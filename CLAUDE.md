@@ -8,7 +8,7 @@
 - **Clinic access for residents aged 65+**: CHAS and CDMP clinic locations against SingStat resident population by planning area.
 - **Live ED wait estimates**: published current wait indicators.
 
-**Audience:** hiring managers for a Business Analyst / Product role at Synapxe, Singapore's national HealthTech agency. Clarity, data accuracy and documentation matter more than feature count. When in doubt, ship less and document it better.
+**Audience:** hiring managers for a Business Analyst / Product role at Synapxe, Singapore's national HealthTech agency. Clarity, data accuracy and documentation matter more than feature count.
 
 ## Monorepo layout
 
@@ -21,24 +21,22 @@ data/raw/     Downloaded source files, unmodified (gitignored)
 data/build/   DuckDB warehouse and published snapshots (gitignored)
 ```
 
-Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `api/tests/`, `web/` test setup).
-
 ## Tech stack
 
 | Layer    | Choice |
 |----------|--------|
-| Pipeline | Python 3.12, DuckDB, pandas, geopandas/shapely (**pipeline only**; never import these in `api/`) |
+| Pipeline | Python 3.12, DuckDB, pandas, geopandas/shapely (pipeline only) |
 | API      | FastAPI, Python 3.12 |
-| Web      | Next.js App Router, TypeScript, Tailwind, Recharts, MapLibre GL or Leaflet (choose one and record it in an ADR) |
+| Web      | Next.js App Router, TypeScript, Tailwind, Recharts, MapLibre GL or Leaflet |
 | Storage  | DuckDB file built in `data/build/`; the last good snapshot is published as a GitHub Release asset (not committed to git) |
 
 ## Data principles (non-negotiable)
 
-1. **No personal or patient-level data, ever.** Only aggregate, publicly published figures.
-2. **Never fabricate, impute or interpolate values silently.** Missing means missing, and it is shown as missing in the warehouse, the API and the UI (for example a gap in a chart or "No data", never a zero).
-3. **Every metric is documented in `docs/data_dictionary.md`** with its definition, unit, source and known caveats. Add or update the entry in the same commit that adds or changes the metric.
-4. **Every number shown to users carries `as_of` and `source`.** API responses include them, and the UI displays them.
-5. **Failed error-level data checks block publishing.** The site keeps serving the last good snapshot. Warning-level checks are logged and surfaced, but they do not block.
+1. **No personal or patient-level data, ever.**
+2. **Never fabricate, impute or interpolate values silently.** Missing means missing, shown as missing.
+3. **Every metric has a written definition, unit, source and known caveats** in `docs/data_dictionary.md`.
+4. **Every number shown to users carries `as_of` and `source`.**
+5. **Failed error-level data checks block publishing;** the site keeps the last good snapshot.
 6. **Every warehouse row keeps lineage:** `source_url`, `source_sha256`, `ingested_at`.
 
 ## Working rules
@@ -48,7 +46,7 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 - **Tests with every change.** No feature or fix lands without a test that covers it.
 - **If a source's structure is unclear, stop and ask.** Don't guess at column meanings, units, date conventions or planning-area name mappings.
 - **Justify any new dependency** (why it's needed, what alternatives exist) before adding it.
-- **No secrets in code.** Use environment variables, and commit a `.env.example` with placeholder values only.
+- **No secrets in code.**
 
 ## Commands
 
