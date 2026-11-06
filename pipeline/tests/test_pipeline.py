@@ -168,18 +168,25 @@ def test_csv_payload_and_postal_zero_padding():
     assert df.iloc[0].has_cdmp is None
 
 
-def test_singstat_flatten_and_pop65():
-    payload = {"Data": {"title": "Residents by Planning Area and Age Group, June 2025", "row": [
-        {"rowText": "Bedok", "columns": [
-            {"key": "2025", "columns": [{"key": "60 - 64", "value": "20,000"},
-                                        {"key": "65 - 69", "value": "18,000"},
-                                        {"key": "90 & Over", "value": "1,200"}]}]},
-        {"rowText": "Total", "columns": [{"key": "2025", "columns": [{"key": "65 - 69", "value": "1"}]}]},
-    ]}}
-    flat = p.parse_singstat_tabledata(payload, "TEST1")
-    assert len(flat) == 4
-    pop = p.derive_pop65(flat, 2025)
-    assert pop.to_dict("records") == [{"planning_area": "Bedok", "year": 2025, "residents_65plus": 19200.0}]
+def test_singstat_residents_sums_planning_areas_and_65_plus():
+    from conftest import SINGSTAT_ZIP
+    out = p.parse_residents_zip(SINGSTAT_ZIP).set_index("planning_area")
+    assert out.loc["Bedok", "residents_total"] == 2000                 # across subzones, sexes, dwellings
+    assert out.loc["Bedok", "residents_65plus"] == 1000                # 65-69, 70-74 and 90+, not 60-64
+    assert out.loc["Tuas", "residents_total"] == 0                     # a real zero, kept
+    assert set(out["year"]) == {2026} and set(out["source_table"]) == {"respopagesextod2026"}
+
+
+@pytest.mark.parametrize("change, message", [
+    ({"columns": ("PA", "SZ", "AG", "Sex", "FA", "Pop", "Time")}, "expected columns"),     # the floor-area file
+    ({"rows": [("Bedok", "X", "65_and_Over", "Males", "Others", 10, 2026)]}, "unexpected age groups"),
+    ({"rows": [("Bedok", "X", "65_to_69", "Males", "Others", "na", 2026)]}, "non-numeric"),
+])
+def test_singstat_residents_stops_on_an_unexpected_layout(change, message):
+    from conftest import singstat_residents_zip
+    from sg_health.parsers.singstat import SingStatFormatError
+    with pytest.raises(SingStatFormatError, match=message):
+        p.parse_residents_zip(singstat_residents_zip(**change))
 
 
 # ------------------------------------------------------------- Excel report #

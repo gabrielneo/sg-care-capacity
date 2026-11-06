@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import json
+import zipfile
 from datetime import datetime, time
 from typing import Any, Optional
 
@@ -105,16 +106,29 @@ def chas_geojson(clinics: list[tuple], postal: str = "629117") -> bytes:
 
 CHAS_V1 = chas_geojson([("15M0211", "JOO KOON CLINIC", "CHAS,CDMP"), ("15M0999", "OTHER CLINIC", "CHAS")])
 CHAS_V2 = chas_geojson([("15M0211", "JOO KOON CLINIC", "CHAS,CDMP")])          # OTHER CLINIC closed
-SINGSTAT_JSON = json.dumps({"Data": {"title": "Residents by Planning Area and Age Group, June 2025", "row": [
-    {"rowText": "Bedok", "columns": [{"key": "2025", "columns": [
-        {"key": "60 - 64", "value": "20,000"}, {"key": "65 - 69", "value": "18,000"},
-        {"key": "90 & Over", "value": "1,200"}]}]},
-]}}).encode()
-
 ANNUAL_AE_CSV = (b"year,level_1,value\n2023,Accident & Emergency Departments,1050400.0\n"
                  b"2023,Polyclinics,5000000.0\n2022,Accident & Emergency Departments,1023000.0\n")
 ANNUAL_AE_DOWNLOAD = "https://s3.example.com/annual.csv"
-SINGSTAT_TABLE = "M810001"
+
+
+def singstat_residents_zip(rows=None, columns=("PA", "SZ", "AG", "Sex", "TOD", "Pop", "Time")) -> bytes:
+    """A zip laid out like SingStat's respopagesextod file: a data CSV plus a notes CSV."""
+    rows = rows if rows is not None else [
+        ("Bedok", "Bedok North", "60_to_64", "Males", "HDB 4-Room Flats", 1000, 2026),
+        ("Bedok", "Bedok North", "65_to_69", "Males", "HDB 4-Room Flats", 800, 2026),
+        ("Bedok", "Bedok North", "90_and_Over", "Females", "Others", 40, 2026),
+        ("Bedok", "Kembangan", "70_to_74", "Females", "Landed Properties", 160, 2026),
+        ("Tuas", "Tuas North", "65_to_69", "Males", "Others", 0, 2026),
+    ]
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("Notes_respopagesextod2026.csv", "Notes\n3) The figures have been rounded to the nearest 10.\n")
+        z.writestr("respopagesextod2026.csv",
+                   ",".join(columns) + "\n" + "".join(",".join(map(str, r)) + "\n" for r in rows))
+    return buf.getvalue()
+
+
+SINGSTAT_ZIP = singstat_residents_zip()
 # Same shape as the real signed link: the object path is the dataset id.
 CHAS_DOWNLOAD = (f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['chas']}.geojson"
                  "?X-Amz-Signature=secret&X-Amz-Expires=60")
@@ -141,7 +155,7 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
             "lastUpdatedAt": updated}}).encode(), JSON)
            for ds, name, updated in [(config.DATAGOV_DATASETS["chas"], "CHAS Clinics", "2024-06-06T14:36:42+08:00"),
                                      (config.DATAGOV_DATASETS["annual_ae"], "Annual", "2026-10-28T08:54:55+08:00")]},
-        config.SINGSTAT_URL.format(table_id=SINGSTAT_TABLE): (SINGSTAT_JSON, JSON),
+        config.SINGSTAT_RESIDENTS_URL: (SINGSTAT_ZIP, "application/zip"),
     }
 
 

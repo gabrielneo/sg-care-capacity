@@ -37,13 +37,13 @@ def test_every_row_points_at_the_raw_file_it_came_from(monkeypatch, paths):
         wh.close()
 
 
-def test_derived_population_points_at_the_singstat_file(monkeypatch, paths):
+def test_population_points_at_the_singstat_file(monkeypatch, paths):
     full_run(monkeypatch, paths)
-    singstat = next(r for r in RawStore(paths["raw"]).records() if r.source == "singstat")
+    singstat = next(r for r in RawStore(paths["raw"]).records() if r.source == "singstat_residents")
     wh = Warehouse(paths["db"])
     try:
         pop = wh.query("SELECT source_sha256, source_table FROM pop_65plus_by_area")
     finally:
         wh.close()
-    assert list(pop["source_sha256"]) == [singstat.sha256]
-    assert list(pop["source_table"]) == ["M810001"]
+    assert set(pop["source_sha256"]) == {singstat.sha256}
+    assert set(pop["source_table"]) == {"respopagesextod2026"}

@@ -14,7 +14,7 @@ from test_ingest import full_run
 pytest.importorskip("duckdb")
 
 RUN_SOURCES = {"moh_bed_waits", "moh_ed_attendances", "nuhs_live", "datagov_chas", "datagov_annual_ae",
-               "datagov_metadata", "singstat"}
+               "datagov_metadata", "singstat_residents"}
 
 
 def summaries(capsys) -> list[dict]:
@@ -43,8 +43,8 @@ def test_one_summary_line_per_source_and_counts_reconcile(monkeypatch, paths, ca
     bed = next(line for line in lines if line["source"] == "moh_bed_waits")
     # Fixture: 3 hospitals x 2 dates, one cell is "-" (MOH's blank marker): missing, not unreadable
     assert (bed["rows_read"], bed["parsed"], bed["drop_reasons"]) == (6, 5, {"blank": 1})
-    singstat = next(line for line in lines if line["source"] == "singstat")
-    assert singstat["derived"] == {"pop_65plus_by_area": 1}
+    singstat = next(line for line in lines if line["source"] == "singstat_residents")
+    assert (singstat["rows_read"], singstat["parsed"]) == (2, 2)          # two planning areas
 
 
 def test_unchanged_file_shows_as_skipped(monkeypatch, paths, capsys):

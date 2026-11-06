@@ -61,10 +61,9 @@ Optional environment variables (see `.env.example`):
 |---|---|
 | `CRAWLER_USER_AGENT` | Your bot's identity. Point it at your public repo URL, not a personal email. |
 | `DATAGOV_API_KEY` | data.gov.sg API key, for higher rate limits (free; register on data.gov.sg). |
-| `SINGSTAT_POP_TABLE_ID` | SingStat Table Builder ID for "residents by planning area and age group" (see below). |
 | `SG_HEALTH_DATA_DIR` | Use a different `data/` directory. |
 
-**Finding the SingStat table ID:** search [tablebuilder.singstat.gov.sg](https://tablebuilder.singstat.gov.sg) for a table of residents by planning area and age group. The ID is in the table's URL. Pass it with `--singstat-table <ID>` or set the env var. The code flattens any Table Builder JSON into `singstat_tabledata`. It then sums age bands of 65 and over per planning area into `pop_65plus_by_area`. Check that derived table against the source the first time.
+**SingStat population:** the planning-area resident counts come from SingStat's yearly file *Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling* (June 2026). Its URL is pinned in `config.SINGSTAT_RESIDENTS_URL`; update it when the next June edition is published (around September). The *Floor Area of Residence* edition is not used: it leaves out about 20,000 residents aged 65+.
 
 ## 3. Raw landing zone and `reparse`
 
@@ -88,8 +87,7 @@ data/raw/manifest.jsonl                            one line per fetch: source, u
 | `moh_ed_attendances` | hospital_name, report_date | Daily ED attendances |
 | `chas_clinics` | clinic_key (HCI code) | Name, address, postal code, lat/long, `has_cdmp`, programmes, `is_active` |
 | `nuhs_live_waits` | site_name, department, snapshot_timestamp | Patients waiting, estimated consult and bed waits (hours). `department` is the page section, e.g. "Adult Emergency" or "Children's Emergency": NUH appears in both. |
-| `singstat_tabledata` | table_id, row_label, column_path | Raw flattened SingStat cells |
-| `pop_65plus_by_area` | planning_area, year | Derived 65+ residents per planning area |
+| `pop_65plus_by_area` | planning_area, year | Residents and residents aged 65+ per planning area (SingStat) |
 | `annual_ae_attendances` | year | MOH annual public-sector A&E attendances, for reconciliation only |
 | `raw_manifest` | seq | Every fetch, mirrored from `data/raw/manifest.jsonl` |
 | `quarantine_<table>` | (none) | Rows that failed an ERROR data-quality check, values as parsed. Never in the clean table. |
@@ -125,7 +123,8 @@ read:
 | `marts.fct_ed_daily` | hospital × day | MOH median bed wait and attendances, ISO week, `is_complete_week`, WARN `dq_flags`, per-metric lineage |
 | `marts.fct_ed_weekly` | hospital × ISO week | **Mean of daily medians** (not a weekly median), total attendances, days reported per metric |
 | `marts.dim_clinic` | CHAS clinic | `has_cdmp`, `is_active`, location; `as_of` is data.gov.sg's own update date |
-| `marts.fct_live_ed_snapshot` | NUHS site × department × snapshot | Live readings, labelled `estimate` |
+| `marts.fct_live_ed_snapshot` | NUHS site × department × snapshot | Live readings, labelled `estimate`; filter `is_adult_ed` for one per hospital |
+| `marts.fct_planning_area_population` | planning area × year | Residents, residents aged 65+, share; SingStat, June 2026 |
 
 Every mart has `as_of` and `as_of_basis` (`source_updated`, `fetched` or `reference_checked`) and
 source hashes. Row counts are reconciled at every step into `transform_log`; a row lost without a
@@ -193,7 +192,7 @@ sg-health reparse
 Setup:
 1. Push this folder to a GitHub repo.
 2. Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions** (needed to create the release and upload the archive).
-3. Optional: add a `DATAGOV_API_KEY` secret and a `SINGSTAT_POP_TABLE_ID` repository variable.
+3. Optional: add a `DATAGOV_API_KEY` secret.
 4. Open the **Actions** tab and run the workflow once manually to check it works. The first run creates the `data-latest` release.
 
 **Size:** the archive only grows. Unchanged files are stored once, so most weeks add only the new MOH workbooks and the live-page snapshots. A release asset can be up to 2 GB.

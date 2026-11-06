@@ -20,7 +20,7 @@ from .parsers.datagov import (normalize_clinics, parse_annual_ae, parse_datagov_
                               parse_datagov_payload)
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
-from .parsers.singstat import derive_pop65, parse_singstat_tabledata, title_year
+from .parsers.singstat import parse_residents_zip
 from .quality import rules  # noqa: F401  (registers the table rules with the gate)
 from .quality.gate import GateContext, gate
 from .raw import RawRecord, RawStore, link_url
@@ -128,30 +128,9 @@ def _clinic_loader(label: str, table: str) -> LoaderFn:
     return load
 
 
-def load_singstat(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
-    try:
-        payload = json.loads(decode_text(rec, content))
-    except ValueError:
-        LOG.warning("SingStat: non-JSON response from %s", rec.url)
-        stats.files_skipped["not_json"] += 1
-        return 0
-    if not isinstance(payload, dict):
-        stats.files_skipped["unexpected_json"] += 1
-        return 0
-    m = re.search(r"/tabledata/([^/?#]+)", rec.url)
-    table_id = m.group(1) if m else rec.url
-    flat = _gated(wh, "singstat_tabledata", parse_singstat_tabledata(payload, table_id, stats=stats), rec, stats)
-    n = _upsert(wh, "singstat_tabledata", flat, ["table_id", "row_label", "column_path"], stats)
-    pop = derive_pop65(flat, title_year(payload))      # from clean cells only
-    if not pop.empty:
-        pop["source_table"] = table_id
-        no_year = int(pop["year"].isna().sum())
-        if no_year:   # derived rows we cannot place in a year are not stored
-            LOG.warning("SingStat %s: %d planning-area rows have no year, not stored", table_id, no_year)
-        derived = ParseStats()
-        pop = _gated(wh, "pop_65plus_by_area", pop.dropna(subset=["year"]), rec, derived)
-        stats.derived["pop_65plus_by_area"] += wh.upsert("pop_65plus_by_area", pop, ["planning_area", "year"])
-    return n
+def load_singstat_residents(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
+    df = parse_residents_zip(content, stats=stats)        # raises SingStatFormatError on any surprise
+    return _load(wh, "pop_65plus_by_area", df, rec, stats)
 
 
 def load_annual_ae(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
@@ -186,14 +165,15 @@ LOADERS: dict[str, LoaderFn] = {
     "datagov_chas": _clinic_loader("chas", "chas_clinics"),
     "datagov_annual_ae": load_annual_ae,
     "datagov_metadata": load_datagov_metadata,
-    "singstat": load_singstat,
+    "singstat_residents": load_singstat_residents,
 }
 # Landed for the record but not parsed into tables (e.g. the MOH pages that link to the files).
 # Retired sources are no longer fetched, but their raw files stay in data/raw (it is
 # immutable), so reparse must recognise and skip them:
 #   singhealth_qwatch  X-ray QWatch page retired (redirects to the SingHealth homepage), 2026-11-06
 #   datagov_has        Health Appointment System clinic list unpublished on data.gov.sg, 2026-11-06
-RETIRED_SOURCES = frozenset({"singhealth_qwatch", "datagov_has"})
+#   singstat           SingStat Table Builder JSON, replaced by the singstat_residents file, 2026-11-06
+RETIRED_SOURCES = frozenset({"singhealth_qwatch", "datagov_has", "singstat"})
 UNPARSED_SOURCES = frozenset({"moh_page"}) | RETIRED_SOURCES
 
 

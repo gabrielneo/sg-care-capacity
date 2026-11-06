@@ -74,11 +74,16 @@ ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in
 DATAGOV_METADATA_URL = "https://api-production.data.gov.sg/v2/public/api/datasets/{dataset_id}/metadata"
 DATAGOV_API_KEY = os.getenv("DATAGOV_API_KEY")      # optional, gives higher rate limits
 
-# SingStat Table Builder resource ID for "residents by planning area x age group".
-# Find it at https://tablebuilder.singstat.gov.sg (it's in the table URL), then
-# set the env var or pass --singstat-table. Skipped if not set.
-SINGSTAT_URL = "https://tablebuilder.singstat.gov.sg/api/table/tabledata/{table_id}"
-SINGSTAT_POP_TABLE_ID = os.getenv("SINGSTAT_POP_TABLE_ID")
+# SingStat "Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling,
+# June 2026" (zip of CSVs), from the geographic distribution page below. Annual: update the URL
+# when SingStat publishes June 2027 (around September).
+# Why this file and not the "... and Floor Area of Residence" one listed first on the page: the
+# floor-area file leaves out residents in the "Others" type of dwelling, 35,280 residents of whom
+# 20,410 are aged 65+ (checked 2026-11-06), so it undercounts exactly the population we need.
+SINGSTAT_RESIDENTS_URL = "https://www.singstat.gov.sg/files/c6755f50-4bfb-4bfa-b7d3-00259b9509ed.zip"
+SINGSTAT_RESIDENTS_PAGE = ("https://www.singstat.gov.sg/find-data/explore-data-themes/population/"
+                           "geographic-distribution/latest-news-data")
+EXPECTED_PLANNING_AREAS = 55     # URA Master Plan 2025, as used by SingStat for June 2026
 
 # Canonical hospitals. Regexes run on lower-cased cell text.
 HOSPITALS: dict[str, tuple[str, str]] = {

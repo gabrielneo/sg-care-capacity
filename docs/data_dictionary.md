@@ -2,7 +2,7 @@
 
 Every metric shown to users is defined here, with its unit, source and known caveats. Start with
 the marts: they are what the API and site read. Entries for the SingStat population tables are still
-to be written (no SingStat table ID is configured yet).
+written; the population mart below covers what the site uses.
 
 All timestamps are Singapore time (SGT, UTC+8, no daylight saving), stored without a time zone.
 
@@ -20,6 +20,7 @@ evidence available. `as_of_basis` says which evidence:
 | `source_updated` | The publisher's own "last updated" time | `dim_clinic` (data.gov.sg `lastUpdatedAt`), `fct_live_ed_snapshot` (NUHS "Last updated at") |
 | `fetched` | When we downloaded the file; the publisher gives no per-figure date | `fct_ed_daily`, `fct_ed_weekly` (MOH); fallback for the two above |
 | `reference_checked` | When the reference list in code was last verified | `dim_hospital` |
+| `reference_period` | The date the statistic describes, set by the publisher | `fct_planning_area_population` (end of June) |
 
 Show `as_of` next to every number. For CHAS it is **2024-06-06** even though the file was
 downloaded in November 2026: the clinic list itself is that old.
@@ -130,6 +131,25 @@ data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing t
 | `as_of` | `source_updated_at`, else `fetched_at` | timestamp (SGT) | `COALESCE` | |
 | `as_of_basis` | `source_updated` or `fetched` | text | | |
 
+### `marts.fct_planning_area_population`
+
+**Grain:** one row per planning area per year (55 planning areas for 2026). **Source:** SingStat
+*Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling, June 2026*
+(`respopagesextod2026.csv`) → `pop_65plus_by_area` → `staging.stg_singstat_residents`.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `planning_area` | URA planning area | text | SingStat `PA` | Master Plan 2025 boundaries for June 2026. Match to the boundary file by name. |
+| `year` | Reference year | integer | SingStat `Time` | |
+| `residents_total` | Singapore residents (citizens and permanent residents) living in the area | residents | sum of `Pop` over subzones, ages, sexes, dwelling types | **Each published cell is rounded to the nearest 10**, so a sum carries rounding (SingStat: "may not add up"). Excludes residents away from Singapore for 12+ months. 0 for non-residential areas (e.g. Tuas, water catchments). |
+| `residents_65plus` | Residents aged 65 and over | residents | sum of `Pop` for age groups 65–69 … 90 and over | Same rounding. **Includes the "Others" type of dwelling**: 35,280 residents nationally, 20,410 of them aged 65+ (June 2026). SingStat's *Floor Area of Residence* file omits them, which is why it isn't used. |
+| `share_65plus` | `residents_65plus / residents_total` | fraction (0–1) | computed | **NULL where there are no residents**, not 0. Small areas are sensitive to the rounding of a few cells. |
+| `reference_date` | The date residents are counted at | date | end of June of `year` | |
+| `source_table` | SingStat file the figures came from | text | data CSV name | |
+| `source_url`, `source_sha256`, `fetched_at` | The raw zip and when it was downloaded | text / timestamp | staging lineage | |
+| `as_of` | `reference_date` | timestamp | | The figures describe end-June; SingStat generated the file on 2026-09-25. |
+| `as_of_basis` | Always `reference_period` | text | constant | |
+
 ## Source tables
 
 The clean tables the marts are built from.
@@ -186,7 +206,7 @@ KK Women's and Children's Hospital and NUH (Children) are **excluded**. The work
 ## Lineage columns (on every parsed table)
 
 Every row in `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`singstat_tabledata`, `pop_65plus_by_area` and `annual_ae_attendances` carries these three columns. None of them may be null.
+`pop_65plus_by_area`, `annual_ae_attendances` and `source_metadata` carries these three columns. None of them may be null.
 
 | Column | Type | Definition |
 |---|---|---|
@@ -213,7 +233,7 @@ and on `reparse`.
 | Column | Type | Definition |
 |---|---|---|
 | `seq` | integer | Position in `manifest.jsonl`, from 0. This is the replay order. |
-| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `datagov_annual_ae`, `singstat`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch` and `datagov_has` (kept, not parsed). |
+| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `datagov_annual_ae`, `datagov_metadata`, `singstat_residents`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch`, `datagov_has` and `singstat` (kept, not parsed). |
 | `url` | text | Where the bytes came from (see `source_url` above). |
 | `sha256` | text | SHA-256 of the bytes. |
 | `bytes` | integer | Size in bytes. |
@@ -242,7 +262,7 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `datagov_has` | **Retired** (not fetched) | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`), no replacement is named, and it isn't needed for the project. |
 | `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
 | `datagov_annual_ae` | OK | 1984–2023; only 2023 overlaps the daily MOH series. Reconciliation only. |
-| `singstat` | Not configured | Needs `SINGSTAT_POP_TABLE_ID`. |
+| `singstat_residents` | OK | June 2026, 55 planning areas: 4,240,430 residents, 828,010 aged 65+ (19.5%). Updated yearly around September; the URL in `config.py` must be updated then. |
 
 ## Data-quality tables
 

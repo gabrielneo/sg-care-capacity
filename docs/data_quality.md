@@ -68,7 +68,7 @@ failing check shows as `FAIL (blocks)`, `FAIL (quarantined)` or `WARN`.
 ## Schema checks (every gated table)
 
 Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`singstat_tabledata`, `pop_65plus_by_area`, `annual_ae_attendances`.
+`pop_65plus_by_area`, `annual_ae_attendances`, `source_metadata`.
 
 ### `schema.required_columns`: ERROR, file, blocks
 
@@ -249,6 +249,30 @@ movement.
   so it warns rather than blocks. The threshold is a judgement, not fitted to data: the CHAS
   file hasn't changed since June 2024, so there is no churn history to measure yet.
 
+## Population checks (`pop_65plus_by_area`)
+
+### `population.counts_consistent`: ERROR, row
+
+- **Guards against:** a planning area with more residents aged 65+ than residents in total, or a
+  negative count, which would give a share over 100% or below 0 on the access page.
+- **Threshold:** `0 <= residents_65plus <= residents_total`.
+- **Why:** these are two sums of the same published cells; any other result means the file was
+  read wrongly.
+
+### `population.planning_area_count`: WARN, file
+
+- **Guards against:** a truncated file, or SingStat switching to new planning-area boundaries
+  without us noticing.
+- **Threshold:** **55** planning areas per year (URA Master Plan 2025, which SingStat uses for
+  June 2026).
+- **Why WARN:** a boundary change is real, not an error, but planning-area names would no longer
+  match the boundary file used for the map, so someone must look.
+
+The parser itself also **stops** (the file is not loaded) if the columns aren't exactly
+`PA, SZ, AG, Sex, TOD, Pop, Time`, an age group is unknown, or a count isn't a number. That's how
+picking up SingStat's *Floor Area of Residence* file by mistake would be caught: it has an `FA`
+column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
+
 ## Reconciliation (WARN only)
 
 ### `reconcile.annual_ae`: WARN, dataset
@@ -285,3 +309,5 @@ movement.
 | MOH bed waits | Unit not stated in the workbook or on the page | Read as hours; guarded by the unit checks. Confirm with MOH before quoting externally. |
 | MOH attendances | AH 2023-09-08 shows 7 attendances (usual ~64) | Published, flagged by `range.attendances_rolling_4sd`. |
 | MOH bed waits | CGH weeks of 8 and 15 Feb 2026 near 0.6–0.8 h | Published, flagged by `unit.weekly_shift_10x`; confirmed as MOH's own figures. |
+| CHAS (data.gov.sg) | 7 names and 2 street names with double spaces | Tidied for display in `dim_clinic`; published text kept in staging. |
+| SingStat residents | Every cell rounded to the nearest 10 | Planning-area sums carry rounding; see the data dictionary. |

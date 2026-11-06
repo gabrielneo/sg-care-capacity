@@ -232,7 +232,8 @@ import re  # noqa: E402
 
 from sg_health import config  # noqa: E402
 
-MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot"]
+MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
+         "fct_planning_area_population"]
 
 
 def documented_columns(mart: str) -> set[str]:
@@ -289,3 +290,10 @@ def test_is_adult_ed_separates_nuh_sections_and_matches_the_reconciliation_rule(
     assert len(rows[rows["is_adult_ed"] == True]) == len(adult_by_rule)     # noqa: E712  same rows as the check
     one_per_hospital = rows[rows["is_adult_ed"] == True].groupby("hospital_code").size()   # noqa: E712
     assert (one_per_hospital == 1).all()
+
+
+def test_population_mart_share_is_null_where_nobody_lives(built):
+    rows = q(built, "SELECT * FROM marts.fct_planning_area_population ORDER BY planning_area").set_index("planning_area")
+    assert rows.loc["Bedok", "share_65plus"] == pytest.approx(0.5)
+    assert rows.loc["Tuas", "residents_total"] == 0 and pd.isna(rows.loc["Tuas", "share_65plus"])
+    assert (rows["as_of"] == pd.Timestamp("2026-06-30")).all() and set(rows["as_of_basis"]) == {"reference_period"}

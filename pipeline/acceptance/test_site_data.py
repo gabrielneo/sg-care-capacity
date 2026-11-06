@@ -13,8 +13,9 @@ import pandas as pd
 import pytest
 
 SG_LAT, SG_LON = (1.15, 1.48), (103.6, 104.1)
-AS_OF_BASES = {"source_updated", "fetched", "reference_checked"}
-MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot"]
+AS_OF_BASES = {"source_updated", "fetched", "reference_checked", "reference_period"}
+MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
+         "fct_planning_area_population"]
 
 
 def dupes(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
@@ -44,7 +45,7 @@ def _source_columns(sql, mart):
     return [c for c in cols if c.endswith("source_url")]
 
 
-@pytest.mark.parametrize("mart", ["fct_ed_daily", "dim_clinic", "fct_live_ed_snapshot"])
+@pytest.mark.parametrize("mart", ["fct_ed_daily", "dim_clinic", "fct_live_ed_snapshot", "fct_planning_area_population"])
 def test_source_links_are_well_formed_urls(sql, mart):
     """The site renders source_url as a link. It must open: http(s), no raw spaces, no credentials."""
     bad = []
@@ -61,6 +62,7 @@ def test_source_links_are_well_formed_urls(sql, mart):
     ("fct_ed_daily", ["wait_source_sha256", "attendance_source_sha256"]),
     ("dim_clinic", ["source_sha256"]),
     ("fct_live_ed_snapshot", ["source_sha256"]),
+    ("fct_planning_area_population", ["source_sha256"]),
 ])
 def test_every_source_hash_resolves_to_an_unchanged_raw_file(sql, raw_dir, mart, sha_cols):
     """'Show me the source' must be answerable: the hash is in the manifest and the file still matches."""
@@ -305,8 +307,56 @@ def test_map_has_active_clinics(sql):
 
 def test_clinic_access_page_has_its_65plus_population_denominator(sql):
     """The 'clinics per 1,000 residents aged 65+' page needs population by planning area."""
-    n = sql("SELECT count(*) n FROM main.pop_65plus_by_area")["n"][0]
-    assert n > 0, "pop_65plus_by_area is empty: the clinic-access page has no denominator"
+    n = sql("SELECT count(*) n FROM marts.fct_planning_area_population")["n"][0]
+    assert n > 0, "fct_planning_area_population is empty: the clinic-access page has no denominator"
+
+
+# =========================================================================== #
+# Clinic access page: population denominator (fct_planning_area_population)
+# =========================================================================== #
+
+def test_one_row_per_planning_area_per_year_covering_all_55_areas(sql):
+    pop = sql("SELECT planning_area, year FROM marts.fct_planning_area_population")
+    assert dupes(pop, ["planning_area", "year"]).empty
+    per_year = pop.groupby("year")["planning_area"].nunique()
+    assert (per_year == 55).all(), per_year.to_dict()
+
+
+def test_national_totals_are_plausible_for_singapore(sql):
+    """Singapore has a little over 4 million residents, about a fifth aged 65+ (a super-aged society)."""
+    t = sql("""SELECT year, sum(residents_total) total, sum(residents_65plus) aged
+               FROM marts.fct_planning_area_population GROUP BY 1""")
+    for r in t.itertuples():
+        assert 3_800_000 <= r.total <= 4_800_000, (r.year, r.total)
+        assert 0.15 <= r.aged / r.total <= 0.30, (r.year, r.aged / r.total)
+
+
+def test_population_shares_are_valid_and_missing_only_where_nobody_lives(sql):
+    pop = sql("SELECT planning_area, residents_total, residents_65plus, share_65plus FROM marts.fct_planning_area_population")
+    assert (pop["residents_65plus"] <= pop["residents_total"]).all() and (pop["residents_65plus"] >= 0).all()
+    assert pop["share_65plus"].dropna().between(0, 1).all()
+    assert (pop["share_65plus"].isna() == (pop["residents_total"] == 0)).all()
+
+
+def test_population_share_is_the_ratio_of_its_own_counts(sql):
+    """The map shades by share_65plus and the tooltip shows the counts: they must agree."""
+    off = sql("""SELECT planning_area, residents_total, residents_65plus, share_65plus FROM marts.fct_planning_area_population
+                 WHERE residents_total > 0 AND abs(share_65plus - residents_65plus / residents_total) > 1e-12""")
+    assert off.empty, off.to_dict("records")
+
+
+def test_population_is_dated_by_its_reference_period(sql):
+    pop = sql("SELECT DISTINCT year, reference_date, as_of, as_of_basis FROM marts.fct_planning_area_population")
+    for r in pop.itertuples():
+        assert pd.Timestamp(r.reference_date) == pd.Timestamp(f"{r.year}-06-30") == pd.Timestamp(r.as_of)
+    assert set(pop["as_of_basis"]) == {"reference_period"}
+
+
+def test_planning_areas_with_clinics_have_residents(sql):
+    """A clinic-access ratio needs a denominator wherever there are clinics. Placeholder until clinics
+    are assigned to planning areas: the population side must at least cover the residential areas."""
+    residential = sql("SELECT count(*) n FROM marts.fct_planning_area_population WHERE residents_total > 0")["n"][0]
+    assert residential >= 40, f"only {residential} planning areas with residents"
 
 
 # =========================================================================== #

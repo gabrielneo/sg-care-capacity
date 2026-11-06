@@ -6,7 +6,7 @@ from sg_health import cli
 from sg_health.raw import RawStore
 from sg_health.warehouse import Warehouse
 
-from conftest import CHAS_V2, SINGSTAT_TABLE, FakeHttp, source_routes
+from conftest import CHAS_V2, FakeHttp, source_routes
 
 pytest.importorskip("duckdb")
 
@@ -21,8 +21,7 @@ def run_cli(monkeypatch, paths, routes, *args):
 
 
 def full_run(monkeypatch, paths, routes=None):
-    return run_cli(monkeypatch, paths, routes or source_routes(),
-                   "run", "--singstat-table", SINGSTAT_TABLE)
+    return run_cli(monkeypatch, paths, routes or source_routes(), "run")
 
 
 def query(paths, sql):
@@ -38,7 +37,7 @@ def test_run_lands_every_fetched_file_before_parsing(monkeypatch, paths):
     recs = RawStore(paths["raw"]).records()
     assert sorted({r.source for r in recs}) == [
         "datagov_annual_ae", "datagov_chas", "datagov_metadata", "moh_bed_waits", "moh_ed_attendances", "moh_page", "nuhs_live",
-        "singstat"]
+        "singstat_residents"]
     for r in recs:
         assert (paths["raw"] / r.path).exists()
         assert r.path.startswith(f"{r.source}/{r.fetched_at.date().isoformat()}/{r.sha256}.")
@@ -57,9 +56,9 @@ def test_run_loads_every_table(monkeypatch, paths):
     full_run(monkeypatch, paths)
     counts = {t: int(query(paths, f"SELECT COUNT(*) AS n FROM {t}")["n"][0]) for t in [
         "moh_bed_waits", "moh_ed_attendances", "nuhs_live_waits", "chas_clinics",
-        "singstat_tabledata", "pop_65plus_by_area", "annual_ae_attendances", "source_metadata"]}
+        "pop_65plus_by_area", "annual_ae_attendances", "source_metadata"]}
     assert counts == {"moh_bed_waits": 5, "moh_ed_attendances": 4, "nuhs_live_waits": 2,
-                      "chas_clinics": 2, "singstat_tabledata": 3, "pop_65plus_by_area": 1,
+                      "chas_clinics": 2, "pop_65plus_by_area": 2,
                       "annual_ae_attendances": 2, "source_metadata": 2}
 
 

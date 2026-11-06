@@ -34,7 +34,6 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       DATAGOV_API_KEY: ${{ secrets.DATAGOV_API_KEY }}          # optional
-      SINGSTAT_POP_TABLE_ID: ${{ vars.SINGSTAT_POP_TABLE_ID }} # optional repo variable
       CRAWLER_USER_AGENT: >-
         SGHealthcareResearchCrawler/1.0 (non-commercial portfolio research;
         +https://github.com/${{ github.repository }})

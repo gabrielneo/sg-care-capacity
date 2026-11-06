@@ -7,7 +7,7 @@ import sys
 from datetime import date
 from typing import Optional
 
-from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR, SINGSTAT_POP_TABLE_ID
+from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR
 from .http import PoliteHttp
 from . import logs
 from .load import Loader, reparse
@@ -30,7 +30,7 @@ STEP_SOURCES = {
     "moh": ("moh_bed_waits", "moh_ed_attendances"),
     "live": ("nuhs_live",),
     "opendata": ("datagov_chas", "datagov_annual_ae", "datagov_metadata"),
-    "singstat": ("singstat",),
+    "singstat": ("singstat_residents",),
 }
 
 
@@ -77,7 +77,6 @@ def main(argv: Optional[list[str]] = None) -> int:
     run.add_argument("--sources", default=",".join(ALL_SOURCES),
                      help=f"comma-separated subset of {ALL_SOURCES}")
     run.add_argument("--force", action="store_true", help="re-parse MOH files even if the sha256 was seen")
-    run.add_argument("--singstat-table", default=SINGSTAT_POP_TABLE_ID)
     run.add_argument("--no-report", action="store_true")
 
     bf = sub.add_parser("backfill", help="load historical MOH files from the Wayback Machine")
@@ -138,7 +137,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             if "opendata" in wanted:
                 results["opendata"] = _run_step("opendata", ingest_opendata, http, loader)
             if "singstat" in wanted:
-                results["singstat"] = _run_step("singstat", ingest_singstat, http, loader, args.singstat_table)
+                results["singstat"] = _run_step("singstat", ingest_singstat, http, loader)
             if not args.no_report:
                 export_report(wh, args.report)
             # Record data quality for this run. The exit code is left to `sg-health validate`,

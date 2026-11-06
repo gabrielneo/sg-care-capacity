@@ -30,13 +30,11 @@ DDL = [
         est_consult_wait_hours DOUBLE, source_updated_at TIMESTAMP,
         snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (site_name, department, snapshot_timestamp))""",
-    """CREATE TABLE IF NOT EXISTS singstat_tabledata (
-        table_id VARCHAR NOT NULL, row_label VARCHAR NOT NULL, column_path VARCHAR NOT NULL,
-        value DOUBLE, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
-        PRIMARY KEY (table_id, row_label, column_path))""",
+    # SingStat residents per planning area and year (all residents, and those aged 65+).
     """CREATE TABLE IF NOT EXISTS pop_65plus_by_area (
-        planning_area VARCHAR NOT NULL, year INTEGER NOT NULL, residents_65plus BIGINT,
-        source_table VARCHAR, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        planning_area VARCHAR NOT NULL, year INTEGER NOT NULL, residents_total BIGINT,
+        residents_65plus BIGINT, source_table VARCHAR,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (planning_area, year))""",
     # Annual A&E attendances (all public-sector A&E departments). Reconciliation only.
     """CREATE TABLE IF NOT EXISTS annual_ae_attendances (
@@ -72,9 +70,9 @@ LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
 PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_live_waits",
-                 "singstat_tabledata", "pop_65plus_by_area", "annual_ae_attendances", "source_metadata")
+                 "pop_65plus_by_area", "annual_ae_attendances", "source_metadata")
 # Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
-RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits")
+RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits", "singstat_tabledata", "quarantine_singstat_tabledata")
 
 # Primary key of every table that goes through the data-quality gate. Each one gets a
 # quarantine_<table> with the same columns (as VARCHAR, so any rejected value fits).
@@ -83,7 +81,6 @@ TABLE_KEYS: dict[str, tuple[str, ...]] = {
     "moh_ed_attendances": ("hospital_name", "report_date"),
     "chas_clinics": ("clinic_key",),
     "nuhs_live_waits": ("site_name", "department", "snapshot_timestamp"),
-    "singstat_tabledata": ("table_id", "row_label", "column_path"),
     "pop_65plus_by_area": ("planning_area", "year"),
     "annual_ae_attendances": ("year",),
     "source_metadata": ("dataset_id",),
