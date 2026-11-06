@@ -185,3 +185,11 @@ def test_nuhs_vs_moh_skips_when_moh_has_not_published_that_day(wh):
         "snapshot_timestamp": datetime(2026, 11, 6, 12, 1), **LINEAGE}]), ["site_name", "department", "snapshot_timestamp"])
     r = result(dq.run_validation(wh, today=date(2026, 11, 8)), "reconcile.nuhs_vs_moh_nuh", "nuhs_live_waits")
     assert r.status == "skipped" and "MOH has published" in r.details
+
+
+@pytest.mark.parametrize("today, status", [(date(2027, 9, 30), "pass"), (date(2027, 10, 1), "fail")])   # cutoff 30 Sep
+def test_population_freshness(wh, today, status):
+    wh.upsert("pop_65plus_by_area", pd.DataFrame([{"planning_area": "Bedok", "year": 2026, "residents_total": 100,
+              "residents_65plus": 20, "source_table": "t", **LINEAGE}]), ["planning_area", "year"])
+    r = result(dq.run_validation(wh, today=today), "freshness.population_15_months", "pop_65plus_by_area")
+    assert r.status == status and not r.blocking                       # WARN: a reminder, never a block

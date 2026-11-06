@@ -127,6 +127,27 @@ def freshness(wh: Warehouse, today: date) -> list[Result]:
     return out
 
 
+POP_FRESH_MONTHS = 15
+FRESH_POPULATION = register(
+    "freshness.population_15_months", Severity.WARN, Scope.DATASET,
+    f"Latest SingStat reference date (end-June) is at most {POP_FRESH_MONTHS} months old",
+    ("pop_65plus_by_area",))
+
+
+@dataset_check
+def population_freshness(wh: Warehouse, today: date) -> list[Result]:
+    latest = wh.con.execute("SELECT max(year) FROM pop_65plus_by_area").fetchall()[0][0]
+    if latest is None:
+        return [Result(FRESH_POPULATION, "pop_65plus_by_area", "skipped", details="no rows")]
+    ref = date(int(latest), 6, 30)
+    y, m = divmod(ref.month - 1 + POP_FRESH_MONTHS, 12)
+    year, month = ref.year + y, m + 1
+    cutoff = date(year, month, min(ref.day, calendar.monthrange(year, month)[1]))   # 30 Jun + 15 months = 30 Sep
+    text = (f"latest reference date {ref}; stale after {cutoff} (checked {today}). SingStat publishes each June "
+            f"edition around September: update config.SINGSTAT_RESIDENTS_URL")
+    return [Result(FRESH_POPULATION, "pop_65plus_by_area", "fail" if today > cutoff else "pass", 0, text)]
+
+
 @dataset_check
 def rolling_attendances(wh: Warehouse, today: date) -> list[Result]:
     df = _moh(wh, "moh_ed_attendances")

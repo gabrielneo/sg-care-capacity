@@ -273,6 +273,17 @@ The parser itself also **stops** (the file is not loaded) if the columns aren't 
 picking up SingStat's *Floor Area of Residence* file by mistake would be caught: it has an `FA`
 column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
 
+### `freshness.population_15_months`: WARN, dataset
+
+- **Guards against:** showing an old population count as current because nobody updated the
+  pinned SingStat file link.
+- **Threshold:** the newest reference date (30 June of the latest `year`) is more than **15
+  months** before today.
+- **Why:** SingStat publishes each June edition around September, so a correctly updated pipeline
+  is never more than about 15 months behind. The file link is pinned in
+  `config.SINGSTAT_RESIDENTS_URL` and updated by hand once a year, on purpose: discovering it
+  automatically from SingStat's page would break silently whenever the page is redesigned.
+
 ## Reconciliation (WARN only)
 
 ### `reconcile.annual_ae`: WARN, dataset
