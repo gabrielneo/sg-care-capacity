@@ -4,7 +4,7 @@ A weekly ETL pipeline that tracks hospital strain in a super-aged Singapore. It 
 
 Only aggregate data about institutions, places and populations is collected. There is no personal or patient-level data.
 
-The read-only **API** over the published snapshot is in [`api/`](api/README.md).
+The read-only **API** over the published snapshot is in [`api/`](api/README.md); the **website** that reads it is in [`web/`](web/README.md).
 
 ```
 sources ──► PoliteHttp ──► data/raw (immutable) ──► parsers ──► DuckDB warehouse ──► Excel report

@@ -66,7 +66,7 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 # run checks:   sg-health validate     # all data-quality checks; exit 1 = publish blocked (docs/data_quality.md)
 # transform:    sg-health transform    # SQL in pipeline/sql/{staging,marts}; marts.* = what the API reads
 # publish:      sg-health publish --out data/build/publish   # validates first; refuses if blocked (docs/runbook.md)
-# all checks:   make test (pipeline, api, acceptance) · make lint · make check   # not bare `pytest` at the root
+# all checks:   make test (pipeline, api, web, acceptance) · make lint · make check   # not bare `pytest` at the root
 # tests:        pytest -q pipeline/tests            # offline unit tests (fixtures only)
 # acceptance:   pytest -q pipeline/acceptance       # the real built data, checked as the site would use it
 
@@ -80,10 +80,11 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 # openapi:      python -m sg_health_api.openapi > api/openapi.json   # after changing a route or model
 # docker:       docker build -t sg-health-api api && docker run --rm -p 8000:8000 sg-health-api
 
-# Web
-# setup:        TODO
-# dev server:   TODO
-# build:        TODO
-# lint/type:    TODO
-# tests:        TODO
+# Web (web/: Next.js App Router, TypeScript strict, Tailwind; see web/README.md)
+# setup:        cd web && npm ci && cp .env.example .env.local     # API_BASE_URL (server-only)
+# dev server:   cd web && npm run dev          # needs the API running; /dev/components shows every component
+# build:        cd web && npm run build && npm start
+# lint/type:    cd web && npm run lint && npm run typecheck
+# tests:        cd web && npm test             # Vitest + Testing Library
+# api types:    cd web && npm run gen:api      # after api/openapi.json changes; CI fails if stale
 ```

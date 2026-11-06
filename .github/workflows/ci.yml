@@ -87,23 +87,25 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
-      - name: Detect web/
-        id: detect
-        run: echo "present=$([ -f web/package.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - name: Skip (web/ not built yet)
-        if: steps.detect.outputs.present != 'true'
-        run: echo "web/ does not exist yet; nothing to check."
       - uses: actions/setup-node@v4
-        if: steps.detect.outputs.present == 'true'
         with:
-          node-version: "20"
-      - name: Lint, type-check and test the web app
-        if: steps.detect.outputs.present == 'true'
-        working-directory: web
-        run: |
-          npm ci
-          npm run lint
-          npm run typecheck
-          npm test
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: API types match api/openapi.json (regenerate with npm run gen:api)
+        run: npm run check:api-types
+      - name: Lint
+        run: npm run lint
+      - name: Type-check (strict)
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npm run build
