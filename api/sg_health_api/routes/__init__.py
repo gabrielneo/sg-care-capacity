@@ -15,9 +15,18 @@ def get_ctx(request: Request) -> Context:
 
 
 def build_router() -> APIRouter:
-    from . import ed, system
+    from . import ed, places, status, system
 
     router = APIRouter(prefix=API_PREFIX)
-    for module in (system, ed):
+    for module in (system, ed, places, status):
         router.include_router(module.router)
     return router
+
+
+def warm(ctx: Context) -> None:
+    """Build the responses that never change for a snapshot, at startup: a bad layer or query
+    fails here, before anything is served, and first requests are as fast as later ones."""
+    from . import ed, places
+
+    ctx.cache["summary"] = ed.build_summary(ctx)
+    places.warm(ctx)

@@ -17,7 +17,7 @@ from . import API_VERSION, errors
 from .caching import caching
 from .config import Settings
 from .context import Context
-from .routes import build_router
+from .routes import build_router, warm
 from .snapshot import load_snapshot
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +37,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         snap = load_snapshot(settings)                  # SnapshotError here stops startup
-        app.state.ctx = Context(snap)
+        try:
+            ctx = Context(snap)
+            warm(ctx)
+        except BaseException:
+            snap.close()
+            raise
+        app.state.ctx = ctx
         try:
             yield
         finally:

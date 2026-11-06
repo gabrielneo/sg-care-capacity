@@ -178,3 +178,128 @@ class EdSummary(BaseModel):
 class EdSummaryResponse(BaseModel):
     data: list[EdSummary]
     meta: Meta
+
+
+# --------------------------------------------------------------------------- #
+# Clinics and planning areas
+# --------------------------------------------------------------------------- #
+
+class Clinic(BaseModel):
+    clinic_key: str
+    hci_code: str | None
+    clinic_name: str | None
+    address: str | None
+    postal_code: str | None = Field(description="6 digits, kept as text (leading zeros)")
+    latitude: float | None
+    longitude: float | None
+    programmes: str | None = Field(description="As published, e.g. 'CDMP,CHAS'")
+    has_cdmp: bool | None = Field(description="Chronic Disease Management Programme; null if programmes is missing")
+    planning_area_code: str | None
+    planning_area: str | None
+    source_sha256: str
+    as_of: datetime
+    as_of_basis: str
+
+
+class ClinicPage(BaseModel):
+    items: list[Clinic]
+    total: int = Field(description="Clinics matching the filters, across all pages")
+    limit: int
+    offset: int
+
+
+class ClinicsResponse(BaseModel):
+    data: ClinicPage
+    meta: Meta
+
+
+class AreaProperties(BaseModel):
+    """Columns of marts.fct_area_access of the same name. Missing values are null, never 0."""
+    planning_area_code: str
+    planning_area: str
+    region_name: str | None
+    population_year: int | None
+    residents_total: int | None
+    residents_65plus: int | None
+    chas_clinics: int | None
+    cdmp_clinics: int | None
+    clinics_per_1k_seniors: float | None
+    cdmp_clinics_per_1k_seniors: float | None
+    pct_area_within_1km_of_cdmp: float | None
+    approx_km_centroid_to_nearest_polyclinic: float | None
+    nearest_polyclinic: str | None
+    dq_note: str | None
+    as_of: str | None
+    as_of_basis: str | None
+
+
+class Geometry(BaseModel):
+    type: Literal["Polygon", "MultiPolygon"]
+    coordinates: list[Any] = Field(description="WGS84 (EPSG:4326) longitude, latitude")
+
+
+class AreaFeature(BaseModel):
+    type: Literal["Feature"]
+    geometry: Geometry
+    properties: AreaProperties
+
+
+class AreaCollection(BaseModel):
+    type: Literal["FeatureCollection"]
+    metadata: dict[str, Any] | None = None
+    features: list[AreaFeature]
+
+
+class AreasResponse(BaseModel):
+    data: AreaCollection
+    meta: Meta
+
+
+# --------------------------------------------------------------------------- #
+# Quality and live
+# --------------------------------------------------------------------------- #
+
+class QualityResult(BaseModel):
+    check_id: str
+    table: str
+    severity: Literal["ERROR", "WARN"]
+    status: Literal["pass", "fail", "skipped"]
+    failing_rows: int
+    scope: str
+    blocks_publish: bool = Field(description="True for checks that stop publishing when they fail")
+    details: str | None
+
+
+class QualityReport(BaseModel):
+    run_id: str
+    checked_at: datetime
+    blocking: int = Field(description="Failed checks that block publishing (0 in any published snapshot)")
+    counts: dict[str, int]
+    results: list[QualityResult]
+
+
+class QualityResponse(BaseModel):
+    data: QualityReport
+    meta: Meta
+
+
+class LiveReading(BaseModel):
+    hospital_code: str | None = Field(description="Null if NUHS lists a site we don't recognise")
+    site_name: str
+    department: str
+    is_adult_ed: bool | None = Field(description="Filter on this for one reading per hospital")
+    measure_type: str = Field(description="Always 'estimate'")
+    patients_waiting: int | None
+    est_wait_to_see_doctor_hours: float | None
+    est_bed_wait_hours: float | None = Field(description="NUHS estimate now; NOT MOH's daily median")
+    snapshot_at: datetime
+    source_updated_at: datetime | None
+    source_url: str
+    source_sha256: str
+    as_of: datetime
+    as_of_basis: str
+
+
+class LiveResponse(BaseModel):
+    data: list[LiveReading]
+    meta: Meta
