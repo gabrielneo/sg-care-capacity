@@ -1,9 +1,10 @@
-"""Command line: run | backfill | reparse | validate | transform | report."""
+"""Command line: run | backfill | reparse | validate | transform | publish | report."""
 from __future__ import annotations
 
 import argparse
 import logging
 import sys
+from pathlib import Path
 from datetime import date
 from typing import Optional
 
@@ -79,6 +80,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                      help=f"comma-separated subset of {ALL_SOURCES}")
     run.add_argument("--force", action="store_true", help="re-parse MOH files even if the sha256 was seen")
     run.add_argument("--no-report", action="store_true")
+    run.add_argument("--no-validate", action="store_true", help="skip recording a validation run at the end")
+    run.add_argument("--no-transform", action="store_true", help="skip building marts at the end")
 
     bf = sub.add_parser("backfill", help="load historical MOH files from the Wayback Machine")
     bf.add_argument("--start", default="2023-01-01")
@@ -88,13 +91,24 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     rp = sub.add_parser("reparse", help="rebuild every parsed table from data/raw alone (no network)")
     rp.add_argument("--no-report", action="store_true")
+    rp.add_argument("--no-transform", action="store_true", help="rebuild clean tables only")
 
-    sub.add_parser("validate", help="run every data-quality check; exit 1 if any check blocks publishing")
+    va = sub.add_parser("validate", help="run every data-quality check; exit 1 if any check blocks publishing")
+    va.add_argument("--markdown", help="also write the failing checks as Markdown to this file")
+    pub = sub.add_parser("publish", help="validate, then write the release snapshot (exit 1 if blocked)")
+    pub.add_argument("--out", default=str(DEFAULT_DB.parent / "publish"), help="output directory (default: %(default)s)")
+    pr = sub.add_parser("snapshots-to-prune", help="read release tags on stdin, print snapshot tags beyond the newest N")
+    pr.add_argument("--keep", type=int, default=12)
     sub.add_parser("transform", help="build staging views and mart tables from the clean tables")
 
     sub.add_parser("report", help="rebuild the Excel report from the warehouse only")
 
     args = parser.parse_args(argv)
+    if args.command == "snapshots-to-prune":            # pure function: no warehouse needed
+        from .publish import snapshots_to_prune
+        for tag in snapshots_to_prune([line.strip() for line in sys.stdin if line.strip()], keep=args.keep):
+            print(tag)
+        return 0
     logs.configure(verbose=args.verbose)
 
     try:
@@ -111,13 +125,26 @@ def main(argv: Optional[list[str]] = None) -> int:
             checks = dq.run_validation(wh)
             run_id = dq.record(wh, checks)
             print(dq.summary_table(checks, run_id))
+            if args.markdown:
+                Path(args.markdown).write_text(dq.summary_markdown(checks, run_id))
             _log_validation(checks, run_id)
             return 1 if any(r.blocking for r in checks) else 0
+        if args.command == "publish":
+            from .publish import PublishBlocked, build_snapshot
+            try:
+                manifest = build_snapshot(wh, Path(args.out))
+            except PublishBlocked as exc:
+                LOG.error("%s", exc, extra={"fields": {"event": "publish_blocked"}})
+                return 1
+            LOG.info("published %s to %s (%d artefacts)", manifest["snapshot_id"], args.out, len(manifest["artefacts"]),
+                     extra={"fields": {"event": "published", "snapshot_id": manifest["snapshot_id"]}})
+            print(manifest["snapshot_id"])
+            return 0
         if args.command == "transform":
             return 0 if _transform(wh) else 1
         if args.command == "reparse":
             results, failed_records = reparse(wh, store)
-            transformed = _transform(wh)
+            transformed = True if args.no_transform else _transform(wh)
             if not args.no_report:
                 export_report(wh, args.report)
             return 1 if failed_records or not transformed else 0
@@ -143,9 +170,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 export_report(wh, args.report)
             # Record data quality for this run. The exit code is left to `sg-health validate`,
             # which CI runs as the publish gate.
-            checks = dq.run_validation(wh)
-            _log_validation(checks, dq.record(wh, checks))
-            if not _transform(wh):
+            if not args.no_validate:
+                checks = dq.run_validation(wh)
+                _log_validation(checks, dq.record(wh, checks))
+            if not args.no_transform and not _transform(wh):
                 return 1
         elif args.command == "backfill":
             loader.expect(*STEP_SOURCES["moh"])

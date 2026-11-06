@@ -324,6 +324,22 @@ def record(wh: Warehouse, results: list[Result]) -> str:
     return run_id
 
 
+def summary_markdown(results: list[Result], run_id: str) -> str:
+    """Failing checks as Markdown, for the GitHub issue opened when publishing is blocked."""
+    failing = [r for r in results if r.status == "fail"]
+    blocking = [r for r in failing if r.blocking]
+    lines = [f"**Validation run `{run_id}`: {len(blocking)} check(s) block publishing, "
+             f"{len(failing)} failing in total.** No snapshot was published; the site keeps the last good one.", "",
+             "| Blocks | Severity | Check | Table | Rows | Details |", "|---|---|---|---|---|---|"]
+    for r in sorted(failing, key=lambda r: (not r.blocking, r.check.check_id)):
+        detail = r.details.replace("|", "\\|").replace("\n", " ")[:200]
+        lines.append(f"| {'**yes**' if r.blocking else 'no'} | {r.check.severity.value} | `{r.check.check_id}` | "
+                     f"`{r.table}` | {r.failing_rows} | {detail} |")
+    lines += ["", "What each check means and how to fix a failure: `docs/data_quality.md`; release process: "
+              "`docs/runbook.md`."]
+    return "\n".join(lines) + "\n"
+
+
 def summary_table(results: list[Result], run_id: str) -> str:
     """Plain-text summary for the terminal and CI logs."""
     def status(r: Result) -> str:
