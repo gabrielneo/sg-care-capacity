@@ -19,6 +19,7 @@ export default async function MethodologyPage() {
                  <li><Link href="/docs/data-dictionary">Full data dictionary</Link></li>
                  <li><Link href="/docs/data-quality">Every data-quality check</Link></li>
                  <li><Link href="/decisions">Decision records</Link></li>
+                 <li><Link href="/glossary">Glossary</Link></li>
                </ul>
              }>
       {methodology.content}
