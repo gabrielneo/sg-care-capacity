@@ -1,11 +1,13 @@
-"""DuckDB warehouse: schema, idempotent upserts and file-hash bookkeeping."""
+"""DuckDB warehouse: schema, idempotent upserts and the raw_manifest mirror."""
 from __future__ import annotations
 
+from dataclasses import asdict, fields
 from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 
-from .config import now_sgt
+from .raw import RawRecord
 
 DDL = [
     """CREATE TABLE IF NOT EXISTS moh_bed_waits (
@@ -27,10 +29,12 @@ DDL = [
     """CREATE TABLE IF NOT EXISTS nuhs_live_waits (
         site_name VARCHAR NOT NULL, patients_waiting INTEGER, est_bed_wait_hours DOUBLE,
         est_consult_wait_hours DOUBLE, source_updated_at TIMESTAMP,
-        snapshot_timestamp TIMESTAMP NOT NULL, PRIMARY KEY (site_name, snapshot_timestamp))""",
+        snapshot_timestamp TIMESTAMP NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (site_name, snapshot_timestamp))""",
     """CREATE TABLE IF NOT EXISTS singhealth_xray_waits (
         site_group VARCHAR, site_name VARCHAR NOT NULL, wait_minutes INTEGER, status VARCHAR,
-        snapshot_timestamp TIMESTAMP NOT NULL, PRIMARY KEY (site_name, snapshot_timestamp))""",
+        snapshot_timestamp TIMESTAMP NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (site_name, snapshot_timestamp))""",
     """CREATE TABLE IF NOT EXISTS singstat_tabledata (
         table_id VARCHAR NOT NULL, row_label VARCHAR NOT NULL, column_path VARCHAR NOT NULL,
         value DOUBLE, ingested_at TIMESTAMP NOT NULL,
@@ -38,14 +42,21 @@ DDL = [
     """CREATE TABLE IF NOT EXISTS pop_65plus_by_area (
         planning_area VARCHAR NOT NULL, year INTEGER NOT NULL, residents_65plus BIGINT,
         source_table VARCHAR, ingested_at TIMESTAMP NOT NULL, PRIMARY KEY (planning_area, year))""",
-    """CREATE TABLE IF NOT EXISTS ingestion_log (
-        sha256 VARCHAR PRIMARY KEY, source VARCHAR, url VARCHAR,
-        fetched_at TIMESTAMP, rows_loaded INTEGER)""",
+    # One row per fetch, mirrored from data/raw/manifest.jsonl (the source of truth).
+    """CREATE TABLE IF NOT EXISTS raw_manifest (
+        seq INTEGER PRIMARY KEY, source VARCHAR NOT NULL, url VARCHAR NOT NULL,
+        sha256 VARCHAR NOT NULL, bytes BIGINT NOT NULL, http_status INTEGER,
+        content_type VARCHAR, fetched_at TIMESTAMP NOT NULL, path VARCHAR NOT NULL)""",
 ]
+
+# Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
+PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "has_clinics",
+                 "nuhs_live_waits", "singhealth_xray_waits", "singstat_tabledata",
+                 "pop_65plus_by_area")
 
 
 class Warehouse:
-    """A thin DuckDB layer: creates the schema, upserts idempotently and records file hashes."""
+    """A thin DuckDB layer: creates the schema and upserts idempotently."""
 
     def __init__(self, path: str | Path) -> None:
         import duckdb  # imported here so the parsers can be unit-tested without DuckDB
@@ -76,12 +87,12 @@ class Warehouse:
             self.con.unregister("_staging")
         return len(df)
 
-    def seen(self, digest: str) -> bool:
-        return self.con.execute("SELECT 1 FROM ingestion_log WHERE sha256 = ?", [digest]).fetchone() is not None
-
-    def log_file(self, digest: str, source: str, url: str, rows: int) -> None:
-        self.con.execute("INSERT OR REPLACE INTO ingestion_log VALUES (?, ?, ?, ?, ?)",
-                         [digest, source, url, now_sgt(), rows])
+    def sync_manifest(self, records: Iterable[RawRecord]) -> int:
+        """Replace raw_manifest with the given records (normally all of manifest.jsonl)."""
+        df = pd.DataFrame([asdict(r) for r in records],
+                          columns=[f.name for f in fields(RawRecord)])
+        self.con.execute("DELETE FROM raw_manifest")
+        return self.upsert("raw_manifest", df, ["seq"])
 
     def mark_inactive(self, table: str) -> None:
         """Before loading a full snapshot, flag every row inactive; the reload re-activates current ones."""

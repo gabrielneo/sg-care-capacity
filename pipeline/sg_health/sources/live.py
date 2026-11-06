@@ -3,45 +3,32 @@ from __future__ import annotations
 
 import logging
 
-import pandas as pd
-
-from ..config import NUHS_LIVE_URL, SINGHEALTH_QWATCH_URL, now_sgt
+from ..config import NUHS_LIVE_URL, SINGHEALTH_QWATCH_URL
 from ..http import PoliteHttp, render_with_playwright
-from ..parsers.live import parse_nuhs_live, parse_singhealth_qwatch
-from ..warehouse import Warehouse
+from ..load import Loader
 
 LOG = logging.getLogger(__name__)
 
+LIVE_PAGES = (("nuhs_live", NUHS_LIVE_URL, "NUHS"),
+              ("singhealth_qwatch", SINGHEALTH_QWATCH_URL, "SingHealth QWatch"))
 
-def ingest_live(http: PoliteHttp, wh: Warehouse) -> int:
+
+def ingest_live(http: PoliteHttp, loader: Loader) -> int:
     total = 0
-    snap = now_sgt().replace(second=0)
-
-    html = http.get_text(NUHS_LIVE_URL)
-    rows = parse_nuhs_live(html) if html else []
-    if not rows:
-        LOG.info("NUHS: no data in static HTML, trying the JS-rendered page")
-        rendered = render_with_playwright(NUHS_LIVE_URL)
-        rows = parse_nuhs_live(rendered) if rendered else []
-    if rows:
-        df = pd.DataFrame(rows)
-        # Use the page's own "last updated" time as the snapshot key, so repeated
-        # runs between page updates don't create duplicate rows.
-        df["snapshot_timestamp"] = df["source_updated_at"].fillna(snap) \
-            if "source_updated_at" in df else snap
-        total += wh.upsert("nuhs_live_waits", df, ["site_name", "snapshot_timestamp"])
-    else:
-        LOG.warning("NUHS: could not parse any wait-time rows")
-
-    html = http.get_text(SINGHEALTH_QWATCH_URL)
-    rows = parse_singhealth_qwatch(html) if html else []
-    if not rows:
-        rendered = render_with_playwright(SINGHEALTH_QWATCH_URL)
-        rows = parse_singhealth_qwatch(rendered) if rendered else []
-    if rows:
-        df = pd.DataFrame(rows)
-        df["snapshot_timestamp"] = snap
-        total += wh.upsert("singhealth_xray_waits", df, ["site_name", "snapshot_timestamp"])
-    else:
-        LOG.warning("SingHealth QWatch: could not parse any rows")
+    for source, url, label in LIVE_PAGES:
+        n = 0
+        resp = http.get(url)
+        if resp is not None:
+            n = loader.process(loader.store.save_response(source, url, resp))
+        if n == 0:
+            LOG.info("%s: no data in static HTML, trying the JS-rendered page", label)
+            rendered = render_with_playwright(url)
+            if rendered:
+                # A rendered page has no HTTP response of its own: http_status is left empty.
+                rec = loader.store.save(source, url, rendered.encode("utf-8"), http_status=None,
+                                        content_type="text/html; charset=utf-8")
+                n = loader.process(rec)
+        if n == 0:
+            LOG.warning("%s: could not parse any wait-time rows", label)
+        total += n
     return total

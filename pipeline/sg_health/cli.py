@@ -7,8 +7,10 @@ import sys
 from datetime import date
 from typing import Optional
 
-from .config import DEFAULT_DB, DEFAULT_REPORT, SINGSTAT_POP_TABLE_ID
+from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR, SINGSTAT_POP_TABLE_ID
 from .http import PoliteHttp
+from .load import Loader
+from .raw import RawStore
 from .report import export_report
 from .sources.datagov import ingest_opendata
 from .sources.live import ingest_live
@@ -34,13 +36,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(prog="sg-health", description="Singapore healthcare capacity ETL pipeline")
     parser.add_argument("--db", default=str(DEFAULT_DB), help="working warehouse (default: %(default)s)")
     parser.add_argument("--report", default=str(DEFAULT_REPORT), help="Excel report (default: %(default)s)")
+    parser.add_argument("--raw-dir", default=str(RAW_DIR), help="raw landing zone (default: %(default)s)")
     parser.add_argument("-v", "--verbose", action="store_true")
     sub = parser.add_subparsers(dest="command", required=True)
 
     run = sub.add_parser("run", help="scrape sources, load DuckDB, write the Excel report")
     run.add_argument("--sources", default=",".join(ALL_SOURCES),
                      help=f"comma-separated subset of {ALL_SOURCES}")
-    run.add_argument("--force", action="store_true", help="re-parse files even if the hash was seen")
+    run.add_argument("--force", action="store_true", help="re-parse MOH files even if the sha256 was seen")
     run.add_argument("--singstat-table", default=SINGSTAT_POP_TABLE_ID)
     run.add_argument("--no-report", action="store_true")
 
@@ -57,7 +60,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                         format="%(asctime)s %(levelname)-7s %(message)s", datefmt="%H:%M:%S")
 
     wh = Warehouse(args.db)
+    store = RawStore(args.raw_dir)
     http = PoliteHttp()
+    loader = Loader.for_run(wh, store, force=getattr(args, "force", False))
     results: dict[str, int] = {}
     try:
         if args.command == "run":
@@ -66,22 +71,23 @@ def main(argv: Optional[list[str]] = None) -> int:
             if unknown:
                 parser.error(f"unknown sources: {sorted(unknown)}")
             if "moh" in wanted:
-                results["moh"] = _run_step("moh", ingest_moh, http, wh, args.force)
+                results["moh"] = _run_step("moh", ingest_moh, http, loader)
             if "live" in wanted:
-                results["live"] = _run_step("live", ingest_live, http, wh)
+                results["live"] = _run_step("live", ingest_live, http, loader)
             if "opendata" in wanted:
-                results["opendata"] = _run_step("opendata", ingest_opendata, http, wh)
+                results["opendata"] = _run_step("opendata", ingest_opendata, http, loader)
             if "singstat" in wanted:
-                results["singstat"] = _run_step("singstat", ingest_singstat, http, wh, args.singstat_table)
+                results["singstat"] = _run_step("singstat", ingest_singstat, http, loader, args.singstat_table)
             if not args.no_report:
                 export_report(wh, args.report)
         elif args.command == "backfill":
-            results["backfill"] = _run_step("backfill", backfill_moh, http, wh, args.start, args.end,
-                                            args.max_snapshots, args.force)
+            results["backfill"] = _run_step("backfill", backfill_moh, http, loader, args.start, args.end,
+                                            args.max_snapshots)
             export_report(wh, args.report)
         else:
             export_report(wh, args.report)
     finally:
+        wh.sync_manifest(store.iter_records())
         wh.close()
 
     LOG.info("Summary (rows upserted, -1 = failed): %s", results)
