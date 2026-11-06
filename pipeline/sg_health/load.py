@@ -42,8 +42,12 @@ def decode_text(rec: RawRecord, content: bytes) -> str:
 
 
 def lineage(rec: RawRecord) -> dict:
-    """Columns every parsed row carries. ingested_at = when the raw file was fetched."""
-    return {"ingested_at": rec.fetched_at}
+    """Columns every parsed row carries, pointing back to the raw file it came from.
+
+    ingested_at is the raw file's fetched_at (when the data entered the pipeline), not the
+    time the parser ran. That is what makes a reparse reproduce the same rows.
+    """
+    return {"source_url": rec.url, "source_sha256": rec.sha256, "ingested_at": rec.fetched_at}
 
 
 def _with_lineage(df: pd.DataFrame, rec: RawRecord) -> pd.DataFrame:

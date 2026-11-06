@@ -12,42 +12,49 @@ from .raw import RawRecord
 DDL = [
     """CREATE TABLE IF NOT EXISTS moh_bed_waits (
         hospital_name VARCHAR NOT NULL, report_date DATE NOT NULL,
-        median_wait_hours DOUBLE, hospital_code VARCHAR, source_file VARCHAR,
-        ingested_at TIMESTAMP NOT NULL, PRIMARY KEY (hospital_name, report_date))""",
+        median_wait_hours DOUBLE, hospital_code VARCHAR,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (hospital_name, report_date))""",
     """CREATE TABLE IF NOT EXISTS moh_ed_attendances (
         hospital_name VARCHAR NOT NULL, report_date DATE NOT NULL,
-        total_attendances BIGINT, hospital_code VARCHAR, source_file VARCHAR,
-        ingested_at TIMESTAMP NOT NULL, PRIMARY KEY (hospital_name, report_date))""",
+        total_attendances BIGINT, hospital_code VARCHAR,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (hospital_name, report_date))""",
     """CREATE TABLE IF NOT EXISTS chas_clinics (
         clinic_key VARCHAR PRIMARY KEY, clinic_name VARCHAR, address VARCHAR,
         postal_code VARCHAR, latitude DOUBLE, longitude DOUBLE, has_cdmp BOOLEAN,
-        hci_code VARCHAR, programmes VARCHAR, is_active BOOLEAN, ingested_at TIMESTAMP NOT NULL)""",
+        hci_code VARCHAR, programmes VARCHAR, is_active BOOLEAN,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS has_clinics (
         clinic_key VARCHAR PRIMARY KEY, clinic_name VARCHAR, address VARCHAR,
         postal_code VARCHAR, latitude DOUBLE, longitude DOUBLE, raw_json VARCHAR,
-        is_active BOOLEAN, ingested_at TIMESTAMP NOT NULL)""",
+        is_active BOOLEAN, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS nuhs_live_waits (
         site_name VARCHAR NOT NULL, patients_waiting INTEGER, est_bed_wait_hours DOUBLE,
         est_consult_wait_hours DOUBLE, source_updated_at TIMESTAMP,
-        snapshot_timestamp TIMESTAMP NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (site_name, snapshot_timestamp))""",
     """CREATE TABLE IF NOT EXISTS singhealth_xray_waits (
         site_group VARCHAR, site_name VARCHAR NOT NULL, wait_minutes INTEGER, status VARCHAR,
-        snapshot_timestamp TIMESTAMP NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (site_name, snapshot_timestamp))""",
     """CREATE TABLE IF NOT EXISTS singstat_tabledata (
         table_id VARCHAR NOT NULL, row_label VARCHAR NOT NULL, column_path VARCHAR NOT NULL,
-        value DOUBLE, ingested_at TIMESTAMP NOT NULL,
+        value DOUBLE, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (table_id, row_label, column_path))""",
     """CREATE TABLE IF NOT EXISTS pop_65plus_by_area (
         planning_area VARCHAR NOT NULL, year INTEGER NOT NULL, residents_65plus BIGINT,
-        source_table VARCHAR, ingested_at TIMESTAMP NOT NULL, PRIMARY KEY (planning_area, year))""",
+        source_table VARCHAR, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (planning_area, year))""",
     # One row per fetch, mirrored from data/raw/manifest.jsonl (the source of truth).
     """CREATE TABLE IF NOT EXISTS raw_manifest (
         seq INTEGER PRIMARY KEY, source VARCHAR NOT NULL, url VARCHAR NOT NULL,
         sha256 VARCHAR NOT NULL, bytes BIGINT NOT NULL, http_status INTEGER,
         content_type VARCHAR, fetched_at TIMESTAMP NOT NULL, path VARCHAR NOT NULL)""",
 ]
+
+# Lineage columns carried by every parsed row (see docs/data_dictionary.md).
+LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
 PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "has_clinics",

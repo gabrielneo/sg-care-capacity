@@ -216,7 +216,8 @@ def test_warehouse_upsert_is_idempotent(tmp_path):
     wh = p.Warehouse(tmp_path / "t.duckdb")
     df = pd.DataFrame({"hospital_name": ["SGH", "SGH"], "report_date": [date(2026, 10, 25)] * 2,
                        "median_wait_hours": [3.0, 3.5], "hospital_code": ["SGH"] * 2,
-                       "source_file": ["a"] * 2, "ingested_at": [datetime(2026, 11, 1)] * 2})
+                       "source_url": ["https://x/a.xlsx"] * 2, "source_sha256": ["0" * 64] * 2,
+                       "ingested_at": [datetime(2026, 11, 1)] * 2})
     wh.upsert("moh_bed_waits", df, ["hospital_name", "report_date"])
     wh.upsert("moh_bed_waits", df, ["hospital_name", "report_date"])
     out = wh.query("SELECT * FROM moh_bed_waits")
