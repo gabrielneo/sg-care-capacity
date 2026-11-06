@@ -59,8 +59,14 @@ SINGHEALTH_QWATCH_URL = "https://www.singhealth.com.sg/patient-care/xrayqwatch"
 
 DATAGOV_BASE = "https://api-open.data.gov.sg/v1/public/api/datasets"
 DATAGOV_DATASETS = {
-    "chas": "d_65d11d02ab0246cec53bfc995c782628",  # CHAS Clinics (GeoJSON)
-    "has": "d_3cd840069e95b6a521aa5301a084b25a",   # Clinics onboard Health Appointment System
+    # CHAS Clinics (GeoJSON), the only dataset in data.gov.sg collection 2036. Verified
+    # 2026-11-06; the previous ID d_65d11d02ab0246cec53bfc995c782628 now returns
+    # DATASET_DOES_NOT_EXIST. If this breaks again, look the ID up from the collection:
+    # https://api-production.data.gov.sg/v2/public/api/collections/2036/metadata
+    "chas": "d_548c33ea2d99e29ec63a7cc9edcccedc",
+    # Clinics onboard the Health Appointment System. UNPUBLISHED: data.gov.sg returns
+    # DATASET_DOES_NOT_EXIST (checked 2026-11-06) and names no replacement.
+    "has": "d_3cd840069e95b6a521aa5301a084b25a",
 }
 DATAGOV_API_KEY = os.getenv("DATAGOV_API_KEY")      # optional, gives higher rate limits
 

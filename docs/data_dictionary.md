@@ -52,3 +52,17 @@ and on `reparse`.
   data.gov.sg poll responses and Wayback CDX listings are not landed.
 - Identical bytes are stored once per source, under the date they were first fetched. Later
   fetches of the same bytes add a manifest row that points at that first file.
+
+## Source status
+
+Checked 2026-11-06. Update this table whenever a source changes.
+
+| Raw source | Status | Notes |
+|---|---|---|
+| `moh_bed_waits` | OK | Workbook covers 2023-01-01 onward for 8 EDs (`NUH(A)` = NUH adult). **The sheet does not state its unit.** Values are read as hours because the median is about 4 (minutes would mean 4-minute bed waits). Confirm against MOH's page text before publishing. |
+| `moh_ed_attendances` | OK | Same 8 EDs and date range as bed waits. |
+| `nuhs_live` | OK | The page has one table per department (Adult Emergency, Children's Emergency). NUH appears in both, so `department` is part of the key. |
+| `datagov_chas` | OK, but **stale upstream** | Dataset `d_548c33ea2d99e29ec63a7cc9edcccedc` (collection 2036): 1,193 clinics, 1,049 with CDMP. data.gov.sg reports it **last updated 2024-06-06**. Clinics that opened or closed since then are not reflected. |
+| `datagov_has` | **Unavailable** | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`); no replacement is named. |
+| `singhealth_qwatch` | **Unavailable** | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. The page appears retired. |
+| `singstat` | Not configured | Needs `SINGSTAT_POP_TABLE_ID`. |
