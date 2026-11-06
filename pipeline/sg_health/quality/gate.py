@@ -22,6 +22,7 @@ import pandas as pd
 
 from ..logs import ParseStats
 from ..raw import RawRecord
+from ..warehouse import TABLE_KEYS
 from .model import CHECKS, Finding, Scope, Severity, key_json, register
 
 LOG = logging.getLogger(__name__)
@@ -30,16 +31,16 @@ LINEAGE = ("source_url", "source_sha256", "ingested_at")
 
 REQUIRED_COLUMNS = register(
     "schema.required_columns", Severity.ERROR, Scope.FILE,
-    "Every NOT NULL column of the table is present in the parsed rows")
+    "Every NOT NULL column of the table is present in the parsed rows", tables=tuple(TABLE_KEYS))
 REQUIRED_VALUES = register(
     "schema.required_values", Severity.ERROR, Scope.ROW,
-    "NOT NULL columns have a value")
+    "NOT NULL columns have a value", tables=tuple(TABLE_KEYS))
 TYPES = register(
     "schema.types", Severity.ERROR, Scope.ROW,
-    "Every value can be stored as its column's type")
+    "Every value can be stored as its column's type", tables=tuple(TABLE_KEYS))
 DUPLICATE_KEY = register(
     "schema.duplicate_key", Severity.ERROR, Scope.ROW,
-    "No two rows in one file share a primary key with different values")
+    "No two rows in one file share a primary key with different values", tables=tuple(TABLE_KEYS))
 
 
 @dataclass

@@ -21,13 +21,13 @@ BED_WAIT_WARN_HOURS = 24         # above this: possible but exceptional, WARN
 
 HOSPITAL_CODE = register(
     "domain.hospital_code", Severity.ERROR, Scope.ROW,
-    "hospital_code is in the reference list of MOH-reported EDs")
+    "hospital_code is in the reference list of MOH-reported EDs", tables=MOH_TABLES)
 NOT_FUTURE = register(
     "domain.report_date_not_future", Severity.ERROR, Scope.ROW,
-    "report_date is not after the date the file was fetched")
+    "report_date is not after the date the file was fetched", tables=MOH_TABLES)
 UNRECOGNISED_COLUMN = register(
     "domain.unrecognised_hospital_column", Severity.WARN, Scope.FILE,
-    "Every hospital column in an MOH sheet maps to a known hospital")
+    "Every hospital column in an MOH sheet maps to a known hospital", tables=MOH_TABLES)
 
 
 @rule(*MOH_TABLES)
@@ -58,13 +58,13 @@ def no_unrecognised_columns(df: pd.DataFrame, ctx: GateContext):
 
 BED_WAIT_BOUNDS = register(
     "range.bed_wait_bounds", Severity.ERROR, Scope.ROW,
-    f"0 <= median_wait_hours <= {BED_WAIT_MAX_HOURS}")
+    f"0 <= median_wait_hours <= {BED_WAIT_MAX_HOURS}", tables=("moh_bed_waits",))
 BED_WAIT_OVER_24H = register(
     "range.bed_wait_over_24h", Severity.WARN, Scope.ROW,
-    f"median_wait_hours above {BED_WAIT_WARN_HOURS} is flagged for review")
+    f"median_wait_hours above {BED_WAIT_WARN_HOURS} is flagged for review", tables=("moh_bed_waits",))
 ATTENDANCES_NEGATIVE = register(
     "range.attendances_negative", Severity.ERROR, Scope.ROW,
-    "total_attendances is not negative")
+    "total_attendances is not negative", tables=("moh_ed_attendances",))
 
 
 @rule("moh_bed_waits")
@@ -102,10 +102,10 @@ SHEET_MEDIAN_HOURS = (0.25, 24)  # plausible median bed wait for a whole sheet, 
 
 UNIT_VS_STORED = register(
     "unit.file_vs_stored", Severity.ERROR, Scope.FILE,
-    f"A sheet's values agree with stored values for the same days (median ratio within {UNIT_RATIO_LIMIT}x)")
+    f"A sheet's values agree with stored values for the same days (median ratio within {UNIT_RATIO_LIMIT}x)", tables=("moh_bed_waits",))
 UNIT_PLAUSIBLE = register(
     "unit.sheet_plausible", Severity.ERROR, Scope.FILE,
-    f"A sheet's median bed wait is between {SHEET_MEDIAN_HOURS[0]} and {SHEET_MEDIAN_HOURS[1]} hours")
+    f"A sheet's median bed wait is between {SHEET_MEDIAN_HOURS[0]} and {SHEET_MEDIAN_HOURS[1]} hours", tables=("moh_bed_waits",))
 
 
 @rule("moh_bed_waits")
@@ -162,13 +162,13 @@ CLINIC_COUNT_TOLERANCE = 0.10    # snapshot-to-snapshot change in clinic count t
 
 COORDS_IN_SG = register(
     "clinic.coordinates_in_singapore", Severity.ERROR, Scope.ROW,
-    f"latitude {SG_LAT[0]}-{SG_LAT[1]}, longitude {SG_LON[0]}-{SG_LON[1]}")
+    f"latitude {SG_LAT[0]}-{SG_LAT[1]}, longitude {SG_LON[0]}-{SG_LON[1]}", tables=("chas_clinics",))
 POSTAL_6_DIGITS = register(
     "clinic.postal_code_6_digits", Severity.WARN, Scope.ROW,
-    "postal_code is exactly 6 digits")
+    "postal_code is exactly 6 digits", tables=("chas_clinics",))
 COUNT_VS_PREVIOUS = register(
     "clinic.count_vs_previous", Severity.WARN, Scope.FILE,
-    f"Clinic count within {CLINIC_COUNT_TOLERANCE:.0%} of the previous snapshot")
+    f"Clinic count within {CLINIC_COUNT_TOLERANCE:.0%} of the previous snapshot", tables=("chas_clinics",))
 
 
 @rule("chas_clinics")

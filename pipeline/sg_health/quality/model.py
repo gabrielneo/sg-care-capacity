@@ -40,6 +40,7 @@ class Check:
     severity: Severity
     scope: Scope
     summary: str                      # one line; the full rationale is in docs/data_quality.md
+    tables: tuple[str, ...] = ()      # tables the check applies to
 
     @property
     def blocks_publish(self) -> bool:
@@ -49,10 +50,11 @@ class Check:
 CHECKS: dict[str, Check] = {}
 
 
-def register(check_id: str, severity: Severity, scope: Scope, summary: str) -> Check:
+def register(check_id: str, severity: Severity, scope: Scope, summary: str,
+             tables: tuple[str, ...] = ()) -> Check:
     if check_id in CHECKS:
         raise ValueError(f"duplicate check id {check_id}")
-    CHECKS[check_id] = Check(check_id, severity, scope, summary)
+    CHECKS[check_id] = Check(check_id, severity, scope, summary, tuple(tables))
     return CHECKS[check_id]
 
 

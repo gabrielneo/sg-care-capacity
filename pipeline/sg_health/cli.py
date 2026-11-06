@@ -1,4 +1,4 @@
-"""Command line: run | backfill | reparse | report."""
+"""Command line: run | backfill | reparse | validate | report."""
 from __future__ import annotations
 
 import argparse
@@ -11,6 +11,7 @@ from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR, SINGSTAT_POP_TABLE_ID
 from .http import PoliteHttp
 from . import logs
 from .load import Loader, reparse
+from .quality import validate as dq
 from .raw import RawStore
 from .report import export_report
 from .sources.datagov import ingest_opendata
@@ -40,6 +41,20 @@ def _run_step(name: str, fn, *args) -> int:
         return -1
 
 
+def _log_validation(results, run_id: str) -> None:
+    for r in results:
+        if r.status == "fail":
+            (LOG.error if r.blocking else LOG.warning)(
+                "%s %s: %s (%d rows)", r.check.check_id, r.table, r.details[:200], r.failing_rows,
+                extra={"fields": {"event": "dq_fail", "run_id": run_id, "check_id": r.check.check_id,
+                                  "table": r.table, "severity": r.check.severity.value,
+                                  "blocks_publish": r.check.blocks_publish, "failing_rows": r.failing_rows}})
+    blocking = sum(r.blocking for r in results)
+    LOG.info("validation %s: %d checks, %d failing, %d blocking publish", run_id, len(results),
+             sum(r.status == "fail" for r in results), blocking,
+             extra={"fields": {"event": "dq_summary", "run_id": run_id, "blocking": blocking}})
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(prog="sg-health", description="Singapore healthcare capacity ETL pipeline")
     parser.add_argument("--db", default=str(DEFAULT_DB), help="working warehouse (default: %(default)s)")
@@ -64,6 +79,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     rp = sub.add_parser("reparse", help="rebuild every parsed table from data/raw alone (no network)")
     rp.add_argument("--no-report", action="store_true")
 
+    sub.add_parser("validate", help="run every data-quality check; exit 1 if any check blocks publishing")
+
     sub.add_parser("report", help="rebuild the Excel report from the warehouse only")
 
     args = parser.parse_args(argv)
@@ -79,6 +96,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     failed_records = 0
     loader = None
     try:
+        if args.command == "validate":
+            checks = dq.run_validation(wh)
+            run_id = dq.record(wh, checks)
+            print(dq.summary_table(checks, run_id))
+            _log_validation(checks, run_id)
+            return 1 if any(r.blocking for r in checks) else 0
         if args.command == "reparse":
             results, failed_records = reparse(wh, store)
             if not args.no_report:
@@ -104,6 +127,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 results["singstat"] = _run_step("singstat", ingest_singstat, http, loader, args.singstat_table)
             if not args.no_report:
                 export_report(wh, args.report)
+            # Record data quality for this run. The exit code is left to `sg-health validate`,
+            # which CI runs as the publish gate.
+            checks = dq.run_validation(wh)
+            _log_validation(checks, dq.record(wh, checks))
         elif args.command == "backfill":
             loader.expect(*STEP_SOURCES["moh"])
             results["backfill"] = _run_step("backfill", backfill_moh, http, loader, args.start, args.end,
