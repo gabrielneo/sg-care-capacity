@@ -55,9 +55,10 @@ def test_run_loads_every_table(monkeypatch, paths):
     full_run(monkeypatch, paths)
     counts = {t: int(query(paths, f"SELECT COUNT(*) AS n FROM {t}")["n"][0]) for t in [
         "moh_bed_waits", "moh_ed_attendances", "nuhs_live_waits", "chas_clinics",
-        "pop_65plus_by_area", "annual_ae_attendances", "source_metadata", "planning_area_boundaries", "polyclinics"]}
+        "pop_65plus_by_area", "pop_65plus_by_subzone", "annual_ae_attendances", "source_metadata",
+        "planning_area_boundaries", "polyclinics"]}
     assert counts == {"moh_bed_waits": 5, "moh_ed_attendances": 4, "nuhs_live_waits": 2,
-                      "chas_clinics": 2, "pop_65plus_by_area": 2,
+                      "chas_clinics": 2, "pop_65plus_by_area": 2, "pop_65plus_by_subzone": 3,
                       "annual_ae_attendances": 2, "source_metadata": 4, "planning_area_boundaries": 2,
                       "polyclinics": 2}
 
@@ -129,9 +130,14 @@ def test_the_committed_reference_file_matches_its_hash_and_parses():
     import hashlib
 
     from sg_health import config
-    from sg_health.parsers.singstat import parse_residents_zip
+    from sg_health.parsers.singstat import parse_residents_by_subzone, parse_residents_zip
     assert config.SINGSTAT_RESIDENTS_FILE.parent == config.REPO_ROOT / "data" / "reference" / "singstat"
     content = config.SINGSTAT_RESIDENTS_FILE.read_bytes()
     assert hashlib.sha256(content).hexdigest() == config.SINGSTAT_RESIDENTS_SHA256
     out = parse_residents_zip(content)
     assert out["planning_area"].nunique() == 55 and int(out["residents_65plus"].sum()) == 828_010
+    sz = parse_residents_by_subzone(content)
+    assert len(sz) == 332 and sz["planning_area"].nunique() == 55
+    # Every planning area equals the sum of its subzones, on the real file.
+    summed = sz.groupby(["planning_area", "year"])[["residents_total", "residents_65plus"]].sum()
+    assert (out.set_index(["planning_area", "year"])[["residents_total", "residents_65plus"]] == summed).all().all()

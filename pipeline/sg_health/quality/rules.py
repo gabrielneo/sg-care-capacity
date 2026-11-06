@@ -204,22 +204,26 @@ from ..config import EXPECTED_PLANNING_AREAS  # noqa: E402
 
 POP_CONSISTENT = register(
     "population.counts_consistent", Severity.ERROR, Scope.ROW,
-    "0 <= residents_65plus <= residents_total", ("pop_65plus_by_area",))
+    "0 <= residents_65plus <= residents_total", ("pop_65plus_by_area", "pop_65plus_by_subzone"))
 POP_AREA_COUNT = register(
     "population.planning_area_count", Severity.WARN, Scope.FILE,
     f"The file covers {EXPECTED_PLANNING_AREAS} planning areas per year", ("pop_65plus_by_area",))
 
 
-@rule("pop_65plus_by_area")
+@rule("pop_65plus_by_area", "pop_65plus_by_subzone")
 def population_counts(df: pd.DataFrame, ctx: GateContext):
     total = pd.to_numeric(df["residents_total"], errors="coerce")
     aged = pd.to_numeric(df["residents_65plus"], errors="coerce")
     bad = (total < 0) | (aged < 0) | (aged > total)
     text = "residents_65plus " + aged.astype(str) + " vs residents_total " + total.astype(str)
+    return [(POP_CONSISTENT.check_id, bad, text)]
+
+
+@rule("pop_65plus_by_area")
+def population_area_count(df: pd.DataFrame, ctx: GateContext):
     per_year = df.groupby("year")["planning_area"].nunique()
     off = per_year[per_year != EXPECTED_PLANNING_AREAS]
-    return [(POP_CONSISTENT.check_id, bad, text),
-            (POP_AREA_COUNT.check_id, int(len(off)),
+    return [(POP_AREA_COUNT.check_id, int(len(off)),
              f"planning areas per year: {off.to_dict()} (expected {EXPECTED_PLANNING_AREAS}; boundaries may have changed)")]
 
 

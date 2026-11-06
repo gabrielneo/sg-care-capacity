@@ -68,7 +68,8 @@ failing check shows as `FAIL (blocks)`, `FAIL (quarantined)` or `WARN`.
 ## Schema checks (every gated table)
 
 Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`pop_65plus_by_area`, `annual_ae_attendances`, `source_metadata`, `planning_area_boundaries`, `polyclinics`.
+`pop_65plus_by_area`, `pop_65plus_by_subzone`, `annual_ae_attendances`, `source_metadata`,
+`planning_area_boundaries`, `polyclinics`.
 
 ### `schema.required_columns`: ERROR, file, blocks
 
@@ -249,15 +250,29 @@ movement.
   so it warns rather than blocks. The threshold is a judgement, not fitted to data: the CHAS
   file hasn't changed since June 2024, so there is no churn history to measure yet.
 
-## Population checks (`pop_65plus_by_area`)
+## Population checks (`pop_65plus_by_area`, `pop_65plus_by_subzone`)
 
 ### `population.counts_consistent`: ERROR, row
 
 - **Guards against:** a planning area with more residents aged 65+ than residents in total, or a
   negative count, which would give a share over 100% or below 0 on the access page.
-- **Threshold:** `0 <= residents_65plus <= residents_total`.
+- **Threshold:** `0 <= residents_65plus <= residents_total`, for every planning area and every
+  subzone.
 - **Why:** these are two sums of the same published cells; any other result means the file was
   read wrongly.
+
+### `population.area_equals_sum_of_subzones`: ERROR, dataset, blocks
+
+- **Guards against:** the planning-area and subzone tables disagreeing, so the site would show one
+  figure for an area and a different total for its subzones. Causes: a subzone row quarantined or
+  missing, one table loaded from a different file than the other, or a bug in either aggregation.
+- **Threshold:** for every planning area and year, `residents_total` and `residents_65plus` in
+  `pop_65plus_by_area` equal the sums over that area's rows in `pop_65plus_by_subzone`, exactly.
+  An area present in only one table fails too.
+- **Why exact, and why ERROR:** both tables are summed independently from the **same** published
+  cells, so they must agree to the person; there's no rounding tolerance to allow. (The cells
+  themselves are rounded to 10 by SingStat, and the file publishes no planning-area totals of its
+  own, so this checks our load, not SingStat's arithmetic.)
 
 ### `population.planning_area_count`: WARN, file
 

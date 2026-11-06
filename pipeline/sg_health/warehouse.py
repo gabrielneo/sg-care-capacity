@@ -36,6 +36,12 @@ DDL = [
         residents_65plus BIGINT, source_table VARCHAR,
         source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (planning_area, year))""",
+    # The same SingStat file summed per subzone (each subzone lies in exactly one planning area).
+    """CREATE TABLE IF NOT EXISTS pop_65plus_by_subzone (
+        planning_area VARCHAR NOT NULL, subzone VARCHAR NOT NULL, year INTEGER NOT NULL, residents_total BIGINT,
+        residents_65plus BIGINT, source_table VARCHAR,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (planning_area, subzone, year))""",
     # Annual A&E attendances (all public-sector A&E departments). Reconciliation only.
     """CREATE TABLE IF NOT EXISTS annual_ae_attendances (
         year INTEGER NOT NULL, attendances BIGINT, series VARCHAR NOT NULL,
@@ -82,8 +88,8 @@ LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
 PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_live_waits",
-                 "pop_65plus_by_area", "annual_ae_attendances", "source_metadata", "planning_area_boundaries",
-                 "polyclinics")
+                 "pop_65plus_by_area", "pop_65plus_by_subzone", "annual_ae_attendances", "source_metadata",
+                 "planning_area_boundaries", "polyclinics")
 # Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
 RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits", "singstat_tabledata", "quarantine_singstat_tabledata")
 
@@ -95,6 +101,7 @@ TABLE_KEYS: dict[str, tuple[str, ...]] = {
     "chas_clinics": ("clinic_key",),
     "nuhs_live_waits": ("site_name", "department", "snapshot_timestamp"),
     "pop_65plus_by_area": ("planning_area", "year"),
+    "pop_65plus_by_subzone": ("planning_area", "subzone", "year"),
     "annual_ae_attendances": ("year",),
     "source_metadata": ("dataset_id",),
     "planning_area_boundaries": ("planning_area_code",),

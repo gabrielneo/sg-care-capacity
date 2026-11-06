@@ -177,10 +177,28 @@ def test_singstat_residents_sums_planning_areas_and_65_plus():
     assert set(out["year"]) == {2026} and set(out["source_table"]) == {"respopagesextod2026"}
 
 
+def test_singstat_residents_sums_subzones_and_65_plus():
+    from conftest import SINGSTAT_ZIP
+    out = p.parse_residents_by_subzone(SINGSTAT_ZIP).set_index("subzone")
+    assert out.loc["Bedok North", ["planning_area", "residents_total", "residents_65plus"]].tolist() == ["Bedok", 1840, 840]
+    assert out.loc["Kembangan", ["residents_total", "residents_65plus"]].tolist() == [160, 160]
+    assert out.loc["Tuas North", ["residents_total", "residents_65plus"]].tolist() == [0, 0]   # a real zero, kept
+    assert set(out["year"]) == {2026} and set(out["source_table"]) == {"respopagesextod2026"}
+
+
+def test_planning_area_totals_equal_the_sum_of_their_subzones():
+    from conftest import SINGSTAT_ZIP
+    areas = p.parse_residents_zip(SINGSTAT_ZIP).set_index(["planning_area", "year"])
+    summed = p.parse_residents_by_subzone(SINGSTAT_ZIP).groupby(["planning_area", "year"])[
+        ["residents_total", "residents_65plus"]].sum()
+    pd.testing.assert_frame_equal(areas[["residents_total", "residents_65plus"]], summed)
+
+
 @pytest.mark.parametrize("change, message", [
     ({"columns": ("PA", "SZ", "AG", "Sex", "FA", "Pop", "Time")}, "expected columns"),     # the floor-area file
     ({"rows": [("Bedok", "X", "65_and_Over", "Males", "Others", 10, 2026)]}, "unexpected age groups"),
     ({"rows": [("Bedok", "X", "65_to_69", "Males", "Others", "na", 2026)]}, "non-numeric"),
+    ({"rows": [("Bedok", "", "65_to_69", "Males", "Others", 10, 2026)]}, "SZ is blank"),   # can't place it in a subzone
 ])
 def test_singstat_residents_stops_on_an_unexpected_layout(change, message):
     from conftest import singstat_residents_zip

@@ -213,3 +213,38 @@ def test_population_present_blocks_publishing_until_every_area_has_one(wh, popul
                   "residents_65plus": 2, "source_table": "t", **LINEAGE} for n in population]), ["planning_area", "year"])
     r = result(dq.run_validation(wh, today=date(2026, 11, 6)), "completeness.population_present", "pop_65plus_by_area")
     assert (r.status, r.blocking) == (status, blocking) and detail in r.details
+
+
+def put_population(wh, areas, subzones):
+    wh.upsert("pop_65plus_by_area", pd.DataFrame([{"planning_area": pa, "year": 2026, "residents_total": tot,
+              "residents_65plus": aged, "source_table": "t", **LINEAGE} for pa, tot, aged in areas]),
+              ["planning_area", "year"])
+    if subzones:
+        wh.upsert("pop_65plus_by_subzone", pd.DataFrame([{"planning_area": pa, "subzone": sz, "year": 2026,
+                  "residents_total": tot, "residents_65plus": aged, "source_table": "t", **LINEAGE}
+                  for pa, sz, tot, aged in subzones]), ["planning_area", "subzone", "year"])
+
+
+@pytest.mark.parametrize("areas, subzones, status, detail", [
+    ([("Bedok", 2000, 1000)], [("Bedok", "Bedok North", 1840, 840), ("Bedok", "Kembangan", 160, 160)], "pass",
+     "1 planning-area rows equal the sum of 2 subzone rows"),
+    ([("Bedok", 2000, 1000)], [("Bedok", "Bedok North", 1840, 840)], "fail",            # a subzone is missing
+     "Bedok 2026: area 2000/1000 (all/65+) vs subzones 1840/840"),
+    ([("Bedok", 2000, 1000)], [("Bedok", "Bedok North", 1840, 830), ("Bedok", "Kembangan", 160, 160)], "fail",
+     "vs subzones 2000/990"),                                                            # off by one cell of 10
+    ([("Bedok", 2000, 1000), ("Tuas", 0, 0)], [("Bedok", "Bedok North", 2000, 1000)], "fail",
+     "Tuas 2026: area 0/0 (all/65+) vs subzones None/None"),                             # an area with no subzones
+    ([("Bedok", 2000, 1000)], [], "fail", "vs subzones None/None"),                      # subzone table empty
+])
+def test_planning_areas_must_equal_the_sum_of_their_subzones(wh, areas, subzones, status, detail):
+    put_population(wh, areas, subzones)
+    r = result(dq.run_validation(wh, today=date(2026, 11, 6)), "population.area_equals_sum_of_subzones",
+               "pop_65plus_by_area")
+    assert r.status == status and r.blocking == (status == "fail") and detail in r.details, r.details
+
+
+def test_subzones_without_their_planning_area_fail_too(wh):
+    put_population(wh, [("Bedok", 160, 160)], [("Bedok", "Kembangan", 160, 160), ("Tuas", "Tuas North", 10, 0)])
+    r = result(dq.run_validation(wh, today=date(2026, 11, 6)), "population.area_equals_sum_of_subzones",
+               "pop_65plus_by_area")
+    assert (r.status, r.failing_rows) == ("fail", 1) and "Tuas 2026: area None/None" in r.details

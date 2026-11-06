@@ -287,10 +287,19 @@ KK Women's and Children's Hospital and NUH (Children) are **excluded**. The work
 | **Source** | MOH via data.gov.sg, *Hospital Admissions And Public Sector Outpatient Attendances, Annual* (`d_a5267c58f60b20f8e04576261abfac93`). |
 | **Caveats** | **Used only to reconcile** the daily MOH series (`reconcile.annual_ae`), not shown as a headline metric. Covers all public-sector A&E departments, **including** KKH and NUH Children's, which MOH's daily figures exclude, so the daily total is expected to be lower (−17.3% in 2023). The 2022 and 2023 values are rounded to the nearest hundred, unlike earlier years; they may be provisional. |
 
+### `pop_65plus_by_subzone` (warehouse table)
+
+| | |
+|---|---|
+| **Grain** | One row per subzone per year: 332 subzones in 55 planning areas for June 2026. Primary key `(planning_area, subzone, year)`. |
+| **Source** | The same SingStat file as `pop_65plus_by_area` (*… Type of Dwelling, June 2026*), summed per `PA, SZ, Time` instead of `PA, Time`. |
+| **Columns** | `planning_area`, `subzone`, `year`, `residents_total`, `residents_65plus`, `source_table`, plus lineage. Definitions and units as in `marts.fct_planning_area_population`. |
+| **Caveats** | **Not published yet**: no mart or page uses it, and no subzone boundaries are loaded, so it can't be mapped. Each cell is rounded to 10, so small subzones are dominated by rounding; 90 subzones have no residents (0, kept). Each planning area equals the sum of its subzones exactly (`population.area_equals_sum_of_subzones`), because both are sums of the same cells. |
+
 ## Lineage columns (on every parsed table)
 
 Every row in `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`pop_65plus_by_area`, `annual_ae_attendances` and `source_metadata` carries these three columns. None of them may be null.
+`pop_65plus_by_area`, `pop_65plus_by_subzone`, `annual_ae_attendances` and `source_metadata` carries these three columns. None of them may be null.
 
 | Column | Type | Definition |
 |---|---|---|
@@ -306,7 +315,8 @@ Every row in `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_w
   the `ingested_at` of the first fetch.
 - Clinic and live-page snapshots are reloaded on every fetch, so their `ingested_at` is the most
   recent fetch that contained the row.
-- For `pop_65plus_by_area`, lineage points at the SingStat file the figure was derived from.
+- For `pop_65plus_by_area` and `pop_65plus_by_subzone`, lineage points at the SingStat file the figure was
+  derived from (the same file and sha256 for both).
 
 ## `raw_manifest`
 

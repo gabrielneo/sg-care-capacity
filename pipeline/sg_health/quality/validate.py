@@ -172,6 +172,37 @@ def population_present(wh: Warehouse, today: date) -> list[Result]:
     return [Result(POPULATION_PRESENT, "pop_65plus_by_area", "fail", len(missing), detail)]
 
 
+POP_SUBZONES_ADD_UP = register(
+    "population.area_equals_sum_of_subzones", Severity.ERROR, Scope.DATASET,
+    "Each planning area's residents (all, and 65+) equal the sum of its subzones, every year",
+    ("pop_65plus_by_area",))
+
+
+@dataset_check
+def population_subzones_add_up(wh: Warehouse, today: date) -> list[Result]:
+    areas = wh.con.execute("SELECT count(*) FROM pop_65plus_by_area").fetchall()[0][0]
+    subzones = wh.con.execute("SELECT count(*) FROM pop_65plus_by_subzone").fetchall()[0][0]
+    if not areas and not subzones:
+        return [Result(POP_SUBZONES_ADD_UP, "pop_65plus_by_area", "skipped", details="no rows")]
+    # A full join, so an area with no subzones (or subzones with no area) is a mismatch too.
+    off = wh.con.execute("""
+        WITH sz AS (SELECT planning_area, year, sum(residents_total)::BIGINT AS total,
+                           sum(residents_65plus)::BIGINT AS aged, count(*) AS n
+                    FROM pop_65plus_by_subzone GROUP BY ALL)
+        SELECT coalesce(a.planning_area, sz.planning_area), coalesce(a.year, sz.year),
+               a.residents_total, sz.total, a.residents_65plus, sz.aged
+        FROM pop_65plus_by_area a FULL JOIN sz USING (planning_area, year)
+        WHERE a.residents_total IS DISTINCT FROM sz.total OR a.residents_65plus IS DISTINCT FROM sz.aged
+        ORDER BY 2, 1""").fetchall()
+    if not off:
+        return [Result(POP_SUBZONES_ADD_UP, "pop_65plus_by_area", "pass", 0,
+                       f"{areas} planning-area rows equal the sum of {subzones} subzone rows")]
+    detail = "; ".join(f"{pa} {yr}: area {t}/{a} (all/65+) vs subzones {st}/{sa}"
+                       for pa, yr, t, st, a, sa in off[:DETAIL_SAMPLES])
+    return [Result(POP_SUBZONES_ADD_UP, "pop_65plus_by_area", "fail", len(off),
+                   detail + (f"; ... {len(off)} in all" if len(off) > DETAIL_SAMPLES else ""))]
+
+
 @dataset_check
 def rolling_attendances(wh: Warehouse, today: date) -> list[Result]:
     df = _moh(wh, "moh_ed_attendances")

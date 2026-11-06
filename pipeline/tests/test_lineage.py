@@ -42,7 +42,9 @@ def test_population_points_at_the_singstat_file(monkeypatch, paths):
     wh = Warehouse(paths["db"])
     try:
         pop = wh.query("SELECT source_sha256, source_table FROM pop_65plus_by_area")
+        sz = wh.query("SELECT source_url, source_sha256, source_table FROM pop_65plus_by_subzone")
     finally:
         wh.close()
     assert set(pop["source_sha256"]) == {singstat.sha256}
     assert set(pop["source_table"]) == {"respopagesextod2026"}
+    assert len(sz) and set(sz["source_sha256"]) == {singstat.sha256} and set(sz["source_url"]) == {singstat.url}

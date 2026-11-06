@@ -1,7 +1,13 @@
 """SingStat: Singapore residents by planning area, age group, sex and type of dwelling.
 
 The file is a zip with one tidy CSV (PA, SZ, AG, Sex, TOD, Pop, Time) and a notes CSV. We sum
-it to one row per planning area and year: all residents, and residents aged 65 and over.
+its cells to two tables: one row per planning area and year, and one row per subzone and year,
+each with all residents and residents aged 65 and over.
+
+The two are summed **independently** from the same cells (neither is derived from the other), so
+the check that a planning area equals the sum of its subzones tests the load, not a tautology. The
+file publishes no planning-area totals of its own: each cell is rounded to the nearest 10, and
+SingStat's own totals elsewhere may differ from these sums by rounding.
 
 Strict on purpose (CLAUDE.md: if a source's structure is unclear, stop): an unexpected column
 or age group raises SingStatFormatError rather than being guessed at.
@@ -33,8 +39,8 @@ def _data_member(z: zipfile.ZipFile) -> str:
     return names[0]
 
 
-def parse_residents_zip(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
-    """One row per planning area and year: residents_total, residents_65plus, source_table."""
+def read_residents_cells(content: bytes) -> tuple[pd.DataFrame, str]:
+    """The published cells, checked for layout, plus the data CSV's name (the source table)."""
     try:
         z = zipfile.ZipFile(io.BytesIO(content))
     except zipfile.BadZipFile as exc:
@@ -49,14 +55,37 @@ def parse_residents_zip(content: bytes, stats: ParseStats | None = None) -> pd.D
     df["Pop"] = pd.to_numeric(df["Pop"], errors="coerce")
     if df["Pop"].isna().any():
         raise SingStatFormatError(f"{member}: {int(df['Pop'].isna().sum())} non-numeric resident counts")
+    for col in ("PA", "SZ"):
+        if df[col].isna().any() or (df[col].astype(str).str.strip() == "").any():
+            raise SingStatFormatError(f"{member}: {col} is blank in some rows")
+    return df, member.rsplit("/", 1)[-1].removesuffix(".csv")
 
-    df["is_65plus"] = df["AG"].isin(AGED_65_PLUS)
-    out = (df.groupby(["PA", "Time"], sort=True)
-             .apply(lambda g: pd.Series({"residents_total": int(g["Pop"].sum()),
-                                         "residents_65plus": int(g.loc[g["is_65plus"], "Pop"].sum())}),
-                    include_groups=False)
-             .reset_index()
-             .rename(columns={"PA": "planning_area", "Time": "year"}))
-    out["source_table"] = member.rsplit("/", 1)[-1].removesuffix(".csv")
+
+def _totals(cells: pd.DataFrame, keys: list[str], source_table: str, stats: ParseStats | None) -> pd.DataFrame:
+    pop = cells["Pop"].astype("int64")
+    frame = cells[keys].assign(residents_total=pop, residents_65plus=pop.where(cells["AG"].isin(AGED_65_PLUS), 0))
+    out = (frame.groupby(keys, sort=True)[["residents_total", "residents_65plus"]].sum().reset_index()
+                .rename(columns={"PA": "planning_area", "SZ": "subzone", "Time": "year"}))
+    out["source_table"] = source_table
     count_read(stats, len(out))
     return out
+
+
+def planning_area_totals(cells: pd.DataFrame, source_table: str, stats: ParseStats | None = None) -> pd.DataFrame:
+    """One row per planning area and year: residents_total, residents_65plus, source_table."""
+    return _totals(cells, ["PA", "Time"], source_table, stats)
+
+
+def subzone_totals(cells: pd.DataFrame, source_table: str, stats: ParseStats | None = None) -> pd.DataFrame:
+    """One row per subzone and year, with its planning area."""
+    return _totals(cells, ["PA", "SZ", "Time"], source_table, stats)
+
+
+def parse_residents_zip(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
+    """Planning-area totals straight from the zip."""
+    return planning_area_totals(*read_residents_cells(content), stats=stats)
+
+
+def parse_residents_by_subzone(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
+    """Subzone totals straight from the zip."""
+    return subzone_totals(*read_residents_cells(content), stats=stats)

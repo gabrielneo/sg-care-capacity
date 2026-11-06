@@ -26,7 +26,7 @@ from .parsers.datagov import (
 )
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
-from .parsers.singstat import parse_residents_zip
+from .parsers.singstat import planning_area_totals, read_residents_cells, subzone_totals
 from .quality import rules  # noqa: F401  (registers the table rules with the gate)
 from .quality.gate import GateContext, gate
 from .raw import RawRecord, RawStore, link_url
@@ -135,8 +135,16 @@ def _clinic_loader(label: str, table: str) -> LoaderFn:
 
 
 def load_singstat_residents(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
-    df = parse_residents_zip(content, stats=stats)        # raises SingStatFormatError on any surprise
-    return _load(wh, "pop_65plus_by_area", df, rec, stats)
+    cells, source_table = read_residents_cells(content)   # raises SingStatFormatError on any surprise
+    n = _load(wh, "pop_65plus_by_area", planning_area_totals(cells, source_table, stats), rec, stats)
+    # The subzone table is a second view of the same file: its rows are accounted separately so the
+    # source's rows_read == parsed + dropped still describes the planning-area rows.
+    sub = ParseStats()
+    stats.derived["pop_65plus_by_subzone"] += _load(
+        wh, "pop_65plus_by_subzone", subzone_totals(cells, source_table, sub), rec, sub)
+    if sub.dropped:
+        stats.derived["pop_65plus_by_subzone_dropped"] += sub.dropped
+    return n
 
 
 def load_annual_ae(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:

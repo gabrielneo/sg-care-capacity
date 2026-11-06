@@ -15,11 +15,11 @@ Layout:
 from .parsers.datagov import normalize_clinics, parse_datagov_payload
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import find_xlsx_links, parse_moh_workbook
-from .parsers.singstat import parse_residents_zip
+from .parsers.singstat import parse_residents_by_subzone, parse_residents_zip
 from .report import build_excel_report
 from .warehouse import Warehouse
 
 __all__ = [
     "Warehouse", "build_excel_report", "find_xlsx_links", "normalize_clinics",
-    "parse_datagov_payload", "parse_moh_workbook", "parse_nuhs_live", "parse_residents_zip",
+    "parse_datagov_payload", "parse_moh_workbook", "parse_nuhs_live", "parse_residents_by_subzone", "parse_residents_zip",
 ]

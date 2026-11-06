@@ -44,6 +44,7 @@ def test_one_summary_line_per_source_and_counts_reconcile(monkeypatch, paths, ca
     assert (bed["rows_read"], bed["parsed"], bed["drop_reasons"]) == (6, 5, {"blank": 1})
     singstat = next(line for line in lines if line["source"] == "singstat_residents")
     assert (singstat["rows_read"], singstat["parsed"]) == (2, 2)          # two planning areas
+    assert singstat["derived"] == {"pop_65plus_by_subzone": 3}            # and their three subzones
 
 
 def test_unchanged_file_shows_as_skipped(monkeypatch, paths, capsys):
