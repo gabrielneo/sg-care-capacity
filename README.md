@@ -172,36 +172,43 @@ Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `repars
 sg-health run 2> run.log && grep '"source_summary"' run.log
 ```
 
-## 8. Automation
+## 8. Automation and releases
 
-`.github/workflows/weekly_scraper.yml` runs every Sunday at 00:00 UTC (08:00 SGT) and can also be triggered manually. Nothing is committed back to the repo. `data/raw/` is kept between runs as `raw.tar.gz` on a rolling GitHub Release tagged `data-latest`:
+Three GitHub Actions workflows. Nothing is ever committed back to the repo, and no database is stored in git.
 
-1. Run the tests.
-2. **Restore** `data/raw/` from the `data-latest` release. On the very first run there is no release yet, so it starts empty. If the release exists but the download fails, the job stops, so an empty `data/raw` can never overwrite history.
-3. **Rebuild** the warehouse with `sg-health reparse`.
-4. **Fetch** new data with `sg-health run`.
-5. **Check** that `manifest.jsonl` has at least as many lines as before; otherwise refuse to upload.
-6. **Upload** the grown `raw.tar.gz` to the release, replacing the old one. This happens **before** validation, so a data-quality failure can never lose raw history.
-7. **Validate** with `sg-health validate`. If a check blocks publishing, the job fails here. The Excel report is attached to the workflow run as an artifact (kept 30 days) either way.
+| Workflow | When | What it does |
+|---|---|---|
+| `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or run by hand | test → ingest → validate → transform → publish |
+| `live.yml` | Every 3 hours | NUHS live waits only, into a separate store (`live-latest` release); never publishes a snapshot |
+| `ci.yml` | Pull requests and pushes to `main` | ruff, mypy, unit tests; fails if a binary database or `.env` is tracked |
 
-The warehouse is rebuilt from `data/raw` on every run and is **not** published yet. When publishing is added, it will run only after a passing `validate` step, so the site keeps the last good snapshot whenever a blocking check fails.
+**Weekly run:**
+- Raw history (`data/raw/`) is restored from, and re-uploaded to, `raw.tar.gz` on the rolling `data-latest` release.
+- The archive is uploaded **before** validation, so a failed check can never lose raw history.
+- If validation finds a check that blocks publishing, nothing is published and an issue labelled `data-quality` lists the failures. The site keeps the last good snapshot.
+- Otherwise `sg-health publish` writes a snapshot and the job uploads it as a release tagged `data-YYYY-MM-DD`. Only the newest 12 are kept.
 
-To get the data locally:
+**What a snapshot contains:**
+- `analytics.duckdb`: the marts plus `dq_results`, read-only.
+- One Parquet file per mart.
+- `planning_area_access.geojson`.
+- `manifest.json`: `as_of` per source, row counts, coverage per hospital, check summary, SHA-256 of every file, and the git commit.
 
 ```bash
-gh release download data-latest --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data
-sg-health reparse
+sg-health publish --out data/build/publish     # validates first; exit 1 = blocked
+gh release download data-latest --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data   # raw history locally
 ```
 
-Setup:
-1. Push this folder to a GitHub repo.
-2. Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions** (needed to create the release and upload the archive).
-3. Optional: add a `DATAGOV_API_KEY` secret.
-4. Open the **Actions** tab and run the workflow once manually to check it works. The first run creates the `data-latest` release.
+**Setup:**
+1. **Settings → Actions → General → Workflow permissions:** choose **Read and write**. The workflows need it to create releases and issues.
+2. Optional: add a repository secret named exactly `DATAGOV_API_KEY`. Locally, put it in `.env` (see `.env.example`); that file is never required.
 
-**Size:** the archive only grows. Unchanged files are stored once, so most weeks add only the new MOH workbooks and the live-page snapshots. A release asset can be up to 2 GB.
-
-**Live snapshots:** once a week gives you only one NUHS reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. It must share the `weekly-scraper` concurrency group, because both read and re-upload the same archive.
+**Runbook:** [docs/runbook.md](docs/runbook.md) covers:
+- the release process and checking a snapshot's hashes;
+- what to do when publishing is blocked;
+- **rolling back to an earlier snapshot**;
+- the yearly SingStat refresh (runners get HTTP 403, so the file is committed under `data/reference/singstat/`);
+- secrets and the live store.
 
 ## 9. Historical backfill (Wayback Machine)
 
