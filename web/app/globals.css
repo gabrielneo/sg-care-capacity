@@ -60,6 +60,12 @@
   }
 }
 
+/* Tailwind's base styles make images block-level; Leaflet's attribution logo must stay inline. */
+.leaflet-control-attribution img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* "No data" on the map: hatched, so it can never be read as the lowest class. */
 .bg-nodata {
   background-image: repeating-linear-gradient(
