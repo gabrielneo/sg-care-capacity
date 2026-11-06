@@ -199,3 +199,28 @@ def test_dim_clinic_keeps_is_active_and_has_cdmp(monkeypatch, paths):
         wh.close()
     assert rows == [{"clinic_key": "15M0211", "is_active": True, "has_cdmp": True},
                     {"clinic_key": "15M0999", "is_active": False, "has_cdmp": False}]
+
+
+# ------------------------------------------------------------- live snapshot #
+
+def test_live_snapshot_is_labelled_estimate_with_the_page_as_of(built):
+    rows = q(built, "SELECT * FROM marts.fct_live_ed_snapshot ORDER BY site_name")
+    assert len(rows) == len(q(built, "SELECT * FROM staging.stg_nuhs_live"))
+    assert set(rows["measure_type"]) == {"estimate"}
+    assert list(rows["hospital_code"]) == ["NUH", "NTFGH"]
+    assert (rows["as_of"] == pd.Timestamp("2026-05-18 09:30:04")).all()       # the page's "Last updated at"
+    assert set(rows["as_of_basis"]) == {"source_updated"}
+
+
+def test_live_snapshot_without_a_page_timestamp_uses_the_fetch_time(monkeypatch, paths):
+    from sg_health import config
+    from conftest import HTML, NUHS_HTML, source_routes
+    routes = source_routes()
+    routes[config.NUHS_LIVE_URL] = (NUHS_HTML.replace(b"Last updated at 18 May 2026, 09:30:04 AM.", b""), HTML)
+    full_run(monkeypatch, paths, routes)
+    wh = Warehouse(paths["db"])
+    try:
+        rows = q(wh, "SELECT as_of, as_of_basis, fetched_at FROM marts.fct_live_ed_snapshot")
+    finally:
+        wh.close()
+    assert set(rows["as_of_basis"]) == {"fetched"} and (rows["as_of"] == rows["fetched_at"]).all()

@@ -39,6 +39,7 @@ MODELS: list[tuple[str, str]] = [
     ("marts", "fct_ed_daily"),
     ("marts", "fct_ed_weekly"),
     ("marts", "dim_clinic"),
+    ("marts", "fct_live_ed_snapshot"),
 ]
 
 
@@ -67,6 +68,8 @@ RECONCILIATIONS: list[Reconciliation] = [
     # One clinic row per staged clinic: the metadata join must never duplicate or drop clinics.
     Reconciliation("marts.dim_clinic", "staging.stg_chas_clinics",
                    "SELECT count(*) FROM staging.stg_chas_clinics", "SELECT count(*) FROM marts.dim_clinic"),
+    Reconciliation("marts.fct_live_ed_snapshot", "staging.stg_nuhs_live",
+                   "SELECT count(*) FROM staging.stg_nuhs_live", "SELECT count(*) FROM marts.fct_live_ed_snapshot"),
     Reconciliation("marts.dim_hospital", "main.ref_hospital",
                    "SELECT count(*) FROM main.ref_hospital", "SELECT count(*) FROM marts.dim_hospital"),
     # Every staged value lands in exactly one daily row.
