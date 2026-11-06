@@ -4,6 +4,8 @@ A weekly ETL pipeline that tracks hospital strain in a super-aged Singapore. It 
 
 Only aggregate data about institutions, places and populations is collected. There is no personal or patient-level data.
 
+The read-only **API** over the published snapshot is in [`api/`](api/README.md).
+
 ```
 sources ──► PoliteHttp ──► data/raw (immutable) ──► parsers ──► DuckDB warehouse ──► Excel report
               retries,       <source>/<date>/         pure        data/build/
@@ -52,7 +54,7 @@ Default paths, all under the repo root (override with `--raw-dir`, `--db`, `--re
 | Path | What | In git? |
 |---|---|---|
 | `data/raw/` | Raw landing zone: every downloaded file, unchanged | No |
-| `data/build/warehouse.duckdb` | The pipeline's working warehouse. It is **not** what the API reads; the API will read a published snapshot. | No |
+| `data/build/warehouse.duckdb` | The pipeline's working warehouse. It is **not** what the API reads: the API serves a published snapshot (`data/build/publish/` or a `data-YYYY-MM-DD` release). | No |
 | `data/build/SG_Healthcare_Scrape_Report.xlsx` | Excel summary | No |
 
 Optional environment variables. Put them in a **`.env`** file at the repo root (copy `.env.example`); the pipeline loads it automatically, it is git-ignored, and a real environment variable of the same name always wins (CI uses a GitHub Actions secret instead). Never commit `.env` or paste its values anywhere:

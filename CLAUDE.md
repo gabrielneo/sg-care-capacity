@@ -69,10 +69,15 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 # tests:        pytest -q pipeline/tests            # offline unit tests (fixtures only)
 # acceptance:   pytest -q pipeline/acceptance       # the real built data, checked as the site would use it
 
-# API
-# setup:        TODO
-# dev server:   TODO
-# tests:        TODO
+# API (package: api/sg_health_api; reads only a published snapshot, read-only; see api/README.md)
+# setup:        pip install -e "api[dev]"
+# dev server:   LOCAL_SNAPSHOT_PATH=data/build/publish uvicorn --factory sg_health_api.main:create_app --reload
+#               (without LOCAL_SNAPSHOT_PATH: downloads DATA_SNAPSHOT, default latest, and verifies it)
+# tests:        pytest -q api                     # fixture snapshot; contract test; openapi.json drift
+#               LOCAL_SNAPSHOT_PATH=data/build/publish pytest -q api -m snapshot   # contract on real data
+# lint/type:    (cd api && ruff check . && mypy)
+# openapi:      python -m sg_health_api.openapi > api/openapi.json   # after changing a route or model
+# docker:       docker build -t sg-health-api api && docker run --rm -p 8000:8000 sg-health-api
 
 # Web
 # setup:        TODO

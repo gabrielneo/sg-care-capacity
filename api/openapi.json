@@ -1,0 +1,2225 @@
+{
+  "components": {
+    "schemas": {
+      "AreaCollection": {
+        "properties": {
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/AreaFeature"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "type": {
+            "const": "FeatureCollection",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "features"
+        ],
+        "title": "AreaCollection",
+        "type": "object"
+      },
+      "AreaFeature": {
+        "properties": {
+          "geometry": {
+            "$ref": "#/components/schemas/Geometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/AreaProperties"
+          },
+          "type": {
+            "const": "Feature",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "geometry",
+          "properties"
+        ],
+        "title": "AreaFeature",
+        "type": "object"
+      },
+      "AreaProperties": {
+        "description": "Columns of marts.fct_area_access of the same name. Missing values are null, never 0.",
+        "properties": {
+          "approx_km_centroid_to_nearest_polyclinic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approx Km Centroid To Nearest Polyclinic"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "as_of_basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of Basis"
+          },
+          "cdmp_clinics": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cdmp Clinics"
+          },
+          "cdmp_clinics_per_1k_seniors": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cdmp Clinics Per 1K Seniors"
+          },
+          "chas_clinics": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chas Clinics"
+          },
+          "clinics_per_1k_seniors": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinics Per 1K Seniors"
+          },
+          "dq_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dq Note"
+          },
+          "nearest_polyclinic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nearest Polyclinic"
+          },
+          "pct_area_within_1km_of_cdmp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Area Within 1Km Of Cdmp"
+          },
+          "planning_area": {
+            "title": "Planning Area",
+            "type": "string"
+          },
+          "planning_area_code": {
+            "title": "Planning Area Code",
+            "type": "string"
+          },
+          "population_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population Year"
+          },
+          "region_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Name"
+          },
+          "residents_65plus": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residents 65Plus"
+          },
+          "residents_total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residents Total"
+          }
+        },
+        "required": [
+          "planning_area_code",
+          "planning_area",
+          "region_name",
+          "population_year",
+          "residents_total",
+          "residents_65plus",
+          "chas_clinics",
+          "cdmp_clinics",
+          "clinics_per_1k_seniors",
+          "cdmp_clinics_per_1k_seniors",
+          "pct_area_within_1km_of_cdmp",
+          "approx_km_centroid_to_nearest_polyclinic",
+          "nearest_polyclinic",
+          "dq_note",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "AreaProperties",
+        "type": "object"
+      },
+      "AreasResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AreaCollection"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "AreasResponse",
+        "type": "object"
+      },
+      "Change": {
+        "properties": {
+          "baseline_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mean over the 4 complete weeks before it; null if any is missing",
+            "title": "Baseline Mean"
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "latest - baseline_mean, in the metric's unit",
+            "title": "Change"
+          },
+          "change_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "change / baseline_mean x 100; null if the baseline is null or 0",
+            "title": "Change Pct"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Value in the latest complete week",
+            "title": "Latest"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit",
+          "latest",
+          "baseline_mean",
+          "change",
+          "change_pct"
+        ],
+        "title": "Change",
+        "type": "object"
+      },
+      "CheckSummary": {
+        "properties": {
+          "blocking": {
+            "description": "Checks that block publishing (always 0 in a published snapshot)",
+            "title": "Blocking",
+            "type": "integer"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Check results by status",
+            "title": "Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "blocking",
+          "counts"
+        ],
+        "title": "CheckSummary",
+        "type": "object"
+      },
+      "Clinic": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "clinic_key": {
+            "title": "Clinic Key",
+            "type": "string"
+          },
+          "clinic_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Name"
+          },
+          "has_cdmp": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Chronic Disease Management Programme; null if programmes is missing",
+            "title": "Has Cdmp"
+          },
+          "hci_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hci Code"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "planning_area": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planning Area"
+          },
+          "planning_area_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planning Area Code"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "6 digits, kept as text (leading zeros)",
+            "title": "Postal Code"
+          },
+          "programmes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "As published, e.g. 'CDMP,CHAS'",
+            "title": "Programmes"
+          },
+          "source_sha256": {
+            "title": "Source Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "clinic_key",
+          "hci_code",
+          "clinic_name",
+          "address",
+          "postal_code",
+          "latitude",
+          "longitude",
+          "programmes",
+          "has_cdmp",
+          "planning_area_code",
+          "planning_area",
+          "source_sha256",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "Clinic",
+        "type": "object"
+      },
+      "ClinicPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Clinic"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Clinics matching the filters, across all pages",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ClinicPage",
+        "type": "object"
+      },
+      "ClinicsResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ClinicPage"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ClinicsResponse",
+        "type": "object"
+      },
+      "DqWarning": {
+        "properties": {
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "failing_rows": {
+            "title": "Failing Rows",
+            "type": "integer"
+          },
+          "scope": {
+            "description": "row, file or dataset",
+            "title": "Scope",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "ERROR",
+              "WARN"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "status": {
+            "description": "'fail' for a check that found something",
+            "title": "Status",
+            "type": "string"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "table",
+          "severity",
+          "status",
+          "failing_rows",
+          "scope",
+          "details"
+        ],
+        "title": "DqWarning",
+        "type": "object"
+      },
+      "EdDailyResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EdDay"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "EdDailyResponse",
+        "type": "object"
+      },
+      "EdDay": {
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "attendance_source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendance Source Sha256"
+          },
+          "attendance_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendance Source Url"
+          },
+          "attendances": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Patients who attended that day; null = MOH gave no value",
+            "title": "Attendances"
+          },
+          "dq_flags": {
+            "description": "WARN checks this row tripped (see meta.dq_warnings)",
+            "items": {
+              "type": "string"
+            },
+            "title": "Dq Flags",
+            "type": "array"
+          },
+          "hospital_code": {
+            "title": "Hospital Code",
+            "type": "string"
+          },
+          "hospital_name": {
+            "title": "Hospital Name",
+            "type": "string"
+          },
+          "is_complete_week": {
+            "title": "Is Complete Week",
+            "type": "boolean"
+          },
+          "iso_week": {
+            "title": "Iso Week",
+            "type": "integer"
+          },
+          "iso_year": {
+            "title": "Iso Year",
+            "type": "integer"
+          },
+          "median_wait_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "MOH daily median wait for a ward bed; unit inferred (hours)",
+            "title": "Median Wait Hours"
+          },
+          "report_date": {
+            "format": "date",
+            "title": "Report Date",
+            "type": "string"
+          },
+          "wait_source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wait Source Sha256"
+          },
+          "wait_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wait Source Url"
+          }
+        },
+        "required": [
+          "hospital_code",
+          "hospital_name",
+          "report_date",
+          "iso_year",
+          "iso_week",
+          "median_wait_hours",
+          "attendances",
+          "is_complete_week",
+          "dq_flags",
+          "wait_source_url",
+          "wait_source_sha256",
+          "attendance_source_url",
+          "attendance_source_sha256",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "EdDay",
+        "type": "object"
+      },
+      "EdSummary": {
+        "properties": {
+          "baseline_weeks": {
+            "description": "week_start of the 4 weeks the baseline averages",
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Baseline Weeks",
+            "type": "array"
+          },
+          "facility_type": {
+            "title": "Facility Type",
+            "type": "string"
+          },
+          "hospital_code": {
+            "title": "Hospital Code",
+            "type": "string"
+          },
+          "hospital_name": {
+            "title": "Hospital Name",
+            "type": "string"
+          },
+          "is_current": {
+            "description": "False if this hospital's latest complete week is older than other hospitals'",
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "latest_complete_week": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeekRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent ISO week with all 7 days of both metrics"
+          },
+          "mean_of_daily_median_wait_hours": {
+            "$ref": "#/components/schemas/Change"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why a value is missing, if one is",
+            "title": "Note"
+          },
+          "total_attendances": {
+            "$ref": "#/components/schemas/Change"
+          }
+        },
+        "required": [
+          "hospital_code",
+          "hospital_name",
+          "facility_type",
+          "latest_complete_week",
+          "is_current",
+          "baseline_weeks",
+          "mean_of_daily_median_wait_hours",
+          "total_attendances",
+          "note"
+        ],
+        "title": "EdSummary",
+        "type": "object"
+      },
+      "EdSummaryResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EdSummary"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "EdSummaryResponse",
+        "type": "object"
+      },
+      "EdWeek": {
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "days_reported_attendances": {
+            "title": "Days Reported Attendances",
+            "type": "integer"
+          },
+          "days_reported_wait": {
+            "title": "Days Reported Wait",
+            "type": "integer"
+          },
+          "hospital_code": {
+            "title": "Hospital Code",
+            "type": "string"
+          },
+          "hospital_name": {
+            "title": "Hospital Name",
+            "type": "string"
+          },
+          "is_complete_week": {
+            "title": "Is Complete Week",
+            "type": "boolean"
+          },
+          "iso_week": {
+            "title": "Iso Week",
+            "type": "integer"
+          },
+          "iso_year": {
+            "title": "Iso Year",
+            "type": "integer"
+          },
+          "mean_of_daily_median_wait_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Average of daily medians, NOT a weekly median",
+            "title": "Mean Of Daily Median Wait Hours"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "total_attendances": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A full-week total only when days_reported_attendances = 7",
+            "title": "Total Attendances"
+          },
+          "week_end": {
+            "format": "date",
+            "title": "Week End",
+            "type": "string"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hospital_code",
+          "hospital_name",
+          "iso_year",
+          "iso_week",
+          "week_start",
+          "week_end",
+          "mean_of_daily_median_wait_hours",
+          "total_attendances",
+          "days_reported_wait",
+          "days_reported_attendances",
+          "is_complete_week",
+          "source_sha256",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "EdWeek",
+        "type": "object"
+      },
+      "EdWeeklyResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EdWeek"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "EdWeeklyResponse",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "description": "Machine-readable, e.g. invalid_parameter, unknown_hospital, not_found",
+            "title": "Code",
+            "type": "string"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The query parameter at fault, if any",
+            "title": "Field"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "data": {
+            "title": "Data",
+            "type": "null"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta",
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "Geometry": {
+        "properties": {
+          "coordinates": {
+            "description": "WGS84 (EPSG:4326) longitude, latitude",
+            "items": {},
+            "title": "Coordinates",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "Polygon",
+              "MultiPolygon"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "title": "Geometry",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "snapshot_id"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Health"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "Hospital": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "cluster": {
+            "title": "Cluster",
+            "type": "string"
+          },
+          "coverage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Note"
+          },
+          "exclusions_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclusions Note"
+          },
+          "facility_type": {
+            "description": "AH is an Urgent Care Centre, not a full ED",
+            "enum": [
+              "ED",
+              "UCC"
+            ],
+            "title": "Facility Type",
+            "type": "string"
+          },
+          "hospital_code": {
+            "title": "Hospital Code",
+            "type": "string"
+          },
+          "hospital_name": {
+            "title": "Hospital Name",
+            "type": "string"
+          },
+          "reported_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "First day MOH reports the site; null = from the series start",
+            "title": "Reported From"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hospital_code",
+          "hospital_name",
+          "cluster",
+          "facility_type",
+          "reported_from",
+          "coverage_note",
+          "exclusions_note",
+          "source_url",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "Hospital",
+        "type": "object"
+      },
+      "HospitalsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Hospital"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "HospitalsResponse",
+        "type": "object"
+      },
+      "LiveReading": {
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "est_bed_wait_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "NUHS estimate now; NOT MOH's daily median",
+            "title": "Est Bed Wait Hours"
+          },
+          "est_wait_to_see_doctor_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Est Wait To See Doctor Hours"
+          },
+          "hospital_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null if NUHS lists a site we don't recognise",
+            "title": "Hospital Code"
+          },
+          "is_adult_ed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Filter on this for one reading per hospital",
+            "title": "Is Adult Ed"
+          },
+          "measure_type": {
+            "description": "Always 'estimate'",
+            "title": "Measure Type",
+            "type": "string"
+          },
+          "patients_waiting": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patients Waiting"
+          },
+          "site_name": {
+            "title": "Site Name",
+            "type": "string"
+          },
+          "snapshot_at": {
+            "format": "date-time",
+            "title": "Snapshot At",
+            "type": "string"
+          },
+          "source_sha256": {
+            "title": "Source Sha256",
+            "type": "string"
+          },
+          "source_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Updated At"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hospital_code",
+          "site_name",
+          "department",
+          "is_adult_ed",
+          "measure_type",
+          "patients_waiting",
+          "est_wait_to_see_doctor_hours",
+          "est_bed_wait_hours",
+          "snapshot_at",
+          "source_updated_at",
+          "source_url",
+          "source_sha256",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "LiveReading",
+        "type": "object"
+      },
+      "LiveResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/LiveReading"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "LiveResponse",
+        "type": "object"
+      },
+      "Meta": {
+        "properties": {
+          "as_of": {
+            "description": "When the data in this response were current (ISO 8601, SGT)",
+            "title": "As Of",
+            "type": "string"
+          },
+          "caveats": {
+            "description": "Text to show with the figures",
+            "items": {
+              "type": "string"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the response covers and what is missing",
+            "title": "Coverage"
+          },
+          "dq_warnings": {
+            "description": "Data-quality findings on the tables behind this response",
+            "items": {
+              "$ref": "#/components/schemas/DqWarning"
+            },
+            "title": "Dq Warnings",
+            "type": "array"
+          },
+          "snapshot_id": {
+            "description": "The published snapshot this response comes from (also the ETag)",
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "as_of",
+          "sources",
+          "coverage",
+          "caveats",
+          "dq_warnings"
+        ],
+        "title": "Meta",
+        "type": "object"
+      },
+      "MetaResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SnapshotInfo"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "MetaResponse",
+        "type": "object"
+      },
+      "QualityReport": {
+        "properties": {
+          "blocking": {
+            "description": "Failed checks that block publishing (0 in any published snapshot)",
+            "title": "Blocking",
+            "type": "integer"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/QualityResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "checked_at",
+          "blocking",
+          "counts",
+          "results"
+        ],
+        "title": "QualityReport",
+        "type": "object"
+      },
+      "QualityResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QualityReport"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "QualityResponse",
+        "type": "object"
+      },
+      "QualityResult": {
+        "properties": {
+          "blocks_publish": {
+            "description": "True for checks that stop publishing when they fail",
+            "title": "Blocks Publish",
+            "type": "boolean"
+          },
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "failing_rows": {
+            "title": "Failing Rows",
+            "type": "integer"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "ERROR",
+              "WARN"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "skipped"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "table": {
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "table",
+          "severity",
+          "status",
+          "failing_rows",
+          "scope",
+          "blocks_publish",
+          "details"
+        ],
+        "title": "QualityResult",
+        "type": "object"
+      },
+      "SnapshotInfo": {
+        "properties": {
+          "api_version": {
+            "title": "Api Version",
+            "type": "string"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/CheckSummary"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "pipeline_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Commit"
+          },
+          "release_tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "GitHub release served; null for a local snapshot",
+            "title": "Release Tag"
+          },
+          "row_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Row Counts",
+            "type": "object"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "release_tag",
+          "created_at",
+          "pipeline_commit",
+          "api_version",
+          "row_counts",
+          "checks"
+        ],
+        "title": "SnapshotInfo",
+        "type": "object"
+      },
+      "Source": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the source's figures were current (ISO 8601)",
+            "title": "As Of"
+          },
+          "as_of_basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What as_of is based on, e.g. 'latest report_date'",
+            "title": "As Of Basis"
+          },
+          "id": {
+            "description": "Source key, as in the snapshot manifest",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_fetched_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the pipeline last downloaded it (SGT)",
+            "title": "Last Fetched At"
+          },
+          "name": {
+            "description": "Publisher and dataset",
+            "title": "Name",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the publisher makes it available",
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "url",
+          "as_of",
+          "as_of_basis",
+          "last_fetched_at"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WeekRef": {
+        "properties": {
+          "iso_week": {
+            "title": "Iso Week",
+            "type": "integer"
+          },
+          "iso_year": {
+            "title": "Iso Year",
+            "type": "integer"
+          },
+          "week_end": {
+            "format": "date",
+            "title": "Week End",
+            "type": "string"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "iso_year",
+          "iso_week",
+          "week_start",
+          "week_end"
+        ],
+        "title": "WeekRef",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Read-only access to one published, verified snapshot of the *Right-siting care in a\nsuper-aged Singapore* data: MOH emergency department bed waits and attendances, CHAS/CDMP clinic\naccess for residents aged 65+ by planning area, and NUHS ED wait estimates.\n\nEvery response is `{data, meta}`. `meta.as_of` says when the figures were current; `meta.sources`,\n`meta.caveats` and `meta.dq_warnings` must be shown with them. Definitions:\n`docs/data_dictionary.md`.",
+    "title": "sg-care-capacity API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/areas/access": {
+      "get": {
+        "operationId": "areas_access_api_v1_areas_access_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          }
+        },
+        "summary": "Clinic access for residents aged 65+ by planning area (GeoJSON in data)",
+        "tags": [
+          "clinics and planning areas"
+        ]
+      }
+    },
+    "/api/v1/clinics": {
+      "get": {
+        "operationId": "clinics_api_v1_clinics_get",
+        "parameters": [
+          {
+            "description": "true: CDMP clinics only; false: clinics known not to be in CDMP (clinics with no programme list are in neither)",
+            "in": "query",
+            "name": "cdmp",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "true: CDMP clinics only; false: clinics known not to be in CDMP (clinics with no programme list are in neither)",
+              "title": "Cdmp"
+            }
+          },
+          {
+            "description": "minLon,minLat,maxLon,maxLat (WGS84)",
+            "in": "query",
+            "name": "bbox",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "minLon,minLat,maxLon,maxLat (WGS84)",
+              "examples": [
+                "103.6,1.2,104.1,1.5"
+              ],
+              "title": "Bbox"
+            }
+          },
+          {
+            "description": "Page size, 1-500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Page size, 1-500",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Active CHAS clinics, paged",
+        "tags": [
+          "clinics and planning areas"
+        ]
+      }
+    },
+    "/api/v1/ed/daily": {
+      "get": {
+        "operationId": "ed_daily_api_v1_ed_daily_get",
+        "parameters": [
+          {
+            "description": "Hospital code, e.g. SGH (see /hospitals). Omit for all",
+            "in": "query",
+            "name": "hospital",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Hospital code, e.g. SGH (see /hospitals). Omit for all",
+              "title": "Hospital"
+            }
+          },
+          {
+            "description": "First day (YYYY-MM-DD). Default: 90 days before `to`",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First day (YYYY-MM-DD). Default: 90 days before `to`",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Last day (YYYY-MM-DD). Default: the latest day MOH has published",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last day (YYYY-MM-DD). Default: the latest day MOH has published",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EdDailyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Daily bed waits and attendances",
+        "tags": [
+          "emergency departments"
+        ]
+      }
+    },
+    "/api/v1/ed/summary": {
+      "get": {
+        "operationId": "ed_summary_api_v1_ed_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EdSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          }
+        },
+        "summary": "Latest complete week per hospital vs the 4 complete weeks before it",
+        "tags": [
+          "emergency departments"
+        ]
+      }
+    },
+    "/api/v1/ed/weekly": {
+      "get": {
+        "operationId": "ed_weekly_api_v1_ed_weekly_get",
+        "parameters": [
+          {
+            "description": "Hospital code (see /hospitals). Omit for all",
+            "in": "query",
+            "name": "hospital",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Hospital code (see /hospitals). Omit for all",
+              "title": "Hospital"
+            }
+          },
+          {
+            "description": "How many of the latest ISO weeks (1-104)",
+            "in": "query",
+            "name": "weeks",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "description": "How many of the latest ISO weeks (1-104)",
+              "maximum": 104,
+              "minimum": 1,
+              "title": "Weeks",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EdWeeklyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "ISO-week (Mon-Sun) aggregates",
+        "tags": [
+          "emergency departments"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness, and which snapshot is loaded",
+        "tags": [
+          "snapshot"
+        ]
+      }
+    },
+    "/api/v1/hospitals": {
+      "get": {
+        "operationId": "hospitals_api_v1_hospitals_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HospitalsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          }
+        },
+        "summary": "The sites MOH reports, with coverage notes",
+        "tags": [
+          "emergency departments"
+        ]
+      }
+    },
+    "/api/v1/live/nuhs/latest": {
+      "get": {
+        "operationId": "live_nuhs_latest_api_v1_live_nuhs_latest_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Latest NUHS ED wait estimates in the snapshot (not a live feed)",
+        "tags": [
+          "quality and live"
+        ]
+      }
+    },
+    "/api/v1/meta": {
+      "get": {
+        "operationId": "meta_api_v1_meta_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "The snapshot being served",
+        "tags": [
+          "snapshot"
+        ]
+      }
+    },
+    "/api/v1/quality": {
+      "get": {
+        "operationId": "quality_api_v1_quality_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualityResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Data-quality results behind this snapshot",
+        "tags": [
+          "quality and live"
+        ]
+      }
+    }
+  }
+}

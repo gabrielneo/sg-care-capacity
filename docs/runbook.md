@@ -91,17 +91,18 @@ never editing data.
 
 1. **Pick the snapshot.** `gh release list` shows the `data-YYYY-MM-DD` releases; each release's notes
    and `manifest.json` show its checks and row counts. Choose the newest one you trust.
-2. **Point the site/API at it.** The API (to be built) reads the snapshot named by a single setting
-   (e.g. `SNAPSHOT_TAG=data-2026-11-01`); set it to the chosen tag and redeploy. Until then, download
-   that release's assets in place of the latest.
+2. **Point the API at it.** Set `DATA_SNAPSHOT=data-2026-11-01` and restart the API. It downloads
+   and verifies that release and refuses to start if any file doesn't match its manifest. Check
+   with `curl …/api/v1/meta`, which shows `snapshot_id` and `release_tag`.
 3. **Mark the bad snapshot, don't delete it.** Keep it for the record and flag it:
    ```bash
    gh release edit data-2026-11-08 --prerelease \
      --notes "WITHDRAWN: <reason>. Use data-2026-11-01. See issue #<n>."
    ```
-   Deleting it would also remove the evidence of what was published.
-4. **Fix forward.** Fix the cause, run the weekly workflow by hand, check the new snapshot, then point
-   the site/API back to "latest".
+   Deleting it would also remove the evidence of what was published. Marking it pre-release is
+   also what makes the API's `DATA_SNAPSHOT=latest` skip it.
+4. **Fix forward.** Fix the cause, run the weekly workflow by hand, check the new snapshot, then set
+   `DATA_SNAPSHOT=latest` again (or unset it) and restart the API.
 
 **Retention:** only 12 snapshots are kept (about 3 months). To keep one longer, e.g. for the case
 study, copy its assets elsewhere or re-tag it outside the `data-YYYY-MM-DD` pattern (pruning only

@@ -49,26 +49,41 @@ jobs:
 
   api:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
     steps:
       - uses: actions/checkout@v4
-      - name: Detect api/
-        id: detect
-        run: echo "present=$([ -f api/pyproject.toml ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-      - name: Skip (api/ not built yet)
-        if: steps.detect.outputs.present != 'true'
-        run: echo "api/ does not exist yet; nothing to check."
       - uses: actions/setup-python@v5
-        if: steps.detect.outputs.present == 'true'
         with:
           python-version: "3.12"
-      - name: Lint, type-check and test the API
-        if: steps.detect.outputs.present == 'true'
-        working-directory: api
+          cache: pip
+          cache-dependency-path: api/pyproject.toml
+      - name: Install
         run: |
+          python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          ruff check .
-          mypy
-          pytest -q
+      - name: Lint (ruff)
+        run: ruff check .
+      - name: Type-check (mypy)
+        run: mypy
+      - name: Tests (fixture snapshot; includes the contract test and the openapi.json drift check)
+        run: pytest -q
+      - name: Docker image builds, serves a verified snapshot, and refuses a tampered one
+        run: |
+          docker build -t sg-health-api .
+          python -c "import sys; sys.path.insert(0, 'tests'); import fixture_snapshot, pathlib; fixture_snapshot.build(pathlib.Path('/tmp/snap'))"
+          chmod -R a+rX /tmp/snap
+          docker run -d --name api -p 8000:8000 -v /tmp/snap:/snap:ro -e LOCAL_SNAPSHOT_PATH=/snap sg-health-api
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/api/v1/health && break; sleep 2; done
+          curl -fsS http://127.0.0.1:8000/api/v1/ed/summary > summary.json || { docker logs api; exit 1; }
+          python -c "import json; b = json.load(open('summary.json')); assert b['meta']['as_of'] and len(b['data']) == 3, b"
+          docker rm -f api
+          cp -r /tmp/snap /tmp/bad && echo tampered >> /tmp/bad/planning_area_access.geojson && chmod -R a+rX /tmp/bad
+          if docker run --rm -v /tmp/bad:/snap:ro -e LOCAL_SNAPSHOT_PATH=/snap sg-health-api; then
+            echo "::error::the API started on a tampered snapshot"; exit 1
+          fi
+          echo "refused the tampered snapshot, as it should"
 
   web:
     runs-on: ubuntu-latest
