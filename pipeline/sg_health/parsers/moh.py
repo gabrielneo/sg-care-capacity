@@ -162,7 +162,8 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
             df[value_col] = df["val"].round(2)
         else:
             df[value_col] = df["raw"].map(to_int).astype("Int64")
-        frames.append(df[["hospital_code", "report_date", value_col]])
+        df["blank"] = df["raw"].map(is_blank)      # empty in the source: missing, not a parse failure
+        frames.append(df[["hospital_code", "report_date", value_col, "blank"]])
 
     if not frames:
         LOG.warning("No usable tables in %s", source_file)
@@ -171,10 +172,13 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
         return empty
     out = pd.concat(frames, ignore_index=True)
     count_read(stats, len(out))
-    dropped = int(out[value_col].isna().sum())
-    if dropped:
-        LOG.debug("%s: dropped %d unparseable cells", source_file or metric, dropped)
-    count_drop(stats, "unparseable_value", dropped)
+    missing = out[value_col].isna()
+    blank = int((missing & out["blank"]).sum())
+    unparseable = int((missing & ~out["blank"]).sum())
+    if unparseable:
+        LOG.warning("%s: %d cells have a value that could not be read", source_file or metric, unparseable)
+    count_drop(stats, "blank", blank)                       # e.g. a hospital before its ED opened
+    count_drop(stats, "unparseable_value", unparseable)
     out = out.dropna(subset=[value_col])
     before = len(out)
     out = out.drop_duplicates(subset=["hospital_code", "report_date"], keep="last")

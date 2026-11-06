@@ -40,8 +40,8 @@ def test_one_summary_line_per_source_and_counts_reconcile(monkeypatch, paths, ca
         assert line["rows_read"] == line["parsed"] + line["dropped"], line
         assert line["dropped"] == sum(line["drop_reasons"].values())
     bed = next(line for line in lines if line["source"] == "moh_bed_waits")
-    # Fixture: 3 hospitals x 2 dates, one cell is "-"
-    assert (bed["rows_read"], bed["parsed"], bed["drop_reasons"]) == (6, 5, {"unparseable_value": 1})
+    # Fixture: 3 hospitals x 2 dates, one cell is "-" (MOH's blank marker): missing, not unreadable
+    assert (bed["rows_read"], bed["parsed"], bed["drop_reasons"]) == (6, 5, {"blank": 1})
     singstat = next(line for line in lines if line["source"] == "singstat")
     assert singstat["derived"] == {"pop_65plus_by_area": 1}
 
@@ -81,14 +81,15 @@ def test_moh_parser_counts_unparseable_and_duplicate_cells():
     for r in rows:
         wb.active.append(r)
     second = wb.create_sheet("Revised")                  # restates SGH on 26/10: a duplicate key
-    for r in [["Date", "SGH", "CGH"], ["26/10/2026", "04:30", "-"], ["27/10/2026", "04:10", "05:10"]]:
+    for r in [["Date", "SGH", "CGH"], ["26/10/2026", "04:30", None], ["27/10/2026", "04:10", "05:10"]]:
         second.append(r)
     buf = io.BytesIO()
     wb.save(buf)
     stats = ParseStats()
     df = parse_moh_workbook(buf.getvalue(), "bed_waits", stats=stats)
     assert stats.rows_read == 8
-    assert stats.drop_reasons == {"unparseable_value": 2, "duplicate_key": 1}
+    # "not a time" can't be read; the empty cell is blank; SGH 26/10 appears on both sheets
+    assert stats.drop_reasons == {"unparseable_value": 1, "blank": 1, "duplicate_key": 1}
     assert len(df) == stats.rows_read - stats.dropped == 5
 
 

@@ -213,3 +213,18 @@ def test_warehouse_upsert_is_idempotent(tmp_path):
     out = wh.query("SELECT * FROM moh_bed_waits")
     assert len(out) == 1 and out.median_wait_hours.iloc[0] == 3.5
     wh.close()
+
+
+def test_real_moh_header_row_maps_all_nine_hospitals():
+    """MOH header as published (week 43, 2026). WH = Woodlands Hospital was once silently skipped."""
+    content = _xlsx([
+        ["Waiting Times (50th Percentile) for Admission from ED"],
+        [None],
+        ["Date", "AH", "CGH", "KTPH", "NTFGH", "NUH(A)", "SGH", "SKH", "TTSH", "WH"],
+        [datetime(2026, 10, 25), 1.62, 1.33, 1.88, 1.92, 4.65, 4.91, 2.97, 3.24, 4.08],
+        [datetime(2026, 10, 26), 1.68, 4.84, 2.01, 3.52, 8.0, 10.32, 3.1, 3.5, 4.2],
+    ])
+    df = p.parse_moh_workbook(content, "bed_waits")
+    assert set(df.hospital_code) == {"AH", "CGH", "KTPH", "NTFGH", "NUH", "SGH", "SKH", "TTSH", "WH"}
+    wh = df[(df.hospital_code == "WH") & (df.report_date == date(2026, 10, 25))].iloc[0]
+    assert wh.hospital_name == "Woodlands Hospital" and wh.median_wait_hours == pytest.approx(4.08)

@@ -82,7 +82,7 @@ HOSPITALS: dict[str, tuple[str, str]] = {
     "SKH":   ("Sengkang General Hospital",     r"sengkang|\bskh\b|\bskgh\b"),
     "SGH":   ("Singapore General Hospital",    r"singapore\s*general|\bsgh\b"),
     "TTSH":  ("Tan Tock Seng Hospital",        r"tan\s*tock\s*seng|\bttsh\b"),
-    "WH":    ("Woodlands Hospital",            r"woodlands"),
+    "WH":    ("Woodlands Hospital",            r"woodlands|\bwh\b"),
 }
 EXCLUDE_HOSPITAL = re.compile(r"child|paediatric|pediatric|kk\s*women|\bkkh\b", re.I)
 

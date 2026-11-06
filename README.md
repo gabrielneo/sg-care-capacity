@@ -118,7 +118,7 @@ Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `repars
  "rows_read": 6, "parsed": 5, "dropped": 1, "drop_reasons": {"unparseable_value": 1}}
 ```
 
-`rows_read` always equals `parsed + dropped`. Drop reasons: `unparseable_value`, `duplicate_key`, `missing_name`, `no_values`. Whole files that weren't parsed are counted in `files_skipped` (`unchanged`, `not_a_workbook`, `unreadable_workbook`, `no_tables_found`, `not_json`, `load_error`). A source that returned nothing still gets a line with `files: 0`. To pull the summaries out of a log:
+`rows_read` always equals `parsed + dropped`. Drop reasons: `blank` (the source cell is empty, e.g. a hospital before its ED opened), `unparseable_value` (a value that could not be read; also logged as a warning), `duplicate_key`, `missing_name`, `no_values`. Whole files that weren't parsed are counted in `files_skipped` (`unchanged`, `not_a_workbook`, `unreadable_workbook`, `no_tables_found`, `not_json`, `load_error`). A source that returned nothing still gets a line with `files: 0`. To pull the summaries out of a log:
 
 ```bash
 sg-health run 2> run.log && grep '"source_summary"' run.log

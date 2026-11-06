@@ -1,10 +1,48 @@
 # Data dictionary
 
 Every metric shown to users is defined here, with its unit, source and known caveats.
-Per-metric entries are still being moved here from the README. This page currently covers
-the columns that every table shares (lineage) and the raw landing zone.
+Entries for the CHAS, NUHS and SingStat metrics are still to be written.
 
 All timestamps are Singapore time (SGT, UTC+8, no daylight saving), stored without a time zone.
+
+## MOH emergency department metrics
+
+**Publisher:** Ministry of Health, *Healthcare Institution Statistics*. Each workbook's footnote
+gives the underlying source as "Weekly Hospital Submissions". Files are published weekly (week
+*N* covers Sunday to Saturday) with a `Historical` sheet from 2023-01-01 and a sheet for the
+latest week. Definitions below are quoted from the MOH pages (checked 2026-11-06).
+
+**Coverage.** MOH lists: the **Urgent Care Centre** at Alexandra Hospital (AH), and the Emergency
+Medicine Departments of CGH, KTPH, NUH (**adults only**, `NUH(A)`), NTFGH, SKH, SGH and TTSH.
+KK Women's and Children's Hospital and NUH (Children) are **excluded**. The workbooks also carry
+**Woodlands Hospital (WH)** from **2024-06-23**, which the MOH page text does not list yet.
+
+| Hospital code | `hospital_name` | Notes |
+|---|---|---|
+| AH | Alexandra Hospital (UCC) | An urgent care centre, **not a full ED**. Lower attendances and waits are expected; don't rank it against EDs without saying so. |
+| CGH, KTPH, NTFGH, SGH, SKH, TTSH | full names | Emergency Medicine Departments. |
+| NUH | National University Hospital | **Adult ED only.** Children's ED is excluded by MOH. |
+| WH | Woodlands Hospital | Series starts 2024-06-23. Earlier days are blank in the source and are **not stored** (missing, not zero). |
+
+### `moh_bed_waits.median_wait_hours`
+
+| | |
+|---|---|
+| **Definition** | Daily median (50th percentile) waiting time for admission to ward: from *"Decision by doctor to admit patient"* to *"Time patient exits EMD"* (to go to the inpatient ward). |
+| **Unit** | Hours, stored to 2 decimal places. |
+| **Grain** | One value per hospital per day. |
+| **Source** | MOH, *Waiting Time for Admission to Ward* (weekly .xlsx). |
+| **Caveats** | **The unit is inferred, not stated.** Neither the workbook nor the page names it; cells are plain decimals shown to one decimal place. Hours is the only plausible reading (median about 4; minutes would mean 4-minute bed waits), but confirm with MOH before quoting figures externally. It is a **median of patients admitted that day**: it says nothing about patients who were not admitted, and it can't be averaged across hospitals without patient counts. |
+
+### `moh_ed_attendances.total_attendances`
+
+| | |
+|---|---|
+| **Definition** | Daily attendances at the EMD. *"Daily attendance figures include all patients who are presented at the EMD regardless of urgency of medical conditions."* |
+| **Unit** | Patients (count) per day. |
+| **Grain** | One value per hospital per day. |
+| **Source** | MOH, *Attendances at Emergency Medicine Departments* (weekly .xlsx). |
+| **Caveats** | Includes non-urgent cases, so it measures demand on the department, not acuity. AH is an urgent care centre (see above). |
 
 ## Lineage columns (on every parsed table)
 
@@ -58,8 +96,8 @@ Checked 2026-11-06. Update this table whenever a source changes.
 
 | Raw source | Status | Notes |
 |---|---|---|
-| `moh_bed_waits` | OK | Workbook covers 2023-01-01 onward for 8 EDs (`NUH(A)` = NUH adult). **The sheet does not state its unit.** Values are read as hours because the median is about 4 (minutes would mean 4-minute bed waits). Confirm against MOH's page text before publishing. |
-| `moh_ed_attendances` | OK | Same 8 EDs and date range as bed waits. |
+| `moh_bed_waits` | OK | 2023-01-01 to 2026-10-31, 9 hospitals (Woodlands from 2024-06-23). Unit inferred as hours; see the metric entry above. |
+| `moh_ed_attendances` | OK | Same hospitals and date range as bed waits. |
 | `nuhs_live` | OK | The page has one table per department (Adult Emergency, Children's Emergency). NUH appears in both, so `department` is part of the key. |
 | `datagov_chas` | OK, but **stale upstream** | Dataset `d_548c33ea2d99e29ec63a7cc9edcccedc` (collection 2036): 1,193 clinics, 1,049 with CDMP. data.gov.sg reports it **last updated 2024-06-06**. Clinics that opened or closed since then are not reflected. |
 | `datagov_has` | **Retired** (not fetched) | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`), no replacement is named, and it isn't needed for the project. |
