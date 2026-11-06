@@ -74,6 +74,18 @@ def strip_signature(url: str) -> str:
     return url
 
 
+def link_url(url: str) -> str:
+    """The URL as shown to users and stored on rows: signature stripped, percent-encoded.
+
+    Sources publish links with literal spaces (MOH: ".../WT for Admission to Ward_week43Y2026.xlsx"),
+    and early manifest lines recorded them that way. requote_uri encodes unsafe characters and
+    leaves already-encoded ones alone, so every spelling of the same link comes out identical.
+    The manifest itself is never rewritten; this is applied wherever a URL is attached to data.
+    """
+    from requests.utils import requote_uri
+    return requote_uri(strip_signature(url))
+
+
 def guess_ext(url: str, content_type: Optional[str]) -> str:
     """Extension for the stored file: the URL's if it's a known data type, else from Content-Type."""
     suffix = Path(urlparse(url).path).suffix.lower().lstrip(".")

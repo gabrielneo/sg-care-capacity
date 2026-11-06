@@ -7,7 +7,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from .raw import RawRecord
+from .raw import RawRecord, link_url
 
 DDL = [
     """CREATE TABLE IF NOT EXISTS moh_bed_waits (
@@ -195,7 +195,7 @@ class Warehouse:
             "table_name": f.table, "check_id": f.check_id, "severity": f.check.severity.value,
             "scope": f.check.scope.value, "row_key": key_json(f.row_key) if f.row_key else None,
             "failing_rows": int(f.extra.get("failing_rows", 1)), "detail": f.detail,
-            "source_url": rec.url, "source_sha256": rec.sha256} for f in findings])
+            "source_url": link_url(rec.url), "source_sha256": rec.sha256} for f in findings])
         self.con.register("_f", df)
         try:
             self.con.execute("INSERT INTO dq_findings SELECT table_name, check_id, severity, scope, row_key, "

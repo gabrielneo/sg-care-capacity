@@ -1,7 +1,7 @@
 """Every parsed row carries source_url, source_sha256 and ingested_at, and they point at a raw file."""
 import pytest
 
-from sg_health.raw import RawStore
+from sg_health.raw import RawStore, link_url
 from sg_health.warehouse import LINEAGE_COLUMNS, PARSED_TABLES, Warehouse
 
 from test_ingest import full_run
@@ -21,7 +21,7 @@ def test_every_parsed_table_has_lineage_columns(tmp_path):
 
 def test_every_row_points_at_the_raw_file_it_came_from(monkeypatch, paths):
     full_run(monkeypatch, paths)
-    raw = {(r.sha256, r.url): r for r in RawStore(paths["raw"]).records()}
+    raw = {(r.sha256, link_url(r.url)): r for r in RawStore(paths["raw"]).records()}
     wh = Warehouse(paths["db"])
     try:
         for table in PARSED_TABLES:

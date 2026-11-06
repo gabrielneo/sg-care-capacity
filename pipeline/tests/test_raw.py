@@ -73,3 +73,25 @@ def test_read_detects_a_tampered_file(tmp_path):
 ])
 def test_guess_ext(url, ctype, ext):
     assert guess_ext(url, ctype) == ext
+
+
+@pytest.mark.parametrize("url, expected", [
+    ("https://isomer-user-content.by.gov.sg/3/e66f/WT for Admission to Ward_week43Y2026.xlsx",
+     "https://isomer-user-content.by.gov.sg/3/e66f/WT%20for%20Admission%20to%20Ward_week43Y2026.xlsx"),
+    ("https://x/WT%20for%20Admission.xlsx", "https://x/WT%20for%20Admission.xlsx"),          # not double-encoded
+    ("https://s3.example.com/blobs/d_548c.geojson?X-Amz-Signature=abc", "https://s3.example.com/blobs/d_548c.geojson"),
+    ("https://web.archive.org/web/20240101id_/https://www.moh.gov.sg/a b.xlsx",
+     "https://web.archive.org/web/20240101id_/https://www.moh.gov.sg/a%20b.xlsx"),
+])
+def test_link_url_is_one_spelling_per_link(url, expected):
+    from sg_health.raw import link_url
+    assert link_url(url) == expected
+    assert link_url(expected) == expected                                    # idempotent
+
+
+def test_a_space_in_the_published_link_reaches_rows_encoded(tmp_path):
+    from sg_health.load import lineage
+    rec = RawStore(tmp_path).save("moh_bed_waits", "https://x/WT for Admission.xlsx", b"PK", http_status=200,
+                                  content_type=None, fetched_at=WHEN)
+    assert rec.url == "https://x/WT for Admission.xlsx"                   # the manifest keeps what was recorded
+    assert lineage(rec)["source_url"] == "https://x/WT%20for%20Admission.xlsx"

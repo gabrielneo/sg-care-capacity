@@ -23,7 +23,7 @@ from .parsers.moh import parse_moh_workbook
 from .parsers.singstat import derive_pop65, parse_singstat_tabledata, title_year
 from .quality import rules  # noqa: F401  (registers the table rules with the gate)
 from .quality.gate import GateContext, gate
-from .raw import RawRecord, RawStore
+from .raw import RawRecord, RawStore, link_url
 from .warehouse import TABLE_KEYS, Warehouse
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ def lineage(rec: RawRecord) -> dict:
     ingested_at is the raw file's fetched_at (when the data entered the pipeline), not the
     time the parser ran. That is what makes a reparse reproduce the same rows.
     """
-    return {"source_url": rec.url, "source_sha256": rec.sha256, "ingested_at": rec.fetched_at}
+    return {"source_url": link_url(rec.url), "source_sha256": rec.sha256, "ingested_at": rec.fetched_at}
 
 
 def _with_lineage(df: pd.DataFrame, rec: RawRecord) -> pd.DataFrame:
