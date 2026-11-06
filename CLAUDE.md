@@ -68,7 +68,8 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 # run checks:   sg-health validate     # all data-quality checks; exit 1 = publish blocked (docs/data_quality.md)
 # transform:    sg-health transform    # SQL in pipeline/sql/{staging,marts}; marts.* = what the API reads
 # publish:      TODO
-# tests:        pytest -q pipeline/tests
+# tests:        pytest -q pipeline/tests            # offline unit tests (fixtures only)
+# acceptance:   pytest -q pipeline/acceptance       # the real built data, checked as the site would use it
 
 # API
 # setup:        TODO
