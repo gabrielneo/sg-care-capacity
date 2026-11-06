@@ -19,7 +19,8 @@ KEYS = ["hospital_name", "report_date"]
 def rows(*values, **overrides):
     """Bed-wait rows: values are (hospital_name, report_date, median_wait_hours)."""
     df = pd.DataFrame(values, columns=["hospital_name", "report_date", "median_wait_hours"])
-    df["hospital_code"] = df["hospital_name"].str[:3].str.upper()
+    codes = {"Changi General Hospital": "CGH", "Singapore General Hospital": "SGH"}
+    df["hospital_code"] = df["hospital_name"].map(codes)
     for k, v in {"source_url": REC.url, "source_sha256": REC.sha256, "ingested_at": REC.fetched_at,
                  **overrides}.items():
         df[k] = v

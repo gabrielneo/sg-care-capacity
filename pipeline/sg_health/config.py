@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +83,20 @@ HOSPITALS: dict[str, tuple[str, str]] = {
     "SGH":   ("Singapore General Hospital",    r"singapore\s*general|\bsgh\b"),
     "TTSH":  ("Tan Tock Seng Hospital",        r"tan\s*tock\s*seng|\bttsh\b"),
     "WH":    ("Woodlands Hospital",            r"woodlands|\bwh\b"),
+}
+# Reference list for data-quality checks: facility type and the first day MOH reports it.
+# valid_from=None means "from the start of MOH's published series" (2023-01-01).
+# Sources: MOH Healthcare Institution Statistics pages and workbooks (checked 2026-11-06).
+HOSPITAL_REFERENCE: dict[str, tuple[str, "date | None"]] = {
+    "AH":    ("UCC", None),        # Urgent Care Centre, not a full ED
+    "CGH":   ("ED", None),
+    "KTPH":  ("ED", None),
+    "NUH":   ("ED", None),         # adult ED only; NUH Children's is excluded by MOH
+    "NTFGH": ("ED", None),
+    "SKH":   ("ED", None),
+    "SGH":   ("ED", None),
+    "TTSH":  ("ED", None),
+    "WH":    ("ED", date(2024, 6, 23)),   # first value in MOH's workbooks
 }
 EXCLUDE_HOSPITAL = re.compile(r"child|paediatric|pediatric|kk\s*women|\bkkh\b", re.I)
 

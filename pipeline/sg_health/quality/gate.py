@@ -49,10 +49,12 @@ class GateContext:
     keys: list[str]
     rec: RawRecord
     stats: ParseStats
+    attrs: dict = None                 # parser notes about the file (DataFrame.attrs)
 
 
 # A rule returns (check_id, failing-row mask, detail). detail is a str for the whole mask,
-# or a Series of per-row strings.
+# or a Series of per-row strings. A file-level rule may return an int instead of a mask: a
+# count of problems that cover no stored rows (e.g. a spreadsheet column that was ignored).
 RuleResult = tuple[str, pd.Series, "str | pd.Series"]
 Rule = Callable[[pd.DataFrame, GateContext], list[RuleResult]]
 TABLE_RULES: dict[str, list[Rule]] = {}
@@ -137,6 +139,7 @@ def gate(df: pd.DataFrame, ctx: GateContext) -> pd.DataFrame:
     wh = ctx.wh
     if df is None or df.empty:
         return df
+    ctx.attrs = dict(df.attrs)
     df = df.reset_index(drop=True)
     types = wh.column_types(ctx.table)
     required = [c for c in wh.not_null_columns(ctx.table) if c not in LINEAGE]
@@ -159,10 +162,16 @@ def gate(df: pd.DataFrame, ctx: GateContext) -> pd.DataFrame:
     row_findings: list[Finding] = []
     file_findings: list[Finding] = []
     for check_id, mask, detail in results:
+        check = CHECKS[check_id]
+        if isinstance(mask, int):           # file-level problem that covers no stored rows
+            if mask:
+                file_findings.append(Finding(check_id, ctx.table, str(detail), extra={"failing_rows": mask}))
+                (LOG.error if check.severity is Severity.ERROR else LOG.warning)(
+                    "%s %s: %s (%s)", check_id, ctx.table, detail, ctx.rec.url)
+            continue
         mask = mask.reindex(df.index, fill_value=False).fillna(False).astype(bool)
         if not mask.any():
             continue
-        check = CHECKS[check_id]
         if check.severity is Severity.ERROR:
             error |= mask
         if check.scope is Scope.ROW:

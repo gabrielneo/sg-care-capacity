@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from ..config import HOSPITALS, SGT
+from ..config import EXCLUDE_HOSPITAL, HOSPITALS, SGT
 from ..logs import ParseStats, count_drop, count_read
 from .common import is_blank, match_hospital, raw_duration, to_date, to_int
 
@@ -53,13 +53,17 @@ def _best_date_column(grid: pd.DataFrame, rows: Iterable[int], exclude: set[int]
     return best
 
 
-def extract_sheet_records(grid: pd.DataFrame, default_year: int) -> list[tuple[str, date, Any]]:
+def extract_sheet_records(grid: pd.DataFrame, default_year: int,
+                          unrecognised: Optional[list[str]] = None) -> list[tuple[str, date, Any]]:
     """Find (hospital_code, date, raw_value) triples in a messy sheet.
 
     Tries three layouts in order:
       A. Hospitals across a header row, dates down a column (the most common MOH layout)
       B. Dates across a header row, hospitals down a column
       C. A long table: each row has a date cell, a hospital cell and a value
+
+    ``unrecognised`` (layout A only) collects header cells that are neither the date column,
+    a known hospital nor a deliberately excluded one, so a new hospital is never dropped silently.
     """
     grid = grid.dropna(how="all").dropna(axis=1, how="all").reset_index(drop=True)
     if grid.empty:
@@ -85,6 +89,13 @@ def extract_sheet_records(grid: pd.DataFrame, default_year: int) -> list[tuple[s
                 if d:
                     recs.extend((code, d, grid.iat[i, c]) for c, code in hosp_cols.items())
             if recs:
+                if unrecognised is not None:
+                    for c in grid.columns:
+                        cell = grid.iat[r, c]
+                        if (c in hosp_cols or c == date_col or is_blank(cell)
+                                or EXCLUDE_HOSPITAL.search(str(cell))):
+                            continue
+                        unrecognised.append(str(cell).strip())
                 return recs
 
     # Layout B
@@ -136,12 +147,13 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
         return empty
 
     frames = []
+    unrecognised: list[str] = []
     for sheet_name, grid in sheets.items():
         header_text = f"{sheet_name} " + " ".join(
             str(v) for v in grid.head(12).to_numpy().ravel() if not is_blank(v))
         year_match = re.search(r"\b(20\d{2})\b", header_text)
         default_year = int(year_match.group(1)) if year_match else datetime.now(SGT).year
-        recs = extract_sheet_records(grid, default_year)
+        recs = extract_sheet_records(grid, default_year, unrecognised)
         if not recs:
             LOG.debug("No records found in sheet %r of %s", sheet_name, source_file)
             continue
@@ -163,7 +175,8 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
         else:
             df[value_col] = df["raw"].map(to_int).astype("Int64")
         df["blank"] = df["raw"].map(is_blank)      # empty in the source: missing, not a parse failure
-        frames.append(df[["hospital_code", "report_date", value_col, "blank"]])
+        df["sheet"] = str(sheet_name)              # units are decided per sheet; checks group by it
+        frames.append(df[["hospital_code", "report_date", value_col, "blank", "sheet"]])
 
     if not frames:
         LOG.warning("No usable tables in %s", source_file)
@@ -184,5 +197,7 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
     # are merged, conflicting ones quarantined) instead of the parser silently picking one.
     out["hospital_name"] = out["hospital_code"].map(lambda c: HOSPITALS[c][0])
     out["source_file"] = source_file
-    return out[["hospital_code", "hospital_name", "report_date", value_col, "source_file"]] \
-        .sort_values(["report_date", "hospital_code"]).reset_index(drop=True)
+    out = out[["hospital_code", "hospital_name", "report_date", value_col, "source_file", "sheet"]] \
+        .sort_values(["report_date", "hospital_code"], kind="stable").reset_index(drop=True)
+    out.attrs["unrecognised_columns"] = sorted(set(unrecognised))   # read by the data-quality gate
+    return out
