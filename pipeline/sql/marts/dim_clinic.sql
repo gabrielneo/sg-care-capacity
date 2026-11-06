@@ -5,12 +5,15 @@
 -- The metadata row is matched by dataset id inside the clinic row's own source_url, so a
 -- clinic is never dated by a different dataset's metadata.
 -- No on_has column: the Health Appointment System clinic list was unpublished on data.gov.sg.
+-- clinic_name and address are tidied for display only: trimmed, runs of whitespace collapsed to one
+-- space (CHAS publishes e.g. 'BUKIT TIMAH NAM SANG  CLINIC'). Wording and case are untouched, and
+-- staging.stg_chas_clinics keeps the text exactly as published.
 CREATE OR REPLACE TABLE marts.dim_clinic AS
 SELECT
     c.clinic_key,
     c.hci_code,
-    c.clinic_name,
-    c.address,
+    regexp_replace(trim(c.clinic_name), '\s+', ' ', 'g')    AS clinic_name,
+    regexp_replace(trim(c.address), '\s+', ' ', 'g')        AS address,
     c.postal_code,
     c.latitude,
     c.longitude,

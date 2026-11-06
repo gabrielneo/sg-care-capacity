@@ -95,7 +95,7 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 |---|---|---|---|---|
 | `clinic_key` | Clinic identifier: the HCI code, or name and postcode if there is none | text | staging | |
 | `hci_code` | MOH healthcare institution code | text | staging | |
-| `clinic_name`, `address` | As published | text | staging | Address is built from block, street, unit and building fields when there is no single address field. |
+| `clinic_name`, `address` | As published, tidied for display | text | staging; trimmed and runs of whitespace collapsed to one space | CHAS publishes some names and streets with double spaces (e.g. `BUKIT TIMAH NAM SANG  CLINIC`); wording and case are unchanged, and `staging.stg_chas_clinics` keeps the published text. The address is built from block, street, `#floor-unit` and building when there is no single address field; CHAS sometimes includes the `#` in the floor field, which is not doubled. |
 | `postal_code` | 6-digit postcode | text | staging | Kept as text: leading zeros matter. Non-6-digit codes are published with a WARN. |
 | `latitude`, `longitude` | Location | degrees (WGS84) | staging, from the GeoJSON point | Rows outside Singapore are quarantined, not corrected (`clinic.coordinates_in_singapore`). |
 | `programmes` | Programme codes as published, e.g. `CDMP,CHAS` | text | staging | Real values seen: CHAS, CDMP, ISP. |

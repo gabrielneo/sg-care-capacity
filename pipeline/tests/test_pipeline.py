@@ -228,3 +228,16 @@ def test_real_moh_header_row_maps_all_nine_hospitals():
     assert set(df.hospital_code) == {"AH", "CGH", "KTPH", "NTFGH", "NUH", "SGH", "SKH", "TTSH", "WH"}
     wh = df[(df.hospital_code == "WH") & (df.report_date == date(2026, 10, 25))].iloc[0]
     assert wh.hospital_name == "Woodlands Hospital" and wh.median_wait_hours == pytest.approx(4.08)
+
+
+@pytest.mark.parametrize("floor, unit, expected", [
+    ("01", "23", "1 STREET #01-23"),
+    ("#01", "311/313", "1 STREET #01-311/313"),     # CHAS sometimes includes the '#' already
+    ("#B1", "#10", "1 STREET #B1-10"),
+    ("01", "", "1 STREET #01"),                      # no dangling '-'
+    ("", "", "1 STREET"),
+])
+def test_clinic_address_unit_formatting(floor, unit, expected):
+    raw = pd.DataFrame([{"HCI_NAME": "A CLINIC", "BLK_HSE_NO": "1", "STREET_NAME": "STREET",
+                         "FLOOR_NO": floor, "UNIT_NO": unit, "POSTAL_CD": "123456"}])
+    assert p.normalize_clinics(raw).iloc[0].address == expected

@@ -90,6 +90,17 @@ def _first(row: pd.Series, candidates: list[str]) -> Optional[str]:
     return None
 
 
+def _unit_part(floor: Optional[str], unit: Optional[str]) -> Optional[str]:
+    """'#01-23' from floor and unit. CHAS sometimes includes the '#' in FLOOR_NO already."""
+    floor = (floor or "").strip().lstrip("#")
+    unit = (unit or "").strip().lstrip("#")
+    if floor and unit:
+        return f"#{floor}-{unit}"
+    if floor or unit:
+        return f"#{floor or unit}"
+    return None
+
+
 def normalize_clinics(raw: pd.DataFrame, stats: Optional[ParseStats] = None) -> pd.DataFrame:
     """Map whatever column names the source uses onto one clinic schema."""
     count_read(stats, len(raw))
@@ -100,7 +111,7 @@ def normalize_clinics(raw: pd.DataFrame, stats: Optional[ParseStats] = None) -> 
         address = _first(row, ["ADDRESS", "ADDR", "FULL_ADDRESS", "FORMATTED_ADDRESS"])
         if not address:
             parts = [_first(row, ["BLK_HSE_NO", "BLOCK"]), _first(row, ["STREET_NAME", "STREET"]),
-                     _first(row, ["FLOOR_NO"]) and f"#{_first(row, ['FLOOR_NO'])}-{_first(row, ['UNIT_NO']) or ''}",
+                     _unit_part(_first(row, ["FLOOR_NO"]), _first(row, ["UNIT_NO"])),
                      _first(row, ["BUILDING_NAME"])]
             address = " ".join(p for p in parts if p) or None
         postal = _first(row, ["POSTAL_CD", "POSTAL_CODE", "POSTALCODE", "ADDRESSPOSTALCODE", "POSTAL"])

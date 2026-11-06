@@ -253,3 +253,16 @@ def test_every_mart_column_is_in_the_data_dictionary(built, mart):
     assert actual - documented == set(), f"undocumented columns in marts.{mart}"
     assert documented - actual == set(), f"documented but not in marts.{mart}"
     assert {"as_of", "as_of_basis"} <= actual and any("sha256" in c for c in actual)
+
+
+def test_dim_clinic_tidies_whitespace_for_display_but_staging_keeps_it(monkeypatch, paths):
+    from conftest import chas_geojson, source_routes
+    full_run(monkeypatch, paths, source_routes(chas=chas_geojson([("C1", "BUKIT TIMAH NAM SANG  CLINIC ", "CHAS")])))
+    wh = Warehouse(paths["db"])
+    try:
+        mart = q(wh, "SELECT clinic_name FROM marts.dim_clinic")["clinic_name"][0]
+        staged = q(wh, "SELECT clinic_name FROM staging.stg_chas_clinics")["clinic_name"][0]
+    finally:
+        wh.close()
+    assert mart == "BUKIT TIMAH NAM SANG CLINIC"
+    assert staged == "BUKIT TIMAH NAM SANG  CLINIC"           # as published (the parser trims edges only)
