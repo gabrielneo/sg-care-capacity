@@ -154,14 +154,14 @@ data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing t
 
 ### `marts.fct_clinic_access`
 
-**Grain:** one row per planning area (55), for the latest SingStat year. **Source:**
+**Grain:** one row per planning area (55), for the latest SingStat year. Every area is kept: if its population is missing, population and ratios are NULL and the blocking check `completeness.population_present` fails. **Source:**
 `marts.dim_clinic` (active clinics, by planning area) joined to `marts.fct_planning_area_population`
 on planning-area name (case-insensitive; 55 of 55 match), over `staging.stg_planning_area_boundaries`.
 
 | Column | Definition | Unit | Source → transformation | Caveats |
 |---|---|---|---|---|
 | `planning_area_code` | URA planning-area code | text | boundaries | |
-| `planning_area` | Planning area, SingStat spelling | text | population mart | |
+| `planning_area` | Planning area, SingStat spelling | text | population mart; URA's name if the population is missing | |
 | `region_name` | URA region | text | boundaries | |
 | `population_year` | Year of the resident counts | integer | latest year in the population mart | |
 | `residents_total`, `residents_65plus` | Residents, and residents aged 65+ | residents | population mart | Rounded per published cell (see that mart). |

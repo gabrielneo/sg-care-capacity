@@ -363,3 +363,22 @@ def test_every_metric_points_at_a_real_mart_column_and_wait_units_are_inferred(b
     assert m.loc["fct_ed_daily.median_wait_hours", "unit_basis"] == "inferred"
     assert "not stated by MOH" in m.loc["fct_ed_daily.median_wait_hours", "caveat"]
     assert set(metrics["unit_basis"]) <= {"stated", "inferred"} and metrics["caveat"].str.len().gt(0).all()
+
+
+def test_access_keeps_every_area_with_empty_ratios_when_population_is_missing(monkeypatch, paths):
+    """First CI run: SingStat refused the runner. The mart must not crash or drop areas."""
+    from sg_health import config
+    from conftest import chas_geojson, source_routes
+    routes = source_routes(chas=chas_geojson([("C1", "A", "CHAS,CDMP", (103.68, 1.33))]))
+    del routes[config.SINGSTAT_RESIDENTS_URL]
+    full_run(monkeypatch, paths, routes)
+    wh = Warehouse(paths["db"])
+    try:
+        access = q(wh, "SELECT * FROM marts.fct_clinic_access ORDER BY planning_area")
+        log = q(wh, "SELECT status FROM main.transform_log")
+    finally:
+        wh.close()
+    assert len(access) == 2 and access["residents_65plus"].isna().all()
+    assert access["cdmp_clinics_per_1000_65plus"].isna().all()
+    assert int(access["active_chas_clinics"].sum()) == 1                    # clinics still counted
+    assert set(log["status"]) <= {"ok", "explained"}                        # no transform failure

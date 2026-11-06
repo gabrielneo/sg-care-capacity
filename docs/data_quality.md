@@ -273,6 +273,18 @@ The parser itself also **stops** (the file is not loaded) if the columns aren't 
 picking up SingStat's *Floor Area of Residence* file by mistake would be caught: it has an `FA`
 column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
 
+### `completeness.population_present`: ERROR, dataset, blocks
+
+- **Guards against:** publishing the clinic-access page without its denominator, either because
+  the SingStat file couldn't be loaded at all (the first CI run: SingStat refused GitHub's
+  runners) or because a planning area in the boundary file has no matching population (a renamed
+  or new area after a Master Plan change).
+- **Threshold:** every planning area in `planning_area_boundaries` has a row in
+  `pop_65plus_by_area` for the latest year (names matched case-insensitively).
+- **Why ERROR:** without it the access ratios are empty or wrong for some areas. `fct_clinic_access`
+  keeps every area with population and ratios NULL (never dropped, never zero), and this check stops
+  publishing so the site keeps the last good snapshot.
+
 ### `freshness.population_15_months`: WARN, dataset
 
 - **Guards against:** showing an old population count as current because nobody updated the

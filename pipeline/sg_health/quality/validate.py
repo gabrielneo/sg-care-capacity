@@ -148,6 +148,30 @@ def population_freshness(wh: Warehouse, today: date) -> list[Result]:
     return [Result(FRESH_POPULATION, "pop_65plus_by_area", "fail" if today > cutoff else "pass", 0, text)]
 
 
+POPULATION_PRESENT = register(
+    "completeness.population_present", Severity.ERROR, Scope.DATASET,
+    "Every planning area in the boundary file has a resident population for the latest year",
+    ("pop_65plus_by_area",))
+
+
+@dataset_check
+def population_present(wh: Warehouse, today: date) -> list[Result]:
+    areas = wh.con.execute("SELECT count(*) FROM planning_area_boundaries").fetchall()[0][0]
+    if not areas:
+        return [Result(POPULATION_PRESENT, "pop_65plus_by_area", "skipped", details="no planning-area boundaries")]
+    missing = [r[0] for r in wh.con.execute("""
+        SELECT b.planning_area_name FROM planning_area_boundaries b
+        WHERE upper(b.planning_area_name) NOT IN (
+            SELECT upper(planning_area) FROM pop_65plus_by_area
+            WHERE year = (SELECT max(year) FROM pop_65plus_by_area))
+        ORDER BY 1""").fetchall()]
+    if not missing:
+        return [Result(POPULATION_PRESENT, "pop_65plus_by_area", "pass", 0, f"{areas} of {areas} planning areas")]
+    detail = ("no SingStat population loaded" if len(missing) == areas
+              else f"{len(missing)} of {areas} planning areas lack a population (renamed or new?): {missing[:DETAIL_SAMPLES]}")
+    return [Result(POPULATION_PRESENT, "pop_65plus_by_area", "fail", len(missing), detail)]
+
+
 @dataset_check
 def rolling_attendances(wh: Warehouse, today: date) -> list[Result]:
     df = _moh(wh, "moh_ed_attendances")

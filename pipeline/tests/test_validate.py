@@ -193,3 +193,23 @@ def test_population_freshness(wh, today, status):
               "residents_65plus": 20, "source_table": "t", **LINEAGE}]), ["planning_area", "year"])
     r = result(dq.run_validation(wh, today=today), "freshness.population_15_months", "pop_65plus_by_area")
     assert r.status == status and not r.blocking                       # WARN: a reminder, never a block
+
+
+def put_areas(wh, names):
+    wh.upsert("planning_area_boundaries", pd.DataFrame([{"planning_area_code": n[:2], "planning_area_name": n.upper(),
+              "region_name": "R", "geometry_wkt": "POLYGON ((103.7 1.3, 103.8 1.3, 103.8 1.4, 103.7 1.3))", **LINEAGE}
+              for n in names]), ["planning_area_code"])
+
+
+@pytest.mark.parametrize("population, status, blocking, detail", [
+    ([], "fail", True, "no SingStat population loaded"),
+    (["Bedok"], "fail", True, "1 of 2 planning areas lack a population"),
+    (["Bedok", "Tuas"], "pass", False, "2 of 2 planning areas"),
+])
+def test_population_present_blocks_publishing_until_every_area_has_one(wh, population, status, blocking, detail):
+    put_areas(wh, ["Bedok", "Tuas"])
+    if population:
+        wh.upsert("pop_65plus_by_area", pd.DataFrame([{"planning_area": n, "year": 2026, "residents_total": 10,
+                  "residents_65plus": 2, "source_table": "t", **LINEAGE} for n in population]), ["planning_area", "year"])
+    r = result(dq.run_validation(wh, today=date(2026, 11, 6)), "completeness.population_present", "pop_65plus_by_area")
+    assert (r.status, r.blocking) == (status, blocking) and detail in r.details
