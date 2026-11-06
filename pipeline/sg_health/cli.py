@@ -4,16 +4,14 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from pathlib import Path
 from datetime import date
-from typing import Optional
+from pathlib import Path
 
+from . import logs
 from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR
 from .http import PoliteHttp
-from . import logs
 from .load import Loader, reparse
 from .quality import validate as dq
-from .transform import TransformError, run_transform
 from .raw import RawStore
 from .report import export_report
 from .sources.datagov import ingest_opendata
@@ -21,6 +19,7 @@ from .sources.live import ingest_live
 from .sources.moh import ingest_moh
 from .sources.singstat import ingest_singstat
 from .sources.wayback import backfill_moh
+from .transform import TransformError, run_transform
 from .warehouse import SchemaOutOfDate, Warehouse
 
 LOG = logging.getLogger("sg_health")
@@ -67,7 +66,7 @@ def _log_validation(results, run_id: str) -> None:
              extra={"fields": {"event": "dq_summary", "run_id": run_id, "blocking": blocking}})
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="sg-health", description="Singapore healthcare capacity ETL pipeline")
     parser.add_argument("--db", default=str(DEFAULT_DB), help="working warehouse (default: %(default)s)")
     parser.add_argument("--report", default=str(DEFAULT_REPORT), help="Excel report (default: %(default)s)")
@@ -156,6 +155,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             unknown = wanted - set(ALL_SOURCES)
             if unknown:
                 parser.error(f"unknown sources: {sorted(unknown)}")
+            assert loader is not None and http is not None      # set above for run/backfill
             for step in wanted:
                 loader.expect(*STEP_SOURCES[step])
             if "moh" in wanted:
@@ -176,6 +176,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             if not args.no_transform and not _transform(wh):
                 return 1
         elif args.command == "backfill":
+            assert loader is not None and http is not None
             loader.expect(*STEP_SOURCES["moh"])
             results["backfill"] = _run_step("backfill", backfill_moh, http, loader, args.start, args.end,
                                             args.max_snapshots)

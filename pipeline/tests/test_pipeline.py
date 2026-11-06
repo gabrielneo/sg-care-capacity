@@ -184,6 +184,7 @@ def test_singstat_residents_sums_planning_areas_and_65_plus():
 ])
 def test_singstat_residents_stops_on_an_unexpected_layout(change, message):
     from conftest import singstat_residents_zip
+
     from sg_health.parsers.singstat import SingStatFormatError
     with pytest.raises(SingStatFormatError, match=message):
         p.parse_residents_zip(singstat_residents_zip(**change))
@@ -252,6 +253,7 @@ def test_clinic_address_unit_formatting(floor, unit, expected):
 
 def test_polyclinic_list_flags_entries_that_are_not_polyclinics():
     from conftest import polyclinics_geojson
+
     from sg_health.parsers.datagov import parse_polyclinics
     out = parse_polyclinics(polyclinics_geojson([("Tampines  Polyclinic", 103.946, 1.357),
                                                  ("Some GP Screening Clinic", 103.80, 1.30)])).set_index("facility_name")

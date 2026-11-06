@@ -1,0 +1,100 @@
+name: Live ED waits (every 3 hours)
+
+# NUHS live wait estimates only, appended to a small separate store: its own raw zone, kept as
+# live.tar.gz on the rolling `live-latest` release, plus nuhs_live_waits.parquet for convenience.
+# Never publishes a data-YYYY-MM-DD snapshot and never touches the weekly raw archive.
+
+on:
+  schedule:
+    - cron: "15 */3 * * *"     # every 3 hours at :15 (off the hour, when GitHub is busiest)
+  workflow_dispatch:
+
+permissions:
+  contents: write               # the live-latest release only
+
+concurrency:
+  group: live-store
+  cancel-in-progress: false
+
+env:
+  LIVE_TAG: live-latest
+  LIVE_ASSET: live.tar.gz
+  SG_HEALTH_DATA_DIR: ${{ github.workspace }}/data-live     # separate from the weekly data/
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CRAWLER_USER_AGENT: >-
+        SGHealthcareResearchCrawler/1.0 (non-commercial portfolio research;
+        +https://github.com/${{ github.repository }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/pyproject.toml
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e pipeline
+
+      - name: Restore the live store
+        id: restore
+        run: |
+          set -euo pipefail
+          mkdir -p "$SG_HEALTH_DATA_DIR"
+          if gh release view "$LIVE_TAG" >/dev/null 2>&1; then
+            gh release download "$LIVE_TAG" --pattern "$LIVE_ASSET" --dir "$RUNNER_TEMP"
+            tar -xzf "$RUNNER_TEMP/$LIVE_ASSET" -C "$SG_HEALTH_DATA_DIR"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+          before=$(grep -c . "$SG_HEALTH_DATA_DIR/raw/manifest.jsonl" 2>/dev/null || true)
+          echo "manifest_lines=${before:-0}" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch live waits
+        id: fetch
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sg-health reparse --no-transform --no-report
+          sg-health run --sources live --no-validate --no-transform --no-report
+
+      - name: Check the store only grew
+        id: grew
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
+        run: |
+          after=$(grep -c . "$SG_HEALTH_DATA_DIR/raw/manifest.jsonl" 2>/dev/null || true)
+          before="${{ steps.restore.outputs.manifest_lines }}"
+          echo "manifest lines: before=$before after=${after:-0}"
+          [ "${after:-0}" -ge "$before" ] || { echo "::error::live store shrank"; exit 1; }
+
+      - name: Upload the live store
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' && steps.grew.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          tar -czf "$RUNNER_TEMP/$LIVE_ASSET" -C "$SG_HEALTH_DATA_DIR" raw
+          python - <<'PY'
+          import os, duckdb
+          db = os.path.join(os.environ["SG_HEALTH_DATA_DIR"], "build", "warehouse.duckdb")
+          out = os.path.join(os.environ["RUNNER_TEMP"], "nuhs_live_waits.parquet")
+          con = duckdb.connect(db, read_only=True)
+          con.execute(f"COPY (SELECT * FROM nuhs_live_waits ORDER BY snapshot_timestamp, site_name, department) TO '{out}' (FORMAT parquet)")
+          print("rows:", con.execute("SELECT count(*) FROM nuhs_live_waits").fetchall()[0][0])
+          PY
+          if [ "${{ steps.restore.outputs.exists }}" != "true" ]; then
+            gh release create "$LIVE_TAG" --latest=false --title "Live ED waits store (rolling)" \
+              --notes "NUHS live wait estimates every 3 hours: live.tar.gz is the raw store (restore with tar -xzf live.tar.gz -C <dir>, then SG_HEALTH_DATA_DIR=<dir> sg-health reparse); nuhs_live_waits.parquet is every reading so far. Not a data snapshot."
+          fi
+          gh release upload "$LIVE_TAG" "$RUNNER_TEMP/$LIVE_ASSET" "$RUNNER_TEMP/nuhs_live_waits.parquet" --clobber
+
+      - name: Fail the job if the fetch failed
+        if: ${{ !cancelled() && steps.fetch.outcome == 'failure' }}
+        run: |
+          echo "::error::live fetch failed; the store was still archived"
+          exit 1

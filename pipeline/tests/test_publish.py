@@ -5,13 +5,11 @@ from datetime import date, datetime
 
 import duckdb
 import pytest
+from test_ingest import full_run
 
 from sg_health import cli
-from sg_health.publish import (KEEP_SNAPSHOTS, PublishBlocked, build_snapshot, snapshots_to_prune,
-                               verify_manifest)
+from sg_health.publish import KEEP_SNAPSHOTS, PublishBlocked, build_snapshot, snapshots_to_prune, verify_manifest
 from sg_health.warehouse import Warehouse
-
-from test_ingest import full_run
 
 
 @pytest.fixture

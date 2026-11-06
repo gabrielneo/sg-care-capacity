@@ -6,13 +6,12 @@ from datetime import datetime
 
 import pandas as pd
 import pytest
+from conftest import CHAS_V2, source_routes
+from test_ingest import full_run
 
 from sg_health import cli
 from sg_health.raw import RawStore
 from sg_health.warehouse import REBUILT_TABLES, Warehouse
-
-from conftest import CHAS_V2, source_routes
-from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 

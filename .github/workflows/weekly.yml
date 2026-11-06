@@ -1,0 +1,213 @@
+name: Weekly pipeline
+
+# test -> ingest -> validate -> transform -> publish. See docs/runbook.md.
+# Raw history (data/raw) lives as raw.tar.gz on the rolling `data-latest` release and is archived
+# even when later steps fail. A snapshot is published as release data-YYYY-MM-DD only if
+# validation passes; otherwise an issue lists the failing checks. Only the newest 12 snapshots
+# are kept.
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"        # Sundays 00:00 UTC = 08:00 SGT
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Comma-separated sources (moh,live,opendata,singstat)"
+        required: false
+        default: "moh,live,opendata,singstat"
+
+permissions:
+  contents: write               # releases (raw archive and snapshots)
+  issues: write                 # open/update the issue when validation fails
+
+concurrency:
+  group: weekly-pipeline
+  cancel-in-progress: false     # never let two runs touch data-latest at once
+
+env:
+  RAW_RELEASE_TAG: data-latest
+  RAW_ASSET: raw.tar.gz
+  PUBLISH_DIR: data/build/publish
+  KEEP_SNAPSHOTS: "12"
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DATAGOV_API_KEY: ${{ secrets.DATAGOV_API_KEY }}          # optional; higher rate limits
+      CRAWLER_USER_AGENT: >-
+        SGHealthcareResearchCrawler/1.0 (non-commercial portfolio research;
+        +https://github.com/${{ github.repository }})
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "pipeline[dev,browser]"
+
+      - name: Install Chromium for the Playwright fallback
+        run: python -m playwright install --with-deps chromium
+
+      # ---------------------------------------------------------------- test
+      - name: Test
+        run: pytest -q pipeline/tests
+
+      # -------------------------------------------------------------- ingest
+      - name: Restore data/raw from the release
+        id: restore
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          if gh release view "$RAW_RELEASE_TAG" >/dev/null 2>&1; then
+            # The release exists, so the archive must download: carrying on with an empty
+            # data/raw would overwrite history on upload.
+            gh release download "$RAW_RELEASE_TAG" --pattern "$RAW_ASSET" --dir "$RUNNER_TEMP"
+            tar -xzf "$RUNNER_TEMP/$RAW_ASSET" -C data
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No $RAW_RELEASE_TAG release yet: starting with an empty data/raw."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+          before=$(grep -c . data/raw/manifest.jsonl 2>/dev/null || true)
+          echo "manifest_lines=${before:-0}" >> "$GITHUB_OUTPUT"
+
+      # Rebuild clean tables from history, then fetch this week's data. May fail (a source down)
+      # without ending the job: whatever was downloaded must still be archived below.
+      - name: Ingest
+        id: ingest
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          sg-health reparse --no-transform --no-report
+          sg-health run --sources "${{ github.event.inputs.sources || 'moh,live,opendata,singstat' }}" \
+            --no-validate --no-transform --no-report
+
+      - name: Check data/raw only grew
+        id: grew
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          after=$(grep -c . data/raw/manifest.jsonl 2>/dev/null || true)
+          before="${{ steps.restore.outputs.manifest_lines }}"
+          echo "manifest lines: before=$before after=${after:-0}"
+          if [ "${after:-0}" -lt "$before" ]; then
+            echo "::error::data/raw shrank ($before -> ${after:-0}); refusing to upload."
+            exit 1
+          fi
+
+      - name: Upload data/raw to the release
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' && steps.grew.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          tar -czf "$RUNNER_TEMP/$RAW_ASSET" -C data raw
+          if [ "${{ steps.restore.outputs.exists }}" != "true" ]; then
+            gh release create "$RAW_RELEASE_TAG" --latest=false \
+              --title "Raw landing zone (rolling)" \
+              --notes "data/raw from the weekly pipeline: every downloaded file, unchanged, plus manifest.jsonl. Replaced on every run. Restore with: tar -xzf raw.tar.gz -C data && sg-health reparse"
+          fi
+          gh release upload "$RAW_RELEASE_TAG" "$RUNNER_TEMP/$RAW_ASSET" --clobber
+
+      # ------------------------------------------------------------ validate
+      - name: Validate
+        id: validate
+        continue-on-error: true
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
+        run: sg-health validate --markdown "$RUNNER_TEMP/dq.md"
+
+      - name: Open or update the data-quality issue
+        if: ${{ !cancelled() && steps.validate.outcome == 'failure' }}
+        run: |
+          set -euo pipefail
+          title="Data quality: publishing blocked"
+          { echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; echo; \
+            cat "$RUNNER_TEMP/dq.md" 2>/dev/null || echo "Validation did not produce a report; see the run log."; } > "$RUNNER_TEMP/issue.md"
+          gh label create data-quality --color B60205 --description "Publishing blocked by data checks" 2>/dev/null || true
+          existing=$(gh issue list --label data-quality --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/issue.md"
+          else
+            gh issue create --title "$title" --label data-quality --body-file "$RUNNER_TEMP/issue.md"
+          fi
+
+      # ----------------------------------------------------------- transform
+      - name: Transform
+        id: transform
+        continue-on-error: true
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
+        run: sg-health transform
+
+      # ------------------------------------------------------------- publish
+      # Only after a clean ingest, a passing validation and a successful transform. `sg-health
+      # publish` re-runs validation itself and refuses if anything blocks.
+      - name: Publish snapshot
+        id: publish
+        if: ${{ !cancelled() && steps.ingest.outcome == 'success' && steps.validate.outcome == 'success' && steps.transform.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          sg-health publish --out "$PUBLISH_DIR"
+          python -c "from sg_health.publish import verify_manifest; import sys; p = verify_manifest('$PUBLISH_DIR'); print(p) if p else None; sys.exit(1 if p else 0)"
+          echo "tag=$(python -c "import json; print(json.load(open('$PUBLISH_DIR/manifest.json'))['snapshot_id'])")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload snapshot release
+        if: ${{ steps.publish.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.publish.outputs.tag }}"
+          python - <<'PY' > "$RUNNER_TEMP/notes.md"
+          import json, os
+          m = json.load(open(os.environ["PUBLISH_DIR"] + "/manifest.json"))
+          c = m["checks"]
+          print(f"Data snapshot **{m['snapshot_id']}** from pipeline commit `{(m['pipeline_commit'] or '')[:7]}`.\n")
+          print(f"Checks: {c['counts']['pass']} pass, {c['counts']['warn']} warn, {c['counts']['fail']} fail (non-blocking), {c['blocking']} blocking.\n")
+          print("| Mart | Rows |\n|---|---|")
+          for k, v in sorted(m["row_counts"].items()):
+              print(f"| `{k}` | {v:,} |")
+          print("\nFull details, hashes and as_of per source: `manifest.json`. Parquet files are named after their mart.")
+          PY
+          files=("$PUBLISH_DIR/analytics.duckdb" "$PUBLISH_DIR/manifest.json" "$PUBLISH_DIR"/parquet/*.parquet)
+          [ -f "$PUBLISH_DIR/planning_area_access.geojson" ] && files+=("$PUBLISH_DIR/planning_area_access.geojson")
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${files[@]}" --clobber          # same-day rerun replaces the files
+            gh release edit "$tag" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$tag" "${files[@]}" --title "Data snapshot ${tag#data-}" --notes-file "$RUNNER_TEMP/notes.md"
+          fi
+
+      - name: Keep only the newest snapshots
+        if: ${{ steps.publish.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          gh release list --limit 200 --json tagName --jq '.[].tagName' \
+            | sg-health snapshots-to-prune --keep "$KEEP_SNAPSHOTS" \
+            | while read -r tag; do echo "deleting old snapshot $tag"; gh release delete "$tag" --yes --cleanup-tag; done
+
+      - name: Upload report and data-quality summary as a build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-report
+          path: |
+            data/build/SG_Healthcare_Scrape_Report.xlsx
+            data/build/web/planning_area_access.geojson
+            ${{ runner.temp }}/dq.md
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # Report the result now that raw history is archived.
+      - name: Fail the job if any stage failed
+        if: ${{ !cancelled() && (steps.ingest.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.transform.outcome == 'failure' || steps.publish.outcome == 'failure') }}
+        run: |
+          echo "::error::ingest: ${{ steps.ingest.outcome }}, validate: ${{ steps.validate.outcome }}, transform: ${{ steps.transform.outcome }}, publish: ${{ steps.publish.outcome }}. Raw data was archived."
+          exit 1

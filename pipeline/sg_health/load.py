@@ -10,14 +10,20 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Callable, Iterable, Optional
+from collections.abc import Callable, Iterable
 
 import pandas as pd
 
 from .config import ANNUAL_AE_SERIES, DATAGOV_DATASETS, MOH_SOURCES
 from .logs import ParseStats
-from .parsers.datagov import (normalize_clinics, parse_annual_ae, parse_datagov_metadata,
-                              parse_datagov_payload, parse_planning_areas, parse_polyclinics)
+from .parsers.datagov import (
+    normalize_clinics,
+    parse_annual_ae,
+    parse_datagov_metadata,
+    parse_datagov_payload,
+    parse_planning_areas,
+    parse_polyclinics,
+)
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
 from .parsers.singstat import parse_residents_zip
@@ -143,7 +149,7 @@ def load_annual_ae(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSt
 
 
 def load_datagov_metadata(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
-    from .sources.datagov import DATASET_SOURCES       # dataset key -> raw source name
+    from .sources.datagov import DATASET_SOURCES  # dataset key -> raw source name
     source_by_id = {DATAGOV_DATASETS[key]: src for key, src in DATASET_SOURCES}
     try:
         payload = json.loads(decode_text(rec, content))
@@ -203,7 +209,7 @@ class Loader:
     """Applies raw records to the warehouse and keeps per-source row accounting."""
 
     def __init__(self, wh: Warehouse, store: RawStore, *, force: bool = False,
-                 seen: Optional[Iterable[tuple[str, str]]] = None) -> None:
+                 seen: Iterable[tuple[str, str]] | None = None) -> None:
         self.wh = wh
         self.store = store
         self.force = force
@@ -211,7 +217,7 @@ class Loader:
         self.stats: dict[str, ParseStats] = {}
 
     @classmethod
-    def for_run(cls, wh: Warehouse, store: RawStore, force: bool = False) -> "Loader":
+    def for_run(cls, wh: Warehouse, store: RawStore, force: bool = False) -> Loader:
         """A loader that knows every (source, sha256) already in the landing zone."""
         return cls(wh, store, force=force, seen=((r.source, r.sha256) for r in store.iter_records()))
 

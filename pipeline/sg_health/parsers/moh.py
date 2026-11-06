@@ -4,8 +4,9 @@ from __future__ import annotations
 import io
 import logging
 import re
+from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Iterable, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import pandas as pd
@@ -23,7 +24,10 @@ def find_xlsx_links(html: str, base_url: str) -> list[str]:
     soup = BeautifulSoup(html, "lxml")
     links: list[str] = []
     for a in soup.find_all("a", href=True):
-        href = a["href"].strip()
+        raw = a.get("href")
+        if not isinstance(raw, str):              # bs4 can return a list for odd markup: skip, don't crash
+            continue
+        href = raw.strip()
         if re.search(r"\.xlsx?(?:$|[?#])", href, re.I) or "xlsx" in href.lower():
             absolute = urljoin(base_url, href)
             if absolute not in links:
@@ -31,7 +35,7 @@ def find_xlsx_links(html: str, base_url: str) -> list[str]:
     return links
 
 
-def _detect_unit(text: str) -> Optional[str]:
+def _detect_unit(text: str) -> str | None:
     t = text.lower()
     if re.search(r"\bmin(ute)?s?\b|\(min", t):
         return "minutes"
@@ -41,7 +45,7 @@ def _detect_unit(text: str) -> Optional[str]:
 
 
 def _best_date_column(grid: pd.DataFrame, rows: Iterable[int], exclude: set[int],
-                      default_year: int) -> Optional[int]:
+                      default_year: int) -> int | None:
     best, best_hits = None, 1
     rows = list(rows)
     for c in grid.columns:
@@ -54,7 +58,7 @@ def _best_date_column(grid: pd.DataFrame, rows: Iterable[int], exclude: set[int]
 
 
 def extract_sheet_records(grid: pd.DataFrame, default_year: int,
-                          unrecognised: Optional[list[str]] = None) -> list[tuple[str, date, Any]]:
+                          unrecognised: list[str] | None = None) -> list[tuple[str, date, Any]]:
     """Find (hospital_code, date, raw_value) triples in a messy sheet.
 
     Tries three layouts in order:
@@ -83,7 +87,7 @@ def extract_sheet_records(grid: pd.DataFrame, default_year: int,
             date_col = _best_date_column(grid, body, set(hosp_cols), default_year)
             if date_col is None:
                 continue
-            recs = []
+            recs: list[tuple[str, date, Any]] = []
             for i in body:
                 d = to_date(grid.iat[i, date_col], default_year)
                 if d:
@@ -100,8 +104,8 @@ def extract_sheet_records(grid: pd.DataFrame, default_year: int,
 
     # Layout B
     for r in scan:
-        date_cols = {c: to_date(grid.iat[r, c], default_year) for c in grid.columns}
-        date_cols = {c: d for c, d in date_cols.items() if d}
+        found = {c: to_date(grid.iat[r, c], default_year) for c in grid.columns}
+        date_cols: dict[int, date] = {c: d for c, d in found.items() if d is not None}
         if len(date_cols) >= 2:
             recs = []
             for i in range(r + 1, len(grid)):
@@ -127,7 +131,7 @@ def extract_sheet_records(grid: pd.DataFrame, default_year: int,
 
 
 def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
-                       stats: Optional[ParseStats] = None) -> pd.DataFrame:
+                       stats: ParseStats | None = None) -> pd.DataFrame:
     """Parse an MOH .xlsx (any sheet, any of the supported layouts) into tidy rows.
 
     metric="bed_waits"      -> columns: hospital_code, hospital_name, report_date, median_wait_hours

@@ -131,7 +131,7 @@ HOSPITALS: dict[str, tuple[str, str]] = {
 # Reference list for data-quality checks: facility type and the first day MOH reports it.
 # valid_from=None means "from the start of MOH's published series" (2023-01-01).
 # Sources: MOH Healthcare Institution Statistics pages and workbooks (checked 2026-11-06).
-HOSPITAL_REFERENCE: dict[str, tuple[str, "date | None"]] = {
+HOSPITAL_REFERENCE: dict[str, tuple[str, date | None]] = {
     "AH":    ("UCC", None),        # Urgent Care Centre, not a full ED
     "CGH":   ("ED", None),
     "KTPH":  ("ED", None),

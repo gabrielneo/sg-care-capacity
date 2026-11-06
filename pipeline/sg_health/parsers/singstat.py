@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import io
 import zipfile
-from typing import Optional
 
 import pandas as pd
 
@@ -34,7 +33,7 @@ def _data_member(z: zipfile.ZipFile) -> str:
     return names[0]
 
 
-def parse_residents_zip(content: bytes, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+def parse_residents_zip(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
     """One row per planning area and year: residents_total, residents_65plus, source_table."""
     try:
         z = zipfile.ZipFile(io.BytesIO(content))

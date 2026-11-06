@@ -19,16 +19,16 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     ERROR = "ERROR"
     WARN = "WARN"
 
 
-class Scope(str, Enum):
+class Scope(StrEnum):
     ROW = "row"
     FILE = "file"
     DATASET = "dataset"
@@ -64,7 +64,7 @@ class Finding:
     check_id: str
     table: str
     detail: str
-    row_key: Optional[dict[str, Any]] = None
+    row_key: dict[str, Any] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
     @property

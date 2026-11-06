@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import random
 import time
-from typing import Any, Optional
+from typing import Any
 from urllib import robotparser
 from urllib.parse import urlparse
 
@@ -48,10 +48,10 @@ class PoliteHttp:
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
         self._last_request = 0.0
-        self._robots: dict[str, Optional[robotparser.RobotFileParser]] = {}
+        self._robots: dict[str, robotparser.RobotFileParser | None] = {}
 
     # -- etiquette ---------------------------------------------------------- #
-    def _sleep_politely(self, delay: Optional[tuple[float, float]]) -> None:
+    def _sleep_politely(self, delay: tuple[float, float] | None) -> None:
         lo, hi = delay or self.delay
         wait = random.uniform(lo, hi) - (time.monotonic() - self._last_request)
         if self._last_request and wait > 0:
@@ -62,26 +62,25 @@ class PoliteHttp:
         parts = urlparse(url)
         host = f"{parts.scheme}://{parts.netloc}"
         if host not in self._robots:
-            rp: Optional[robotparser.RobotFileParser] = robotparser.RobotFileParser()
+            parsed: robotparser.RobotFileParser | None = None   # None: no robots.txt, everything allowed
             try:
                 r = self.session.get(f"{host}/robots.txt", timeout=self.timeout)
                 if r.status_code == 200:
-                    rp.parse(r.text.splitlines())
-                else:
-                    rp = None  # no robots.txt means everything is allowed
+                    parsed = robotparser.RobotFileParser()
+                    parsed.parse(r.text.splitlines())
             except requests.RequestException:
-                rp = None
-            self._robots[host] = rp
+                parsed = None
+            self._robots[host] = parsed
         rp = self._robots[host]
-        ok = True if rp is None else rp.can_fetch(self.session.headers["User-Agent"], url)
+        ok = True if rp is None else rp.can_fetch(str(self.session.headers["User-Agent"]), url)
         if not ok:
             LOG.warning("robots.txt disallows %s, skipping", url)
         return ok
 
     # -- requests ----------------------------------------------------------- #
-    def get(self, url: str, *, params: Optional[dict] = None, headers: Optional[dict] = None,
-            delay: Optional[tuple[float, float]] = None, check_robots: bool = True
-            ) -> Optional[requests.Response]:
+    def get(self, url: str, *, params: dict | None = None, headers: dict | None = None,
+            delay: tuple[float, float] | None = None, check_robots: bool = True
+            ) -> requests.Response | None:
         if check_robots and not self.allowed(url):
             return None
         self._sleep_politely(delay)
@@ -102,15 +101,15 @@ class PoliteHttp:
                         extra={"fields": {"event": "redirected", "requested": url, "final": resp.url}})
         return resp
 
-    def get_text(self, url: str, **kw) -> Optional[str]:
+    def get_text(self, url: str, **kw) -> str | None:
         r = self.get(url, **kw)
         return r.text if r is not None else None
 
-    def get_bytes(self, url: str, **kw) -> Optional[bytes]:
+    def get_bytes(self, url: str, **kw) -> bytes | None:
         r = self.get(url, **kw)
         return r.content if r is not None else None
 
-    def get_json(self, url: str, **kw) -> Optional[Any]:
+    def get_json(self, url: str, **kw) -> Any | None:
         r = self.get(url, **kw)
         if r is None:
             return None
@@ -121,7 +120,7 @@ class PoliteHttp:
             return None
 
 
-def render_with_playwright(url: str, wait_ms: int = 4000) -> Optional[str]:
+def render_with_playwright(url: str, wait_ms: int = 4000) -> str | None:
     """Fallback for JavaScript-rendered pages. Returns the HTML, or None if Playwright isn't installed.
 
     Setup: pip install playwright && python -m playwright install chromium

@@ -1,10 +1,9 @@
 """Every parsed row carries source_url, source_sha256 and ingested_at, and they point at a raw file."""
 import pytest
+from test_ingest import full_run
 
 from sg_health.raw import RawStore, link_url
 from sg_health.warehouse import LINEAGE_COLUMNS, PARSED_TABLES, Warehouse
-
-from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 

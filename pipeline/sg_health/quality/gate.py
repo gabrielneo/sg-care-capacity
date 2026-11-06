@@ -15,8 +15,9 @@ findings describe the latest file gated for the table.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -24,6 +25,9 @@ from ..logs import ParseStats
 from ..raw import RawRecord
 from ..warehouse import TABLE_KEYS
 from .model import CHECKS, Finding, Scope, Severity, key_json, register
+
+if TYPE_CHECKING:
+    from ..warehouse import Warehouse
 
 LOG = logging.getLogger(__name__)
 
@@ -45,12 +49,12 @@ DUPLICATE_KEY = register(
 
 @dataclass
 class GateContext:
-    wh: "Warehouse"                     # noqa: F821 (imported lazily to avoid a cycle)
+    wh: Warehouse                     # imported for type checking only, to avoid a cycle
     table: str
     keys: list[str]
     rec: RawRecord
     stats: ParseStats
-    attrs: dict = None                 # parser notes about the file (DataFrame.attrs)
+    attrs: dict | None = None          # parser notes about the file (DataFrame.attrs)
 
 
 # A rule returns (check_id, failing-row mask, detail). detail is a str for the whole mask,

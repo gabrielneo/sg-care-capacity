@@ -4,12 +4,11 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 import pytest
+from test_ingest import full_run
 
 from sg_health import transform
 from sg_health.transform import TransformError, run_transform
 from sg_health.warehouse import Warehouse
-
-from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 
@@ -149,7 +148,7 @@ def test_dim_hospital_matches_the_reference_in_code(wh):
     run_transform(wh)
     dim = q(wh, "SELECT * FROM marts.dim_hospital").set_index("hospital_code")
     assert set(dim.index) == set(HOSPITAL_REFERENCE)
-    for code, (ftype, valid_from) in HOSPITAL_REFERENCE.items():
+    for code, (ftype, _valid_from) in HOSPITAL_REFERENCE.items():
         assert dim.loc[code, "facility_type"] == ftype and dim.loc[code, "cluster"] == HOSPITAL_CLUSTER[code]
     assert dim.loc["AH", "facility_type"] == "UCC" and "adult" in dim.loc["NUH", "coverage_note"].lower()
     assert dim.loc["WH", "reported_from"].date() == date(2024, 6, 23) and dim["source_sha256"].nunique() == 1
@@ -175,7 +174,6 @@ def test_dim_clinic_as_of_is_the_upstream_update_not_our_download(built):
 
 
 def test_dim_clinic_falls_back_to_fetch_time_without_metadata(monkeypatch, paths):
-    from sg_health import config
     from conftest import source_routes
     routes = {u: v for u, v in source_routes().items() if "/metadata" not in u}
     full_run(monkeypatch, paths, routes)
@@ -188,8 +186,7 @@ def test_dim_clinic_falls_back_to_fetch_time_without_metadata(monkeypatch, paths
 
 
 def test_dim_clinic_keeps_is_active_and_has_cdmp(monkeypatch, paths):
-    from conftest import CHAS_V2
-    from conftest import source_routes
+    from conftest import CHAS_V2, source_routes
     full_run(monkeypatch, paths)
     full_run(monkeypatch, paths, source_routes(chas=CHAS_V2))
     wh = Warehouse(paths["db"])
@@ -213,8 +210,9 @@ def test_live_snapshot_is_labelled_estimate_with_the_page_as_of(built):
 
 
 def test_live_snapshot_without_a_page_timestamp_uses_the_fetch_time(monkeypatch, paths):
-    from sg_health import config
     from conftest import HTML, NUHS_HTML, source_routes
+
+    from sg_health import config
     routes = source_routes()
     routes[config.NUHS_LIVE_URL] = (NUHS_HTML.replace(b"Last updated at 18 May 2026, 09:30:04 AM.", b""), HTML)
     full_run(monkeypatch, paths, routes)
@@ -270,9 +268,10 @@ def test_dim_clinic_tidies_whitespace_for_display_but_staging_keeps_it(monkeypat
 
 
 def test_is_adult_ed_separates_nuh_sections_and_matches_the_reconciliation_rule(monkeypatch, paths):
-    from sg_health import config
     from conftest import HTML, source_routes
     from test_nuhs import TWO_DEPARTMENTS
+
+    from sg_health import config
     routes = source_routes()
     routes[config.NUHS_LIVE_URL] = (TWO_DEPARTMENTS + b"<h3>Urgent Care</h3><table><tr><th></th><th>Somewhere</th></tr>"
                                     b"<tr><td>Number of Patients Waiting for Consult</td><td>1 patient(s)</td></tr></table>", HTML)
@@ -302,7 +301,7 @@ def test_population_mart_share_is_null_where_nobody_lives(built):
 # ------------------------------------------------------------ clinic access #
 
 def access_run(monkeypatch, paths, clinics, areas=None):
-    from conftest import chas_geojson, planning_area_geojson, source_routes, PLANNING_AREAS_DOWNLOAD
+    from conftest import PLANNING_AREAS_DOWNLOAD, chas_geojson, planning_area_geojson, source_routes
     routes = source_routes(chas=chas_geojson(clinics))
     if areas is not None:
         routes[PLANNING_AREAS_DOWNLOAD] = (planning_area_geojson(areas), "application/geo+json")
@@ -367,8 +366,9 @@ def test_every_metric_points_at_a_real_mart_column_and_wait_units_are_inferred(b
 
 def test_access_keeps_every_area_with_empty_ratios_when_population_is_missing(monkeypatch, paths):
     """First CI run: SingStat refused the runner. The mart must not crash or drop areas."""
-    from sg_health import config
     from conftest import chas_geojson, source_routes
+
+    from sg_health import config
     routes = source_routes(chas=chas_geojson([("C1", "A", "CHAS,CDMP", (103.68, 1.33))]))
     del routes[config.SINGSTAT_RESIDENTS_URL]
     monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_FILE", paths["raw"] / "missing.zip")

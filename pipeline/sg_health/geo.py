@@ -11,6 +11,7 @@ import json
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 import geopandas as gpd
 import pandas as pd
@@ -104,7 +105,7 @@ def assign_clinics(wh: Warehouse) -> pd.DataFrame:
     """
     clinics = wh.query("SELECT clinic_key, latitude, longitude FROM staging.stg_chas_clinics ORDER BY clinic_key")
     names = display_names(wh)
-    rows = []
+    rows: list[tuple[Any, Any, Any, str]] = []
     placeable = clinics.dropna(subset=["latitude", "longitude"])
     hits: dict[str, list[str]] = {}
     if len(placeable):

@@ -4,11 +4,10 @@ Fixture mirrors the live page structure seen on 2026-11-06: two tables, each wit
 header row, and "National University Hospital" in both.
 """
 import pytest
-
-from sg_health.parsers.live import parse_nuhs_live
-
 from conftest import HTML, NUHS_HTML, source_routes
 from test_ingest import full_run, query
+
+from sg_health.parsers.live import parse_nuhs_live
 
 pytest.importorskip("duckdb")
 

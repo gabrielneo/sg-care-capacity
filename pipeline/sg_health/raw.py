@@ -18,10 +18,10 @@ import json
 import os
 import stat
 import tempfile
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator, Optional
 from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from .config import now_sgt
@@ -44,8 +44,8 @@ class RawRecord:
     url: str                      # the URL the bytes came from (an archive URL for Wayback copies)
     sha256: str
     bytes: int
-    http_status: Optional[int]    # None for a Playwright-rendered page (no HTTP response of its own)
-    content_type: Optional[str]
+    http_status: int | None    # None for a Playwright-rendered page (no HTTP response of its own)
+    content_type: str | None
     fetched_at: datetime          # SGT, naive
     path: str                     # relative to the raw root
 
@@ -55,7 +55,7 @@ class RawRecord:
         return json.dumps(d, sort_keys=True)
 
     @classmethod
-    def from_json(cls, line: str) -> "RawRecord":
+    def from_json(cls, line: str) -> RawRecord:
         d = json.loads(line)
         d["fetched_at"] = datetime.fromisoformat(d["fetched_at"])
         return cls(**d)
@@ -86,7 +86,7 @@ def link_url(url: str) -> str:
     return requote_uri(strip_signature(url))
 
 
-def guess_ext(url: str, content_type: Optional[str]) -> str:
+def guess_ext(url: str, content_type: str | None) -> str:
     """Extension for the stored file: the URL's if it's a known data type, else from Content-Type."""
     suffix = Path(urlparse(url).path).suffix.lower().lstrip(".")
     if suffix in _KNOWN_EXT:
@@ -104,11 +104,11 @@ class RawStore:
     def __init__(self, root: str | Path) -> None:
         self.root = Path(root)
         self.manifest = self.root / MANIFEST_NAME
-        self._count: Optional[int] = None   # manifest lines so far, read once then tracked
+        self._count: int | None = None   # manifest lines so far, read once then tracked
 
     # -- writing ------------------------------------------------------------ #
-    def save(self, source: str, url: str, content: bytes, *, http_status: Optional[int],
-             content_type: Optional[str], fetched_at: Optional[datetime] = None) -> RawRecord:
+    def save(self, source: str, url: str, content: bytes, *, http_status: int | None,
+             content_type: str | None, fetched_at: datetime | None = None) -> RawRecord:
         """Store ``content`` (if new) and append a manifest line. Returns that line's record."""
         fetched_at = fetched_at or now_sgt()
         digest = sha256(content)
@@ -150,7 +150,7 @@ class RawStore:
                 os.unlink(tmp)
             raise
 
-    def _find(self, source: str, digest: str) -> Optional[Path]:
+    def _find(self, source: str, digest: str) -> Path | None:
         hits = sorted((self.root / source).glob(f"*/{digest}.*"))
         return hits[0] if hits else None
 

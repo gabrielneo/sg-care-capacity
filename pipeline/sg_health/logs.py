@@ -15,7 +15,7 @@ import logging
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from .config import SGT
 
@@ -48,12 +48,12 @@ class ParseStats:
                 **({"derived": dict(self.derived)} if self.derived else {})}
 
 
-def count_read(stats: Optional[ParseStats], n: int = 1) -> None:
+def count_read(stats: ParseStats | None, n: int = 1) -> None:
     if stats is not None:
         stats.read(n)
 
 
-def count_drop(stats: Optional[ParseStats], reason: str, n: int = 1) -> None:
+def count_drop(stats: ParseStats | None, reason: str, n: int = 1) -> None:
     if stats is not None:
         stats.drop(reason, n)
 

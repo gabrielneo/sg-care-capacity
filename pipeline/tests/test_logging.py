@@ -3,13 +3,12 @@ import json
 import logging
 
 import pytest
+from conftest import BED_WAITS_XLSX
+from test_ingest import full_run
 
 from sg_health import cli
 from sg_health.logs import JsonFormatter, ParseStats
 from sg_health.parsers.moh import parse_moh_workbook
-
-from conftest import BED_WAITS_XLSX
-from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 
@@ -76,6 +75,7 @@ def test_reparse_logs_a_summary_for_every_loader(monkeypatch, paths, capsys):
 
 def test_moh_parser_counts_unparseable_and_blank_cells():
     import io
+
     from openpyxl import Workbook
     wb = Workbook()
     rows = [["Date", "SGH", "CGH"], ["25/10/2026", "03:00", "not a time"], ["26/10/2026", "04:00", "05:00"]]

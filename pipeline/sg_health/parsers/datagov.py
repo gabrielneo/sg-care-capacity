@@ -4,7 +4,6 @@ from __future__ import annotations
 import io
 import json
 import re
-from typing import Optional
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -13,7 +12,7 @@ from ..logs import ParseStats, count_drop, count_read
 from .common import is_blank
 
 
-def parse_annual_ae(content: bytes, series: str, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+def parse_annual_ae(content: bytes, series: str, stats: ParseStats | None = None) -> pd.DataFrame:
     """Rows of one series from the annual admissions/attendances CSV: year, attendances, series.
 
     Matches the series label exactly. A missing value stays missing (NULL), never zero.
@@ -48,7 +47,7 @@ def parse_datagov_metadata(payload: dict, source_by_id: dict[str, str]) -> pd.Da
     }])
 
 
-def parse_polyclinics(content: bytes, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+def parse_polyclinics(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
     """HPB screening-centre GeoJSON -> facility_name, address, postal_code, lat/lon, is_polyclinic.
 
     Entries whose name doesn't end in "Polyclinic" are kept but flagged, never used as polyclinics.
@@ -79,7 +78,7 @@ class BoundaryFormatError(ValueError):
     """The boundary file isn't laid out as expected; stop rather than guess."""
 
 
-def parse_planning_areas(content: bytes, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+def parse_planning_areas(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
     """URA planning-area polygons: planning_area_code, planning_area_name, region_name, geometry_wkt.
 
     Geometry is kept as WKT text (WGS84 lon/lat) so the warehouse needs no spatial extension.
@@ -135,7 +134,7 @@ def parse_datagov_payload(content: bytes) -> pd.DataFrame:
     return pd.read_csv(io.StringIO(text))
 
 
-def _first(row: pd.Series, candidates: list[str]) -> Optional[str]:
+def _first(row: pd.Series, candidates: list[str]) -> str | None:
     for c in candidates:
         if c in row and not is_blank(row[c]):
             v = str(row[c]).strip()
@@ -144,7 +143,7 @@ def _first(row: pd.Series, candidates: list[str]) -> Optional[str]:
     return None
 
 
-def _unit_part(floor: Optional[str], unit: Optional[str]) -> Optional[str]:
+def _unit_part(floor: str | None, unit: str | None) -> str | None:
     """'#01-23' from floor and unit. CHAS sometimes includes the '#' in FLOOR_NO already."""
     floor = (floor or "").strip().lstrip("#")
     unit = (unit or "").strip().lstrip("#")
@@ -155,7 +154,7 @@ def _unit_part(floor: Optional[str], unit: Optional[str]) -> Optional[str]:
     return None
 
 
-def normalize_clinics(raw: pd.DataFrame, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+def normalize_clinics(raw: pd.DataFrame, stats: ParseStats | None = None) -> pd.DataFrame:
     """Map whatever column names the source uses onto one clinic schema."""
     count_read(stats, len(raw))
     raw = raw.rename(columns=lambda c: str(c).strip().upper())

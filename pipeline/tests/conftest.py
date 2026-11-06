@@ -5,7 +5,7 @@ import io
 import json
 import zipfile
 from datetime import datetime, time
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from openpyxl import Workbook
@@ -30,7 +30,7 @@ def make_xlsx(rows, sheet="Sheet1") -> bytes:
 
 class FakeResponse:
     def __init__(self, content: bytes, content_type: str, status: int = 200,
-                 url: Optional[str] = None) -> None:
+                 url: str | None = None) -> None:
         self.content = content
         self.status_code = status
         self.headers = {"Content-Type": content_type}
@@ -51,7 +51,7 @@ class FakeHttp:
         self.routes = dict(routes)
         self.calls: list[str] = []
 
-    def get(self, url: str, **_: Any) -> Optional[FakeResponse]:
+    def get(self, url: str, **_: Any) -> FakeResponse | None:
         self.calls.append(url)
         hit = self.routes.get(url)
         if not hit:

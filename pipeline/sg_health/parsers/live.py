@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -23,19 +23,19 @@ def _cell_texts(tr) -> list[str]:
     return [c.get_text(" ", strip=True) for c in tr.find_all(["th", "td"])]
 
 
-def _label_of(text: str) -> Optional[str]:
+def _label_of(text: str) -> str | None:
     for key, pattern in _NUHS_LABELS.items():
         if pattern.search(text):
             return key
     return None
 
 
-def _nearest_heading(node) -> Optional[str]:
+def _nearest_heading(node) -> str | None:
     h = node.find_previous(["h1", "h2", "h3", "h4", "h5", "strong"])
     return h.get_text(" ", strip=True) if h else None
 
 
-def parse_nuhs_live(html: str, stats: Optional[ParseStats] = None) -> list[dict[str, Any]]:
+def parse_nuhs_live(html: str, stats: ParseStats | None = None) -> list[dict[str, Any]]:
     """Parse the NUHS ED wait-time page into one dict per (site, department).
 
     The page has one table per department (e.g. "Adult Emergency", "Children's Emergency"),
@@ -76,7 +76,7 @@ def parse_nuhs_live(html: str, stats: Optional[ParseStats] = None) -> list[dict[
                 site = heading
             else:
                 site = f"{heading} - site {j + 1}"
-            rec = {"site_name": site, "department": heading, "patients_waiting": None,
+            rec: dict[str, Any] = {"site_name": site, "department": heading, "patients_waiting": None,
                    "est_consult_wait_hours": None, "est_bed_wait_hours": None}
             for key, vals in metrics.items():
                 cell = vals[j] if j < len(vals) else ""
@@ -90,8 +90,8 @@ def parse_nuhs_live(html: str, stats: Optional[ParseStats] = None) -> list[dict[
     if not results:  # fallback: plain-text regex
         results = _parse_nuhs_text(text)
         count_read(stats, len(results))
-    for r in results:
-        r["source_updated_at"] = updated
+    for res in results:
+        res["source_updated_at"] = updated
     return results
 
 
@@ -107,6 +107,7 @@ def _parse_nuhs_text(text: str) -> list[dict[str, Any]]:
     for idx, (_, end, key) in enumerate(spans):
         stop = spans[idx + 1][0] if idx + 1 < len(spans) else min(len(flat), end + 200)
         segment = flat[end:stop]
+        values: list[Any]
         if key == "patients_waiting":
             values = [int(x) for x in re.findall(r"(\d+)\s*patient", segment, re.I)]
         else:

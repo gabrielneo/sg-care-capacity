@@ -25,7 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 browser = ["playwright>=1.44"]   # optional fallback for JavaScript-rendered pages
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-requests"]   # CI lint and type checks
 
 [project.scripts]
 sg-health = "sg_health.cli:main"
@@ -36,3 +36,29 @@ include = ["sg_health*"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]       # offline unit tests; acceptance/ (real data) is run explicitly
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+# pycodestyle errors/warnings, pyflakes, import order, modern syntax, likely bugs (bugbear).
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",   # line length: long SQL and messages; to be enforced once wrapped (lenient start)
+    "E731",   # small named lambdas are used deliberately in tests and helpers
+    "B905",   # zip(strict=...): many zips are over columns of the same DataFrame
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]          # tests import fixtures after helper definitions
+"acceptance/*" = ["E402"]
+
+[tool.mypy]
+# Lenient to start (the codebase wasn't written typed): no pandas stubs, untyped defs allowed.
+# Tighten step by step; CI runs exactly this configuration.
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true
+files = ["sg_health"]

@@ -2,12 +2,11 @@
 import logging
 
 import pytest
+from test_ingest import full_run
 
 from sg_health import cli
 from sg_health.raw import RawStore
 from sg_health.warehouse import RETIRED_TABLES, SchemaOutOfDate, Warehouse
-
-from test_ingest import full_run
 
 duckdb = pytest.importorskip("duckdb")
 

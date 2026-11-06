@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -15,7 +15,7 @@ from ..parsers.moh import find_xlsx_links
 LOG = logging.getLogger(__name__)
 
 
-def fetch_moh_page(http: PoliteHttp, loader: Loader, cfg: dict[str, Any]) -> Optional[tuple[str, str]]:
+def fetch_moh_page(http: PoliteHttp, loader: Loader, cfg: dict[str, Any]) -> tuple[str, str] | None:
     """Fetch and land the metric's page. If it has moved, search the index page by link text.
 
     Returns (page_url, html), or None if the page can't be found.
@@ -33,8 +33,9 @@ def fetch_moh_page(http: PoliteHttp, loader: Loader, cfg: dict[str, Any]) -> Opt
     soup = BeautifulSoup(resp.text, "lxml")
     for a in soup.find_all("a", href=True):
         text = a.get_text(" ", strip=True).lower()
-        if any(k in text for k in cfg["keywords"]):
-            page = urljoin(MOH_INDEX_URL, a["href"])
+        href = a.get("href")
+        if isinstance(href, str) and any(k in text for k in cfg["keywords"]):
+            page = urljoin(MOH_INDEX_URL, href)
             resp = http.get(page)
             if resp is None:
                 return None

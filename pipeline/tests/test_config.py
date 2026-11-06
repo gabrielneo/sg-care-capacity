@@ -24,7 +24,6 @@ def test_data_dir_env_override(tmp_path):
 
 # ------------------------------------------------------------------ .env loading #
 
-import os  # noqa: E402
 
 import pytest  # noqa: E402
 

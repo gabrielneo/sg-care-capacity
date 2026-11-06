@@ -3,16 +3,15 @@
 Each test asserts that the specific check fails, the bad rows are quarantined (ERROR) or
 flagged but published (WARN), and the good rows in the same file are untouched.
 """
-from datetime import date, datetime, time
+from datetime import date, datetime
 
 import pandas as pd
 import pytest
+from conftest import XLSX, make_xlsx
 
 from sg_health.load import Loader
 from sg_health.raw import RawStore
 from sg_health.warehouse import Warehouse
-
-from conftest import XLSX, make_xlsx
 
 pytest.importorskip("duckdb")
 

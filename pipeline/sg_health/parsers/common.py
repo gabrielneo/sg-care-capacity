@@ -4,8 +4,9 @@ from __future__ import annotations
 import hashlib
 import math
 import re
-from datetime import date, datetime, time as dtime, timedelta
-from typing import Any, Optional
+from datetime import date, datetime, timedelta
+from datetime import time as dtime
+from typing import Any
 
 import pandas as pd
 
@@ -23,7 +24,7 @@ def is_blank(v: Any) -> bool:
     return isinstance(v, str) and v.strip() in {"", "-", "–", "N/A", "NA", "n.a.", "na", "nan"}
 
 
-def match_hospital(value: Any) -> Optional[str]:
+def match_hospital(value: Any) -> str | None:
     """Map free-text such as 'Changi General Hospital' or 'CGH' to a canonical code."""
     if is_blank(value) or not isinstance(value, str):
         return None
@@ -44,7 +45,7 @@ _DATE_SHAPE = re.compile(
 )
 
 
-def to_date(value: Any, default_year: Optional[int] = None) -> Optional[date]:
+def to_date(value: Any, default_year: int | None = None) -> date | None:
     """Parse Excel or text dates the Singapore way (day first). Returns None if it isn't a date."""
     if is_blank(value) or isinstance(value, bool):
         return None
@@ -72,7 +73,7 @@ def to_date(value: Any, default_year: Optional[int] = None) -> Optional[date]:
     return ts.date()
 
 
-def raw_duration(value: Any) -> tuple[Optional[float], str]:
+def raw_duration(value: Any) -> tuple[float | None, str]:
     """Convert a single cell to (number, kind).
 
     kind="hours"   -> already converted to hours (time-like values: 03:25, 3h 20m, timedelta)
@@ -103,7 +104,7 @@ def raw_duration(value: Any) -> tuple[Optional[float], str]:
         return None, "none"
 
 
-def parse_duration_hours(text: str) -> Optional[float]:
+def parse_duration_hours(text: str) -> float | None:
     """'1 hour(s)', '2 hrs 30 mins', '45 min' -> hours. Returns None if there's no unit."""
     if not text:
         return None
@@ -115,7 +116,7 @@ def parse_duration_hours(text: str) -> Optional[float]:
     return sum(float(x) for x in hrs) + sum(float(x) for x in mins) / 60
 
 
-def to_int(value: Any) -> Optional[int]:
+def to_int(value: Any) -> int | None:
     if is_blank(value) or isinstance(value, bool):
         return None
     if isinstance(value, (int, float)):

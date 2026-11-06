@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
 import requests
 
@@ -18,7 +17,7 @@ DATASET_SOURCES = (("chas", "datagov_chas"), ("annual_ae", "datagov_annual_ae"),
 
 
 def fetch_datagov_dataset(http: PoliteHttp, dataset_id: str
-                          ) -> Optional[tuple[str, requests.Response]]:
+                          ) -> tuple[str, requests.Response] | None:
     """Download a data.gov.sg dataset using the initiate/poll-download flow.
 
     Returns (download_url, response), or None.

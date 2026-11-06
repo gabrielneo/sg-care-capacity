@@ -2,16 +2,14 @@
 import math
 
 import geopandas as gpd
-import pandas as pd
 import pyproj
 import pytest
 from shapely.geometry import Point
+from test_ingest import full_run, query
 
 from sg_health import geo
 from sg_health.transform import TransformError
 from sg_health.warehouse import Warehouse
-
-from test_ingest import full_run, query
 
 GEOD = pyproj.Geod(ellps="WGS84")         # independent reference: geodesic distance on the ellipsoid
 
@@ -61,8 +59,9 @@ def test_unmatched_area_names_fail_loudly(monkeypatch, paths):
     routes[PLANNING_AREAS_DOWNLOAD] = (planning_area_geojson([
         ("BD", "BEDOK", "EAST", (103.65, 1.30, 103.72, 1.36)),
         ("TS", "TUAS SOUTH", "WEST", (103.60, 1.28, 103.64, 1.32))]), "application/geo+json")   # renamed
-    from sg_health import cli
     from conftest import FakeHttp
+
+    from sg_health import cli
     fake = FakeHttp(routes)
     monkeypatch.setattr(cli, "PoliteHttp", lambda: fake)
     code = cli.main(["--db", str(paths["db"]), "--raw-dir", str(paths["raw"]), "--report", str(paths["report"]), "run"])
@@ -77,8 +76,9 @@ def test_unmatched_area_names_fail_loudly(monkeypatch, paths):
 
 
 def test_missing_population_maps_to_null_rather_than_failing(monkeypatch, paths):
-    from sg_health import config
     from conftest import source_routes
+
+    from sg_health import config
     routes = source_routes()
     del routes[config.SINGSTAT_RESIDENTS_URL]
     monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_FILE", paths["raw"] / "missing.zip")
@@ -116,7 +116,13 @@ def test_pct_area_within_1km_matches_circle_over_square(monkeypatch, paths):
 
 
 def test_nearest_polyclinic_distance_from_the_centroid(monkeypatch, paths):
-    from conftest import POLYCLINICS_DOWNLOAD, PLANNING_AREAS_DOWNLOAD, planning_area_geojson, polyclinics_geojson, source_routes
+    from conftest import (
+        PLANNING_AREAS_DOWNLOAD,
+        POLYCLINICS_DOWNLOAD,
+        planning_area_geojson,
+        polyclinics_geojson,
+        source_routes,
+    )
     routes = source_routes()
     square = _square_around(103.68, 1.33, 2000)
     lon_3km, lat_3km, _ = GEOD.fwd(103.68, 1.33, 90, 3000)                      # 3 km due east of the centre

@@ -1,12 +1,11 @@
 """End-to-end `run` against a fake HTTP client: everything lands in data/raw before parsing."""
 import pandas as pd
 import pytest
+from conftest import CHAS_V2, FakeHttp, source_routes
 
 from sg_health import cli
 from sg_health.raw import RawStore
 from sg_health.warehouse import Warehouse
-
-from conftest import CHAS_V2, FakeHttp, source_routes
 
 pytest.importorskip("duckdb")
 
@@ -128,6 +127,7 @@ def test_missing_reference_file_loads_nothing_and_does_not_crash(monkeypatch, pa
 
 def test_the_committed_reference_file_matches_its_hash_and_parses():
     import hashlib
+
     from sg_health import config
     from sg_health.parsers.singstat import parse_residents_zip
     assert config.SINGSTAT_RESIDENTS_FILE.parent == config.REPO_ROOT / "data" / "reference" / "singstat"

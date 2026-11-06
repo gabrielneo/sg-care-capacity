@@ -373,15 +373,15 @@ def test_live_readings_are_labelled_estimates(sql):
 
 
 def test_one_live_reading_per_hospital_department_and_time(sql):
-    l = sql("SELECT hospital_code, department, snapshot_at FROM marts.fct_live_ed_snapshot")
-    assert dupes(l, ["hospital_code", "department", "snapshot_at"]).empty
+    live = sql("SELECT hospital_code, department, snapshot_at FROM marts.fct_live_ed_snapshot")
+    assert dupes(live, ["hospital_code", "department", "snapshot_at"]).empty
 
 
 def test_widget_filtering_adult_eds_gets_one_figure_per_hospital(sql):
     """The widget shows one figure per hospital, matching MOH's coverage (NUH = adults): filter is_adult_ed."""
-    l = sql("""SELECT hospital_code, snapshot_at, count(*) n FROM marts.fct_live_ed_snapshot
+    live = sql("""SELECT hospital_code, snapshot_at, count(*) n FROM marts.fct_live_ed_snapshot
                WHERE is_adult_ed GROUP BY 1, 2 HAVING count(*) > 1""")
-    assert l.empty, l.to_dict("records")
+    assert live.empty, live.to_dict("records")
 
 
 def test_every_live_reading_is_classified_adult_or_children(sql):
@@ -397,16 +397,16 @@ def test_every_hospital_in_the_live_widget_has_an_adult_reading(sql):
 
 
 def test_live_figures_are_plausible(sql):
-    l = sql("SELECT * FROM marts.fct_live_ed_snapshot")
-    assert (l["patients_waiting"].dropna() >= 0).all()
+    live = sql("SELECT * FROM marts.fct_live_ed_snapshot")
+    assert (live["patients_waiting"].dropna() >= 0).all()
     for col in ("est_wait_to_see_doctor_hours", "est_bed_wait_hours"):
-        assert l[col].dropna().between(0, 72).all(), col
+        assert live[col].dropna().between(0, 72).all(), col
 
 
 def test_live_page_was_recent_when_fetched(sql):
     """'Live' means the page's own timestamp was close to when we read it."""
-    l = sql("SELECT as_of, fetched_at, as_of_basis FROM marts.fct_live_ed_snapshot")
-    lag = (l["fetched_at"] - l["as_of"]).dt.total_seconds() / 3600
+    live = sql("SELECT as_of, fetched_at, as_of_basis FROM marts.fct_live_ed_snapshot")
+    lag = (live["fetched_at"] - live["as_of"]).dt.total_seconds() / 3600
     assert (lag >= 0).all() and (lag <= 3).all(), f"page lag at fetch: {lag.round(2).tolist()} h"
 
 
@@ -518,7 +518,8 @@ def test_web_layer_properties_are_the_mart_values(web_layer, sql):
     mart = sql("SELECT * FROM marts.fct_area_access").set_index("planning_area_code")
     off = []
     for f in web_layer["features"]:
-        p = f["properties"]; m = mart.loc[p["planning_area_code"]]
+        p = f["properties"]
+        m = mart.loc[p["planning_area_code"]]
         for k in ("residents_65plus", "cdmp_clinics", "cdmp_clinics_per_1k_seniors", "pct_area_within_1km_of_cdmp",
                   "approx_km_centroid_to_nearest_polyclinic"):
             mv, pv = m[k], p[k]
