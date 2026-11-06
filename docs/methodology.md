@@ -1,11 +1,92 @@
-# Methodology: clinic access for residents aged 65+
+# Methodology
 
-How the planning-area access measures in `marts.fct_area_access` and the web map layer
-`planning_area_access.geojson` are built, why they're built that way, and what they can't tell you.
-Column definitions are in [data_dictionary.md](data_dictionary.md); the checks that guard them are
-in [data_quality.md](data_quality.md).
+How the figures on this site are sourced, checked, transformed and computed, and what they can't tell
+you. Every column is defined in [data_dictionary.md](data_dictionary.md); every data-quality check is
+described in [data_quality.md](data_quality.md); the decisions behind the design are in the
+[architecture decision records](adr/README.md).
 
-## What is measured
+## Sources
+
+All sources are public and aggregate: counts and statistics about hospitals, clinics, places and
+populations. **No personal or patient-level data is collected.**
+
+| Source | Publisher | What it gives | How often it changes | How it is collected |
+|---|---|---|---|---|
+| Waiting Time for Admission to Ward | MOH | Daily median wait for a ward bed, per public ED, from 1 Jan 2023 | Weekly (files end on a Saturday) | Weekly workbook (.xlsx) from MOH's website |
+| Attendances at Emergency Medicine Departments | MOH | Daily attendances, per public ED, from 1 Jan 2023 | Weekly | Weekly workbook (.xlsx) from MOH's website |
+| ED waiting time page | NUHS | Estimated waits and patients waiting at AH, NUH (adult and children's) and NTFGH, at one moment | Continuously (estimates) | The page is read when each weekly snapshot is built |
+| CHAS Clinics | data.gov.sg (MOH) | Location and programmes (CHAS, CDMP) of every CHAS GP clinic | Irregular: last updated 6 Jun 2024 | data.gov.sg API |
+| Master Plan 2025 Planning Area Boundary (No Sea) | data.gov.sg (URA) | The 55 planning-area polygons | With each Master Plan | data.gov.sg API |
+| Cervical Screening Centres | data.gov.sg (HPB) | Used as the **polyclinic list** (it includes all 26 polyclinics) | Irregular | data.gov.sg API |
+| Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling | SingStat | Residents and residents aged 65+, per planning area and subzone, at end-June | Yearly (published around September) | Downloaded by hand once a year and committed; SingStat refuses automated requests from GitHub's servers |
+| Hospital Admissions and Public Sector Outpatient Attendances | data.gov.sg (MOH) | Annual A&E attendances, used **only** to cross-check the daily MOH series | Yearly | data.gov.sg API |
+
+Every figure on the site shows the date its data was current (`as_of`) and its source. The Data
+Quality page shows each source's current date and how fresh it is for how often it changes.
+
+## From download to published figure
+
+1. **Raw landing zone.** Every downloaded file is stored unchanged under `data/raw/<source>/<date>/`,
+   named by its SHA-256, and logged in an append-only `manifest.jsonl`. Nothing in it is ever edited.
+   Every table can be rebuilt from it offline (`sg-health reparse`), and the same files always give
+   the same rows.
+2. **Parse and gate.** Each file is parsed, then checked before any row is stored. A row that fails
+   an error-level check goes to a `quarantine_<table>` table with its reason; it is never corrected.
+   A file that fails a file-level check is rejected whole ([ADR 0002](adr/0002-validation-gate.md)).
+3. **Clean tables with lineage.** Every stored row keeps `source_url`, `source_sha256` and
+   `ingested_at`, so any figure can be traced to the exact file it came from.
+4. **Validate.** Checks across whole tables: completeness, freshness, unit plausibility,
+   reconciliation with other sources. A failed error-level check here **blocks publishing**.
+5. **Transform.** Plain SQL builds typed staging views, then the marts the site reads. Every model's
+   row counts are reconciled; a row lost without a logged reason stops the build. Geospatial measures
+   are computed in Python, in SVY21 ([ADR 0003](adr/0003-svy21-for-distances-and-areas.md)).
+6. **Publish.** Only if nothing blocks: a read-only snapshot with a manifest of hashes, row counts,
+   dates per source and check results, released as `data-YYYY-MM-DD`
+   ([ADR 0001](adr/0001-published-snapshot.md)).
+7. **Serve.** The API verifies the snapshot before it starts, and returns every figure with its
+   `as_of`, sources, caveats and data-quality warnings
+   ([ADR 0005](adr/0005-typed-api-contract.md)).
+
+This runs every Sunday on GitHub Actions. The [runbook](runbook.md) covers releases and rollback.
+
+## Emergency department measures
+
+**Median wait for a ward bed (daily).** MOH's definition: the daily median (50th percentile) time
+from *"Decision by doctor to admit patient"* to *"Time patient exits EMD"* to go to a ward.
+
+- It covers **only patients admitted that day**. Patients treated and sent home are not in it.
+- **The unit is inferred, not stated**: neither MOH's workbook nor its page names it. Values are read
+  as hours because the typical median is about 4 (minutes would mean 4-minute waits). A check warns if
+  a week's values shift tenfold, the signature of a unit change.
+- MOH publishes **daily medians only**. A weekly figure on this site is the **average of the daily
+  medians**, not a weekly median, which can't be derived from them.
+
+**Attendances (daily).** Patients who presented at the emergency department that day, *"regardless
+of urgency of medical conditions"* (MOH). It measures demand, not acuity: it includes non-urgent cases.
+
+**Which sites, and what they cover.**
+
+- 9 sites: SGH, CGH, SKH (SingHealth); TTSH, KTPH, WH (NHG Health); NUH, NTFGH, AH (NUHS).
+- **Alexandra Hospital is an Urgent Care Centre**, not a full ED. It is labelled wherever it appears
+  and should not be ranked against EDs.
+- **NUH figures cover its adult ED only.**
+- **Woodlands Hospital is reported from 23 Jun 2024.** Totals across all sites jump when it joins:
+  all-site attendances went from 868,644 (2023) to 949,568 (2025), but **without Woodlands they
+  were flat** (868,644 in 2023, 863,988 in 2024, 869,131 in 2025). Compare like with like.
+- MOH leaves KK Women's and Children's Hospital and NUH Children's Emergency out of these statistics.
+  That is why the daily total is about 17% below MOH's annual A&E figure, which includes them
+  (checked by `reconcile.annual_ae`).
+
+**Complete weeks.** A week counts as complete when all 7 days of both measures are in. MOH's files
+end on a Saturday, so the newest ISO week (Monday to Sunday) is usually 6 of 7 days. The Overview
+compares only complete weeks.
+
+**NUHS estimates are a different measure.** NUHS's page shows its own *estimates* at one moment
+(patients waiting, estimated wait to see a doctor, estimated wait for a bed). They are not MOH's
+daily median of admitted patients and are only ever shown side by side with it, labelled as estimates.
+On this site they come from the weekly snapshot, so they can be up to 7 days old.
+
+## Clinic access: what is measured
 
 For each of Singapore's 55 planning areas (URA Master Plan 2025):
 
@@ -127,3 +208,29 @@ Also:
 | Master Plan 2025 boundaries | Master Plan 2019 | SingStat's 2026 figures use MP2025. Three areas changed shape since 2019 (Changi Bay by 83% of its area, Changi 4.4%, Pasir Ris 1.0%), so MP2019 would misplace clinics and land. |
 | CDMP clinics as the lead measure | All CHAS clinics | Chronic disease management is the care most relevant to older residents; both are published. |
 | 1 km radius | 500 m, 2 km | A judgement, not a standard: roughly a 10–15 minute walk for an older adult in a straight line, before detours. It's a single constant (`geo.CDMP_RADIUS_M`) so it can be changed and re-run; the measure is a proxy whatever radius is chosen. |
+
+## What this data can't tell you
+
+These are limits of the sources, not of the analysis, and no amount of processing removes them.
+
+- **Anything about an individual patient.** Every source is aggregate, by design. Nothing here
+  describes, or could identify, a person.
+- **Who attends the ED, or how urgently.** MOH publishes attendance *counts*, with no age, triage
+  category or diagnosis. So this data **cannot say how many ED attendances are by older residents, or
+  how many could have been seen in primary care instead**, the central question of right-siting.
+- **Why waits change.** There is no data on bed occupancy, discharges, staffing, admissions mix or
+  seasonal illness. A rise or fall in waits can be described, not explained.
+- **The whole ED journey.** MOH's bed wait starts at the decision to admit and covers admitted patients
+  only. Waits to be triaged or seen, and the experience of patients sent home, aren't in it. NUHS's
+  estimates touch on these for three sites, at single moments.
+- **Whether seniors can use the clinics near them.** The clinic list says where clinics are and which
+  schemes they join, not their opening hours, capacity, waiting times, fees, or whether they accept new
+  chronic-care patients. Enrolment and visits are not published.
+- **Care outside these lists.** Private GPs outside CHAS, home care, telemedicine and community
+  nursing aren't counted.
+- **Any link between clinic access and ED pressure.** The ED figures are per hospital and the access
+  measures per planning area; patients don't always go to the nearest ED, and residents cross area
+  lines for GP care. The two sides of this site can be read together, but **the data supports no
+  causal claim, and no area-level correlation, between them**.
+- **Today.** MOH publishes weekly, so the latest ED figure is several days old; the clinic list is
+  from June 2024.
