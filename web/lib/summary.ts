@@ -79,52 +79,57 @@ export function formatWeek(week: WeekRange): string {
   return `${a.d}–${b.d} ${b.mon} ${b.y}`;
 }
 
-const hours = (v: number) => `${v.toLocaleString("en-SG", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} hours`;
+const num = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 const count = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 0 });
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
+/** "Alexandra Hospital's UCC" for the urgent care centre; the hospital's name otherwise. */
 function label(h: HospitalWeek, hospitals: Map<string, Hospital>): string {
-  return hospitals.get(h.code)?.facility_type === "UCC" || h.facilityType === "UCC"
-    ? `${h.name.replace(/\s*\(UCC\)$/, "")} (an urgent care centre)`
-    : h.name;
+  const base = h.name.replace(/\s*\(UCC\)$/, "");
+  return hospitals.get(h.code)?.facility_type === "UCC" || h.facilityType === "UCC" ? `${base}'s UCC` : base;
 }
 
+/**
+ * The Overview's plain-English paragraph. Fixed templates, sentences under 25 words, no causal
+ * words (docs/language_rules.md). Terms such as ED and UCC are wrapped by <Glossed> when shown.
+ */
 export function summaryParagraph(k: WeekKpis, hospitalList: Hospital[] = []): string {
   if (!k.week || k.current.length === 0) {
-    return "No hospital has a complete week of MOH data in this snapshot yet, so there is nothing to summarise.";
+    return "No hospital has a complete week of MOH figures in this week's data release, so there is nothing to summarise.";
   }
   const hospitals = new Map(hospitalList.map((h) => [h.hospital_code, h]));
   const out: string[] = [];
   const waits = k.current.filter((h) => h.wait != null).sort((a, b) => (a.wait as number) - (b.wait as number));
   const lo = waits[0];
   const hi = waits.at(-1);
+  const lead = `For ${formatWeek(k.week)}, the time waiting for a ward bed after the decision to admit`;
   if (lo && hi && lo !== hi) {
-    out.push(`In the week of ${formatWeek(k.week)}, the average of daily median waits for a ward bed ranged from ` +
-             `${hours(lo.wait as number)} at ${label(lo, hospitals)} to ${hours(hi.wait as number)} at ${label(hi, hospitals)}.`);
+    out.push(`${lead} ranged from ${num(lo.wait as number)} to ${num(hi.wait as number)} hours.`);
+    out.push(`It was shortest at ${label(lo, hospitals)} and longest at ${label(hi, hospitals)}.`);
   } else if (lo) {
-    out.push(`In the week of ${formatWeek(k.week)}, the average of daily median waits for a ward bed was ` +
-             `${hours(lo.wait as number)} at ${label(lo, hospitals)}.`);
+    out.push(`${lead} was ${num(lo.wait as number)} hours at ${label(lo, hospitals)}.`);
   }
   const { count: n, outOf: m } = k.above;
+  const prior = "average for the previous 4 weeks";
   if (m === 0) out.push("No hospital had four complete earlier weeks to compare with.");
   else if (m === 1) {
     const only = k.current.find((h) => h.waitChangePct != null);
-    out.push(`The one hospital with a comparison${only ? `, ${only.name},` : ""} was ${n === 1 ? "above" : "not above"} its previous 4-week average.`);
-  } else if (n === 0) out.push(`None of the ${m} hospitals with a comparison was above its previous 4-week average.`);
-  else out.push(`${n} of ${m} hospitals ${n === 1 ? "was" : "were"} above ${n === 1 ? "its" : "their"} previous 4-week average.`);
+    out.push(`The one hospital with a comparison${only ? `, ${label(only, hospitals)},` : ""} ${n === 1 ? "had" : "did not have"} a longer bed wait than its ${prior}.`);
+  } else if (n === 0) out.push(`None of the ${m} hospitals with a comparison had a longer bed wait than its ${prior}.`);
+  else out.push(`${n} of ${m} hospitals had a longer bed wait than ${n === 1 ? "its" : "their"} ${prior}.`);
   const a = k.attendances;
   if (a.total != null) {
-    const who = a.hospitals === 1 ? "It" : `Together the ${a.hospitals} hospitals`;
+    const one = a.hospitals === 1;
     let trend = "";
     if (a.changePct != null) {
       const p = Math.abs(a.changePct).toLocaleString("en-SG", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-      trend = Math.abs(a.changePct) < 0.5 ? ", about the same as the 4-week average"
-        : `, ${p}% ${a.changePct > 0 ? "more" : "fewer"} than the 4-week average`;
+      trend = Math.abs(a.changePct) < 0.5 ? `, about the same as ${one ? "its" : "their"} ${prior}`
+        : `, ${p}% ${a.changePct > 0 ? "more" : "fewer"} than ${one ? "its" : "their"} ${prior}`;
     }
-    out.push(`${who} recorded ${count(a.total)} attendances${trend}.`);
+    out.push(`${one ? "It" : "Together they"} had ${count(a.total)} ED visits${trend}.`);
   }
   if (k.missing.length) {
-    const names = k.missing.map((h) => h.name);
+    const names = k.missing.map((h) => h.name.replace(/\s*\(UCC\)$/, ""));
     out.push(`${list(names)} ${names.length === 1 ? "has" : "have"} no complete data for that week and ${names.length === 1 ? "is" : "are"} left out.`);
   }
   return out.join(" ");

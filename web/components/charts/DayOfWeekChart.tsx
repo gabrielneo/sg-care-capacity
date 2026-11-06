@@ -21,7 +21,7 @@ function WeekdayTip({ active, label, data, series }: TipProps) {
   return (
     <TooltipBox
       title={`${FULL[label as keyof typeof FULL] ?? label}s in the range`}
-      rows={series.map((s) => ({ key: s.code, color: s.style.color, label: `${s.code} average of medians`,
+      rows={series.map((s) => ({ key: s.code, color: s.style.color, label: s.name,
                                  value: `${hours((row?.[s.code] as number | null) ?? null)} (${row?.[`${s.code}_n`] ?? 0} days)` }))}
     />
   );
@@ -35,7 +35,7 @@ export function DayOfWeekChart({ data, series }: { data: WeekdayRow[]; series: S
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="day" {...AXIS} />
-          <YAxis width={48} {...AXIS} label={{ value: "hours", angle: -90, position: "insideLeft", fill: AXIS.stroke, fontSize: 12 }} />
+          <YAxis width={48} {...AXIS} label={{ value: "hours (average of each day's median)", angle: -90, position: "insideLeft", fill: AXIS.stroke, fontSize: 12, dy: 100 }} />
           <Tooltip content={<WeekdayTip data={data} series={series} />} />
           {series.map((s) => (
             <Line key={s.code} type="linear" dataKey={s.code} name={s.name} stroke={s.style.color} strokeWidth={2}

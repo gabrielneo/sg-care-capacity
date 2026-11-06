@@ -9,6 +9,7 @@ import { AREA_METRICS, DEFAULT_METRIC, metricByKey, type MetricKey } from "@/lib
 import { classColors, legendClasses, quantileBreaks } from "@/lib/quantiles";
 
 import { AreaPanel } from "./AreaPanel";
+import { Glossed } from "../terms/Glossed";
 import { MapLegend } from "./MapLegend";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
@@ -64,11 +65,11 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
             <label className="flex min-h-11 items-center gap-2">
               <input type="checkbox" checked={cdmpOnly} disabled={!showClinics} onChange={(e) => setCdmpOnly(e.target.checked)}
                      className="h-4 w-4 accent-accent" />
-              CDMP only
+              <Glossed text="CDMP only" plain />
             </label>
           </div>
           <p id={ids.clinics} className="text-xs text-muted" aria-live="polite">
-            {showClinics ? `${shownClinics.toLocaleString("en-SG")} ${cdmpOnly ? "CDMP" : "CHAS"} clinics shown as white dots.` : "Clinics hidden."}
+            {showClinics ? <Glossed text={`${shownClinics.toLocaleString("en-SG")} ${cdmpOnly ? "CDMP" : "CHAS"} GP clinics shown as white dots.`} /> : "Clinics hidden."}
           </p>
         </fieldset>
       </div>
@@ -77,12 +78,12 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
         <div>
           <LeafletMap areas={areas} clinics={clinics} metric={metric} breaks={breaks} colors={colors} showClinics={showClinics}
                       cdmpOnly={cdmpOnly} selected={selected} onSelect={setSelected} />
-          <p className="mt-2 text-xs text-muted">Click an area, or tab to it and press Enter, for its details.</p>
+          <p className="mt-2 text-xs text-muted">Select an area (click, tap, or Tab then Enter) to see its details.</p>
         </div>
         <div className="space-y-4">
           {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
           <MapLegend metric={metric} classes={classes} noData={noData} smallAreas={smallAreas} />
-          {caveats[metric.metricId] ? <p className="text-xs text-muted">{caveats[metric.metricId]}</p> : null}
+          {caveats[metric.metricId] ? <p className="text-xs text-muted"><Glossed text={caveats[metric.metricId]!} /></p> : null}
         </div>
       </div>
     </div>

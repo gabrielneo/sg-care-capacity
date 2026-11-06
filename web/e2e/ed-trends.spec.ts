@@ -1,17 +1,20 @@
 import { expect, test } from "@playwright/test";
 
-import { expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 test.describe("ED Trends", () => {
   test("draws the three charts with labels, gaps counted and an as-of date on each", async ({ page }) => {
     await page.goto("/ed-trends");
-    for (const title of ["Daily median wait for a ward bed", "Day-of-week pattern", "Wait vs attendances"]) {
+    for (const title of ["Time waiting for a ward bed after the decision to admit", "Bed wait by day of the week",
+                         "Bed wait and ED visits on the same day"]) {
       await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
     }
     await expect(page.getByTestId("chart-daily-wait").locator(".recharts-line-curve")).toHaveCount(3);
-    await expect(page.getByText("AH = urgent care centre; NUH = adults only.").first()).toBeVisible();
+    expect(await seen(page.getByTestId("chart-card").first())).toContain("AH = urgent care centre; NUH = adults only.");
+    expect(await seen(page.getByTestId("bed-wait-explainer"))).toBe(
+      "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed.");
     // Default range is 3 Aug to 31 Oct; the fixture starts on 14 Sep and has no NUH rows.
-    await expect(page.getByTestId("gap-summary")).toHaveText("Days with no figure in this range: AH 42, NUH 90, SGH 42.");
+    expect(await seen(page.getByTestId("gap-summary"))).toBe("Days with no figure in this range: AH 42, NUH 90, SGH 42.");
     await expectAsOfOnEveryCard(page, 3);
     await expectNoHorizontalScroll(page);
   });
@@ -26,13 +29,13 @@ test.describe("ED Trends", () => {
     else await page.mouse.move(x, y);
     const tip = daily.locator(".recharts-tooltip-wrapper");
     await expect(tip).toContainText(/[A-Z][a-z]{2}, \d{1,2} Oct 2026/);
-    await expect(tip).toContainText(/SGH median wait:\s*\d+\.\d hours/);
+    await expect(tip).toContainText(/Singapore General Hospital:\s*\d+\.\d hours/);
   });
 
   test("filters by hospital through the form, keeping the URL shareable", async ({ page }) => {
     await page.goto("/ed-trends");
-    await page.getByRole("checkbox", { name: /^AH / }).uncheck();
-    await page.getByRole("checkbox", { name: /^NUH / }).uncheck();
+    await page.getByRole("checkbox", { name: /Alexandra Hospital/ }).uncheck();
+    await page.getByRole("checkbox", { name: /National University Hospital/ }).uncheck();
     await page.getByRole("button", { name: "Show" }).click();
     await expect(page).toHaveURL(/hospital=SGH/);
     await expect(page.getByTestId("chart-daily-wait").locator(".recharts-line-curve")).toHaveCount(1);
@@ -40,7 +43,7 @@ test.describe("ED Trends", () => {
 
   test("a hospital with no figures gets an empty state, not a flat line", async ({ page }) => {
     await page.goto("/ed-trends?hospital=NUH");
-    await expect(page.getByText("No MOH figures for this selection")).toBeVisible();
+    expect(await seen(page.locator("main"))).toContain("No MOH figures for this selection");
     await expect(page.getByTestId("chart-card")).toHaveCount(0);
   });
 
@@ -48,7 +51,8 @@ test.describe("ED Trends", () => {
     await page.goto("/ed-trends?from=2023-01-01&to=2026-10-31");
     const alert = page.getByRole("alert").filter({ hasText: "These dates can't be shown" });
     await expect(alert).toBeVisible();
-    await expect(alert).toContainText("at most 2 years apart");
+    await expect(alert).toContainText("Choose dates no more than 2 years apart.");
+    await expect(alert).toContainText("Reference: range_too_long");
   });
 
   test("ignores an unknown hospital code and says so", async ({ page }) => {

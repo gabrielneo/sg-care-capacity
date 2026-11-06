@@ -8,7 +8,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
 import type { Clinic, Meta } from "@/lib/api/types";
+import { CAVEAT, plainError } from "@/lib/copy";
 import { fetchAllPages } from "@/lib/paging";
+import { Glossed } from "@/components/terms/Glossed";
 
 export const metadata: Metadata = { title: "Access Map" };
 export const dynamic = "force-dynamic";
@@ -16,7 +18,7 @@ export const dynamic = "force-dynamic";
 type Search = Promise<Record<string, string | string[] | undefined>>;
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-const INTRO = "Where CHAS and CDMP clinics are, compared with where residents aged 65 and over live, by URA planning area.";
+const INTRO = <Glossed text="Where CHAS and CDMP GP clinics are, compared with where residents aged 65 and over live, by area (the 55 URA planning areas)." />;
 
 async function allClinics(): Promise<{ items: Clinic[]; meta: Meta | null }> {
   let meta: Meta | null = null;
@@ -50,20 +52,20 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
       <>
         <PageHeader title="Access Map" intro={INTRO} />
         {tabs}
-        <ErrorState error={result.error} />
+        <ErrorState error={plainError(result.error)} />
       </>
     );
   }
   const [areas, clinics] = result.value;
   const features = areas.data.features;
-  const caveats = Object.fromEntries(
-    areas.meta.caveats.map((c) => [c.split(":")[0] ?? c, c]),
-  );
+  // The site's own plain caveats (the API's mention internal names); see lib/copy.ts.
   const metricCaveats: Record<string, string> = {
-    "fct_area_access.clinics_per_1k_seniors": caveats["CHAS clinics per 1,000 residents aged 65+"] ?? "",
-    "fct_area_access.cdmp_clinics_per_1k_seniors": caveats["CDMP clinics per 1,000 residents aged 65+"] ?? "",
-    "fct_area_access.pct_area_within_1km_of_cdmp": caveats["Share of land within 1 km of a CDMP clinic"] ?? "",
-    "fct_area_access.approx_km_centroid_to_nearest_polyclinic": caveats["Approximate distance from area centre to nearest polyclinic"] ?? "",
+    "fct_area_access.clinics_per_1k_seniors": CAVEAT.clinics,
+    "fct_area_access.cdmp_clinics_per_1k_seniors": CAVEAT.clinics,
+    "fct_area_access.pct_area_within_1km_of_cdmp":
+      "This counts land, including parks and industrial land where no one lives. It uses straight-line distance, not travel time.",
+    "fct_area_access.approx_km_centroid_to_nearest_polyclinic":
+      "One point stands for the whole area, and it may be far from where people live. Straight-line distance, not travel time.",
   };
 
   return (
@@ -71,10 +73,9 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
       <PageHeader title="Access Map" intro={INTRO} />
       {tabs}
       {features.length === 0 ? (
-        <EmptyState title="No planning areas in this snapshot" message="The map layer is empty, so there is nothing to show." />
+        <EmptyState title="No areas in this week's data release" message="There are no areas to show." />
       ) : view === "map" ? (
-        <ChartCard title="Clinic access by planning area" meta={areas.meta}
-                   caveat={metricCaveats["fct_area_access.cdmp_clinics_per_1k_seniors"] || null}
+        <ChartCard title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics}
                    description="Counts where clinics are, not where their patients live: residents use clinics in neighbouring areas too.">
           <AccessMap areas={areas.data}
                      clinics={(clinics?.items ?? []).map((c) => ({ clinic_key: c.clinic_key, clinic_name: c.clinic_name,
@@ -82,7 +83,7 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
                      caveats={metricCaveats} />
         </ChartCard>
       ) : (
-        <ChartCard title="Clinic access by planning area (table)" meta={areas.meta} caveat={null}
+        <ChartCard title="Clinic access by area (table)" meta={areas.meta} caveat={CAVEAT.clinics}
                    description="The same figures as the map. Select a column heading to sort.">
           <AreaTable areas={features.map((f) => f.properties)} sort={first(params.sort)} dir={first(params.dir)} />
         </ChartCard>

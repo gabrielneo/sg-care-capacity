@@ -30,7 +30,7 @@ describe("states", () => {
   });
   it("ErrorState is announced and shows the API's code", () => {
     render(<ErrorState error={{ code: "unreachable", message: "The API could not be reached" }} />);
-    expect(screen.getByRole("alert")).toHaveTextContent("The API could not be reached(unreachable)");
+    expect(screen.getByRole("alert")).toHaveTextContent("The API could not be reached(Reference: unreachable)");
   });
   it("Skeletons are announced as loading, once", () => {
     render(<><Skeleton /><ChartCardSkeleton title="Bed waits" /></>);

@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { type AreaProps, formatValue, sortAreas, TABLE_COLUMNS } from "@/lib/areaMetrics";
 
+import { Glossed } from "../terms/Glossed";
+
 /** The map's data as a sortable table. Server-rendered: works without JavaScript and with screen readers. */
 export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: string; dir?: string }) {
   const s = sortAreas(areas, sort, dir);
@@ -10,10 +12,10 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
     return `/access-map?view=table&sort=${key}&dir=${next}`;
   };
   return (
-    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Planning-area table (scrolls sideways)">
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Area table (scrolls sideways)">
       <table className="w-full min-w-[880px] border-collapse text-sm" data-testid="area-table">
         <caption className="mb-2 text-left text-xs text-muted">
-          Clinic access for residents aged 65+, {areas.length} planning areas. Sorted by{" "}
+          Clinic access for residents aged 65+, {areas.length} areas. Sorted by{" "}
           {TABLE_COLUMNS.find((c) => c.key === s.key)?.label} ({s.dir === "asc" ? "ascending" : "descending"}); areas with no data are listed last.
         </caption>
         <thead>
@@ -22,7 +24,7 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
               <th key={c.key} scope="col" aria-sort={s.key === c.key ? (s.dir === "asc" ? "ascending" : "descending") : "none"}
                   className={`px-2 py-2 font-semibold ${c.numeric ? "text-right" : ""}`}>
                 <Link href={href(c.key)} className="text-ink no-underline hover:underline">
-                  {c.label}
+                  <Glossed text={c.label} plain />
                   <span aria-hidden="true">{s.key === c.key ? (s.dir === "asc" ? " ▲" : " ▼") : ""}</span>
                 </Link>
               </th>

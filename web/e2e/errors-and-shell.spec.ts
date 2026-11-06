@@ -9,7 +9,7 @@ test.describe("when the API is down", () => {
     test(`${path} shows an error and no figures`, async ({ page }) => {
       await page.goto(`${DOWN}${path}`);
       // (Next adds its own empty role="alert" route announcer, so match by text.)
-      await expect(page.getByRole("alert").filter({ hasText: "The API could not be reached" })).toBeVisible();
+      await expect(page.getByRole("alert").filter({ hasText: "The data service isn't responding." })).toBeVisible();
       await expect(page.getByTestId("provenance-line")).toHaveCount(0);
       await expectNoHorizontalScroll(page);
     });

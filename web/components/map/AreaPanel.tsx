@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 import { AREA_METRICS, type AreaProps, formatValue } from "@/lib/areaMetrics";
 import { formatAsOf } from "@/lib/dates";
 
+import { Glossed } from "../terms/Glossed";
+
 /** Details for one planning area. Focus moves to its heading when it opens. */
 export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats: Record<string, string>; onClose: () => void }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -26,18 +28,18 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
         <dd className="text-right tabular-nums">{count(area.residents_65plus)}</dd>
         <dt className="text-muted">All residents</dt>
         <dd className="text-right tabular-nums">{count(area.residents_total)}</dd>
-        <dt className="text-muted">CHAS clinics (CDMP)</dt>
+        <dt className="text-muted"><Glossed text="CHAS GP clinics (of which CDMP)" /></dt>
         <dd className="text-right tabular-nums">{count(area.chas_clinics)} ({count(area.cdmp_clinics)})</dd>
         {AREA_METRICS.map((m) => (
           <div key={m.key} className="contents">
-            <dt className="text-muted">{m.label}</dt>
+            <dt className="text-muted"><Glossed text={m.label} /></dt>
             <dd className="text-right tabular-nums">
               {formatValue(area[m.key], m.decimals)}
               {area[m.key] != null ? (m.unit === "% of land" ? "%" : m.unit === "km" ? " km" : "") : ""}
             </dd>
           </div>
         ))}
-        <dt className="text-muted">Nearest polyclinic</dt>
+        <dt className="text-muted">Nearest <Glossed text="polyclinic" /></dt>
         <dd className="text-right">{area.nearest_polyclinic ?? "No data"}</dd>
       </dl>
       <div className="mt-3 rounded-md bg-page p-2 text-xs">
@@ -45,7 +47,7 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
         <p className="mt-0.5">{area.dq_note ? area.dq_note.split(";").map((s) => s.trim()).join(". ") + "." : "No area-specific notes."}</p>
         <p className="mt-1 text-muted">
           As of {area.as_of ? formatAsOf(area.as_of) : "unknown"} (the older of the clinic list and the population count).{" "}
-          {caveats["fct_area_access.cdmp_clinics_per_1k_seniors"] ?? ""}
+          <Glossed text={caveats["fct_area_access.cdmp_clinics_per_1k_seniors"] ?? ""} />
         </p>
       </div>
     </aside>

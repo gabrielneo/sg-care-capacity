@@ -13,8 +13,8 @@ const STATUS: Record<Result["status"], { label: string; icon: string; cls: strin
 
 const GROUPS: { key: string; title: string; text: string; match: (r: Result) => boolean }[] = [
   { key: "blocking", title: "Errors that block publishing", match: (r) => r.severity === "ERROR" && r.blocks_publish,
-    text: "If any of these fails, nothing is published and the site keeps the previous snapshot." },
-  { key: "quarantine", title: "Errors that quarantine rows", match: (r) => r.severity === "ERROR" && !r.blocks_publish,
+    text: "If any of these fails, nothing is published and the site keeps the previous weekly data release." },
+  { key: "quarantine", title: "Errors that set records aside", match: (r) => r.severity === "ERROR" && !r.blocks_publish,
     text: "A failing row is set aside with its reason, never corrected, and left out of the figures." },
   { key: "warn", title: "Warnings", match: (r) => r.severity === "WARN",
     text: "Published, with the warning shown next to the affected figures." },

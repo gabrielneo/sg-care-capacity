@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function EmptyState({ title, message, action }: { title: string; message?: ReactNode; action?: ReactNode }) {
+export function EmptyState({ title, message, action }: { title: ReactNode; message?: ReactNode; action?: ReactNode }) {
   return (
     <div className="rounded-lg border border-dashed border-line bg-surface px-4 py-8 text-center">
       <p className="font-medium text-ink">{title}</p>
@@ -31,7 +31,7 @@ export function ErrorState({
       <p className="font-medium">{title}</p>
       <p className="mt-1 text-sm">
         {info.message}
-        {info.code ? <span className="ml-1 font-mono text-xs">({info.code})</span> : null}
+        {info.code ? <span className="ml-1 text-xs">(Reference: <span className="font-mono">{info.code}</span>)</span> : null}
       </p>
       {action ? <div className="mt-3">{action}</div> : null}
     </div>

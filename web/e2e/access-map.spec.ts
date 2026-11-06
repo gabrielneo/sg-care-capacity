@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { blockTiles, expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { blockTiles, expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 test.beforeEach(async ({ page }) => blockTiles(page));
 
@@ -8,10 +8,10 @@ test.describe("Access Map", () => {
   test("draws the areas with a quantile legend, attribution and an as-of date", async ({ page }) => {
     await page.goto("/access-map");
     await expect(page.locator("[data-area]")).toHaveCount(2);
-    const legend = page.getByTestId("map-legend");
-    await expect(legend).toContainText("CHAS clinics per 1,000 residents aged 65+");
-    await expect(legend).toContainText("Classes are quantiles");
-    await expect(legend).toContainText("No data (1 area");                 // Tuas: no residents
+    const legend = await seen(page.getByTestId("map-legend"));
+    expect(legend).toContain("CHAS GP clinics per 1,000 residents aged 65+");
+    expect(legend).toContain("five groups with equal numbers of areas");
+    expect(legend).toContain("No data (1 area");                           // Tuas: no residents
     const attribution = page.locator(".leaflet-control-attribution");
     await expect(attribution).toContainText("OneMap");
     await expect(attribution).toContainText("Singapore Land Authority");
@@ -23,16 +23,17 @@ test.describe("Access Map", () => {
   test("the metric switcher changes the legend", async ({ page }) => {
     await page.goto("/access-map");
     await page.getByLabel("Measure").selectOption("pct_area_within_1km_of_cdmp");
-    await expect(page.getByTestId("map-legend")).toContainText("Share of land within 1 km of a CDMP clinic");
+    await expect.poll(() => seen(page.getByTestId("map-legend"))).toContain("Share of land within 1 km of a CDMP clinic");
     await page.getByLabel("Measure").selectOption("approx_km_centroid_to_nearest_polyclinic");
-    await expect(page.getByTestId("map-legend")).toContainText("Darker = farther (worse access).");
+    await expect.poll(() => seen(page.getByTestId("map-legend"))).toContain("Darker means farther: worse access.");
   });
 
   test("clinic points can be limited to CDMP clinics", async ({ page }) => {
     await page.goto("/access-map");
-    await expect(page.getByText("4 CHAS clinics shown as white dots.")).toBeVisible();   // the inactive clinic is not shown
+    const count = page.locator("fieldset p[aria-live]");
+    await expect.poll(() => seen(count)).toBe("4 CHAS GP clinics shown as white dots.");   // the inactive clinic is not shown
     await page.getByRole("checkbox", { name: "CDMP only" }).check();
-    await expect(page.getByText("2 CDMP clinics shown as white dots.")).toBeVisible();
+    await expect.poll(() => seen(count)).toBe("2 CDMP GP clinics shown as white dots.");
   });
 
   test("an area opens its panel from the keyboard, with its data note", async ({ page }) => {
@@ -52,7 +53,7 @@ test.describe("Access Map", () => {
     const table = page.getByTestId("area-table");
     await expect(table.locator("tbody tr")).toHaveCount(2);
     await expect(table.locator("tbody tr").first()).toContainText("Bedok");
-    await table.getByRole("link", { name: /CHAS per 1,000/ }).click();
+    await table.getByRole("link", { name: /CHAS GP clinics per 1,000/ }).click();
     await expect(page).toHaveURL(/sort=clinics_per_1k_seniors&dir=asc/);
     await expect(table.locator("tbody tr").last()).toContainText("No data");          // missing values last
     await expectAsOfOnEveryCard(page, 1);

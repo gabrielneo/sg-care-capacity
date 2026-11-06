@@ -17,7 +17,7 @@ export const GRID = "#E2E8F0";
 
 const fmt1 = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 export const hours = (v: number | null | undefined) => (v == null ? "no data" : `${fmt1(v)} hours`);
-export const patients = (v: number | null | undefined) => (v == null ? "no data" : `${v.toLocaleString("en-SG")} patients`);
+export const patients = (v: number | null | undefined) => (v == null ? "no data" : `${v.toLocaleString("en-SG")} visits`);
 
 export const SHAPES = ["circle", "square", "triangle", "diamond", "cross", "star", "wye", "circle", "square"] as const;
 
@@ -39,9 +39,7 @@ export function SeriesLegend({ series, shapes = false }: { series: SeriesInfo[];
               <line x1="0" y1="4" x2="28" y2="4" stroke={s.style.color} strokeWidth="2.5" strokeDasharray={s.style.dash || undefined} />
             </svg>
           )}
-          <span>
-            <span className="font-medium">{s.code}</span> {s.name}
-          </span>
+          <span>{s.name}</span>
         </li>
       ))}
     </ul>

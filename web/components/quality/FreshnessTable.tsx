@@ -1,7 +1,10 @@
 import { FreshnessBadge } from "@/components/FreshnessBadge";
 import type { Source } from "@/lib/api/types";
 import { formatAsOf } from "@/lib/dates";
+import { BASIS } from "@/lib/copy";
 import { CADENCE_BY_SOURCE, THRESHOLDS } from "@/lib/freshness";
+
+import { Glossed } from "../terms/Glossed";
 
 export function FreshnessTable({ sources }: { sources: Source[] }) {
   return (
@@ -22,10 +25,10 @@ export function FreshnessTable({ sources }: { sources: Source[] }) {
             return (
               <tr key={s.id} className="border-b border-line align-top">
                 <th scope="row" className="py-1.5 pr-3 text-left font-normal">
-                  {s.url ? <a href={s.url}>{s.name}</a> : s.name}
+                  {s.url ? <a href={s.url}><Glossed text={s.name} plain /></a> : <Glossed text={s.name} />}
                 </th>
-                <td className="py-1.5 pr-3 tabular-nums">{s.as_of ? formatAsOf(s.as_of, { withTime: cadence === "live" }) : "Unknown"}</td>
-                <td className="py-1.5 pr-3 text-muted">{s.as_of_basis ?? ""}</td>
+                <td className="py-1.5 pr-3 tabular-nums">{s.as_of ? <Glossed text={formatAsOf(s.as_of, { withTime: cadence === "live" })} /> : "Unknown"}</td>
+                <td className="py-1.5 pr-3 text-muted">{BASIS[s.id] ?? ""}</td>
                 <td className="py-1.5 pr-3 tabular-nums text-muted">{s.last_fetched_at ? formatAsOf(s.last_fetched_at) : "Unknown"}</td>
                 <td className="py-1.5">
                   {s.as_of ? <FreshnessBadge asOf={s.as_of} cadence={cadence} /> : null}

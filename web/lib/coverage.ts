@@ -10,8 +10,8 @@ export type CellState = "both" | "wait_only" | "attendance_only" | "missing" | "
 
 export const CELL_LABELS: Record<CellState, string> = {
   both: "Both figures reported",
-  wait_only: "Bed wait only (no attendances)",
-  attendance_only: "Attendances only (no bed wait)",
+  wait_only: "Bed wait only (no ED visits)",
+  attendance_only: "ED visits only (no bed wait)",
   missing: "Missing",
   not_expected: "Not reported by MOH yet",
 };

@@ -15,7 +15,7 @@ describe("KpiTile", () => {
     expect(screen.getByText("hours")).toBeInTheDocument();
     expect(screen.getByText("-5.7%")).toBeInTheDocument();
     expect(screen.getByText(/vs the previous 4-week average/)).toBeInTheDocument();
-    expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 31 Oct 2026 · Source: MOH");
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 31 Oct 2026 · Source: Ministry of Health (MOH)");
   });
 
   it("shows missing as missing, never 0", () => {
@@ -30,7 +30,7 @@ describe("KpiTile", () => {
   it("refuses to show a number without a date", () => {
     render(<KpiTile label="Average bed wait" value={7.8} meta={{ ...edMeta, as_of: "" }} />);
     expect(screen.queryByText("7.8")).not.toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent("its date (as_of) is missing");
+    expect(screen.getByRole("alert")).toHaveTextContent("its date is missing");
   });
 
   it("does not compile without meta", () => {

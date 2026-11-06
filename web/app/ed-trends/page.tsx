@@ -8,8 +8,11 @@ import { WaitAttendanceScatter } from "@/components/charts/WaitAttendanceScatter
 import { EdFilterForm } from "@/components/EdFilterForm";
 import { PageHeader } from "@/components/PageHeader";
 import { CaveatChip } from "@/components/CaveatChip";
+import { Glossed } from "@/components/terms/Glossed";
+import { Term } from "@/components/terms/Term";
 import { EmptyState, ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
+import { BED_WAIT_EXPLAINER, BED_WAIT_LABEL, BED_WAIT_UNIT_DAILY, CAVEAT, dayText, plainError } from "@/lib/copy";
 import { parseEdFilters } from "@/lib/edParams";
 import { hospitalKey } from "@/lib/hospitalNotes";
 import { seriesStyles } from "@/lib/hospitalStyle";
@@ -20,15 +23,16 @@ export const dynamic = "force-dynamic";
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
-const INTRO = "Daily figures MOH publishes for each public emergency department: the median wait for a ward bed and the number of attendances.";
+const INTRO = "Daily figures from MOH for each public ED: the time waiting for a ward bed after the decision to admit, and the number of ED visits.";
+const TITLE = <><Term id="ed" /> trends</>;
 
 export default async function EdTrendsPage({ searchParams }: { searchParams: Search }) {
   const hospitalsRes = await settle(api.hospitals());
   if (!hospitalsRes.ok) {
     return (
       <>
-        <PageHeader title="ED Trends" intro={INTRO} />
-        <ErrorState error={hospitalsRes.error} />
+        <PageHeader title={TITLE} intro={<Glossed text={INTRO} />} />
+        <ErrorState error={plainError(hospitalsRes.error)} />
       </>
     );
   }
@@ -42,7 +46,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
 
   const header = (from: string, to: string) => (
     <>
-      <PageHeader title="ED Trends" intro={INTRO} />
+      <PageHeader title={TITLE} intro={<Glossed text={INTRO} />} />
       <EdFilterForm hospitals={hospitals} selected={filters.hospitals} from={from} to={to} />
       {filters.notes.map((n) => (
         <p key={n} className="mb-3">
@@ -56,7 +60,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     return (
       <>
         {header(filters.from ?? "", filters.to ?? "")}
-        <ErrorState title="These dates can't be shown" error={dailyRes.error} action={<Link href="/ed-trends">Show the default range</Link>} />
+        <ErrorState title="These dates can't be shown" error={plainError(dailyRes.error)} action={<Link href="/ed-trends">Show the default range</Link>} />
       </>
     );
   }
@@ -73,8 +77,8 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     return (
       <>
         {header(from, to)}
-        <EmptyState title="No MOH figures for this selection"
-                    message={`MOH published nothing for ${chosen.map((h) => h.hospital_code).join(", ")} between ${from} and ${to}. Try other hospitals or dates.`} />
+        <EmptyState title={<Glossed text="No MOH figures for this selection" />}
+                    message={<Glossed text={`MOH published nothing for ${chosen.map((h) => h.hospital_code).join(", ")} between ${from ? dayText(from) : "?"} and ${to ? dayText(to) : "?"}. Try other hospitals or dates.`} />} />
       </>
     );
   }
@@ -83,34 +87,34 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const gaps = missingDays(wide, selected);
   const gapText = Object.entries(gaps).filter(([, n]) => n > 0).map(([c, n]) => `${c} ${n}`).join(", ");
   const scatter = scatterPoints(rows, selected);
-  const description = (text: string) => (
+  const description = (text: string, explainer = false) => (
     <>
-      {text}
-      {key.length ? <span className="mt-1 block font-medium text-ink">{key.join("; ")}.</span> : null}
+      <Glossed text={text} />
+      {explainer ? <span className="mt-1 block text-ink" data-testid="bed-wait-explainer"><Glossed text={BED_WAIT_EXPLAINER} /></span> : null}
+      {key.length ? <span className="mt-1 block font-medium text-ink"><Glossed text={`${key.join("; ")}.`} /></span> : null}
     </>
   );
+  const range = `${dayText(from)} to ${dayText(to)}`;
 
   return (
     <>
       {header(from, to)}
       <div className="space-y-6">
-        <ChartCard title="Daily median wait for a ward bed" meta={meta}
-                   caveat={meta.caveats.find((c) => c.startsWith("Median wait")) ?? null}
-                   description={description(`From the decision to admit to leaving the ED, for patients admitted that day; ${from} to ${to}. A break in a line is a day MOH didn't publish.`)}>
+        <ChartCard title={BED_WAIT_LABEL} meta={meta} caveat={CAVEAT.bedWaitUnit}
+                   description={description(`${BED_WAIT_UNIT_DAILY[0]!.toUpperCase()}${BED_WAIT_UNIT_DAILY.slice(1)}, ${range}. A break in a line is a day MOH didn't publish: we never fill in missing days.`, true)}>
           <DailyWaitChart data={wide} series={series} />
           <p className="mt-2 text-xs text-muted" data-testid="gap-summary">
-            {gapText ? `Days with no figure in this range: ${gapText}.` : "Every day in this range has a figure for each hospital shown."}
+            {gapText ? <Glossed text={`Days with no figure in this range: ${gapText}.`} /> : "Every day in this range has a figure for each hospital shown."}
           </p>
         </ChartCard>
 
-        <ChartCard title="Day-of-week pattern" meta={meta} caveat={null}
-                   description={description("Average of the daily median waits on each weekday, over the same days. Hover for how many days each average uses.")}>
+        <ChartCard title="Bed wait by day of the week" meta={meta} caveat={CAVEAT.weeklyAverage}
+                   description={description(`${BED_WAIT_LABEL}: the average of each day's median for each weekday, ${range}. Hover or tap to see how many days each average uses.`)}>
           <DayOfWeekChart data={dayOfWeek(rows, selected)} series={series} />
         </ChartCard>
 
-        <ChartCard title="Wait vs attendances" meta={meta}
-                   caveat={meta.caveats.find((c) => c.startsWith("Emergency department attendances")) ?? null}
-                   description={description("Each point is one hospital on one day. Busier days don't always mean longer waits: bed waits depend on ward capacity too.")}>
+        <ChartCard title="Bed wait and ED visits on the same day" meta={meta} caveat={CAVEAT.edVisits}
+                   description={description("Each point is one hospital on one day. A busier day does not always come with a longer bed wait.")}>
           <WaitAttendanceScatter points={scatter.points} series={series} />
           {scatter.excluded ? (
             <p className="mt-2 text-xs text-muted">{scatter.excluded} days with only one of the two figures are left out.</p>

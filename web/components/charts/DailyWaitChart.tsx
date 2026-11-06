@@ -25,7 +25,7 @@ function DailyTip({ active, label, data, series }: TipProps) {
   return (
     <TooltipBox
       title={formatDay(String(label))}
-      rows={series.map((s) => ({ key: s.code, label: `${s.code} median wait`, color: s.style.color,
+      rows={series.map((s) => ({ key: s.code, label: s.name, color: s.style.color,
                                  value: hours((row?.[s.code] as number | null | undefined) ?? null) }))}
     />
   );
@@ -37,7 +37,7 @@ export function DailyWaitChart({ data, series, width }: { data: WideRow[]; serie
         <LineChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }} width={width} height={width ? CHART_HEIGHT : undefined}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="date" tickFormatter={tick} minTickGap={24} {...AXIS} />
-          <YAxis width={48} {...AXIS} label={{ value: "hours", angle: -90, position: "insideLeft", fill: AXIS.stroke, fontSize: 12 }} />
+          <YAxis width={48} {...AXIS} label={{ value: "hours (daily median)", angle: -90, position: "insideLeft", fill: AXIS.stroke, fontSize: 12, dy: 60 }} />
           <Tooltip content={<DailyTip data={data} series={series} />} />
           {series.map((s) => (
             <Line key={s.code} type="linear" dataKey={s.code} name={s.name} stroke={s.style.color} strokeWidth={2}

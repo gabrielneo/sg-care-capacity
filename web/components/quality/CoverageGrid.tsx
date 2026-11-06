@@ -1,5 +1,8 @@
 import { CELL_LABELS, type CellState, type CoverageRow, dateRuns } from "@/lib/coverage";
 
+import { Glossed } from "../terms/Glossed";
+import { Term } from "../terms/Term";
+
 const CELL = 7;
 const GAP = 1;
 const LABEL_W = 56;
@@ -50,7 +53,7 @@ export function CoverageGrid({ days, rows }: { days: string[]; rows: CoverageRow
         {(Object.keys(CELL_LABELS) as CellState[]).filter((s) => s !== "attendance_only").map((s) => (
           <li key={s} className="flex items-center gap-1.5">
             <Swatch state={s} />
-            {s === "wait_only" ? "Only one of the two figures" : CELL_LABELS[s]}
+            {s === "wait_only" ? "Only one of the two figures" : <Glossed text={CELL_LABELS[s]} />}
           </li>
         ))}
       </ul>
@@ -81,7 +84,7 @@ export function CoverageGrid({ days, rows }: { days: string[]; rows: CoverageRow
           const partial = r.gaps.filter((g) => g.state !== "missing").map((g) => g.date);
           return (
             <li key={r.code}>
-              <span className="font-medium">{r.code}</span>{" "}
+              <span className="font-medium"><Term id={r.code.toLowerCase()} /></span>{" "}
               {r.gaps.length === 0 ? (
                 <span className="text-muted">none</span>
               ) : (

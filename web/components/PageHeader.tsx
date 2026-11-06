@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function PageHeader({ title, intro }: { title: string; intro?: ReactNode }) {
+export function PageHeader({ title, intro }: { title: ReactNode; intro?: ReactNode }) {
   return (
     <header className="mb-6">
       <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{title}</h1>

@@ -53,38 +53,38 @@ describe("weekKpis", () => {
 describe("summaryParagraph", () => {
   it("states the range, the comparison, the total and who is missing", () => {
     expect(summaryParagraph(weekKpis(ROWS))).toBe(
-      "In the week of 19–25 Oct 2026, the average of daily median waits for a ward bed ranged from 2.1 hours at " +
-      "Alexandra Hospital (an urgent care centre) to 7.8 hours at Singapore General Hospital. " +
-      "1 of 3 hospitals was above its previous 4-week average. " +
-      "Together the 3 hospitals recorded 8,100 attendances, about the same as the 4-week average. " +
+      "For 19–25 Oct 2026, the time waiting for a ward bed after the decision to admit ranged from 2.1 to 7.8 hours. " +
+      "It was shortest at Alexandra Hospital's UCC and longest at Singapore General Hospital. " +
+      "1 of 3 hospitals had a longer bed wait than its average for the previous 4 weeks. " +
+      "Together they had 8,100 ED visits, about the same as their average for the previous 4 weeks. " +
       "National University Hospital has no complete data for that week and is left out.");
   });
 
   it("says more or fewer, and handles none above", () => {
     const rows = [row("SGH", "Singapore General Hospital", 7, 8, 3000, 3600), row("CGH", "Changi General Hospital", 3, 4, 3000, 3000)];
     const text = summaryParagraph(weekKpis(rows));
-    expect(text).toContain("None of the 2 hospitals with a comparison was above its previous 4-week average.");
-    expect(text).toContain("recorded 6,000 attendances, 9.1% fewer than the 4-week average.");
+    expect(text).toContain("None of the 2 hospitals with a comparison had a longer bed wait than its average for the previous 4 weeks.");
+    expect(text).toContain("Together they had 6,000 ED visits, 9.1% fewer than their average for the previous 4 weeks.");
   });
 
   it("never invents a figure when there is no complete week", () => {
     expect(summaryParagraph(weekKpis([ROWS[3]!]))).toBe(
-      "No hospital has a complete week of MOH data in this snapshot yet, so there is nothing to summarise.");
+      "No hospital has a complete week of MOH figures in this week's data release, so there is nothing to summarise.");
   });
 
   it("names the hospital when only one can be compared", () => {
     const rows = [row("AH", "Alexandra Hospital (UCC)", 2, null, 700, null), row("SGH", "Singapore General Hospital", 5, 4, 3150, 2800)];
     expect(summaryParagraph(weekKpis(rows))).toContain(
-      "The one hospital with a comparison, Singapore General Hospital, was above its previous 4-week average.");
+      "The one hospital with a comparison, Singapore General Hospital, had a longer bed wait than its average for the previous 4 weeks.");
     const down = [row("SGH", "Singapore General Hospital", 3, 4, 3150, 2800)];
-    expect(summaryParagraph(weekKpis(down))).toContain("was not above its previous 4-week average.");
+    expect(summaryParagraph(weekKpis(down))).toContain("did not have a longer bed wait than its average for the previous 4 weeks.");
   });
 
   it("says when nothing can be compared", () => {
     const text = summaryParagraph(weekKpis([row("SGH", "Singapore General Hospital", 7, null, 3000, null)]));
     expect(text).toContain("was 7.0 hours at Singapore General Hospital.");
     expect(text).toContain("No hospital had four complete earlier weeks to compare with.");
-    expect(text).toContain("It recorded 3,000 attendances.");
+    expect(text).toContain("It had 3,000 ED visits.");
   });
 });
 
@@ -94,4 +94,10 @@ describe("formatWeek", () => {
     [{ week_start: "2026-10-26", week_end: "2026-11-01" }, "26 Oct – 1 Nov 2026"],
     [{ week_start: "2025-12-29", week_end: "2026-01-04" }, "29 Dec 2025 – 4 Jan 2026"],
   ])("%o -> %s", (week, text) => expect(formatWeek(week)).toBe(text));
+});
+
+it("keeps every sentence under 25 words and uses no causal words", () => {
+  const text = summaryParagraph(weekKpis(ROWS));
+  for (const s of text.split(/(?<=\.)\s+/)) expect(s.split(/\s+/).length, s).toBeLessThan(25);
+  expect(text).not.toMatch(/\b(causes?|drives?|leads? to|because)\b/i);
 });

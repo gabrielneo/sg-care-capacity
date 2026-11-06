@@ -3,6 +3,9 @@ import Link from "next/link";
 import type { Hospital } from "@/lib/api/types";
 import { shortNote } from "@/lib/hospitalNotes";
 
+import { Glossed } from "./terms/Glossed";
+import { Term } from "./terms/Term";
+
 /** A plain GET form: works with the keyboard, without JavaScript, and gives shareable URLs. */
 export function EdFilterForm({ hospitals, selected, from, to }: { hospitals: Hospital[]; selected: string[]; from: string; to: string }) {
   const all = selected.length === 0;
@@ -18,7 +21,7 @@ export function EdFilterForm({ hospitals, selected, from, to }: { hospitals: Hos
                 <input type="checkbox" name="hospital" value={h.hospital_code} defaultChecked={all || selected.includes(h.hospital_code)}
                        className="h-4 w-4 accent-accent" />
                 <span>
-                  <span className="font-medium">{h.hospital_code}</span> {h.hospital_name.replace(/\s*\(UCC\)$/, "")}
+                  <Term id={h.hospital_code.toLowerCase()} plain />
                   {note ? <span className="text-muted"> · {note.toLowerCase()}</span> : null}
                 </span>
               </label>
@@ -37,7 +40,7 @@ export function EdFilterForm({ hospitals, selected, from, to }: { hospitals: Hos
         </label>
         <button type="submit" className="min-h-11 rounded-md bg-accent px-4 text-sm font-medium text-surface">Show</button>
         <Link href="/ed-trends" className="flex min-h-11 items-center text-sm">Reset</Link>
-        <p className="w-full text-xs text-muted">Up to 2 years at a time. Default: the 90 days up to the latest day MOH has published.</p>
+        <p className="w-full text-xs text-muted"><Glossed text="Up to 2 years at a time. Default: the 90 days up to the latest day MOH has published." /></p>
       </div>
     </form>
   );

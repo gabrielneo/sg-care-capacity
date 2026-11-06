@@ -16,8 +16,9 @@ function PointTip({ active, payload }: TipProps) {
   if (!active || !p) return null;
   return (
     <TooltipBox
-      title={`${p.code ? `${p.code} ${p.name ?? ""} · ` : ""}${formatDay(p.date)}`}
-      rows={[{ key: "w", label: "Median wait", value: hours(p.wait) }, { key: "a", label: "Attendances", value: patients(p.attendances) }]}
+      title={`${p.name ? `${p.name} · ` : ""}${formatDay(p.date)}`}
+      rows={[{ key: "w", label: "Time waiting for a ward bed", value: `${hours(p.wait)} (daily median)` },
+             { key: "a", label: "ED visits", value: patients(p.attendances) }]}
     />
   );
 }
@@ -29,10 +30,10 @@ export function WaitAttendanceScatter({ points, series }: { points: Record<strin
       <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
         <ScatterChart margin={{ top: 8, right: 12, bottom: 24, left: 0 }}>
           <CartesianGrid stroke={GRID} />
-          <XAxis type="number" dataKey="attendances" name="Attendances" {...AXIS}
-                 label={{ value: "attendances (patients per day)", position: "insideBottom", offset: -12, fill: AXIS.stroke, fontSize: 12 }} />
-          <YAxis type="number" dataKey="wait" name="Median wait" width={48} {...AXIS}
-                 label={{ value: "hours", angle: -90, position: "insideLeft", fill: AXIS.stroke, fontSize: 12 }} />
+          <XAxis type="number" dataKey="attendances" name="ED visits" {...AXIS}
+                 label={{ value: "ED visits per day", position: "insideBottom", offset: -12, fill: AXIS.stroke, fontSize: 12 }} />
+          <YAxis type="number" dataKey="wait" name="Time waiting for a ward bed" width={48} {...AXIS}
+                 label={{ value: "hours (daily median)", angle: -90, position: "insideLeft", fill: AXIS.stroke, fontSize: 12, dy: 60 }} />
           <ZAxis range={[28, 28]} />
           <Tooltip content={<PointTip />} />
           {series.map((s, i) => (

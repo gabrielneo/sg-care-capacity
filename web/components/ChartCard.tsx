@@ -12,8 +12,12 @@ export interface ChartCardProps {
   meta: Meta;
   children: ReactNode;
   description?: ReactNode;
-  /** The caveat for the footer line. Defaults to meta.caveats[0]; null shows none (all stay under "All notes"). */
+  /** The site's plain caveat for the footer line (lib/copy.ts). */
   caveat?: string | null;
+  /** More plain notes, under "More about these figures". */
+  notes?: string[];
+  /** Show the API's own caveats and each warning's details (Data Quality only). */
+  detail?: boolean;
   cadence?: Cadence;
   now?: Date;
 }
@@ -22,7 +26,7 @@ export interface ChartCardProps {
  * A titled chart with its provenance footer. If meta has no usable as_of or no source, the chart
  * is NOT rendered: a figure without a date and source is never shown.
  */
-export function ChartCard({ title, meta, children, description, caveat, cadence, now }: ChartCardProps) {
+export function ChartCard({ title, meta, children, description, caveat, notes, detail, cadence, now }: ChartCardProps) {
   const id = `chart-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
   return (
@@ -38,7 +42,7 @@ export function ChartCard({ title, meta, children, description, caveat, cadence,
       ) : (
         <>
           <div className="mt-4">{children}</div>
-          <Provenance meta={meta} caveat={caveat} cadence={cadence} now={now} />
+          <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} cadence={cadence} now={now} />
         </>
       )}
     </section>

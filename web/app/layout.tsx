@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Nav } from "@/components/Nav";
+import { Glossed } from "@/components/terms/Glossed";
 import { TermScope } from "@/components/terms/TermScope";
 
 export const metadata: Metadata = {
@@ -33,18 +34,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Nav />
           </div>
         </header>
-        {/* Glossary first-use tracking starts in the page body: the nav never uses up an expansion. */}
+        {/* Glossary first-use tracking covers the page body only. The nav and footer sit outside it:
+            page content streams in after them, so they must not use up a page's first expansion. */}
         <TermScope>
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
           {children}
         </main>
+        </TermScope>
         <footer className="border-t border-line bg-surface">
           <div className="mx-auto max-w-6xl px-4 py-4 text-sm text-muted">
-            Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data.{" "}
-            <Link href="/methodology">How the figures are made</Link>
+            <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." />{" "}
+            <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
           </div>
         </footer>
-        </TermScope>
       </body>
     </html>
   );

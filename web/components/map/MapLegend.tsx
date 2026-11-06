@@ -2,16 +2,22 @@ import type { AreaMetric } from "@/lib/areaMetrics";
 import { formatValue } from "@/lib/areaMetrics";
 import type { LegendClass } from "@/lib/quantiles";
 
+import { Glossed } from "../terms/Glossed";
+
 /** Class breaks, the method used, and how many areas have no data. Plain HTML, outside the map. */
 export function MapLegend({ metric, classes, noData, smallAreas = 0 }: {
   metric: AreaMetric; classes: LegendClass[]; noData: number; smallAreas?: number }) {
   return (
     <div className="text-xs text-ink" data-testid="map-legend">
-      <p className="font-semibold">{metric.label}</p>
+      <p className="font-semibold"><Glossed text={metric.label} /></p>
       <p className="mt-0.5 text-muted">
-        {metric.higherIsBetter ? "Darker = higher (better access)." : "Darker = farther (worse access)."} Classes are{" "}
-        <strong className="font-medium text-ink">quantiles</strong>: each holds about the same number of planning areas, counting
-        only areas with a value{classes.length < 5 ? "; tied values merge classes" : ""}.
+        {metric.higherIsBetter ? (
+          <><span aria-hidden="true">▲ </span>Darker means more clinics: better access.</>
+        ) : (
+          <><span aria-hidden="true">▼ </span>Darker means farther: worse access.</>
+        )}{" "}
+        The map is shaded in <strong className="font-medium text-ink">five groups with equal numbers of areas</strong>
+        {classes.length < 5 ? " (fewer when areas share a value)" : ""}. Areas with no value are left out of the groups.
       </p>
       <ul className="mt-2 space-y-1">
         {classes.map((c) => (

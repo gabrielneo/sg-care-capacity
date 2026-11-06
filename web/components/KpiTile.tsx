@@ -1,9 +1,12 @@
+import type { ReactNode } from "react";
+
 import type { Meta } from "@/lib/api/types";
 import type { Cadence } from "@/lib/freshness";
 
 import { CaveatChip } from "./CaveatChip";
 import { Provenance, provenanceProblems } from "./Provenance";
 import { ErrorState } from "./States";
+import { Glossed } from "./terms/Glossed";
 
 export interface KpiChange {
   /** Signed change, e.g. 12.5 for +12.5%. null = no comparison possible. */
@@ -14,9 +17,9 @@ export interface KpiChange {
 }
 
 export interface KpiTileProps {
-  label: string;
+  label: ReactNode;
   value: number | null;
-  unit?: string;
+  unit?: ReactNode;
   /** Required: the response's meta (as_of and source are always shown). */
   meta: Meta;
   format?: (value: number) => string;
@@ -65,12 +68,12 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
             ) : (
               format(value)
             )}
-            {value !== null && unit ? <span className="ml-1 text-base font-normal text-muted">{unit}</span> : null}
+            {value !== null && unit ? <>{" "}<span className="text-base font-normal text-muted">{unit}</span></> : null}
           </p>
           {change ? <ChangeLine change={change} /> : null}
           {caveat ? (
             <div className="mt-2">
-              <CaveatChip>{caveat}</CaveatChip>
+              <CaveatChip><Glossed text={caveat} /></CaveatChip>
             </div>
           ) : null}
           <Provenance meta={meta} cadence={cadence} now={now} compact />

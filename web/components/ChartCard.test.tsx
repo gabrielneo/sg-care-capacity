@@ -9,12 +9,12 @@ const NOW = new Date("2026-11-06T12:00:00+08:00");
 
 describe("ChartCard", () => {
   it("always shows 'Data as of {date} · Source: {publisher} · {caveat}' under the chart", () => {
-    render(<ChartCard title="Bed waits" meta={edMeta} now={NOW}><p>chart</p></ChartCard>);
+    render(<ChartCard title="Bed waits" meta={edMeta} now={NOW} caveat="A plain caveat."><p>chart</p></ChartCard>);
     expect(screen.getByRole("heading", { name: "Bed waits" })).toBeInTheDocument();
     expect(screen.getByText("chart")).toBeInTheDocument();
     expect(screen.getByTestId("provenance-line")).toHaveTextContent(
-      "Data as of 31 Oct 2026 · Source: MOH · Average of daily median ward-bed waits (week): Not a weekly median: MOH publishes daily medians only.");
-    const source = screen.getByRole("link", { name: "MOH" });
+      "Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · A plain caveat.");
+    const source = screen.getByRole("link", { name: "Ministry of Health (MOH)" });
     expect(source).toHaveAttribute("href", edMeta.sources[0]!.url);
     expect(screen.getByText(/Up to date · 6 days old/)).toBeInTheDocument();
   });
@@ -25,11 +25,20 @@ describe("ChartCard", () => {
     expect(screen.getByText(/Old · 2 years old/)).toHaveAttribute("data-level", "red");
   });
 
-  it("lists every other caveat and data-quality note behind 'All notes'", () => {
-    render(<ChartCard title="Bed waits" meta={edMeta} now={NOW}><p>chart</p></ChartCard>);
-    const details = screen.getByText("All notes (2)").closest("details")!;
+  it("public pages show the site's notes and summarise data-quality warnings with a link", () => {
+    render(<ChartCard title="Bed waits" meta={edMeta} now={NOW} notes={["A site note."]}><p>chart</p></ChartCard>);
+    const details = screen.getByText("More about these figures (2)").closest("details")!;
+    expect(within(details).getByText("A site note.")).toBeInTheDocument();
+    expect(details).toHaveTextContent("1 data-quality warning applies to these figures. See Data Quality");
+    expect(within(details).getByRole("link", { name: "See Data Quality" })).toHaveAttribute("href", "/data-quality");
+    expect(details).not.toHaveTextContent("range.bed_wait_over_24h");             // no internal names
+    expect(details).not.toHaveTextContent("Not a weekly median");                 // the API's own caveats stay out
+  });
+
+  it("the detail view lists the API's caveats and each warning's check", () => {
+    render(<ChartCard title="Bed waits" meta={edMeta} now={NOW} detail><p>chart</p></ChartCard>);
+    const details = screen.getByText("More about these figures (3)").closest("details")!;
     expect(within(details).getByText("AH: Urgent Care Centre, not a full ED.")).toBeInTheDocument();
-    expect(within(details).getByText(/range.bed_wait_over_24h/)).toBeInTheDocument();
     expect(details).toHaveTextContent("(63 rows): SGH, 2026-10-20: over 24 hours");
   });
 
@@ -37,12 +46,12 @@ describe("ChartCard", () => {
     const { rerender } = render(<ChartCard title="x" meta={edMeta} caveat="Chosen caveat" now={NOW}>c</ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent(/· Chosen caveat$/);
     rerender(<ChartCard title="x" meta={edMeta} caveat={null} now={NOW}>c</ChartCard>);
-    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/Source: MOH$/);
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/Source: Ministry of Health \(MOH\)$/);
   });
 
   it.each([
-    [{ ...edMeta, as_of: "" }, "its date (as_of) is missing"],
-    [{ ...edMeta, as_of: "not a date" }, "its date (as_of) is missing"],
+    [{ ...edMeta, as_of: "" }, "its date is missing"],
+    [{ ...edMeta, as_of: "not a date" }, "its date is missing"],
     [{ ...edMeta, sources: [] }, "its source is missing"],
   ])("refuses to show the chart without a date or source (%#)", (meta, reason) => {
     render(<ChartCard title="Bed waits" meta={meta}><p>chart</p></ChartCard>);
