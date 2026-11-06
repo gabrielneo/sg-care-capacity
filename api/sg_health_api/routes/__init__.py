@@ -15,9 +15,9 @@ def get_ctx(request: Request) -> Context:
 
 
 def build_router() -> APIRouter:
-    from . import system
+    from . import ed, system
 
     router = APIRouter(prefix=API_PREFIX)
-    for module in (system,):
+    for module in (system, ed):
         router.include_router(module.router)
     return router

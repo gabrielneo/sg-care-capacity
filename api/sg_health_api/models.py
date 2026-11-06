@@ -1,6 +1,7 @@
 """Pydantic models for every response. Each response is {data, meta}; errors are {data: null, meta, error}."""
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -77,4 +78,103 @@ class Health(BaseModel):
 
 class HealthResponse(BaseModel):
     data: Health
+    meta: Meta
+
+
+# --------------------------------------------------------------------------- #
+# Hospitals and ED
+# --------------------------------------------------------------------------- #
+
+class Hospital(BaseModel):
+    hospital_code: str
+    hospital_name: str
+    cluster: str
+    facility_type: Literal["ED", "UCC"] = Field(description="AH is an Urgent Care Centre, not a full ED")
+    reported_from: date | None = Field(description="First day MOH reports the site; null = from the series start")
+    coverage_note: str | None
+    exclusions_note: str | None
+    source_url: str
+    as_of: date
+    as_of_basis: str
+
+
+class HospitalsResponse(BaseModel):
+    data: list[Hospital]
+    meta: Meta
+
+
+class EdDay(BaseModel):
+    hospital_code: str
+    hospital_name: str
+    report_date: date
+    iso_year: int
+    iso_week: int
+    median_wait_hours: float | None = Field(description="MOH daily median wait for a ward bed; unit inferred (hours)")
+    attendances: int | None = Field(description="Patients who attended that day; null = MOH gave no value")
+    is_complete_week: bool
+    dq_flags: list[str] = Field(description="WARN checks this row tripped (see meta.dq_warnings)")
+    wait_source_url: str | None
+    wait_source_sha256: str | None
+    attendance_source_url: str | None
+    attendance_source_sha256: str | None
+    as_of: datetime
+    as_of_basis: str
+
+
+class EdDailyResponse(BaseModel):
+    data: list[EdDay]
+    meta: Meta
+
+
+class EdWeek(BaseModel):
+    hospital_code: str
+    hospital_name: str
+    iso_year: int
+    iso_week: int
+    week_start: date
+    week_end: date
+    mean_of_daily_median_wait_hours: float | None = Field(description="Average of daily medians, NOT a weekly median")
+    total_attendances: int | None = Field(description="A full-week total only when days_reported_attendances = 7")
+    days_reported_wait: int
+    days_reported_attendances: int
+    is_complete_week: bool
+    source_sha256: str | None
+    as_of: datetime
+    as_of_basis: str
+
+
+class EdWeeklyResponse(BaseModel):
+    data: list[EdWeek]
+    meta: Meta
+
+
+class WeekRef(BaseModel):
+    iso_year: int
+    iso_week: int
+    week_start: date
+    week_end: date
+
+
+class Change(BaseModel):
+    unit: str
+    latest: int | float | None = Field(description="Value in the latest complete week")
+    baseline_mean: float | None = Field(description="Mean over the 4 complete weeks before it; null if any is missing")
+    change: float | None = Field(description="latest - baseline_mean, in the metric's unit")
+    change_pct: float | None = Field(description="change / baseline_mean x 100; null if the baseline is null or 0")
+
+
+class EdSummary(BaseModel):
+    hospital_code: str
+    hospital_name: str
+    facility_type: str
+    latest_complete_week: WeekRef | None = Field(description="Most recent ISO week with all 7 days of both metrics")
+    is_current: bool = Field(description="False if this hospital's latest complete week is older than other hospitals'")
+    baseline_weeks: list[date] = Field(description="week_start of the 4 weeks the baseline averages")
+    mean_of_daily_median_wait_hours: Change
+    total_attendances: Change
+    note: str | None = Field(description="Why a value is missing, if one is")
+
+
+class EdSummaryResponse(BaseModel):
+    data: list[EdSummary]
     meta: Meta
