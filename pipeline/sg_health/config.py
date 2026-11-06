@@ -16,6 +16,20 @@ SGT = timezone(timedelta(hours=8))  # Singapore has no DST, so a fixed offset is
 # Paths. Defaults are resolved from the repo root (this file is pipeline/sg_health/config.py),
 # so commands behave the same from any working directory. SG_HEALTH_DATA_DIR overrides.
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_local_env(path: Path | None = None) -> bool:
+    """Load a local .env into os.environ if one exists (python-dotenv). Never required.
+
+    override=False: a real environment variable always wins, e.g. CI's DATAGOV_API_KEY secret.
+    Values are never logged. Returns True if a file was read.
+    """
+    from dotenv import load_dotenv
+    path = path or REPO_ROOT / ".env"
+    return path.is_file() and load_dotenv(path, override=False)
+
+
+load_local_env()   # before any setting below is read
 DATA_DIR = Path(os.getenv("SG_HEALTH_DATA_DIR", REPO_ROOT / "data"))
 RAW_DIR = DATA_DIR / "raw"                     # immutable landing zone (gitignored)
 BUILD_DIR = DATA_DIR / "build"                 # working outputs (gitignored)

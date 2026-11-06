@@ -55,7 +55,7 @@ Default paths, all under the repo root (override with `--raw-dir`, `--db`, `--re
 | `data/build/warehouse.duckdb` | The pipeline's working warehouse. It is **not** what the API reads; the API will read a published snapshot. | No |
 | `data/build/SG_Healthcare_Scrape_Report.xlsx` | Excel summary | No |
 
-Optional environment variables (see `.env.example`):
+Optional environment variables. Put them in a **`.env`** file at the repo root (copy `.env.example`); the pipeline loads it automatically, it is git-ignored, and a real environment variable of the same name always wins (CI uses a GitHub Actions secret instead). Never commit `.env` or paste its values anywhere:
 
 | Variable | Purpose |
 |---|---|
