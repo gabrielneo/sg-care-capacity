@@ -16,7 +16,11 @@
     "gen:api": "openapi-typescript ../api/openapi.json -o lib/api/schema.d.ts",
     "check:api-types": "npm run gen:api && git diff --exit-code -- lib/api/schema.d.ts",
     "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
+    "e2e:install": "playwright install --with-deps chromium",
+    "gen:glossary": "node scripts/gen-glossary.mjs",
+    "check:glossary": "npm run gen:glossary && git diff --exit-code -- lib/glossary.generated.ts",
+    "predev": "npm run gen:glossary",
+    "prebuild": "npm run gen:glossary"
   },
   "dependencies": {
     "@mdx-js/mdx": "3.1.1",
@@ -54,6 +58,7 @@
     "openapi-typescript": "7.13.0",
     "tailwindcss": "4.3.4",
     "typescript": "5.9.3",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "yaml": "2.9.1"
   }
 }
