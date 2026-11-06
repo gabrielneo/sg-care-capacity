@@ -81,3 +81,72 @@ def bed_wait_ranges(df: pd.DataFrame, ctx: GateContext):
 def attendance_ranges(df: pd.DataFrame, ctx: GateContext):
     v = pd.to_numeric(df["total_attendances"], errors="coerce")
     return [(ATTENDANCES_NEGATIVE.check_id, v < 0, "total_attendances = " + v.astype(str) + " is negative")]
+
+
+# --------------------------------------------------------------------------- #
+# Unit sanity (minutes vs hours)
+# --------------------------------------------------------------------------- #
+# The parser decides a sheet's unit from its header, or from the size of the numbers if the
+# header says nothing (MOH's doesn't). A wrong decision changes every value in that sheet by
+# exactly 60x. Two file-level checks catch that, per sheet:
+#   1. MOH repeats its full history in every weekly file, so a sheet can be compared with the
+#      values already stored for the same hospitals and dates: same units give a ratio of ~1.
+#   2. When there is nothing to compare with (first load, or a brand-new week), the sheet's
+#      overall median must be a plausible number of hours.
+# A hospital's own week-on-week swings (e.g. CGH, Feb 2026: ~8 h down to ~0.6 h, confirmed in
+# MOH's file) are real data, not unit errors; they are only a WARN, in `validate`.
+
+UNIT_RATIO_LIMIT = 20            # stored-vs-new median ratio beyond 20x (or 1/20x): unit error
+UNIT_MIN_OVERLAP = 7             # need at least a week of overlapping cells to compare
+SHEET_MEDIAN_HOURS = (0.25, 24)  # plausible median bed wait for a whole sheet, in hours
+
+UNIT_VS_STORED = register(
+    "unit.file_vs_stored", Severity.ERROR, Scope.FILE,
+    f"A sheet's values agree with stored values for the same days (median ratio within {UNIT_RATIO_LIMIT}x)")
+UNIT_PLAUSIBLE = register(
+    "unit.sheet_plausible", Severity.ERROR, Scope.FILE,
+    f"A sheet's median bed wait is between {SHEET_MEDIAN_HOURS[0]} and {SHEET_MEDIAN_HOURS[1]} hours")
+
+
+@rule("moh_bed_waits")
+def unit_sanity(df: pd.DataFrame, ctx: GateContext):
+    out = []
+    v = pd.to_numeric(df["median_wait_hours"], errors="coerce")
+    sheets = df["sheet"] if "sheet" in df else pd.Series("(all)", index=df.index)
+    stored = _stored_bed_waits(ctx, df)
+    for sheet in sheets.dropna().unique():
+        in_sheet = sheets.eq(sheet)
+        med = v[in_sheet].median()
+        if pd.notna(med) and not (SHEET_MEDIAN_HOURS[0] <= med <= SHEET_MEDIAN_HOURS[1]):
+            out.append((UNIT_PLAUSIBLE.check_id, in_sheet,
+                        f"sheet {sheet!r}: median {med:.3g} h is outside {SHEET_MEDIAN_HOURS} h; "
+                        "possible minutes/hours unit error"))
+        if stored is not None:
+            pair = df.loc[in_sheet, ["hospital_name", "report_date"]].assign(new=v[in_sheet]).merge(
+                stored, on=["hospital_name", "report_date"], how="inner")
+            pair = pair[(pair.new > 0) & (pair.old > 0)]
+            if len(pair) >= UNIT_MIN_OVERLAP:
+                ratio = (pair.new / pair.old).median()
+                if ratio > UNIT_RATIO_LIMIT or ratio < 1 / UNIT_RATIO_LIMIT:
+                    out.append((UNIT_VS_STORED.check_id, in_sheet,
+                                f"sheet {sheet!r}: values are {ratio:.3g}x the stored values for the same "
+                                f"{len(pair)} hospital-days; possible minutes/hours unit error"))
+    return out
+
+
+def _stored_bed_waits(ctx: GateContext, df: pd.DataFrame):
+    """Clean values already stored for the hospitals and dates in df, or None if none."""
+    keys = df[["hospital_name", "report_date"]].drop_duplicates()
+    con = ctx.wh.con
+    con.register("_unit_keys", keys)
+    try:
+        stored = con.execute(
+            "SELECT b.hospital_name, b.report_date, b.median_wait_hours AS old FROM moh_bed_waits b "
+            "JOIN _unit_keys k ON b.hospital_name = k.hospital_name "
+            "AND b.report_date = CAST(k.report_date AS DATE)").df()
+    finally:
+        con.unregister("_unit_keys")
+    if stored.empty:
+        return None
+    stored["report_date"] = pd.to_datetime(stored["report_date"]).dt.date
+    return stored
