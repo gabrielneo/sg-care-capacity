@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { DOWN, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { DOWN, expectNoHorizontalScroll } from "./helpers";
 
 const DATA_PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality"];
 

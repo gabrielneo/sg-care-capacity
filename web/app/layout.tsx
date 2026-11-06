@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Nav } from "@/components/Nav";
+import { TermScope } from "@/components/terms/TermScope";
 
 export const metadata: Metadata = {
   title: { default: "Right-siting care in a super-aged Singapore", template: "%s · Right-siting care" },
@@ -32,6 +33,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Nav />
           </div>
         </header>
+        {/* Glossary first-use tracking starts in the page body: the nav never uses up an expansion. */}
+        <TermScope>
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
           {children}
         </main>
@@ -41,6 +44,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/methodology">How the figures are made</Link>
           </div>
         </footer>
+        </TermScope>
       </body>
     </html>
   );
