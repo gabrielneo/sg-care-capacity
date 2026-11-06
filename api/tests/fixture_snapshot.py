@@ -1,0 +1,277 @@
+"""A small snapshot, laid out exactly like `sg-health publish` output, built at test time.
+
+CI refuses committed .duckdb/.parquet files, so it is generated. Its mart columns are checked
+against docs/data_dictionary.md (test_fixture_matches_the_data_dictionary), which the pipeline's
+own tests check against the real marts, so the fixture can't drift from what the API will read.
+
+What's in it, and why:
+- SGH: 14 Sep to 31 Oct 2026. The last ISO week (26 Oct) has 6 of 7 days, as in real MOH data.
+  The latest complete week (19 Oct) has higher waits and attendances than the 4 weeks before.
+- AH (a UCC): one missing attendance day on 7 Oct, so 5 Oct is an incomplete week and the
+  4-week baseline for AH can't be computed.
+- NUH: in dim_hospital but no daily rows (missing stays missing).
+- Clinics: CDMP, non-CDMP, unknown programme (NULL), and an inactive clinic.
+- Live: two NUHS snapshots; NTFGH appears only in the older one.
+- dq_results: an old run and the latest run; only the latest may be served.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import date, datetime, timedelta
+from pathlib import Path
+
+import duckdb
+
+SNAPSHOT_ID = "data-2026-11-01"
+CREATED_AT = "2026-11-01T16:34:48"
+FIRST_DAY, LAST_DAY = date(2026, 9, 14), date(2026, 10, 31)
+MOH_FETCHED = datetime(2026, 11, 1, 16, 33, 44)
+
+DDL = {
+    "dim_hospital": """hospital_code VARCHAR, hospital_name VARCHAR, cluster VARCHAR, facility_type VARCHAR,
+        reported_from DATE, coverage_note VARCHAR, exclusions_note VARCHAR, source_url VARCHAR, source_sha256 VARCHAR,
+        as_of DATE, as_of_basis VARCHAR""",
+    "fct_ed_daily": """hospital_code VARCHAR, hospital_name VARCHAR, report_date DATE, iso_year INTEGER, iso_week INTEGER,
+        median_wait_hours DOUBLE, attendances BIGINT, is_complete_week BOOLEAN, dq_flags VARCHAR,
+        wait_source_url VARCHAR, wait_source_sha256 VARCHAR, attendance_source_url VARCHAR,
+        attendance_source_sha256 VARCHAR, as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "fct_ed_weekly": """hospital_code VARCHAR, hospital_name VARCHAR, iso_year INTEGER, iso_week INTEGER, week_start DATE,
+        week_end DATE, mean_of_daily_median_wait_hours DOUBLE, total_attendances BIGINT, days_reported_wait INTEGER,
+        days_reported_attendances INTEGER, is_complete_week BOOLEAN, source_sha256 VARCHAR, as_of TIMESTAMP,
+        as_of_basis VARCHAR""",
+    "dim_clinic": """clinic_key VARCHAR, hci_code VARCHAR, clinic_name VARCHAR, address VARCHAR, postal_code VARCHAR,
+        latitude DOUBLE, longitude DOUBLE, programmes VARCHAR, has_cdmp BOOLEAN, is_active BOOLEAN,
+        planning_area_code VARCHAR, planning_area VARCHAR, planning_area_assignment VARCHAR, source_url VARCHAR,
+        source_sha256 VARCHAR, fetched_at TIMESTAMP, as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "fct_live_ed_snapshot": """hospital_code VARCHAR, site_name VARCHAR, department VARCHAR, is_adult_ed BOOLEAN,
+        measure_type VARCHAR, patients_waiting INTEGER, est_wait_to_see_doctor_hours DOUBLE, est_bed_wait_hours DOUBLE,
+        snapshot_at TIMESTAMP, source_updated_at TIMESTAMP, source_url VARCHAR, source_sha256 VARCHAR,
+        fetched_at TIMESTAMP, as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "fct_planning_area_population": """planning_area VARCHAR, year INTEGER, residents_total BIGINT,
+        residents_65plus BIGINT, share_65plus DOUBLE, reference_date DATE, source_table VARCHAR, source_url VARCHAR,
+        source_sha256 VARCHAR, fetched_at TIMESTAMP, as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "fct_area_access": """planning_area_code VARCHAR, planning_area VARCHAR, region_name VARCHAR, population_year INTEGER,
+        residents_total BIGINT, residents_65plus BIGINT, chas_clinics BIGINT, cdmp_clinics BIGINT,
+        clinics_per_1k_seniors DOUBLE, cdmp_clinics_per_1k_seniors DOUBLE, area_km2 DOUBLE,
+        pct_area_within_1km_of_cdmp DOUBLE, approx_km_centroid_to_nearest_polyclinic DOUBLE, nearest_polyclinic VARCHAR,
+        centroid_in_area BOOLEAN, dq_note VARCHAR, clinics_as_of TIMESTAMP, population_as_of TIMESTAMP,
+        clinic_source_sha256 VARCHAR, population_source_sha256 VARCHAR, boundary_source_sha256 VARCHAR,
+        polyclinic_source_sha256 VARCHAR, as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "dim_metric": """metric_id VARCHAR, label VARCHAR, definition VARCHAR, unit VARCHAR, unit_basis VARCHAR,
+        caveat VARCHAR, source_name VARCHAR, source_sha256 VARCHAR, as_of DATE, as_of_basis VARCHAR""",
+}
+DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
+    details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""
+
+H = "a" * 64
+MOH_URL = "https://www.moh.gov.sg/fixture.xlsx"
+CHAS_AS_OF = datetime(2024, 6, 6, 14, 36, 42)
+POP_AS_OF = datetime(2026, 6, 30)
+
+HOSPITALS = [
+    ("AH", "Alexandra Hospital (UCC)", "NUHS", "UCC", None, "Urgent Care Centre, not a full ED.",
+     "Excludes KKH and NUH Children's Emergency.", "https://www.moh.gov.sg/", H, date(2026, 11, 6), "reference_checked"),
+    ("NUH", "National University Hospital", "NUHS", "ED", None, "Adults only.",
+     "Excludes KKH and NUH Children's Emergency.", "https://www.moh.gov.sg/", H, date(2026, 11, 6), "reference_checked"),
+    ("SGH", "Singapore General Hospital", "SingHealth", "ED", None, None,
+     "Excludes KKH and NUH Children's Emergency.", "https://www.moh.gov.sg/", H, date(2026, 11, 6), "reference_checked"),
+]
+NAMES = {h[0]: h[1] for h in HOSPITALS}
+
+
+def _daily_values(code: str, day: date) -> tuple[float | None, int | None, str | None]:
+    week = day.isocalendar()[1]
+    if code == "SGH":
+        if week == 43:
+            return 5.0, 450, "range.bed_wait_over_24h" if day == date(2026, 10, 20) else None
+        if week == 44:
+            return 4.5, 420, None
+        return 4.0, 400, None
+    if code == "AH":
+        return 2.0, None if day == date(2026, 10, 7) else 100, None
+    raise ValueError(code)
+
+
+def daily_rows() -> list[tuple]:
+    rows = []
+    for code in ("AH", "SGH"):
+        day = FIRST_DAY
+        while day <= LAST_DAY:
+            wait, att, flags = _daily_values(code, day)
+            y, w, _ = day.isocalendar()
+            rows.append((code, NAMES[code], day, y, w, wait, att, flags, MOH_URL if wait is not None else None,
+                         H if wait is not None else None, MOH_URL if att is not None else None,
+                         H if att is not None else None, MOH_FETCHED, "fetched"))
+            day += timedelta(days=1)
+    return rows
+
+
+CLINICS = [
+    ("C1", "HCI1", "Alpha Clinic", "1 Bedok North Ave", "460001", 1.3240, 103.9300, "CDMP,CHAS", True, True, "BD", "Bedok"),
+    ("C2", "HCI2", "Bravo Clinic", "2 Bedok Rd", "460002", 1.3300, 103.9400, "CHAS", False, True, "BD", "Bedok"),
+    ("C3", "HCI3", "Charlie Clinic", "3 Tuas Ave", "638003", 1.3200, 103.6500, "CDMP,CHAS", True, True, "TS", "Tuas"),
+    ("C4", "HCI4", "Delta Clinic", "4 Bedok Walk", "460004", 1.3250, 103.9350, None, None, True, "BD", "Bedok"),
+    ("C5", "HCI5", "Echo Clinic", "5 Bedok Closed", "460005", 1.3260, 103.9360, "CDMP,CHAS", True, False, "BD", "Bedok"),
+]
+
+LIVE = [   # (code, site, department, adult, waiting, doctor_h, bed_h, snapshot_at)
+    ("NTFGH", "Ng Teng Fong General Hospital", "Adult Emergency", True, 12, 1.0, 5.0, datetime(2026, 10, 31, 20, 0)),
+    ("NUH", "National University Hospital", "Adult Emergency", True, 20, 2.0, 18.0, datetime(2026, 10, 31, 20, 0)),
+    ("NUH", "National University Hospital", "Adult Emergency", True, 18, 2.0, 20.0, datetime(2026, 11, 1, 12, 1, 49)),
+    ("NUH", "National University Hospital", "Children's Emergency", False, 2, 1.0, 1.0, datetime(2026, 11, 1, 12, 1, 49)),
+    ("AH", "Alexandra Hospital", "Adult Emergency", True, 4, 1.0, 1.0, datetime(2026, 11, 1, 12, 1, 49)),
+]
+
+AREAS = [   # code, name, region, total, 65+, chas, cdmp, per1k, cdmp per1k, km2, pct1km, km_poly, poly, centroid_in, note
+    ("BD", "Bedok", "EAST REGION", 276000, 61000, 3, 1, 0.0492, 0.0164, 21.69, 83.3, 0.75, "Bedok Polyclinic", True, None),
+    ("TS", "Tuas", "WEST REGION", 0, 0, 1, 1, None, None, 30.0, 10.0, 6.1, "Pioneer Polyclinic", True,
+     "no residents"),
+]
+
+METRICS = [
+    ("fct_ed_daily.median_wait_hours", "Median wait for a ward bed (daily)", "Daily median wait.", "hours", "inferred",
+     "Unit inferred, not stated by MOH.", "MOH, Waiting Time for Admission to Ward"),
+    ("fct_ed_daily.attendances", "Emergency department attendances (daily)", "Attendances.", "patients", "stated",
+     "Includes non-urgent cases.", "MOH, Attendances at Emergency Medicine Departments"),
+    ("fct_ed_weekly.mean_of_daily_median_wait_hours", "Average of daily median ward-bed waits (week)", "Mean.", "hours",
+     "inferred", "Not a weekly median.", "MOH, Waiting Time for Admission to Ward"),
+    ("fct_area_access.cdmp_clinics_per_1k_seniors", "CDMP clinics per 1,000 residents aged 65+", "Ratio.",
+     "clinics per 1,000 residents aged 65+", "stated", "Mixes vintages.", "data.gov.sg CHAS Clinics; SingStat"),
+    ("fct_live_ed_snapshot.est_bed_wait_hours", "Estimated bed wait now (NUHS)", "Estimate.", "hours", "stated",
+     "An estimate at one moment, not MOH's daily median.", "NUHS, Emergency Department wait times"),
+]
+
+LATEST_RUN = "run-latest"
+DQ = [
+    # check_id, table, severity, status, failing, details, run_id, checked_at, scope, blocks
+    ("range.bed_wait_over_24h", "moh_bed_waits", "WARN", "fail", 9, "old run", "run-old",
+     datetime(2026, 10, 25, 8), "row", False),
+    ("range.bed_wait_over_24h", "moh_bed_waits", "WARN", "fail", 1, "SGH, 2026-10-20: over 24 hours", LATEST_RUN,
+     datetime(2026, 11, 1, 16, 34), "row", False),
+    ("clinic.coordinates_in_singapore", "chas_clinics", "ERROR", "fail", 1, "1 clinic outside Singapore, quarantined",
+     LATEST_RUN, datetime(2026, 11, 1, 16, 34), "row", False),
+    ("schema.types", "moh_bed_waits", "ERROR", "pass", 0, "", LATEST_RUN, datetime(2026, 11, 1, 16, 34), "file", True),
+    ("freshness.population_15_months", "pop_65plus_by_area", "WARN", "pass", 0, "ok", LATEST_RUN,
+     datetime(2026, 11, 1, 16, 34), "dataset", False),
+    ("reconcile.nuhs_vs_moh_nuh", "nuhs_live_waits", "WARN", "skipped", 0, "no overlap", LATEST_RUN,
+     datetime(2026, 11, 1, 16, 34), "dataset", False),
+]
+
+
+def _square(lon: float, lat: float, d: float = 0.01) -> dict:
+    ring = [[lon, lat], [lon + d, lat], [lon + d, lat + d], [lon, lat + d], [lon, lat]]
+    return {"type": "Polygon", "coordinates": [ring]}
+
+
+def geojson() -> dict:
+    features = []
+    for (code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, _km2, pct, km, poly, _cin, note), (lon, lat) in zip(
+            AREAS, [(103.92, 1.32), (103.63, 1.31)], strict=True):
+        features.append({"type": "Feature", "geometry": _square(lon, lat), "properties": {
+            "planning_area_code": code, "planning_area": name, "region_name": region, "population_year": 2026,
+            "residents_total": total, "residents_65plus": aged, "chas_clinics": chas, "cdmp_clinics": cdmp,
+            "clinics_per_1k_seniors": per1k, "cdmp_clinics_per_1k_seniors": cdmp1k,
+            "pct_area_within_1km_of_cdmp": pct, "approx_km_centroid_to_nearest_polyclinic": km,
+            "nearest_polyclinic": poly, "dq_note": note, "as_of": CHAS_AS_OF.isoformat(),
+            "as_of_basis": "source_updated"}})
+    return {"type": "FeatureCollection", "metadata": {"title": "fixture", "methodology": "docs/methodology.md"},
+            "features": features}
+
+
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build(out: Path) -> Path:
+    """Write the fixture snapshot into `out` (created). Returns `out`."""
+    out.mkdir(parents=True, exist_ok=True)
+    db = out / "analytics.duckdb"
+    con = duckdb.connect(str(db))
+    try:
+        con.execute("CREATE SCHEMA marts")
+        for mart, cols in DDL.items():
+            con.execute(f"CREATE TABLE marts.{mart} ({cols})")
+        con.execute(f"CREATE TABLE main.dq_results ({DQ_DDL})")
+        con.executemany("INSERT INTO marts.dim_hospital VALUES (?,?,?,?,?,?,?,?,?,?,?)", HOSPITALS)
+        con.executemany("INSERT INTO marts.fct_ed_daily VALUES (?,?,?,?,?,?,?,NULL,?,?,?,?,?,?,?)", daily_rows())
+        # is_complete_week: all 7 days of both metrics in the hospital's ISO week (as the mart does).
+        con.execute("""UPDATE marts.fct_ed_daily d SET is_complete_week = w.n = 7 FROM (
+                         SELECT hospital_code, iso_year, iso_week,
+                                count(*) FILTER (WHERE median_wait_hours IS NOT NULL AND attendances IS NOT NULL) AS n
+                         FROM marts.fct_ed_daily GROUP BY ALL) w
+                       WHERE d.hospital_code = w.hospital_code AND d.iso_year = w.iso_year AND d.iso_week = w.iso_week""")
+        con.execute("""INSERT INTO marts.fct_ed_weekly
+            SELECT hospital_code, hospital_name, iso_year, iso_week, date_trunc('week', min(report_date))::DATE,
+                   (date_trunc('week', min(report_date)) + INTERVAL 6 DAY)::DATE, avg(median_wait_hours),
+                   sum(attendances)::BIGINT, count(median_wait_hours)::INTEGER, count(attendances)::INTEGER,
+                   count(median_wait_hours) = 7 AND count(attendances) = 7, string_agg(DISTINCT wait_source_sha256, ','),
+                   max(as_of), 'fetched'
+            FROM marts.fct_ed_daily GROUP BY hospital_code, hospital_name, iso_year, iso_week""")
+        con.executemany("INSERT INTO marts.dim_clinic VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'inside',?,?,?,?,?)",
+                        [(*c, "https://data.gov.sg/chas.geojson", H, datetime(2026, 11, 1, 16, 34), CHAS_AS_OF,
+                          "source_updated") for c in CLINICS])
+        con.executemany("INSERT INTO marts.fct_live_ed_snapshot VALUES (?,?,?,?,'estimate',?,?,?,?,?,?,?,?,?,?)",
+                        [(code, site, dept, adult, n, doc, bed, at, at, "https://www.nuhs.edu.sg/wait", H,
+                          at + timedelta(minutes=5), at, "source_updated")
+                         for code, site, dept, adult, n, doc, bed, at in LIVE])
+        con.executemany("INSERT INTO marts.fct_planning_area_population VALUES (?,2026,?,?,?,DATE '2026-06-30',"
+                        "'respopagesextod2026',?,?,?,?,'reference_period')",
+                        [(name, total, aged, (aged / total) if total else None, "https://www.singstat.gov.sg/x.zip", H,
+                          datetime(2026, 11, 1, 16, 34), POP_AS_OF) for _, name, _, total, aged, *_ in AREAS])
+        con.executemany("INSERT INTO marts.fct_area_access VALUES (?,?,?,2026,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"
+                        "'source_updated')",
+                        [(*a, CHAS_AS_OF, POP_AS_OF, H, H, H, H, CHAS_AS_OF) for a in AREAS])
+        con.executemany("INSERT INTO marts.dim_metric VALUES (?,?,?,?,?,?,?,?,DATE '2026-11-06','reference_checked')",
+                        [(*m, H) for m in METRICS])
+        con.executemany("INSERT INTO main.dq_results VALUES (?,?,?,?,?,?,?,?,?,?)", DQ)
+        (out / "parquet").mkdir(exist_ok=True)
+        for mart in DDL:
+            con.execute(f"COPY marts.{mart} TO '{out / 'parquet' / (mart + '.parquet')}' (FORMAT parquet)")
+        row_counts = {m: con.execute(f"SELECT count(*) FROM marts.{m}").fetchall()[0][0] for m in DDL}
+        con.execute("CHECKPOINT")
+    finally:
+        con.close()
+    (out / "planning_area_access.geojson").write_text(json.dumps(geojson()))
+
+    files = [db, out / "planning_area_access.geojson", *sorted((out / "parquet").glob("*.parquet"))]
+    latest = [d for d in DQ if d[6] == LATEST_RUN]
+    manifest = {
+        "snapshot_id": SNAPSHOT_ID,
+        "created_at": CREATED_AT,
+        "pipeline_commit": "0" * 40,
+        "row_counts": row_counts,
+        "artefacts": {f.relative_to(out).as_posix(): {"sha256": _sha(f), "bytes": f.stat().st_size} for f in files},
+        "sources": {
+            "moh_bed_waits": {"as_of": "2026-10-31", "as_of_basis": "latest report_date",
+                              "last_fetched_at": "2026-11-01T16:33:44"},
+            "moh_ed_attendances": {"as_of": "2026-10-31", "as_of_basis": "latest report_date",
+                                   "last_fetched_at": "2026-11-01T16:33:50"},
+            "datagov_chas": {"as_of": CHAS_AS_OF.isoformat(), "as_of_basis": "data.gov.sg lastUpdatedAt",
+                             "last_fetched_at": "2026-11-01T16:34:00"},
+            "datagov_planning_areas": {"as_of": "2026-02-27T10:07:02", "as_of_basis": "data.gov.sg lastUpdatedAt",
+                                       "last_fetched_at": "2026-11-01T16:34:17"},
+            "datagov_polyclinics": {"as_of": "2026-01-04T10:06:46", "as_of_basis": "data.gov.sg lastUpdatedAt",
+                                    "last_fetched_at": "2026-11-01T16:34:40"},
+            "nuhs_live": {"as_of": "2026-11-01T12:01:49", "as_of_basis": "NUHS 'Last updated at'",
+                          "last_fetched_at": "2026-11-01T16:33:53"},
+            "singstat_residents": {"as_of": "2026-06-30", "as_of_basis": "reference date (end of June)",
+                                   "last_fetched_at": "2026-11-01T16:34:42"},
+        },
+        "coverage_per_hospital": {
+            "AH": {"hospital_name": NAMES["AH"], "first_day": FIRST_DAY.isoformat(), "last_day": LAST_DAY.isoformat(),
+                   "expected_days": 48, "days_with_wait": 48, "days_with_attendances": 47,
+                   "missing_wait_days": 0, "missing_attendance_days": 1},
+            "SGH": {"hospital_name": NAMES["SGH"], "first_day": FIRST_DAY.isoformat(), "last_day": LAST_DAY.isoformat(),
+                    "expected_days": 48, "days_with_wait": 48, "days_with_attendances": 48,
+                    "missing_wait_days": 0, "missing_attendance_days": 0},
+        },
+        "checks": {
+            "blocking": 0,
+            "counts": {s: sum(1 for d in latest if d[3] == s) for s in ("pass", "fail", "skipped")},
+            "failing": [{"check_id": d[0], "table": d[1], "severity": d[2], "failing_rows": d[4], "scope": d[8],
+                         "blocks_publish": False} for d in latest if d[3] == "fail"],
+        },
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    return out

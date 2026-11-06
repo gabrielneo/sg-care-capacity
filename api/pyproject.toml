@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sg-health-api"
+version = "0.1.0"
+description = "Read-only API over the published sg-care-capacity data snapshot"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1",      # web framework; brings pydantic v2 (response models, OpenAPI) and starlette
+    "uvicorn>=0.30,<1",       # ASGI server
+    "duckdb>=2.0,<3",         # reads analytics.duckdb; must be >= the version the pipeline wrote it with
+    "httpx>=0.27,<1",         # downloads the release; FastAPI's TestClient needs it too
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
+
+[tool.setuptools.packages.find]
+include = ["sg_health_api*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["snapshot: runs against a real snapshot in LOCAL_SNAPSHOT_PATH (pytest -m snapshot)"]
+addopts = "-m 'not snapshot'"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501", "B008"]   # B008: FastAPI's Query() defaults are the documented pattern
+
+[tool.mypy]
+python_version = "3.12"
+files = ["sg_health_api"]
+ignore_missing_imports = true
