@@ -50,7 +50,7 @@ METRICS: list[dict] = [
         "source_name": "NUHS, Emergency Department wait times",
     },
     {
-        "metric_id": "fct_clinic_access.cdmp_clinics_per_1000_65plus",
+        "metric_id": "fct_area_access.cdmp_clinics_per_1k_seniors",
         "label": "CDMP clinics per 1,000 residents aged 65+",
         "definition": "Active CHAS clinics in the Chronic Disease Management Programme in the planning "
                       "area, per 1,000 residents aged 65 and over living there.",
@@ -61,12 +61,34 @@ METRICS: list[dict] = [
         "source_name": "data.gov.sg CHAS Clinics; SingStat; URA Master Plan 2025",
     },
     {
-        "metric_id": "fct_clinic_access.chas_clinics_per_1000_65plus",
+        "metric_id": "fct_area_access.clinics_per_1k_seniors",
         "label": "CHAS clinics per 1,000 residents aged 65+",
         "definition": "Active CHAS clinics in the planning area per 1,000 residents aged 65 and over.",
         "unit": "clinics per 1,000 residents aged 65+", "unit_basis": "stated",
         "caveat": "Same caveats as the CDMP measure.",
         "source_name": "data.gov.sg CHAS Clinics; SingStat; URA Master Plan 2025",
+    },
+    {
+        "metric_id": "fct_area_access.pct_area_within_1km_of_cdmp",
+        "label": "Share of land within 1 km of a CDMP clinic",
+        "definition": "Percentage of the planning area's land (URA Master Plan 2025, no sea) lying within "
+                      "1 km straight-line of any active CDMP clinic in Singapore, computed in SVY21 metres.",
+        "unit": "% of land area", "unit_basis": "stated",
+        "caveat": "An area-based proxy, not people: it counts land, including parks, water catchments and "
+                  "industrial land where no one lives. Straight-line distance, not travel time. Clinic list "
+                  "as of June 2024.",
+        "source_name": "data.gov.sg CHAS Clinics; URA Master Plan 2025",
+    },
+    {
+        "metric_id": "fct_area_access.approx_km_centroid_to_nearest_polyclinic",
+        "label": "Approximate distance from area centre to nearest polyclinic",
+        "definition": "Straight-line distance in SVY21 from the planning area's geometric centre to the nearest "
+                      "polyclinic.",
+        "unit": "km", "unit_basis": "stated",
+        "caveat": "Approximate: one point stands in for the whole area, and the geometric centre may be far "
+                  "from where people live (or outside the area). Straight-line, not travel time. Polyclinic "
+                  "list is HPB's cervical-screening centres (all 26 polyclinics, Jan 2026), a proxy.",
+        "source_name": "HPB Cervical Screening Centre; URA Master Plan 2025",
     },
     {
         "metric_id": "fct_planning_area_population.share_65plus",

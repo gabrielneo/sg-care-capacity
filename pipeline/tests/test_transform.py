@@ -233,7 +233,7 @@ import re  # noqa: E402
 from sg_health import config  # noqa: E402
 
 MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
-         "fct_planning_area_population", "fct_clinic_access", "dim_metric"]
+         "fct_planning_area_population", "fct_area_access", "dim_metric"]
 
 
 def documented_columns(mart: str) -> set[str]:
@@ -310,7 +310,7 @@ def access_run(monkeypatch, paths, clinics, areas=None):
     wh = Warehouse(paths["db"])
     try:
         return (q(wh, "SELECT clinic_key, planning_area_code, planning_area, planning_area_assignment FROM marts.dim_clinic ORDER BY 1"),
-                q(wh, "SELECT * FROM marts.fct_clinic_access ORDER BY planning_area").set_index("planning_area"))
+                q(wh, "SELECT * FROM marts.fct_area_access ORDER BY planning_area").set_index("planning_area"))
     finally:
         wh.close()
 
@@ -321,7 +321,7 @@ def test_clinics_are_placed_in_the_area_that_contains_them(monkeypatch, paths):
         ("C3", "TUAS ONE", "CHAS,CDMP", (103.62, 1.30))])
     assert list(clinics["planning_area"]) == ["Bedok", "Bedok", "Tuas"]           # SingStat spelling
     assert set(clinics["planning_area_assignment"]) == {"inside"}
-    assert (access.loc["Bedok", "active_chas_clinics"], access.loc["Bedok", "active_cdmp_clinics"]) == (2, 1)
+    assert (access.loc["Bedok", "chas_clinics"], access.loc["Bedok", "cdmp_clinics"]) == (2, 1)
 
 
 def test_a_clinic_outside_every_area_is_left_unassigned_not_snapped(monkeypatch, paths):
@@ -329,7 +329,7 @@ def test_a_clinic_outside_every_area_is_left_unassigned_not_snapped(monkeypatch,
         ("C1", "IN BEDOK", "CHAS", (103.68, 1.33)), ("C2", "BETWEEN AREAS", "CHAS", (103.645, 1.33))])
     row = clinics.set_index("clinic_key").loc["C2"]
     assert pd.isna(row.planning_area_code) and row.planning_area_assignment == "outside_all"
-    assert access["active_chas_clinics"].sum() == 1                                # only the placed one
+    assert access["chas_clinics"].sum() == 1                                # only the placed one
 
 
 def test_a_clinic_in_two_overlapping_areas_is_ambiguous(monkeypatch, paths):
@@ -341,10 +341,10 @@ def test_a_clinic_in_two_overlapping_areas_is_ambiguous(monkeypatch, paths):
 def test_access_ratio_per_1000_aged_65_and_null_where_nobody_that_age_lives(monkeypatch, paths):
     _, access = access_run(monkeypatch, paths, [("C1", "A", "CHAS,CDMP", (103.68, 1.33)), ("C2", "B", "CHAS", (103.69, 1.33))])
     bedok = access.loc["Bedok"]                                                     # fixture: 1,000 residents aged 65+
-    assert bedok.cdmp_clinics_per_1000_65plus == pytest.approx(1.0)
-    assert bedok.chas_clinics_per_1000_65plus == pytest.approx(2.0)
+    assert bedok.cdmp_clinics_per_1k_seniors == pytest.approx(1.0)
+    assert bedok.clinics_per_1k_seniors == pytest.approx(2.0)
     tuas = access.loc["Tuas"]                                                       # 0 residents
-    assert tuas.active_chas_clinics == 0 and pd.isna(tuas.cdmp_clinics_per_1000_65plus)
+    assert tuas.chas_clinics == 0 and pd.isna(tuas.cdmp_clinics_per_1k_seniors)
 
 
 def test_access_as_of_is_the_older_input(monkeypatch, paths):
@@ -375,11 +375,11 @@ def test_access_keeps_every_area_with_empty_ratios_when_population_is_missing(mo
     full_run(monkeypatch, paths, routes)
     wh = Warehouse(paths["db"])
     try:
-        access = q(wh, "SELECT * FROM marts.fct_clinic_access ORDER BY planning_area")
+        access = q(wh, "SELECT * FROM marts.fct_area_access ORDER BY planning_area")
         log = q(wh, "SELECT status FROM main.transform_log")
     finally:
         wh.close()
     assert len(access) == 2 and access["residents_65plus"].isna().all()
-    assert access["cdmp_clinics_per_1000_65plus"].isna().all()
-    assert int(access["active_chas_clinics"].sum()) == 1                    # clinics still counted
+    assert access["cdmp_clinics_per_1k_seniors"].isna().all()
+    assert int(access["chas_clinics"].sum()) == 1                    # clinics still counted
     assert set(log["status"]) <= {"ok", "explained"}                        # no transform failure

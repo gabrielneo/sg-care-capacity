@@ -37,16 +37,23 @@ MODELS: list[tuple[str, str]] = [
     ("staging", "stg_datagov_metadata"),
     ("staging", "stg_singstat_residents"),
     ("staging", "stg_planning_area_boundaries"),
-    ("python", "clinic_planning_area"),        # point-in-polygon; not expressible in plain SQL
+    ("staging", "stg_polyclinics"),
+    # Geospatial steps (sg_health/geo.py, SVY21): not expressible in plain SQL.
+    ("python", "area_name_map"),
+    ("python", "clinic_planning_area"),
     ("marts", "dim_hospital"),
     ("marts", "fct_ed_daily"),
     ("marts", "fct_ed_weekly"),
     ("marts", "dim_clinic"),
     ("marts", "fct_live_ed_snapshot"),
     ("marts", "fct_planning_area_population"),
-    ("marts", "fct_clinic_access"),
+    ("python", "area_geo_metrics"),
+    ("marts", "fct_area_access"),
     ("marts", "dim_metric"),
 ]
+
+# Marts that no longer exist; dropped on every build so a stale copy can't be read by mistake.
+RETIRED_MARTS = ("fct_clinic_access",)
 
 
 @dataclass(frozen=True)
@@ -87,14 +94,21 @@ RECONCILIATIONS: list[Reconciliation] = [
     # Every staged clinic gets exactly one assignment row (an area, or an explicit 'none').
     Reconciliation("main.clinic_planning_area", "staging.stg_chas_clinics",
                    "SELECT count(*) FROM staging.stg_chas_clinics", "SELECT count(*) FROM main.clinic_planning_area"),
-    # Every planning area appears once, with its population: the name join must not lose any.
-    Reconciliation("marts.fct_clinic_access", "staging.stg_planning_area_boundaries",
+    Reconciliation("staging.stg_polyclinics", "main.polyclinics",
+                   "SELECT count(*) FROM main.polyclinics", "SELECT count(*) FROM staging.stg_polyclinics"),
+    # Every boundary area gets exactly one name-map row and one geometry-metrics row.
+    Reconciliation("main.ref_area_name_map", "staging.stg_planning_area_boundaries",
+                   "SELECT count(*) FROM staging.stg_planning_area_boundaries", "SELECT count(*) FROM main.ref_area_name_map"),
+    Reconciliation("main.area_geo_metrics", "staging.stg_planning_area_boundaries",
+                   "SELECT count(*) FROM staging.stg_planning_area_boundaries", "SELECT count(*) FROM main.area_geo_metrics"),
+    # Every planning area appears once in the access mart: never dropped.
+    Reconciliation("marts.fct_area_access", "staging.stg_planning_area_boundaries",
                    "SELECT count(*) FROM staging.stg_planning_area_boundaries",
-                   "SELECT count(*) FROM marts.fct_clinic_access"),
+                   "SELECT count(*) FROM marts.fct_area_access"),
     # Every active clinic placed in an area is counted in exactly one area.
-    Reconciliation("marts.fct_clinic_access", "marts.dim_clinic (active, placed)",
+    Reconciliation("marts.fct_area_access", "marts.dim_clinic (active, placed)",
                    "SELECT count(*) FROM marts.dim_clinic WHERE is_active AND planning_area_code IS NOT NULL",
-                   "SELECT coalesce(sum(active_chas_clinics), 0) FROM marts.fct_clinic_access"),
+                   "SELECT coalesce(sum(chas_clinics), 0) FROM marts.fct_area_access"),
     Reconciliation("marts.dim_metric", "main.ref_metric",
                    "SELECT count(*) FROM main.ref_metric", "SELECT count(*) FROM marts.dim_metric"),
     Reconciliation("marts.dim_hospital", "main.ref_hospital",
@@ -129,6 +143,7 @@ UPSTREAM_QUARANTINE = {
     "staging.stg_datagov_metadata": "quarantine_source_metadata",
     "staging.stg_singstat_residents": "quarantine_pop_65plus_by_area",
     "staging.stg_planning_area_boundaries": "quarantine_planning_area_boundaries",
+    "staging.stg_polyclinics": "quarantine_polyclinics",
 }
 
 
@@ -170,44 +185,6 @@ def seed_metrics(wh: Warehouse) -> None:
         wh.con.unregister("_ref_metric")
 
 
-def assign_clinic_planning_areas(wh: Warehouse) -> pd.DataFrame:
-    """main.clinic_planning_area: the planning area containing each staged clinic's point.
-
-    'inside' = in exactly one area. 'outside_all' / 'ambiguous' = in none / several: the area is
-    left NULL, never snapped to the nearest one. The name uses SingStat's spelling where the
-    area matches SingStat's (case-insensitive), so clinics and population show the same name.
-    """
-    from shapely import wkt as shapely_wkt
-    from shapely.geometry import Point
-    from shapely.strtree import STRtree
-
-    areas = wh.query("SELECT planning_area_code, planning_area_name, geometry_wkt "
-                     "FROM staging.stg_planning_area_boundaries ORDER BY planning_area_code")
-    spelling = {n.upper(): n for (n,) in wh.con.execute(
-        "SELECT DISTINCT planning_area FROM staging.stg_singstat_residents").fetchall()}
-    clinics = wh.query("SELECT clinic_key, latitude, longitude FROM staging.stg_chas_clinics ORDER BY clinic_key")
-    polys = [shapely_wkt.loads(t) for t in areas["geometry_wkt"]]
-    tree = STRtree(polys) if polys else None
-    rows = []
-    for key, lat, lon in clinics.itertuples(index=False):
-        hits = []
-        if tree is not None and pd.notna(lat) and pd.notna(lon):
-            pt = Point(lon, lat)
-            hits = [i for i in tree.query(pt) if polys[i].covers(pt)]
-        if len(hits) == 1:
-            code, name = areas.at[hits[0], "planning_area_code"], areas.at[hits[0], "planning_area_name"]
-            rows.append((key, code, spelling.get(name.upper(), name), "inside"))
-        else:
-            rows.append((key, None, None, "ambiguous" if hits else "outside_all"))
-    out = pd.DataFrame(rows, columns=["clinic_key", "planning_area_code", "planning_area_name", "assignment"])
-    wh.con.register("_cpa", out)
-    try:
-        wh.con.execute("CREATE OR REPLACE TABLE main.clinic_planning_area AS SELECT * FROM _cpa ORDER BY clinic_key")
-    finally:
-        wh.con.unregister("_cpa")
-    return out
-
-
 def run_transform(wh: Warehouse) -> pd.DataFrame:
     """Build staging views and mart tables, reconcile row counts, write transform_log."""
     con = wh.con
@@ -220,9 +197,17 @@ def run_transform(wh: Warehouse) -> pd.DataFrame:
         con.unregister("_ref_hospital")
 
     seed_metrics(wh)
+    for mart in RETIRED_MARTS:
+        con.execute(f"DROP TABLE IF EXISTS marts.{mart}")
+    from . import geo
+    python_steps = {"area_name_map": geo.build_area_name_map, "clinic_planning_area": geo.assign_clinics,
+                    "area_geo_metrics": geo.area_geo_metrics}
     for layer, name in MODELS:
         if layer == "python":
-            assign_clinic_planning_areas(wh)
+            try:
+                python_steps[name](wh)
+            except geo.AreaNameMismatch as exc:
+                raise TransformError(str(exc)) from exc
             continue
         path = SQL_DIR / layer / f"{name}.sql"
         try:

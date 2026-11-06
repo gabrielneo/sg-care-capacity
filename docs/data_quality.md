@@ -281,7 +281,7 @@ column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
   or new area after a Master Plan change).
 - **Threshold:** every planning area in `planning_area_boundaries` has a row in
   `pop_65plus_by_area` for the latest year (names matched case-insensitively).
-- **Why ERROR:** without it the access ratios are empty or wrong for some areas. `fct_clinic_access`
+- **Why ERROR:** without it the access ratios are empty or wrong for some areas. `fct_area_access`
   keeps every area with population and ratios NULL (never dropped, never zero), and this check stops
   publishing so the site keeps the last good snapshot.
 

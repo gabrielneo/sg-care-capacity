@@ -125,7 +125,7 @@ read:
 | `marts.dim_clinic` | CHAS clinic | `has_cdmp`, `is_active`, location; `as_of` is data.gov.sg's own update date |
 | `marts.fct_live_ed_snapshot` | NUHS site × department × snapshot | Live readings, labelled `estimate`; filter `is_adult_ed` for one per hospital |
 | `marts.fct_planning_area_population` | planning area × year | Residents, residents aged 65+, share; SingStat, June 2026 |
-| `marts.fct_clinic_access` | planning area | Active CHAS and CDMP clinics vs residents aged 65+; **CDMP clinics per 1,000 aged 65+** (lead measure) |
+| `marts.fct_area_access` | planning area | Seniors, CHAS and CDMP clinics, **CDMP clinics per 1,000 aged 65+** (lead), % of area within 1 km of a CDMP clinic, approximate distance to the nearest polyclinic, per-area `dq_note`; computed in SVY21 |
 | `marts.dim_metric` | metric | Label, unit, whether the unit is stated or inferred, and the caveat to show |
 
 Every mart has `as_of` and `as_of_basis` (`source_updated`, `fetched` or `reference_checked`) and

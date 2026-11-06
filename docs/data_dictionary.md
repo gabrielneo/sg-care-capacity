@@ -102,7 +102,7 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | `programmes` | Programme codes as published, e.g. `CDMP,CHAS` | text | staging | Real values seen: CHAS, CDMP, ISP. |
 | `has_cdmp` | TRUE if the clinic participates in the Chronic Disease Management Programme | boolean | `'CDMP' in programmes` | NULL if `programmes` is missing. |
 | `is_active` | TRUE if the clinic is in the latest snapshot | boolean | staging | A clinic quarantined in a later snapshot keeps its last good row, still active. |
-| `planning_area_code`, `planning_area` | URA Master Plan 2025 planning area containing the clinic | text | point-in-polygon on `planning_area_boundaries`; name in SingStat's spelling | NULL if the point is in no area or several (see `planning_area_assignment`): never snapped to the nearest area. |
+| `planning_area_code`, `planning_area` | URA Master Plan 2025 planning area containing the clinic | text | point-in-polygon in SVY21 (`sg_health/geo.py`); name in SingStat's spelling via `ref_area_name_map` | NULL if the point is in no area or several (see `planning_area_assignment`): never snapped to the nearest area. |
 | `planning_area_assignment` | `inside` (in exactly one area), `outside_all` or `ambiguous` | text | point-in-polygon | All 1,192 real clinics are `inside`. |
 | `source_url`, `source_sha256` | The raw CHAS file the row came from | text | staging lineage | The signed query string is removed from the URL. |
 | `fetched_at` | When that file was downloaded | timestamp (SGT) | staging | |
@@ -152,28 +152,37 @@ data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing t
 | `as_of` | `reference_date` | timestamp | | The figures describe end-June; SingStat generated the file on 2026-09-25. |
 | `as_of_basis` | Always `reference_period` | text | constant | |
 
-### `marts.fct_clinic_access`
+### `marts.fct_area_access`
 
-**Grain:** one row per planning area (55), for the latest SingStat year. Every area is kept: if its population is missing, population and ratios are NULL and the blocking check `completeness.population_present` fails. **Source:**
-`marts.dim_clinic` (active clinics, by planning area) joined to `marts.fct_planning_area_population`
-on planning-area name (case-insensitive; 55 of 55 match), over `staging.stg_planning_area_boundaries`.
+**Grain:** one row per URA Master Plan 2025 planning area (55), for the latest SingStat year.
+Replaces `fct_clinic_access`. **Sources:** `marts.dim_clinic`, `marts.fct_planning_area_population`,
+`staging.stg_planning_area_boundaries`, `staging.stg_polyclinics`. Names are joined through the
+explicit map `main.ref_area_name_map` (55 of 55 exact matches; any mismatch stops the build).
+Distances and areas are computed in **SVY21 (EPSG:3414)** by `sg_health/geo.py`; see
+[methodology.md](methodology.md). Every area is kept: if population is missing, population and
+ratios are NULL and the blocking check `completeness.population_present` fails.
 
 | Column | Definition | Unit | Source → transformation | Caveats |
 |---|---|---|---|---|
 | `planning_area_code` | URA planning-area code | text | boundaries | |
-| `planning_area` | Planning area, SingStat spelling | text | population mart; URA's name if the population is missing | |
+| `planning_area` | Planning area, SingStat spelling | text | name map; URA's name if population is missing | |
 | `region_name` | URA region | text | boundaries | |
 | `population_year` | Year of the resident counts | integer | latest year in the population mart | |
 | `residents_total`, `residents_65plus` | Residents, and residents aged 65+ | residents | population mart | Rounded per published cell (see that mart). |
-| `active_chas_clinics` | Active CHAS clinics located in the area | clinics | count of `dim_clinic` with `is_active` | **0 is a real zero** (the CHAS list is complete), not missing. Quarantined clinics are not counted. |
-| `active_cdmp_clinics` | Of those, clinics in the Chronic Disease Management Programme | clinics | count with `has_cdmp` | |
-| `cdmp_clinics_per_1000_65plus` | **Lead measure.** `1000 × active_cdmp_clinics / residents_65plus` | clinics per 1,000 residents aged 65+ | computed | **NULL where no one aged 65+ lives** (no denominator). Counts where clinics *are*, not where patients live: residents cross area lines, so low values in small or central areas aren't necessarily poor access. **Mixed vintages:** clinics June 2024, residents June 2026. |
-| `chas_clinics_per_1000_65plus` | Same for all active CHAS clinics | clinics per 1,000 residents aged 65+ | computed | Same caveats. |
-| `clinics_as_of` | When the CHAS list was last updated | timestamp (SGT) | `dim_clinic.as_of` | 2024-06-06 on the real data. |
-| `population_as_of` | Population reference date | timestamp | population mart | End of June of `population_year`. |
-| `clinic_source_sha256`, `population_source_sha256`, `boundary_source_sha256` | The raw files behind each part | text | lineage | |
-| `as_of` | The **older** of `clinics_as_of` and `population_as_of` | timestamp | `least(...)` | So the page never claims the measure is more current than its oldest input. |
-| `as_of_basis` | Basis of whichever input is older (`source_updated` for the clinic list today) | text | | |
+| `chas_clinics` | Active CHAS clinics located in the area | clinics | count of `dim_clinic` with `is_active`, placed by point-in-polygon in SVY21 | **0 is a real zero** (the CHAS list is complete). Quarantined clinics are not counted. |
+| `cdmp_clinics` | Of those, clinics in the Chronic Disease Management Programme | clinics | count with `has_cdmp` | |
+| `clinics_per_1k_seniors` | `1000 × chas_clinics / residents_65plus` | CHAS clinics per 1,000 residents aged 65+ | computed | NULL where no one aged 65+ lives. Counts where clinics *are*, not where patients live. Mixed vintages: clinics June 2024, residents June 2026. |
+| `cdmp_clinics_per_1k_seniors` | **Lead measure.** `1000 × cdmp_clinics / residents_65plus` | CDMP clinics per 1,000 residents aged 65+ | computed | Same caveats. |
+| `area_km2` | Area of the URA planning-area polygon | km² | SVY21 polygon area | URA "no sea" boundary area, **not** Singapore's official land area: water catchments and island groups contribute much of the 797 km² total (official land is about 735 km²). Matches geodesic area within 0.002%. |
+| `pct_area_within_1km_of_cdmp` | Share of the area within 1 km straight-line of any active CDMP clinic in Singapore | % of area | union of 1 km SVY21 buffers around every active CDMP clinic (across area borders too), intersected with the polygon | **An area-based proxy, not people**: parks, catchments and industrial land count as much as housing estates. Straight-line, not travel time. NULL if no clinic data is loaded. |
+| `approx_km_centroid_to_nearest_polyclinic` | Straight-line distance from the polygon's geometric centroid to the nearest polyclinic | km | SVY21 distance to each polyclinic, minimum | **Approximate**: one point for the whole area, and the centroid may sit away from where people live (or outside the area, see `centroid_in_area`). Polyclinic list is HPB's screening-centre proxy. NULL if no polyclinic list is loaded. |
+| `nearest_polyclinic` | Name of that polyclinic | text | as above | |
+| `centroid_in_area` | TRUE if the centroid lies inside the area's own polygon | boolean | SVY21 | FALSE for Western Islands (scattered islands). |
+| `dq_note` | Area-specific caveats for the map tooltip, `;`-separated | text | rules in `fct_area_access.sql` | NULL when there is nothing particular. Notes: population not loaded; no residents; no residents aged 65+; fewer than 1,000 aged 65+ (ratios unstable); no CDMP clinic inside the area; centroid outside the area. SingStat **rounds** small counts (to 10) rather than suppressing them, so no area is "suppressed". |
+| `clinics_as_of`, `population_as_of` | When the clinic list was last updated; the population reference date | timestamp | | |
+| `clinic_source_sha256`, `population_source_sha256`, `boundary_source_sha256`, `polyclinic_source_sha256` | The raw files behind each part | text | lineage | |
+| `as_of` | The **older** of `clinics_as_of` and `population_as_of` | timestamp | `least(...)` | |
+| `as_of_basis` | Basis of whichever input is older | text | | |
 
 ### `marts.dim_metric`
 
