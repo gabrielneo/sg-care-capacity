@@ -21,3 +21,11 @@ data/build/*
 # Local outputs written next to the code by older versions of the pipeline
 /singapore_healthcare.duckdb
 /SG_Healthcare_Scrape_Report.xlsx
+
+# Web (Next.js)
+web/node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+web/*.tsbuildinfo
+web/.env*.local
