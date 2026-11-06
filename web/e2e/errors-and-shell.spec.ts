@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { DOWN, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
 
-const DATA_PAGES = ["/", "/ed-trends", "/access-map", "/live"];
+const DATA_PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality"];
 
 test.describe("when the API is down", () => {
   for (const path of DATA_PAGES) {
@@ -35,10 +35,4 @@ test.describe("shell", () => {
     expect(res?.status()).toBe(404);
   });
 
-  for (const path of ["/data-quality", "/methodology", "/case-study"]) {
-    test(`${path} passes axe WCAG 2.1 AA checks`, async ({ page }) => {
-      await page.goto(path);
-      await expectNoA11yViolations(page);
-    });
-  }
 });

@@ -47,7 +47,8 @@ function components(fromFile: string) {
       if (code?.props?.className?.includes("language-mermaid")) {
         return <MermaidDiagram chart={String(code.props.children ?? "").trim()} />;
       }
-      return <pre {...rest}>{children}</pre>;
+      // Focusable so keyboard users can scroll a long line (WCAG 2.1.1).
+      return <pre tabIndex={0} {...rest}>{children}</pre>;
     },
   };
 }

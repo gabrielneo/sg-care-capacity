@@ -35,7 +35,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
         <div role="img" aria-label="Diagram. The same steps are written out in the text that follows."
              dangerouslySetInnerHTML={{ __html: svg }} />
       ) : (
-        <pre aria-label="Diagram source">{chart}</pre>
+        <pre tabIndex={0} aria-label="Diagram source">{chart}</pre>
       )}
       {failed ? <figcaption className="text-xs text-muted">The diagram couldn&apos;t be drawn; its source is shown instead.</figcaption> : null}
     </figure>
