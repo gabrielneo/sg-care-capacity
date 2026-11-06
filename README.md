@@ -1,6 +1,6 @@
 # Singapore Healthcare Capacity Pipeline
 
-A weekly ETL pipeline that tracks hospital strain in a super-aged Singapore. It collects ED bed-wait and attendance figures from MOH, live ED and X-ray wait times, clinic locations and the 65+ population. Every downloaded file is kept unchanged in a raw landing zone, then parsed into a DuckDB warehouse, with a formatted Excel summary on top.
+A weekly ETL pipeline that tracks hospital strain in a super-aged Singapore. It collects MOH ED bed-wait and attendance figures, NUHS live ED wait estimates, CHAS/CDMP clinic locations and the 65+ population by planning area. Every downloaded file is kept unchanged in a raw landing zone, then parsed into a DuckDB warehouse, with a formatted Excel summary on top.
 
 Only aggregate data about institutions, places and populations is collected. There is no personal or patient-level data.
 
@@ -13,7 +13,7 @@ sources ──► PoliteHttp ──► data/raw (immutable) ──► parsers �
                                     └──── sg-health reparse: rebuild every table from data/raw, offline
 ```
 
-Sources: MOH weekly .xlsx · NUHS live ED waits · SingHealth X-ray QWatch · data.gov.sg (CHAS, HAS clinics) · SingStat · Wayback Machine (backfill only).
+Sources: MOH weekly .xlsx · NUHS live ED waits · data.gov.sg CHAS clinics · SingStat · Wayback Machine (backfill only). Retired on 2026-11-06: SingHealth X-ray QWatch (page removed) and data.gov.sg HAS clinics (dataset unpublished); their tables are gone, but any raw files already landed are kept.
 
 ## 1. Install
 
@@ -85,9 +85,7 @@ data/raw/manifest.jsonl                            one line per fetch: source, u
 | `moh_bed_waits` | hospital_name, report_date | Daily median wait from the decision to admit until the patient leaves the ED (hours) |
 | `moh_ed_attendances` | hospital_name, report_date | Daily ED attendances |
 | `chas_clinics` | clinic_key (HCI code) | Name, address, postal code, lat/long, `has_cdmp`, programmes, `is_active` |
-| `has_clinics` | clinic_key | Clinics on the Health Appointment System, plus a `raw_json` copy of the source row |
 | `nuhs_live_waits` | site_name, department, snapshot_timestamp | Patients waiting, estimated consult and bed waits (hours). `department` is the page section, e.g. "Adult Emergency" or "Children's Emergency": NUH appears in both. |
-| `singhealth_xray_waits` | site_name, snapshot_timestamp | X-ray queue wait (minutes) or CLOSED |
 | `singstat_tabledata` | table_id, row_label, column_path | Raw flattened SingStat cells |
 | `pop_65plus_by_area` | planning_area, year | Derived 65+ residents per planning area |
 | `raw_manifest` | seq | Every fetch, mirrored from `data/raw/manifest.jsonl` |
@@ -154,7 +152,7 @@ Setup:
 
 **Size:** the archive only grows. Unchanged files are stored once, so most weeks add only the new MOH workbooks and the live-page snapshots. A release asset can be up to 2 GB.
 
-**Live snapshots:** once a week gives you only one NUHS/QWatch reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. It must share the `weekly-scraper` concurrency group, because both read and re-upload the same archive.
+**Live snapshots:** once a week gives you only one NUHS reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. It must share the `weekly-scraper` concurrency group, because both read and re-upload the same archive.
 
 ## 7. Historical backfill (Wayback Machine)
 

@@ -1,16 +1,15 @@
-"""Live wait-time pages: polite snapshots of NUHS ED waits and SingHealth X-ray QWatch."""
+"""Live wait-time pages: polite snapshots of the NUHS ED wait-time page."""
 from __future__ import annotations
 
 import logging
 
-from ..config import NUHS_LIVE_URL, SINGHEALTH_QWATCH_URL
+from ..config import NUHS_LIVE_URL
 from ..http import PoliteHttp, render_with_playwright
 from ..load import Loader
 
 LOG = logging.getLogger(__name__)
 
-LIVE_PAGES = (("nuhs_live", NUHS_LIVE_URL, "NUHS"),
-              ("singhealth_qwatch", SINGHEALTH_QWATCH_URL, "SingHealth QWatch"))
+LIVE_PAGES = (("nuhs_live", NUHS_LIVE_URL, "NUHS"),)
 
 
 def ingest_live(http: PoliteHttp, loader: Loader) -> int:

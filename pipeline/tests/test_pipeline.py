@@ -136,16 +136,6 @@ def test_nuhs_text_fallback_when_no_tables():
     assert [r["patients_waiting"] for r in rows] == [4, 15]
 
 
-def test_singhealth_qwatch():
-    html = """<table><tr><th>SingHealth Polyclinics</th><th>Total Waiting Time (in Minutes)**</th></tr>
-              <tr><td>Bukit Merah Polyclinic</td><td>CLOSED</td></tr>
-              <tr><td>Tampines Polyclinic</td><td>35</td></tr></table>"""
-    rows = p.parse_singhealth_qwatch(html)
-    assert rows[0] == {"site_group": "SingHealth Polyclinics", "site_name": "Bukit Merah Polyclinic",
-                       "wait_minutes": None, "status": "CLOSED"}
-    assert rows[1]["wait_minutes"] == 35 and rows[1]["status"] == "OPEN"
-
-
 # ------------------------------------------------------ data.gov.sg / SingStat #
 
 def test_chas_geojson_with_html_description():

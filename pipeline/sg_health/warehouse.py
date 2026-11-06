@@ -25,19 +25,11 @@ DDL = [
         postal_code VARCHAR, latitude DOUBLE, longitude DOUBLE, has_cdmp BOOLEAN,
         hci_code VARCHAR, programmes VARCHAR, is_active BOOLEAN,
         source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL)""",
-    """CREATE TABLE IF NOT EXISTS has_clinics (
-        clinic_key VARCHAR PRIMARY KEY, clinic_name VARCHAR, address VARCHAR,
-        postal_code VARCHAR, latitude DOUBLE, longitude DOUBLE, raw_json VARCHAR,
-        is_active BOOLEAN, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS nuhs_live_waits (
         site_name VARCHAR NOT NULL, department VARCHAR NOT NULL, patients_waiting INTEGER, est_bed_wait_hours DOUBLE,
         est_consult_wait_hours DOUBLE, source_updated_at TIMESTAMP,
         snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (site_name, department, snapshot_timestamp))""",
-    """CREATE TABLE IF NOT EXISTS singhealth_xray_waits (
-        site_group VARCHAR, site_name VARCHAR NOT NULL, wait_minutes INTEGER, status VARCHAR,
-        snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
-        PRIMARY KEY (site_name, snapshot_timestamp))""",
     """CREATE TABLE IF NOT EXISTS singstat_tabledata (
         table_id VARCHAR NOT NULL, row_label VARCHAR NOT NULL, column_path VARCHAR NOT NULL,
         value DOUBLE, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
@@ -57,9 +49,10 @@ DDL = [
 LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
-PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "has_clinics",
-                 "nuhs_live_waits", "singhealth_xray_waits", "singstat_tabledata",
-                 "pop_65plus_by_area")
+PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_live_waits",
+                 "singstat_tabledata", "pop_65plus_by_area")
+# Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
+RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits")
 
 
 class SchemaOutOfDate(RuntimeError):
@@ -100,6 +93,7 @@ class Warehouse:
         finally:
             expected_con.close()
         stale = sorted(t for t, sql in _table_sql(self.con, tables).items() if sql != expected.get(t))
+        stale += sorted(_table_sql(self.con, RETIRED_TABLES))      # left over from retired sources
         if stale:
             self.con.close()
             raise SchemaOutOfDate(
@@ -140,7 +134,7 @@ class Warehouse:
 
         Used by `reparse`. Dropping rather than deleting also picks up schema changes.
         """
-        for table in (*PARSED_TABLES, "raw_manifest"):
+        for table in (*PARSED_TABLES, *RETIRED_TABLES, "raw_manifest"):
             self.con.execute(f"DROP TABLE IF EXISTS {table}")
         for stmt in DDL:
             self.con.execute(stmt)

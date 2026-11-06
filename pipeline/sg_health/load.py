@@ -17,7 +17,7 @@ import pandas as pd
 from .config import MOH_SOURCES
 from .logs import ParseStats
 from .parsers.datagov import normalize_clinics, parse_datagov_payload
-from .parsers.live import parse_nuhs_live, parse_singhealth_qwatch
+from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
 from .parsers.singstat import derive_pop65, parse_singstat_tabledata, title_year
 from .raw import RawRecord, RawStore
@@ -100,16 +100,6 @@ def load_nuhs_live(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSt
                    ["site_name", "department", "snapshot_timestamp"], stats)
 
 
-def load_singhealth_qwatch(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
-    rows = parse_singhealth_qwatch(decode_text(rec, content), stats=stats)
-    if not rows:
-        return 0
-    df = pd.DataFrame(rows)
-    df["snapshot_timestamp"] = rec.fetched_at.replace(second=0)
-    return _upsert(wh, "singhealth_xray_waits", _with_lineage(df, rec),
-                   ["site_name", "snapshot_timestamp"], stats)
-
-
 def _clinic_loader(label: str, table: str) -> LoaderFn:
     def load(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
         raw = parse_datagov_payload(content)
@@ -152,13 +142,16 @@ LOADERS: dict[str, LoaderFn] = {
     "moh_bed_waits": _moh_loader("bed_waits"),
     "moh_ed_attendances": _moh_loader("ed_attendances"),
     "nuhs_live": load_nuhs_live,
-    "singhealth_qwatch": load_singhealth_qwatch,
     "datagov_chas": _clinic_loader("chas", "chas_clinics"),
-    "datagov_has": _clinic_loader("has", "has_clinics"),
     "singstat": load_singstat,
 }
 # Landed for the record but not parsed into tables (e.g. the MOH pages that link to the files).
-UNPARSED_SOURCES = frozenset({"moh_page"})
+# Retired sources are no longer fetched, but their raw files stay in data/raw (it is
+# immutable), so reparse must recognise and skip them:
+#   singhealth_qwatch  X-ray QWatch page retired (redirects to the SingHealth homepage), 2026-11-06
+#   datagov_has        Health Appointment System clinic list unpublished on data.gov.sg, 2026-11-06
+RETIRED_SOURCES = frozenset({"singhealth_qwatch", "datagov_has"})
+UNPARSED_SOURCES = frozenset({"moh_page"}) | RETIRED_SOURCES
 
 
 class Loader:

@@ -93,14 +93,14 @@ def test_reparse_needs_only_data_raw(history, no_network, tmp_path):
 def test_reparse_replays_a_parser_fix(history, no_network, monkeypatch):
     """The point of the raw zone: change a parser, replay history, get corrected rows."""
     from sg_health import load
-    original = load.LOADERS["datagov_has"]
+    original = load.LOADERS["datagov_chas"]
 
     def fixed(wh, rec, content, stats):
-        return original(wh, rec, content.replace(b"A Clinic", b"A Clinic (fixed)"), stats)
-    monkeypatch.setitem(load.LOADERS, "datagov_has", fixed)
+        return original(wh, rec, content.replace(b"JOO KOON CLINIC", b"JOO KOON CLINIC (fixed)"), stats)
+    monkeypatch.setitem(load.LOADERS, "datagov_chas", fixed)
     assert reparse_cli(history) == 0
-    names = snapshots(history["db"])["has_clinics"]["clinic_name"]
-    assert list(names) == ["A Clinic (fixed)"]
+    names = snapshots(history["db"])["chas_clinics"]["clinic_name"]
+    assert "JOO KOON CLINIC (fixed)" in set(names) and "JOO KOON CLINIC" not in set(names)
 
 
 def test_reparse_reports_a_missing_raw_file_and_keeps_going(history, no_network):

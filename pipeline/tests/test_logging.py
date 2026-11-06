@@ -13,8 +13,7 @@ from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 
-RUN_SOURCES = {"moh_bed_waits", "moh_ed_attendances", "nuhs_live", "singhealth_qwatch",
-               "datagov_chas", "datagov_has", "singstat"}
+RUN_SOURCES = {"moh_bed_waits", "moh_ed_attendances", "nuhs_live", "datagov_chas", "singstat"}
 
 
 def summaries(capsys) -> list[dict]:
@@ -60,7 +59,7 @@ def test_source_that_returned_nothing_still_gets_a_line(monkeypatch, paths, caps
     from test_ingest import run_cli
     run_cli(monkeypatch, paths, {}, "run", "--sources", "live", "--no-report")   # every URL misses
     lines = summaries(capsys)
-    assert {line["source"] for line in lines} == {"nuhs_live", "singhealth_qwatch"}
+    assert {line["source"] for line in lines} == {"nuhs_live"}
     assert all(line["files"] == 0 and line["rows_read"] == 0 for line in lines)
 
 

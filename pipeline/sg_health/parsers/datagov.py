@@ -1,4 +1,4 @@
-"""data.gov.sg payloads: CHAS clinics and clinics on the Health Appointment System."""
+"""data.gov.sg payloads: CHAS clinics."""
 from __future__ import annotations
 
 import io
@@ -86,7 +86,7 @@ def normalize_clinics(raw: pd.DataFrame, stats: Optional[ParseStats] = None) -> 
             "longitude": pd.to_numeric(lon, errors="coerce"),
             "programmes": programmes,
             "has_cdmp": None if programmes is None else ("CDMP" in programmes.upper()),
-            # Full source row kept for has_clinics (column lists differ between datasets)
+            # Full source row, for fields not mapped above (column lists differ between versions)
             "raw_json": json.dumps({k: (None if is_blank(v) else str(v)) for k, v in row.items()}),
         })
     df = pd.DataFrame(out)

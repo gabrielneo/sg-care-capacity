@@ -1,4 +1,4 @@
-"""Live public wait-time pages: NUHS ED waits and SingHealth X-ray QWatch."""
+"""Live public wait-time pages: NUHS ED waits."""
 from __future__ import annotations
 
 import re
@@ -120,29 +120,3 @@ def _parse_nuhs_text(text: str) -> list[dict[str, Any]]:
             if rec[key] is None:
                 rec[key] = v
     return list(sites.values())
-
-
-def parse_singhealth_qwatch(html: str, stats: Optional[ParseStats] = None) -> list[dict[str, Any]]:
-    """Parse SingHealth X-ray QWatch tables: site | total waiting time (minutes) or CLOSED."""
-    soup = BeautifulSoup(html, "lxml")
-    out: list[dict[str, Any]] = []
-    for table in soup.find_all("table"):
-        group = None
-        for tr in table.find_all("tr"):
-            cells = _cell_texts(tr)
-            if len(cells) < 2:
-                continue
-            name, value = cells[0], cells[1]
-            if re.search(r"waiting\s+time", value, re.I):   # header row names the group
-                group = name
-                continue
-            count_read(stats)
-            if not name or set(name) <= {"-"}:
-                count_drop(stats, "missing_name")
-                continue
-            status = value.strip().upper() or "N/A"
-            minutes = to_int(value) if re.search(r"\d", value) else None
-            out.append({"site_group": group or _nearest_heading(table), "site_name": name,
-                        "wait_minutes": minutes,
-                        "status": "OPEN" if minutes is not None else status})
-    return out

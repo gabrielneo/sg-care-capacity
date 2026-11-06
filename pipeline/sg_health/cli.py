@@ -26,8 +26,8 @@ ALL_SOURCES = ("moh", "live", "opendata", "singstat")
 # Raw sources each step fetches, so each gets a summary line even if nothing arrived.
 STEP_SOURCES = {
     "moh": ("moh_bed_waits", "moh_ed_attendances"),
-    "live": ("nuhs_live", "singhealth_qwatch"),
-    "opendata": ("datagov_chas", "datagov_has"),
+    "live": ("nuhs_live",),
+    "opendata": ("datagov_chas",),
     "singstat": ("singstat",),
 }
 

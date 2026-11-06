@@ -1,4 +1,4 @@
-"""data.gov.sg open datasets: CHAS clinics and clinics on the Health Appointment System."""
+"""data.gov.sg open datasets: CHAS clinics (GeoJSON)."""
 from __future__ import annotations
 
 import logging
@@ -13,7 +13,7 @@ from ..load import Loader
 
 LOG = logging.getLogger(__name__)
 
-DATASET_SOURCES = (("chas", "datagov_chas"), ("has", "datagov_has"))
+DATASET_SOURCES = (("chas", "datagov_chas"),)
 
 
 def fetch_datagov_dataset(http: PoliteHttp, dataset_id: str

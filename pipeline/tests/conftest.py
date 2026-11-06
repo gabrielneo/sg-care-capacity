@@ -88,8 +88,6 @@ NUHS_HTML = b"""<h2>Emergency Department</h2><table>
  <tr><td>Number of Patients Waiting for Consult</td><td>4 patient(s)</td><td>15 patient(s)</td></tr>
  <tr><td>Estimated Bed Wait Time</td><td>3 hour(s)</td><td>26 hour(s)</td></tr></table>
  <p>Last updated at 18 May 2026, 09:30:04 AM.</p>"""
-QWATCH_HTML = b"""<table><tr><th>SingHealth Polyclinics</th><th>Total Waiting Time (in Minutes)**</th></tr>
- <tr><td>Bukit Merah Polyclinic</td><td>CLOSED</td></tr><tr><td>Tampines Polyclinic</td><td>35</td></tr></table>"""
 
 
 def chas_geojson(clinics: list[tuple[str, str, str]]) -> bytes:
@@ -106,7 +104,6 @@ def chas_geojson(clinics: list[tuple[str, str, str]]) -> bytes:
 
 CHAS_V1 = chas_geojson([("15M0211", "JOO KOON CLINIC", "CHAS,CDMP"), ("15M0999", "OTHER CLINIC", "CHAS")])
 CHAS_V2 = chas_geojson([("15M0211", "JOO KOON CLINIC", "CHAS,CDMP")])          # OTHER CLINIC closed
-HAS_CSV = b"clinic_name,address,postal_code,latitude,longitude\nA Clinic,1 Road,18989,1.3,103.8\n"
 SINGSTAT_JSON = json.dumps({"Data": {"title": "Residents by Planning Area and Age Group, June 2025", "row": [
     {"rowText": "Bedok", "columns": [{"key": "2025", "columns": [
         {"key": "60 - 64", "value": "20,000"}, {"key": "65 - 69", "value": "18,000"},
@@ -115,7 +112,6 @@ SINGSTAT_JSON = json.dumps({"Data": {"title": "Residents by Planning Area and Ag
 
 SINGSTAT_TABLE = "M810001"
 CHAS_DOWNLOAD = "https://s3.example.com/chas.geojson?X-Amz-Signature=secret&X-Amz-Expires=60"
-HAS_DOWNLOAD = "https://s3.example.com/has.csv"
 
 
 def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
@@ -128,13 +124,9 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
         "https://www.moh.gov.sg/files/bed-waits-wk43.xlsx": (BED_WAITS_XLSX, XLSX),
         "https://www.moh.gov.sg/files/ed-attendances-wk43.xlsx": (ATTENDANCES_XLSX, XLSX),
         config.NUHS_LIVE_URL: (NUHS_HTML, HTML),
-        config.SINGHEALTH_QWATCH_URL: (QWATCH_HTML, HTML),
         poll.format(config.DATAGOV_DATASETS["chas"]):
             (json.dumps({"data": {"url": CHAS_DOWNLOAD}}).encode(), JSON),
-        poll.format(config.DATAGOV_DATASETS["has"]):
-            (json.dumps({"data": {"url": HAS_DOWNLOAD}}).encode(), JSON),
         CHAS_DOWNLOAD: (chas, "application/geo+json"),
-        HAS_DOWNLOAD: (HAS_CSV, "text/csv"),
         config.SINGSTAT_URL.format(table_id=SINGSTAT_TABLE): (SINGSTAT_JSON, JSON),
     }
 

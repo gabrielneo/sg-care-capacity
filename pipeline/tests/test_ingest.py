@@ -37,8 +37,7 @@ def test_run_lands_every_fetched_file_before_parsing(monkeypatch, paths):
     full_run(monkeypatch, paths)
     recs = RawStore(paths["raw"]).records()
     assert sorted({r.source for r in recs}) == [
-        "datagov_chas", "datagov_has", "moh_bed_waits", "moh_ed_attendances", "moh_page",
-        "nuhs_live", "singhealth_qwatch", "singstat"]
+        "datagov_chas", "moh_bed_waits", "moh_ed_attendances", "moh_page", "nuhs_live", "singstat"]
     for r in recs:
         assert (paths["raw"] / r.path).exists()
         assert r.path.startswith(f"{r.source}/{r.fetched_at.date().isoformat()}/{r.sha256}.")
@@ -56,11 +55,10 @@ def test_raw_manifest_table_mirrors_manifest_file(monkeypatch, paths):
 def test_run_loads_every_table(monkeypatch, paths):
     full_run(monkeypatch, paths)
     counts = {t: int(query(paths, f"SELECT COUNT(*) AS n FROM {t}")["n"][0]) for t in [
-        "moh_bed_waits", "moh_ed_attendances", "nuhs_live_waits", "singhealth_xray_waits",
-        "chas_clinics", "has_clinics", "singstat_tabledata", "pop_65plus_by_area"]}
+        "moh_bed_waits", "moh_ed_attendances", "nuhs_live_waits", "chas_clinics",
+        "singstat_tabledata", "pop_65plus_by_area"]}
     assert counts == {"moh_bed_waits": 5, "moh_ed_attendances": 4, "nuhs_live_waits": 2,
-                      "singhealth_xray_waits": 2, "chas_clinics": 2, "has_clinics": 1,
-                      "singstat_tabledata": 3, "pop_65plus_by_area": 1}
+                      "chas_clinics": 2, "singstat_tabledata": 3, "pop_65plus_by_area": 1}
 
 
 def test_signed_download_url_is_not_stored(monkeypatch, paths):
@@ -88,11 +86,11 @@ def test_clinic_missing_from_new_snapshot_is_kept_inactive(monkeypatch, paths):
 
 
 def test_redirected_page_records_the_url_the_bytes_came_from(monkeypatch, paths):
-    """2026-11-06: the QWatch URL redirected to the SingHealth homepage. Lineage must say so."""
+    """2026-11-06: a retired page (SingHealth QWatch) redirected to a homepage. Lineage must say so."""
     from sg_health import config
     routes = source_routes()
-    content, ctype = routes[config.SINGHEALTH_QWATCH_URL]
-    routes[config.SINGHEALTH_QWATCH_URL] = (content, ctype, "https://www.singhealth.com.sg/")
+    content, ctype = routes[config.NUHS_LIVE_URL]
+    routes[config.NUHS_LIVE_URL] = (content, ctype, "https://www.nuhs.edu.sg/moved")
     full_run(monkeypatch, paths, routes)
-    rec = next(r for r in RawStore(paths["raw"]).records() if r.source == "singhealth_qwatch")
-    assert rec.url == "https://www.singhealth.com.sg/"
+    rec = next(r for r in RawStore(paths["raw"]).records() if r.source == "nuhs_live")
+    assert rec.url == "https://www.nuhs.edu.sg/moved"

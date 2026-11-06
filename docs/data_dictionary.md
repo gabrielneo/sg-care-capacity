@@ -8,9 +8,8 @@ All timestamps are Singapore time (SGT, UTC+8, no daylight saving), stored witho
 
 ## Lineage columns (on every parsed table)
 
-Every row in `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `has_clinics`,
-`nuhs_live_waits`, `singhealth_xray_waits`, `singstat_tabledata` and `pop_65plus_by_area`
-carries these three columns. None of them may be null.
+Every row in `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
+`singstat_tabledata` and `pop_65plus_by_area` carries these three columns. None of them may be null.
 
 | Column | Type | Definition |
 |---|---|---|
@@ -37,7 +36,7 @@ and on `reparse`.
 | Column | Type | Definition |
 |---|---|---|
 | `seq` | integer | Position in `manifest.jsonl`, from 0. This is the replay order. |
-| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `singhealth_qwatch`, `datagov_chas`, `datagov_has`, `singstat`, or `moh_page` (stored, not parsed). |
+| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `singstat`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch` and `datagov_has` (kept, not parsed). |
 | `url` | text | Where the bytes came from (see `source_url` above). |
 | `sha256` | text | SHA-256 of the bytes. |
 | `bytes` | integer | Size in bytes. |
@@ -63,6 +62,6 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `moh_ed_attendances` | OK | Same 8 EDs and date range as bed waits. |
 | `nuhs_live` | OK | The page has one table per department (Adult Emergency, Children's Emergency). NUH appears in both, so `department` is part of the key. |
 | `datagov_chas` | OK, but **stale upstream** | Dataset `d_548c33ea2d99e29ec63a7cc9edcccedc` (collection 2036): 1,193 clinics, 1,049 with CDMP. data.gov.sg reports it **last updated 2024-06-06**. Clinics that opened or closed since then are not reflected. |
-| `datagov_has` | **Unavailable** | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`); no replacement is named. |
-| `singhealth_qwatch` | **Unavailable** | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. The page appears retired. |
+| `datagov_has` | **Retired** (not fetched) | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`), no replacement is named, and it isn't needed for the project. |
+| `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
 | `singstat` | Not configured | Needs `SINGSTAT_POP_TABLE_ID`. |
