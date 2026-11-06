@@ -7,6 +7,7 @@ from typing import Any, Optional
 import pandas as pd
 from bs4 import BeautifulSoup
 
+from ..logs import ParseStats, count_drop, count_read
 from .common import parse_duration_hours, to_int
 
 _NUHS_LABELS = {
@@ -32,7 +33,7 @@ def _nearest_heading(node) -> Optional[str]:
     return h.get_text(" ", strip=True) if h else None
 
 
-def parse_nuhs_live(html: str) -> list[dict[str, Any]]:
+def parse_nuhs_live(html: str, stats: Optional[ParseStats] = None) -> list[dict[str, Any]]:
     """Parse the NUHS ED wait-time page into one dict per site.
 
     Primary strategy: look for tables with label rows (patients waiting, time to
@@ -74,11 +75,15 @@ def parse_nuhs_live(html: str) -> list[dict[str, Any]]:
             for key, vals in metrics.items():
                 cell = vals[j] if j < len(vals) else ""
                 rec[key] = to_int(cell) if key == "patients_waiting" else parse_duration_hours(cell)
+            count_read(stats)
             if any(rec[k] is not None for k in _NUHS_LABELS):
                 results.append(rec)
+            else:
+                count_drop(stats, "no_values")
 
     if not results:  # fallback: plain-text regex
         results = _parse_nuhs_text(text)
+        count_read(stats, len(results))
     for r in results:
         r["source_updated_at"] = updated
     return results
@@ -110,7 +115,7 @@ def _parse_nuhs_text(text: str) -> list[dict[str, Any]]:
     return list(sites.values())
 
 
-def parse_singhealth_qwatch(html: str) -> list[dict[str, Any]]:
+def parse_singhealth_qwatch(html: str, stats: Optional[ParseStats] = None) -> list[dict[str, Any]]:
     """Parse SingHealth X-ray QWatch tables: site | total waiting time (minutes) or CLOSED."""
     soup = BeautifulSoup(html, "lxml")
     out: list[dict[str, Any]] = []
@@ -124,7 +129,9 @@ def parse_singhealth_qwatch(html: str) -> list[dict[str, Any]]:
             if re.search(r"waiting\s+time", value, re.I):   # header row names the group
                 group = name
                 continue
+            count_read(stats)
             if not name or set(name) <= {"-"}:
+                count_drop(stats, "missing_name")
                 continue
             status = value.strip().upper() or "N/A"
             minutes = to_int(value) if re.search(r"\d", value) else None

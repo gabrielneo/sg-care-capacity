@@ -6,9 +6,15 @@ from typing import Optional
 
 import pandas as pd
 
+from ..logs import ParseStats, count_read
 
-def parse_singstat_tabledata(payload: dict, table_id: str) -> pd.DataFrame:
-    """Flatten SingStat Table Builder JSON (it can be nested several levels deep)."""
+
+def parse_singstat_tabledata(payload: dict, table_id: str,
+                             stats: Optional[ParseStats] = None) -> pd.DataFrame:
+    """Flatten SingStat Table Builder JSON (it can be nested several levels deep).
+
+    Cells whose value isn't a number are kept, with value = NULL: missing stays missing.
+    """
     data = payload.get("Data") or payload.get("data") or {}
     rows = data.get("row") or data.get("rows") or []
     out = []
@@ -27,6 +33,7 @@ def parse_singstat_tabledata(payload: dict, table_id: str) -> pd.DataFrame:
     for row in rows:
         label = str(row.get("rowText", row.get("seriesNo", ""))).strip()
         walk(row.get("columns", []), [], label)
+    count_read(stats, len(out))
     return pd.DataFrame(out)
 
 

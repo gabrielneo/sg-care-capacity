@@ -140,6 +140,17 @@ def no_playwright(monkeypatch):
     monkeypatch.setattr("sg_health.sources.live.render_with_playwright", lambda url: None)
 
 
+@pytest.fixture(autouse=True)
+def reset_log_handlers():
+    """cli.main() installs a JSON handler on the root logger; remove it after each test."""
+    import logging
+    yield
+    root = logging.getLogger()
+    for h in list(root.handlers):
+        if getattr(h, "_sg_health", False):
+            root.removeHandler(h)
+
+
 @pytest.fixture
 def paths(tmp_path):
     return {"db": tmp_path / "build" / "warehouse.duckdb", "raw": tmp_path / "raw",

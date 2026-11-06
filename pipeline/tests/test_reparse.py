@@ -95,8 +95,8 @@ def test_reparse_replays_a_parser_fix(history, no_network, monkeypatch):
     from sg_health import load
     original = load.LOADERS["datagov_has"]
 
-    def fixed(wh, rec, content):
-        return original(wh, rec, content.replace(b"A Clinic", b"A Clinic (fixed)"))
+    def fixed(wh, rec, content, stats):
+        return original(wh, rec, content.replace(b"A Clinic", b"A Clinic (fixed)"), stats)
     monkeypatch.setitem(load.LOADERS, "datagov_has", fixed)
     assert reparse_cli(history) == 0
     names = snapshots(history["db"])["has_clinics"]["clinic_name"]

@@ -12,6 +12,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 from ..config import HOSPITALS, SGT
+from ..logs import ParseStats, count_drop, count_read
 from .common import is_blank, match_hospital, raw_duration, to_date, to_int
 
 LOG = logging.getLogger(__name__)
@@ -114,11 +115,15 @@ def extract_sheet_records(grid: pd.DataFrame, default_year: int) -> list[tuple[s
     return recs
 
 
-def parse_moh_workbook(content: bytes, metric: str, source_file: str = "") -> pd.DataFrame:
+def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
+                       stats: Optional[ParseStats] = None) -> pd.DataFrame:
     """Parse an MOH .xlsx (any sheet, any of the supported layouts) into tidy rows.
 
     metric="bed_waits"      -> columns: hospital_code, hospital_name, report_date, median_wait_hours
     metric="ed_attendances" -> columns: hospital_code, hospital_name, report_date, total_attendances
+
+    If ``stats`` is given, every candidate (hospital, date) cell is counted as read, and every
+    cell not returned is counted as dropped with its reason.
     """
     value_col = "median_wait_hours" if metric == "bed_waits" else "total_attendances"
     empty = pd.DataFrame(columns=["hospital_code", "hospital_name", "report_date", value_col, "source_file"])
@@ -126,6 +131,8 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "") -> pd
         sheets = pd.read_excel(io.BytesIO(content), sheet_name=None, header=None, engine="openpyxl")
     except Exception as exc:  # corrupt file, HTML error page saved as .xlsx, etc.
         LOG.warning("Cannot open workbook %s: %s", source_file, exc)
+        if stats is not None:
+            stats.files_skipped["unreadable_workbook"] += 1
         return empty
 
     frames = []
@@ -159,13 +166,19 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "") -> pd
 
     if not frames:
         LOG.warning("No usable tables in %s", source_file)
+        if stats is not None:
+            stats.files_skipped["no_tables_found"] += 1
         return empty
     out = pd.concat(frames, ignore_index=True)
-    dropped = out[value_col].isna().sum()
+    count_read(stats, len(out))
+    dropped = int(out[value_col].isna().sum())
     if dropped:
-        LOG.info("%s: dropped %d unparseable cells", source_file or metric, dropped)
+        LOG.debug("%s: dropped %d unparseable cells", source_file or metric, dropped)
+    count_drop(stats, "unparseable_value", dropped)
     out = out.dropna(subset=[value_col])
+    before = len(out)
     out = out.drop_duplicates(subset=["hospital_code", "report_date"], keep="last")
+    count_drop(stats, "duplicate_key", before - len(out))   # same hospital and date twice in one file
     out["hospital_name"] = out["hospital_code"].map(lambda c: HOSPITALS[c][0])
     out["source_file"] = source_file
     return out[["hospital_code", "hospital_name", "report_date", value_col, "source_file"]] \

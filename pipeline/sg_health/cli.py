@@ -9,6 +9,7 @@ from typing import Optional
 
 from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR, SINGSTAT_POP_TABLE_ID
 from .http import PoliteHttp
+from . import logs
 from .load import Loader, reparse
 from .raw import RawStore
 from .report import export_report
@@ -22,6 +23,13 @@ from .warehouse import Warehouse
 LOG = logging.getLogger("sg_health")
 
 ALL_SOURCES = ("moh", "live", "opendata", "singstat")
+# Raw sources each step fetches, so each gets a summary line even if nothing arrived.
+STEP_SOURCES = {
+    "moh": ("moh_bed_waits", "moh_ed_attendances"),
+    "live": ("nuhs_live", "singhealth_qwatch"),
+    "opendata": ("datagov_chas", "datagov_has"),
+    "singstat": ("singstat",),
+}
 
 
 def _run_step(name: str, fn, *args) -> int:
@@ -59,13 +67,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     sub.add_parser("report", help="rebuild the Excel report from the warehouse only")
 
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
-                        format="%(asctime)s %(levelname)-7s %(message)s", datefmt="%H:%M:%S")
+    logs.configure(verbose=args.verbose)
 
     wh = Warehouse(args.db)
     store = RawStore(args.raw_dir)
     results: dict[str, int] = {}
     failed_records = 0
+    loader = None
     try:
         if args.command == "reparse":
             results, failed_records = reparse(wh, store)
@@ -80,6 +88,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             unknown = wanted - set(ALL_SOURCES)
             if unknown:
                 parser.error(f"unknown sources: {sorted(unknown)}")
+            for step in wanted:
+                loader.expect(*STEP_SOURCES[step])
             if "moh" in wanted:
                 results["moh"] = _run_step("moh", ingest_moh, http, loader)
             if "live" in wanted:
@@ -91,6 +101,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             if not args.no_report:
                 export_report(wh, args.report)
         elif args.command == "backfill":
+            loader.expect(*STEP_SOURCES["moh"])
             results["backfill"] = _run_step("backfill", backfill_moh, http, loader, args.start, args.end,
                                             args.max_snapshots)
             export_report(wh, args.report)
@@ -99,8 +110,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     finally:
         if args.command != "reparse":
             wh.sync_manifest(store.iter_records())
+        if loader is not None:
+            loader.log_summary(args.command)
         wh.close()
-        LOG.info("Summary (rows upserted, -1 = failed): %s", results)
+        LOG.info("Summary (rows upserted, -1 = failed): %s", results,
+                 extra={"fields": {"event": "command_done", "command": args.command, "results": results}})
 
     # Exit with 1 only if every step failed, so partial data still gets published in CI.
     return 1 if results and all(v < 0 for v in results.values()) else 0

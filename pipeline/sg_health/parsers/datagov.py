@@ -9,6 +9,7 @@ from typing import Optional
 import pandas as pd
 from bs4 import BeautifulSoup
 
+from ..logs import ParseStats, count_drop, count_read
 from .common import is_blank
 
 
@@ -54,8 +55,9 @@ def _first(row: pd.Series, candidates: list[str]) -> Optional[str]:
     return None
 
 
-def normalize_clinics(raw: pd.DataFrame) -> pd.DataFrame:
+def normalize_clinics(raw: pd.DataFrame, stats: Optional[ParseStats] = None) -> pd.DataFrame:
     """Map whatever column names the source uses onto one clinic schema."""
+    count_read(stats, len(raw))
     raw = raw.rename(columns=lambda c: str(c).strip().upper())
     out = []
     for _, row in raw.iterrows():
@@ -90,5 +92,10 @@ def normalize_clinics(raw: pd.DataFrame) -> pd.DataFrame:
     df = pd.DataFrame(out)
     if df.empty:
         return df
-    df = df[df["clinic_name"].notna()]
-    return df.drop_duplicates(subset=["clinic_key"], keep="last").reset_index(drop=True)
+    named = df["clinic_name"].notna()
+    count_drop(stats, "missing_name", int((~named).sum()))
+    df = df[named]
+    before = len(df)
+    df = df.drop_duplicates(subset=["clinic_key"], keep="last").reset_index(drop=True)
+    count_drop(stats, "duplicate_key", before - len(df))
+    return df
