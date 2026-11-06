@@ -29,7 +29,8 @@ ALL_SOURCES = ("moh", "live", "opendata", "singstat")
 STEP_SOURCES = {
     "moh": ("moh_bed_waits", "moh_ed_attendances"),
     "live": ("nuhs_live",),
-    "opendata": ("datagov_chas", "datagov_annual_ae", "datagov_planning_areas", "datagov_metadata"),
+    "opendata": ("datagov_chas", "datagov_annual_ae", "datagov_planning_areas", "datagov_polyclinics",
+                 "datagov_metadata"),
     "singstat": ("singstat_residents",),
 }
 

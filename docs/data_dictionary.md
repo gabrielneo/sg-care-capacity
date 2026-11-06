@@ -306,6 +306,7 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `datagov_has` | **Retired** (not fetched) | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`), no replacement is named, and it isn't needed for the project. |
 | `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
 | `datagov_planning_areas` | OK | URA Master Plan 2025 Planning Area Boundary (No Sea), `d_2cc750190544007400b2cfd5d7f53209`, updated upstream 2026-02-27: 55 areas, names match SingStat 55 of 55. Not collection 2104 (that is the 2019 edition). |
+| `datagov_polyclinics` | OK, a proxy | HPB *Cervical Screening Centre* (`d_3ca2a28059588f297908b32da4ac3cbe`, Jan 2026) used as the polyclinic list: all 26 polyclinics. Not a polyclinic register: a new polyclinic appears only once HPB lists it for screening. MOH's *Vaccination_Polyclinics* has only 8 and isn't used. |
 | `datagov_annual_ae` | OK | 1984–2023; only 2023 overlaps the daily MOH series. Reconciliation only. |
 | `singstat_residents` | OK, with a pinned fallback | June 2026, 55 planning areas: 4,240,430 residents, 828,010 aged 65+ (19.5%). SingStat returns HTTP 403 to GitHub's runners (works elsewhere), so CI falls back to `pipeline/seeds/singstat/respopagesextod2026.zip`, used only if its SHA-256 matches `config.SINGSTAT_RESIDENTS_SEED_SHA256`. Live is always tried first. Each September: update the URL, the pinned file and its hash together. |
 

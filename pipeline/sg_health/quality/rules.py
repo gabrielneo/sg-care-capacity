@@ -259,3 +259,34 @@ def boundary_shapes(df: pd.DataFrame, ctx: GateContext):
     return [(BOUNDARY_VALID.check_id, found != "", found),
             (BOUNDARY_COUNT.check_id, int(n_areas != EXPECTED_PLANNING_AREAS),
              f"{n_areas} planning areas (expected {EXPECTED_PLANNING_AREAS}; boundaries may have changed)")]
+
+
+# --------------------------------------------------------------------------- #
+# Polyclinics (HPB screening-centre list, used as a proxy)
+# --------------------------------------------------------------------------- #
+
+MIN_POLYCLINICS = 25             # 26 in January 2026; fewer suggests a truncated or changed list
+
+POLY_COORDS = register(
+    "polyclinic.coordinates_in_singapore", Severity.ERROR, Scope.ROW,
+    f"latitude {SG_LAT[0]}-{SG_LAT[1]}, longitude {SG_LON[0]}-{SG_LON[1]}", ("polyclinics",))
+POLY_COUNT = register(
+    "polyclinic.count_at_least_25", Severity.WARN, Scope.FILE,
+    f"The list has at least {MIN_POLYCLINICS} polyclinics", ("polyclinics",))
+POLY_OTHER = register(
+    "polyclinic.non_polyclinic_entries", Severity.WARN, Scope.FILE,
+    "Every entry in the screening-centre list is a polyclinic", ("polyclinics",))
+
+
+@rule("polyclinics")
+def polyclinic_list(df: pd.DataFrame, ctx: GateContext):
+    lat = pd.to_numeric(df["latitude"], errors="coerce")
+    lon = pd.to_numeric(df["longitude"], errors="coerce")
+    inside = lat.between(*SG_LAT) & lon.between(*SG_LON)
+    n_poly = int(df["is_polyclinic"].astype(bool).sum())
+    others = sorted(df.loc[~df["is_polyclinic"].astype(bool), "facility_name"].astype(str))
+    return [(POLY_COORDS.check_id, ~inside, "lat " + lat.astype(str) + ", lon " + lon.astype(str) + " is outside Singapore"),
+            (POLY_COUNT.check_id, int(n_poly < MIN_POLYCLINICS),
+             f"{n_poly} polyclinics (expected at least {MIN_POLYCLINICS}); distances to the nearest may be overstated"),
+            (POLY_OTHER.check_id, len(others),
+             f"entries that are not polyclinics, kept but not used for distances: {others[:10]}")]

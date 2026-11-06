@@ -71,6 +71,11 @@ DATAGOV_DATASETS = {
     # boundaries SingStat uses for June 2026. Names match SingStat's case-insensitively (checked
     # 2026-11-06, 55 of 55). Not the collection-2104 dataset, which is the 2019 edition.
     "planning_areas": "d_2cc750190544007400b2cfd5d7f53209",
+    # HPB "Cervical Screening Centre" (GeoJSON, Jan 2026): used as the POLYCLINIC list, because
+    # every polyclinic offers cervical screening and it lists all 26. A proxy, not a polyclinic
+    # register: a polyclinic appears only once HPB lists it for screening. MOH's own
+    # "Vaccination_Polyclinics" set has only 8 (a COVID-vaccination subset), so it isn't used.
+    "polyclinics": "d_3ca2a28059588f297908b32da4ac3cbe",
 }
 ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in that CSV
 # Dataset metadata (name, publisher, lastUpdatedAt). lastUpdatedAt is the as_of shown to users

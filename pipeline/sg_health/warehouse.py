@@ -53,6 +53,12 @@ DDL = [
         geometry_wkt VARCHAR NOT NULL,
         source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (planning_area_code))""",
+    # Polyclinic locations (HPB screening-centre list used as a proxy; latest snapshot only).
+    """CREATE TABLE IF NOT EXISTS polyclinics (
+        facility_name VARCHAR NOT NULL, address VARCHAR, postal_code VARCHAR,
+        latitude DOUBLE, longitude DOUBLE, is_polyclinic BOOLEAN NOT NULL,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (facility_name))""",
     # One row per fetch, mirrored from data/raw/manifest.jsonl (the source of truth).
     """CREATE TABLE IF NOT EXISTS raw_manifest (
         seq INTEGER PRIMARY KEY, source VARCHAR NOT NULL, url VARCHAR NOT NULL,
@@ -76,7 +82,8 @@ LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
 PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_live_waits",
-                 "pop_65plus_by_area", "annual_ae_attendances", "source_metadata", "planning_area_boundaries")
+                 "pop_65plus_by_area", "annual_ae_attendances", "source_metadata", "planning_area_boundaries",
+                 "polyclinics")
 # Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
 RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits", "singstat_tabledata", "quarantine_singstat_tabledata")
 
@@ -91,6 +98,7 @@ TABLE_KEYS: dict[str, tuple[str, ...]] = {
     "annual_ae_attendances": ("year",),
     "source_metadata": ("dataset_id",),
     "planning_area_boundaries": ("planning_area_code",),
+    "polyclinics": ("facility_name",),
 }
 QUARANTINE_TABLES = tuple(f"quarantine_{t}" for t in TABLE_KEYS)
 # Everything `reparse` drops and rebuilds from data/raw. dq_results (a log) is kept.

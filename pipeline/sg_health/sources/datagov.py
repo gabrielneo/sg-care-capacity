@@ -14,7 +14,7 @@ from ..load import Loader
 LOG = logging.getLogger(__name__)
 
 DATASET_SOURCES = (("chas", "datagov_chas"), ("annual_ae", "datagov_annual_ae"),
-                   ("planning_areas", "datagov_planning_areas"))
+                   ("planning_areas", "datagov_planning_areas"), ("polyclinics", "datagov_polyclinics"))
 
 
 def fetch_datagov_dataset(http: PoliteHttp, dataset_id: str

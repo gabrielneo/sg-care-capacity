@@ -145,6 +145,20 @@ def planning_area_geojson(areas=None) -> bytes:
 
 
 PLANNING_AREAS = planning_area_geojson()
+
+
+def polyclinics_geojson(rows=None) -> bytes:
+    """HPB screening-centre layout: NAME, address parts, Point geometry (lon, lat)."""
+    rows = rows if rows is not None else [("Bedok Polyclinic", 103.69, 1.34), ("Tuas Polyclinic", 103.62, 1.29)]
+    feats = [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [lon, lat]},
+              "properties": {"NAME": name, "ADDRESSBLOCKHOUSENUMBER": "1", "ADDRESSSTREETNAME": "Some Street",
+                             "ADDRESSPOSTALCODE": "123456", "ADDRESSFLOORNUMBER": None, "ADDRESSUNITNUMBER": None}}
+             for name, lon, lat in rows]
+    return json.dumps({"type": "FeatureCollection", "features": feats}).encode()
+
+
+POLYCLINICS = polyclinics_geojson()
+POLYCLINICS_DOWNLOAD = f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['polyclinics']}.geojson"
 PLANNING_AREAS_DOWNLOAD = f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['planning_areas']}.geojson"
 # Same shape as the real signed link: the object path is the dataset id.
 CHAS_DOWNLOAD = (f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['chas']}.geojson"
@@ -170,12 +184,16 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
         poll.format(config.DATAGOV_DATASETS["planning_areas"]):
             (json.dumps({"data": {"url": PLANNING_AREAS_DOWNLOAD}}).encode(), JSON),
         PLANNING_AREAS_DOWNLOAD: (PLANNING_AREAS, "application/geo+json"),
+        poll.format(config.DATAGOV_DATASETS["polyclinics"]):
+            (json.dumps({"data": {"url": POLYCLINICS_DOWNLOAD}}).encode(), JSON),
+        POLYCLINICS_DOWNLOAD: (POLYCLINICS, "application/geo+json"),
         **{config.DATAGOV_METADATA_URL.format(dataset_id=ds): (json.dumps({"code": 0, "data": {
             "datasetId": ds, "name": name, "managedBy": "Ministry of Health",
             "lastUpdatedAt": updated}}).encode(), JSON)
            for ds, name, updated in [(config.DATAGOV_DATASETS["chas"], "CHAS Clinics", "2024-06-06T14:36:42+08:00"),
                                      (config.DATAGOV_DATASETS["annual_ae"], "Annual", "2026-10-28T08:54:55+08:00"),
-                                     (config.DATAGOV_DATASETS["planning_areas"], "MP2025 PA", "2026-02-27T10:07:02+08:00")]},
+                                     (config.DATAGOV_DATASETS["planning_areas"], "MP2025 PA", "2026-02-27T10:07:02+08:00"),
+                                     (config.DATAGOV_DATASETS["polyclinics"], "Cervical Screening Centre", "2026-01-04T10:00:00+08:00")]},
         config.SINGSTAT_RESIDENTS_URL: (SINGSTAT_ZIP, "application/zip"),
     }
 

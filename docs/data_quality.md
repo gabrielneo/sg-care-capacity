@@ -68,7 +68,7 @@ failing check shows as `FAIL (blocks)`, `FAIL (quarantined)` or `WARN`.
 ## Schema checks (every gated table)
 
 Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`pop_65plus_by_area`, `annual_ae_attendances`, `source_metadata`, `planning_area_boundaries`.
+`pop_65plus_by_area`, `annual_ae_attendances`, `source_metadata`, `planning_area_boundaries`, `polyclinics`.
 
 ### `schema.required_columns`: ERROR, file, blocks
 
@@ -318,6 +318,33 @@ column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
 How clinics are placed: each clinic's point must be **inside exactly one** area. None, or more
 than one, leaves the area NULL with `planning_area_assignment` = `outside_all` or `ambiguous`; it
 is never assigned to the nearest area. On the real data all 1,192 clinics are inside exactly one.
+
+## Polyclinic checks (`polyclinics`)
+
+The polyclinic list is HPB's **Cervical Screening Centre** dataset, used as a proxy because every
+polyclinic offers cervical screening and it lists all 26 (January 2026). MOH's own
+"Vaccination_Polyclinics" set has only 8 and isn't used.
+
+### `polyclinic.coordinates_in_singapore`: ERROR, row
+
+- **Guards against:** a polyclinic plotted outside Singapore, which would distort every nearest-distance.
+- **Threshold:** latitude 1.15–1.48, longitude 103.6–104.1.
+- **Why:** the same reason as for clinics; a wrong point is withheld, not corrected.
+
+### `polyclinic.count_at_least_25`: WARN, file
+
+- **Guards against:** a truncated list, or HPB dropping polyclinics from the screening list, either of
+  which would make "distance to nearest polyclinic" look worse than it is.
+- **Threshold:** at least **25** entries named "… Polyclinic" (26 in January 2026).
+- **Why WARN:** polyclinics can genuinely close or merge; someone should look before the change is published.
+
+### `polyclinic.non_polyclinic_entries`: WARN, file
+
+- **Guards against:** HPB adding GP clinics or other centres to the screening list, which would then
+  be mistaken for polyclinics.
+- **Threshold:** any entry whose name doesn't end in "Polyclinic". Such entries are kept with
+  `is_polyclinic = FALSE` and never used for polyclinic distances.
+- **Why WARN:** a name-based test is a heuristic; a human should confirm new entries.
 
 ## Reconciliation (WARN only)
 

@@ -14,9 +14,12 @@ dependencies = [
     "pandas>=2.1",
     "openpyxl>=3.1",
     "duckdb>=1.0",
-    # Point-in-polygon for clinic -> planning area. Only shapely (GEOS): geopandas would add
-    # pyproj/pyogrio for CRS handling we don't need (both sources are WGS84 lon/lat).
-    "shapely>=2.0",
+    # Geospatial marts: every distance and area is computed in SVY21 (EPSG:3414), which needs
+    # pyproj for reprojection; geopandas gives buffers, overlays and spatial joins on top of shapely.
+    # Pipeline only (CLAUDE.md): the API never imports these.
+    "shapely>=2.1",          # coverage_simplify (shared borders stay shared) needs 2.1+
+    "pyproj>=3.6",
+    "geopandas>=1.0",
 ]
 
 [project.optional-dependencies]

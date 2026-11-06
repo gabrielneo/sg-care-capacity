@@ -48,6 +48,33 @@ def parse_datagov_metadata(payload: dict, source_by_id: dict[str, str]) -> pd.Da
     }])
 
 
+def parse_polyclinics(content: bytes, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+    """HPB screening-centre GeoJSON -> facility_name, address, postal_code, lat/lon, is_polyclinic.
+
+    Entries whose name doesn't end in "Polyclinic" are kept but flagged, never used as polyclinics.
+    """
+    data = json.loads(content.decode("utf-8-sig"))
+    if not isinstance(data, dict) or data.get("type") != "FeatureCollection":
+        raise BoundaryFormatError("expected a GeoJSON FeatureCollection")
+    rows = []
+    for feat in data.get("features", []):
+        p = {str(k).upper(): v for k, v in (feat.get("properties") or {}).items()}
+        if "NAME" not in p:
+            raise BoundaryFormatError(f"screening-centre feature lacks NAME; has {sorted(p)}")
+        geom = feat.get("geometry") or {}
+        lon, lat = (geom.get("coordinates") or [None, None])[:2] if geom.get("type") == "Point" else (None, None)
+        name = re.sub(r"\s+", " ", str(p["NAME"])).strip()
+        parts = [p.get("ADDRESSBLOCKHOUSENUMBER"), p.get("ADDRESSSTREETNAME"),
+                 _unit_part(p.get("ADDRESSFLOORNUMBER"), p.get("ADDRESSUNITNUMBER")), p.get("ADDRESSBUILDINGNAME")]
+        rows.append({"facility_name": name,
+                     "address": " ".join(str(x).strip() for x in parts if x and str(x).strip()) or None,
+                     "postal_code": (str(p.get("ADDRESSPOSTALCODE")).strip().zfill(6) if p.get("ADDRESSPOSTALCODE") else None),
+                     "latitude": lat, "longitude": lon,
+                     "is_polyclinic": bool(re.search(r"\bpolyclinic$", name, re.I))})
+    count_read(stats, len(rows))
+    return pd.DataFrame(rows, columns=["facility_name", "address", "postal_code", "latitude", "longitude", "is_polyclinic"])
+
+
 class BoundaryFormatError(ValueError):
     """The boundary file isn't laid out as expected; stop rather than guess."""
 

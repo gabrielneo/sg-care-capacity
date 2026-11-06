@@ -248,3 +248,12 @@ def test_clinic_address_unit_formatting(floor, unit, expected):
     raw = pd.DataFrame([{"HCI_NAME": "A CLINIC", "BLK_HSE_NO": "1", "STREET_NAME": "STREET",
                          "FLOOR_NO": floor, "UNIT_NO": unit, "POSTAL_CD": "123456"}])
     assert p.normalize_clinics(raw).iloc[0].address == expected
+
+
+def test_polyclinic_list_flags_entries_that_are_not_polyclinics():
+    from conftest import polyclinics_geojson
+    from sg_health.parsers.datagov import parse_polyclinics
+    out = parse_polyclinics(polyclinics_geojson([("Tampines  Polyclinic", 103.946, 1.357),
+                                                 ("Some GP Screening Clinic", 103.80, 1.30)])).set_index("facility_name")
+    assert bool(out.loc["Tampines Polyclinic", "is_polyclinic"]) and not bool(out.loc["Some GP Screening Clinic", "is_polyclinic"])
+    assert out.loc["Tampines Polyclinic", "longitude"] == pytest.approx(103.946)
