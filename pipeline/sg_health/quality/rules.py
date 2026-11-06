@@ -221,3 +221,41 @@ def population_counts(df: pd.DataFrame, ctx: GateContext):
     return [(POP_CONSISTENT.check_id, bad, text),
             (POP_AREA_COUNT.check_id, int(len(off)),
              f"planning areas per year: {off.to_dict()} (expected {EXPECTED_PLANNING_AREAS}; boundaries may have changed)")]
+
+
+# --------------------------------------------------------------------------- #
+# Planning-area boundaries (URA)
+# --------------------------------------------------------------------------- #
+
+BOUNDARY_VALID = register(
+    "boundary.geometry_valid", Severity.ERROR, Scope.ROW,
+    "Each planning area is a valid, non-empty polygon inside Singapore's bounding box",
+    ("planning_area_boundaries",))
+BOUNDARY_COUNT = register(
+    "boundary.planning_area_count", Severity.WARN, Scope.FILE,
+    f"The boundary file has {EXPECTED_PLANNING_AREAS} planning areas", ("planning_area_boundaries",))
+
+
+@rule("planning_area_boundaries")
+def boundary_shapes(df: pd.DataFrame, ctx: GateContext):
+    from shapely import wkt as shapely_wkt
+    from shapely.geometry import box
+    singapore = box(SG_LON[0], SG_LAT[0], SG_LON[1], SG_LAT[1])
+
+    def problem(text):
+        try:
+            geom = shapely_wkt.loads(text)
+        except Exception:
+            return "geometry is not readable"
+        if geom.is_empty or geom.geom_type not in ("Polygon", "MultiPolygon"):
+            return f"geometry is {geom.geom_type}, empty={geom.is_empty}"
+        if not geom.is_valid:
+            return "geometry is not valid (self-intersecting?)"
+        if not singapore.contains(geom):
+            return "geometry extends outside Singapore's bounding box"
+        return ""
+    found = df["geometry_wkt"].map(lambda t: problem(t) if isinstance(t, str) else "no geometry")
+    n_areas = int(df["planning_area_code"].nunique())
+    return [(BOUNDARY_VALID.check_id, found != "", found),
+            (BOUNDARY_COUNT.check_id, int(n_areas != EXPECTED_PLANNING_AREAS),
+             f"{n_areas} planning areas (expected {EXPECTED_PLANNING_AREAS}; boundaries may have changed)")]

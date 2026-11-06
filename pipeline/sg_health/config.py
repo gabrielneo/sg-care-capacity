@@ -67,6 +67,10 @@ DATAGOV_DATASETS = {
     # year, level_1, value), 1984-2023 as of 2026-11-06. Used only to reconcile MOH's daily
     # ED attendances (data-quality check reconcile.annual_ae).
     "annual_ae": "d_a5267c58f60b20f8e04576261abfac93",
+    # URA "Master Plan 2025 Planning Area Boundary (No Sea)" (GeoJSON, 55 areas, WGS84), the
+    # boundaries SingStat uses for June 2026. Names match SingStat's case-insensitively (checked
+    # 2026-11-06, 55 of 55). Not the collection-2104 dataset, which is the 2019 edition.
+    "planning_areas": "d_2cc750190544007400b2cfd5d7f53209",
 }
 ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in that CSV
 # Dataset metadata (name, publisher, lastUpdatedAt). lastUpdatedAt is the as_of shown to users

@@ -233,7 +233,7 @@ import re  # noqa: E402
 from sg_health import config  # noqa: E402
 
 MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
-         "fct_planning_area_population"]
+         "fct_planning_area_population", "fct_clinic_access", "dim_metric"]
 
 
 def documented_columns(mart: str) -> set[str]:
@@ -297,3 +297,69 @@ def test_population_mart_share_is_null_where_nobody_lives(built):
     assert rows.loc["Bedok", "share_65plus"] == pytest.approx(0.5)
     assert rows.loc["Tuas", "residents_total"] == 0 and pd.isna(rows.loc["Tuas", "share_65plus"])
     assert (rows["as_of"] == pd.Timestamp("2026-06-30")).all() and set(rows["as_of_basis"]) == {"reference_period"}
+
+
+# ------------------------------------------------------------ clinic access #
+
+def access_run(monkeypatch, paths, clinics, areas=None):
+    from conftest import chas_geojson, planning_area_geojson, source_routes, PLANNING_AREAS_DOWNLOAD
+    routes = source_routes(chas=chas_geojson(clinics))
+    if areas is not None:
+        routes[PLANNING_AREAS_DOWNLOAD] = (planning_area_geojson(areas), "application/geo+json")
+    full_run(monkeypatch, paths, routes)
+    wh = Warehouse(paths["db"])
+    try:
+        return (q(wh, "SELECT clinic_key, planning_area_code, planning_area, planning_area_assignment FROM marts.dim_clinic ORDER BY 1"),
+                q(wh, "SELECT * FROM marts.fct_clinic_access ORDER BY planning_area").set_index("planning_area"))
+    finally:
+        wh.close()
+
+
+def test_clinics_are_placed_in_the_area_that_contains_them(monkeypatch, paths):
+    clinics, access = access_run(monkeypatch, paths, [
+        ("C1", "BEDOK ONE", "CHAS,CDMP", (103.68, 1.33)), ("C2", "BEDOK TWO", "CHAS", (103.70, 1.34)),
+        ("C3", "TUAS ONE", "CHAS,CDMP", (103.62, 1.30))])
+    assert list(clinics["planning_area"]) == ["Bedok", "Bedok", "Tuas"]           # SingStat spelling
+    assert set(clinics["planning_area_assignment"]) == {"inside"}
+    assert (access.loc["Bedok", "active_chas_clinics"], access.loc["Bedok", "active_cdmp_clinics"]) == (2, 1)
+
+
+def test_a_clinic_outside_every_area_is_left_unassigned_not_snapped(monkeypatch, paths):
+    clinics, access = access_run(monkeypatch, paths, [
+        ("C1", "IN BEDOK", "CHAS", (103.68, 1.33)), ("C2", "BETWEEN AREAS", "CHAS", (103.645, 1.33))])
+    row = clinics.set_index("clinic_key").loc["C2"]
+    assert pd.isna(row.planning_area_code) and row.planning_area_assignment == "outside_all"
+    assert access["active_chas_clinics"].sum() == 1                                # only the placed one
+
+
+def test_a_clinic_in_two_overlapping_areas_is_ambiguous(monkeypatch, paths):
+    overlapping = [("BD", "BEDOK", "EAST", (103.65, 1.30, 103.72, 1.36)), ("TS", "TUAS", "WEST", (103.60, 1.28, 103.70, 1.34))]
+    clinics, _ = access_run(monkeypatch, paths, [("C1", "IN BOTH", "CHAS", (103.68, 1.33))], areas=overlapping)
+    assert clinics["planning_area_assignment"].iloc[0] == "ambiguous" and pd.isna(clinics["planning_area"].iloc[0])
+
+
+def test_access_ratio_per_1000_aged_65_and_null_where_nobody_that_age_lives(monkeypatch, paths):
+    _, access = access_run(monkeypatch, paths, [("C1", "A", "CHAS,CDMP", (103.68, 1.33)), ("C2", "B", "CHAS", (103.69, 1.33))])
+    bedok = access.loc["Bedok"]                                                     # fixture: 1,000 residents aged 65+
+    assert bedok.cdmp_clinics_per_1000_65plus == pytest.approx(1.0)
+    assert bedok.chas_clinics_per_1000_65plus == pytest.approx(2.0)
+    tuas = access.loc["Tuas"]                                                       # 0 residents
+    assert tuas.active_chas_clinics == 0 and pd.isna(tuas.cdmp_clinics_per_1000_65plus)
+
+
+def test_access_as_of_is_the_older_input(monkeypatch, paths):
+    _, access = access_run(monkeypatch, paths, [("C1", "A", "CHAS", (103.68, 1.33))])
+    assert (access["clinics_as_of"] == pd.Timestamp("2024-06-06 14:36:42")).all()
+    assert (access["population_as_of"] == pd.Timestamp("2026-06-30")).all()
+    assert (access["as_of"] == access["clinics_as_of"]).all() and set(access["as_of_basis"]) == {"source_updated"}
+
+
+def test_every_metric_points_at_a_real_mart_column_and_wait_units_are_inferred(built):
+    metrics = q(built, "SELECT * FROM marts.dim_metric")
+    for metric_id in metrics["metric_id"]:
+        mart, col = metric_id.split(".")
+        assert col in q(built, f"SELECT * FROM marts.{mart} LIMIT 0").columns, metric_id
+    m = metrics.set_index("metric_id")
+    assert m.loc["fct_ed_daily.median_wait_hours", "unit_basis"] == "inferred"
+    assert "not stated by MOH" in m.loc["fct_ed_daily.median_wait_hours", "caveat"]
+    assert set(metrics["unit_basis"]) <= {"stated", "inferred"} and metrics["caveat"].str.len().gt(0).all()

@@ -13,7 +13,7 @@ sources ──► PoliteHttp ──► data/raw (immutable) ──► parsers �
                                     └──── sg-health reparse: rebuild every table from data/raw, offline
 ```
 
-Sources: MOH weekly .xlsx · NUHS live ED waits · data.gov.sg CHAS clinics · SingStat · Wayback Machine (backfill only) · data.gov.sg annual A&E attendances (reconciliation only). Retired on 2026-11-06: SingHealth X-ray QWatch (page removed) and data.gov.sg HAS clinics (dataset unpublished); their tables are gone, but any raw files already landed are kept.
+Sources: MOH weekly .xlsx · NUHS live ED waits · data.gov.sg CHAS clinics · SingStat · Wayback Machine (backfill only) · data.gov.sg annual A&E attendances (reconciliation only) · URA Master Plan 2025 planning-area boundaries (data.gov.sg). Retired on 2026-11-06: SingHealth X-ray QWatch (page removed) and data.gov.sg HAS clinics (dataset unpublished); their tables are gone, but any raw files already landed are kept.
 
 ## 1. Install
 
@@ -125,6 +125,8 @@ read:
 | `marts.dim_clinic` | CHAS clinic | `has_cdmp`, `is_active`, location; `as_of` is data.gov.sg's own update date |
 | `marts.fct_live_ed_snapshot` | NUHS site × department × snapshot | Live readings, labelled `estimate`; filter `is_adult_ed` for one per hospital |
 | `marts.fct_planning_area_population` | planning area × year | Residents, residents aged 65+, share; SingStat, June 2026 |
+| `marts.fct_clinic_access` | planning area | Active CHAS and CDMP clinics vs residents aged 65+; **CDMP clinics per 1,000 aged 65+** (lead measure) |
+| `marts.dim_metric` | metric | Label, unit, whether the unit is stated or inferred, and the caveat to show |
 
 Every mart has `as_of` and `as_of_basis` (`source_updated`, `fetched` or `reference_checked`) and
 source hashes. Row counts are reconciled at every step into `transform_log`; a row lost without a

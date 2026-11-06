@@ -15,7 +15,7 @@ import pytest
 SG_LAT, SG_LON = (1.15, 1.48), (103.6, 104.1)
 AS_OF_BASES = {"source_updated", "fetched", "reference_checked", "reference_period"}
 MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
-         "fct_planning_area_population"]
+         "fct_planning_area_population", "fct_clinic_access", "dim_metric"]
 
 
 def dupes(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
@@ -408,3 +408,74 @@ def test_live_page_was_recent_when_fetched(sql):
     l = sql("SELECT as_of, fetched_at, as_of_basis FROM marts.fct_live_ed_snapshot")
     lag = (l["fetched_at"] - l["as_of"]).dt.total_seconds() / 3600
     assert (lag >= 0).all() and (lag <= 3).all(), f"page lag at fetch: {lag.round(2).tolist()} h"
+
+
+# =========================================================================== #
+# Clinic access page (fct_clinic_access) and metric labels (dim_metric)
+# =========================================================================== #
+
+def test_access_page_has_every_planning_area_once(sql):
+    a = sql("SELECT planning_area_code, planning_area FROM marts.fct_clinic_access")
+    assert len(a) == 55 and a["planning_area_code"].is_unique and a["planning_area"].is_unique
+
+
+def test_every_active_clinic_is_on_the_access_page_exactly_once(sql):
+    """The map's clinic dots and the area totals must add up to the same number."""
+    placed = sql("SELECT count(*) n FROM marts.dim_clinic WHERE is_active AND planning_area_code IS NOT NULL")["n"][0]
+    active = sql("SELECT count(*) n FROM marts.dim_clinic WHERE is_active")["n"][0]
+    counted = sql("SELECT sum(active_chas_clinics) n FROM marts.fct_clinic_access")["n"][0]
+    assert placed == active, f"{active - placed} active clinics have no planning area"
+    assert counted == placed
+
+
+def test_access_ratios_are_the_ratio_of_their_own_counts(sql):
+    off = sql("""SELECT planning_area FROM marts.fct_clinic_access WHERE residents_65plus > 0 AND (
+                   abs(cdmp_clinics_per_1000_65plus - 1000.0 * active_cdmp_clinics / residents_65plus) > 1e-9
+                OR abs(chas_clinics_per_1000_65plus - 1000.0 * active_chas_clinics / residents_65plus) > 1e-9)""")
+    assert off.empty, list(off["planning_area"])
+
+
+def test_access_ratio_is_missing_only_where_no_one_aged_65_lives(sql):
+    a = sql("SELECT residents_65plus, cdmp_clinics_per_1000_65plus r FROM marts.fct_clinic_access")
+    assert (a["r"].isna() == (a["residents_65plus"] == 0)).all()
+    assert (a["r"].dropna() >= 0).all()
+
+
+def test_cdmp_clinics_are_a_subset_of_chas_clinics_in_every_area(sql):
+    bad = sql("SELECT planning_area FROM marts.fct_clinic_access WHERE active_cdmp_clinics > active_chas_clinics")
+    assert bad.empty, list(bad["planning_area"])
+
+
+def test_access_page_population_matches_the_population_mart(sql):
+    off = sql("""SELECT a.planning_area FROM marts.fct_clinic_access a JOIN marts.fct_planning_area_population p
+                 ON p.planning_area = a.planning_area AND p.year = a.population_year
+                 WHERE p.residents_65plus <> a.residents_65plus OR p.residents_total <> a.residents_total""")
+    assert off.empty, list(off["planning_area"])
+
+
+def test_access_as_of_is_never_newer_than_either_input(sql):
+    a = sql("SELECT as_of, clinics_as_of, population_as_of FROM marts.fct_clinic_access")
+    assert (a["as_of"] <= a["clinics_as_of"]).all() and (a["as_of"] <= a["population_as_of"]).all()
+
+
+def test_clinic_and_population_names_agree(sql):
+    """The map popup (dim_clinic) and the area panel (fct_clinic_access) must use the same area name."""
+    off = sql("""SELECT DISTINCT c.planning_area FROM marts.dim_clinic c
+                 WHERE c.planning_area IS NOT NULL AND c.planning_area NOT IN (SELECT planning_area FROM marts.fct_clinic_access)""")
+    assert off.empty, list(off["planning_area"])
+
+
+def test_every_metric_shown_has_a_label_unit_and_caveat(sql):
+    m = sql("SELECT * FROM marts.dim_metric")
+    for col in ("label", "definition", "unit", "unit_basis", "caveat", "source_name"):
+        assert m[col].notna().all() and (m[col].str.strip() != "").all(), col
+    for metric_id in m["metric_id"]:
+        mart, col = metric_id.split(".")
+        assert col in sql(f"SELECT * FROM marts.{mart} LIMIT 0").columns, metric_id
+
+
+def test_inferred_units_say_so_in_their_caveat(sql):
+    """Decision: publish bed waits with the caveat that the unit is inferred."""
+    inferred = sql("SELECT metric_id, caveat FROM marts.dim_metric WHERE unit_basis = 'inferred'")
+    assert "fct_ed_daily.median_wait_hours" in set(inferred["metric_id"])
+    assert inferred["caveat"].str.contains("inferred", case=False).all()

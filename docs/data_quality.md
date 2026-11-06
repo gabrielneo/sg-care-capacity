@@ -68,7 +68,7 @@ failing check shows as `FAIL (blocks)`, `FAIL (quarantined)` or `WARN`.
 ## Schema checks (every gated table)
 
 Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`pop_65plus_by_area`, `annual_ae_attendances`, `source_metadata`.
+`pop_65plus_by_area`, `annual_ae_attendances`, `source_metadata`, `planning_area_boundaries`.
 
 ### `schema.required_columns`: ERROR, file, blocks
 
@@ -283,6 +283,29 @@ column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
   is never more than about 15 months behind. The file link is pinned in
   `config.SINGSTAT_RESIDENTS_URL` and updated by hand once a year, on purpose: discovering it
   automatically from SingStat's page would break silently whenever the page is redesigned.
+
+## Boundary checks (`planning_area_boundaries`)
+
+### `boundary.geometry_valid`: ERROR, row
+
+- **Guards against:** a broken or misplaced polygon putting clinics in the wrong planning area,
+  or in none.
+- **Threshold:** each planning area's geometry is a readable, valid, non-empty Polygon or
+  MultiPolygon lying inside Singapore's bounding box (lat 1.15–1.48, lon 103.6–104.1).
+- **Why:** clinics are counted per area by point-in-polygon. An invalid shape can make that test
+  wrong silently. All 55 real areas pass (extent lon 103.606–104.089, lat 1.159–1.471).
+
+### `boundary.planning_area_count`: WARN, file
+
+- **Guards against:** a partial boundary file, or a Master Plan change that the population data
+  doesn't follow yet.
+- **Threshold:** **55** planning areas.
+- **Why WARN:** fewer areas would leave clinics unassigned (shown as `outside_all`, not snapped
+  to a neighbour); more would mean new areas without a SingStat population.
+
+How clinics are placed: each clinic's point must be **inside exactly one** area. None, or more
+than one, leaves the area NULL with `planning_area_assignment` = `outside_all` or `ambiguous`; it
+is never assigned to the nearest area. On the real data all 1,192 clinics are inside exactly one.
 
 ## Reconciliation (WARN only)
 

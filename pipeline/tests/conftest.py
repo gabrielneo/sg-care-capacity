@@ -129,6 +129,23 @@ def singstat_residents_zip(rows=None, columns=("PA", "SZ", "AG", "Sex", "TOD", "
 
 
 SINGSTAT_ZIP = singstat_residents_zip()
+
+
+
+def planning_area_geojson(areas=None) -> bytes:
+    """URA-style boundary file: squares (lon0, lat0, lon1, lat1) named like the fixture's SingStat areas."""
+    areas = areas if areas is not None else [("BD", "BEDOK", "EAST REGION", (103.65, 1.30, 103.72, 1.36)),
+                                             ("TS", "TUAS", "WEST REGION", (103.60, 1.28, 103.64, 1.32))]
+    feats = []
+    for code, name, region, (x0, y0, x1, y1) in areas:
+        feats.append({"type": "Feature",
+                      "properties": {"PLN_AREA_N": name, "PLN_AREA_C": code, "REGION_N": region},
+                      "geometry": {"type": "Polygon", "coordinates": [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]]}})
+    return json.dumps({"type": "FeatureCollection", "features": feats}).encode()
+
+
+PLANNING_AREAS = planning_area_geojson()
+PLANNING_AREAS_DOWNLOAD = f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['planning_areas']}.geojson"
 # Same shape as the real signed link: the object path is the dataset id.
 CHAS_DOWNLOAD = (f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['chas']}.geojson"
                  "?X-Amz-Signature=secret&X-Amz-Expires=60")
@@ -150,11 +167,15 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
         poll.format(config.DATAGOV_DATASETS["annual_ae"]):
             (json.dumps({"data": {"url": ANNUAL_AE_DOWNLOAD}}).encode(), JSON),
         ANNUAL_AE_DOWNLOAD: (ANNUAL_AE_CSV, "text/csv"),
+        poll.format(config.DATAGOV_DATASETS["planning_areas"]):
+            (json.dumps({"data": {"url": PLANNING_AREAS_DOWNLOAD}}).encode(), JSON),
+        PLANNING_AREAS_DOWNLOAD: (PLANNING_AREAS, "application/geo+json"),
         **{config.DATAGOV_METADATA_URL.format(dataset_id=ds): (json.dumps({"code": 0, "data": {
             "datasetId": ds, "name": name, "managedBy": "Ministry of Health",
             "lastUpdatedAt": updated}}).encode(), JSON)
            for ds, name, updated in [(config.DATAGOV_DATASETS["chas"], "CHAS Clinics", "2024-06-06T14:36:42+08:00"),
-                                     (config.DATAGOV_DATASETS["annual_ae"], "Annual", "2026-10-28T08:54:55+08:00")]},
+                                     (config.DATAGOV_DATASETS["annual_ae"], "Annual", "2026-10-28T08:54:55+08:00"),
+                                     (config.DATAGOV_DATASETS["planning_areas"], "MP2025 PA", "2026-02-27T10:07:02+08:00")]},
         config.SINGSTAT_RESIDENTS_URL: (SINGSTAT_ZIP, "application/zip"),
     }
 

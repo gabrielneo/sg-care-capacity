@@ -102,6 +102,8 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | `programmes` | Programme codes as published, e.g. `CDMP,CHAS` | text | staging | Real values seen: CHAS, CDMP, ISP. |
 | `has_cdmp` | TRUE if the clinic participates in the Chronic Disease Management Programme | boolean | `'CDMP' in programmes` | NULL if `programmes` is missing. |
 | `is_active` | TRUE if the clinic is in the latest snapshot | boolean | staging | A clinic quarantined in a later snapshot keeps its last good row, still active. |
+| `planning_area_code`, `planning_area` | URA Master Plan 2025 planning area containing the clinic | text | point-in-polygon on `planning_area_boundaries`; name in SingStat's spelling | NULL if the point is in no area or several (see `planning_area_assignment`): never snapped to the nearest area. |
+| `planning_area_assignment` | `inside` (in exactly one area), `outside_all` or `ambiguous` | text | point-in-polygon | All 1,192 real clinics are `inside`. |
 | `source_url`, `source_sha256` | The raw CHAS file the row came from | text | staging lineage | The signed query string is removed from the URL. |
 | `fetched_at` | When that file was downloaded | timestamp (SGT) | staging | |
 | `as_of` | When data.gov.sg last updated the CHAS dataset | timestamp (SGT) | metadata `lastUpdatedAt`, matched by the dataset id in `source_url` | **2024-06-06 on the real data**, so clinics opened or closed since then aren't reflected. Falls back to `fetched_at` if metadata is unavailable. |
@@ -149,6 +151,48 @@ data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing t
 | `source_url`, `source_sha256`, `fetched_at` | The raw zip and when it was downloaded | text / timestamp | staging lineage | |
 | `as_of` | `reference_date` | timestamp | | The figures describe end-June; SingStat generated the file on 2026-09-25. |
 | `as_of_basis` | Always `reference_period` | text | constant | |
+
+### `marts.fct_clinic_access`
+
+**Grain:** one row per planning area (55), for the latest SingStat year. **Source:**
+`marts.dim_clinic` (active clinics, by planning area) joined to `marts.fct_planning_area_population`
+on planning-area name (case-insensitive; 55 of 55 match), over `staging.stg_planning_area_boundaries`.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `planning_area_code` | URA planning-area code | text | boundaries | |
+| `planning_area` | Planning area, SingStat spelling | text | population mart | |
+| `region_name` | URA region | text | boundaries | |
+| `population_year` | Year of the resident counts | integer | latest year in the population mart | |
+| `residents_total`, `residents_65plus` | Residents, and residents aged 65+ | residents | population mart | Rounded per published cell (see that mart). |
+| `active_chas_clinics` | Active CHAS clinics located in the area | clinics | count of `dim_clinic` with `is_active` | **0 is a real zero** (the CHAS list is complete), not missing. Quarantined clinics are not counted. |
+| `active_cdmp_clinics` | Of those, clinics in the Chronic Disease Management Programme | clinics | count with `has_cdmp` | |
+| `cdmp_clinics_per_1000_65plus` | **Lead measure.** `1000 × active_cdmp_clinics / residents_65plus` | clinics per 1,000 residents aged 65+ | computed | **NULL where no one aged 65+ lives** (no denominator). Counts where clinics *are*, not where patients live: residents cross area lines, so low values in small or central areas aren't necessarily poor access. **Mixed vintages:** clinics June 2024, residents June 2026. |
+| `chas_clinics_per_1000_65plus` | Same for all active CHAS clinics | clinics per 1,000 residents aged 65+ | computed | Same caveats. |
+| `clinics_as_of` | When the CHAS list was last updated | timestamp (SGT) | `dim_clinic.as_of` | 2024-06-06 on the real data. |
+| `population_as_of` | Population reference date | timestamp | population mart | End of June of `population_year`. |
+| `clinic_source_sha256`, `population_source_sha256`, `boundary_source_sha256` | The raw files behind each part | text | lineage | |
+| `as_of` | The **older** of `clinics_as_of` and `population_as_of` | timestamp | `least(...)` | So the page never claims the measure is more current than its oldest input. |
+| `as_of_basis` | Basis of whichever input is older (`source_updated` for the clinic list today) | text | | |
+
+### `marts.dim_metric`
+
+**Grain:** one row per published metric. **Source:** `sg_health/metrics.py`, seeded into
+`main.ref_metric` on every build. The site reads labels, units and caveats from here, so the same
+caveat appears wherever a metric does.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `metric_id` | `mart.column` the metric lives in | text | metrics.py | A test checks each one exists. |
+| `label` | Display name | text | metrics.py | |
+| `definition` | What is measured; the publisher's wording where it gives one | text | metrics.py | |
+| `unit` | Unit of the values | text | metrics.py | |
+| `unit_basis` | `stated` (the publisher names the unit) or `inferred` (we deduced it) | text | metrics.py | **MOH bed waits are `inferred`**: show the caveat with them. |
+| `caveat` | Text to show with the metric | text | metrics.py | |
+| `source_name` | Publisher and dataset, for display | text | metrics.py | |
+| `source_sha256` | SHA-256 of the metric definitions | text | computed | Changes whenever a definition changes. |
+| `as_of` | When the definitions were last checked | date | `metrics.METRICS_CHECKED` | |
+| `as_of_basis` | Always `reference_checked` | text | constant | |
 
 ## Source tables
 
@@ -261,6 +305,7 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `datagov_chas` | OK, but **stale upstream** | Dataset `d_548c33ea2d99e29ec63a7cc9edcccedc` (collection 2036): 1,193 clinics, 1,049 with CDMP. data.gov.sg reports it **last updated 2024-06-06**. Clinics that opened or closed since then are not reflected. |
 | `datagov_has` | **Retired** (not fetched) | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`), no replacement is named, and it isn't needed for the project. |
 | `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
+| `datagov_planning_areas` | OK | URA Master Plan 2025 Planning Area Boundary (No Sea), `d_2cc750190544007400b2cfd5d7f53209`, updated upstream 2026-02-27: 55 areas, names match SingStat 55 of 55. Not collection 2104 (that is the 2019 edition). |
 | `datagov_annual_ae` | OK | 1984–2023; only 2023 overlaps the daily MOH series. Reconciliation only. |
 | `singstat_residents` | OK | June 2026, 55 planning areas: 4,240,430 residents, 828,010 aged 65+ (19.5%). Updated yearly around September; the URL in `config.py` must be updated then. |
 

@@ -36,7 +36,7 @@ def test_run_lands_every_fetched_file_before_parsing(monkeypatch, paths):
     full_run(monkeypatch, paths)
     recs = RawStore(paths["raw"]).records()
     assert sorted({r.source for r in recs}) == [
-        "datagov_annual_ae", "datagov_chas", "datagov_metadata", "moh_bed_waits", "moh_ed_attendances", "moh_page", "nuhs_live",
+        "datagov_annual_ae", "datagov_chas", "datagov_metadata", "datagov_planning_areas", "moh_bed_waits", "moh_ed_attendances", "moh_page", "nuhs_live",
         "singstat_residents"]
     for r in recs:
         assert (paths["raw"] / r.path).exists()
@@ -56,10 +56,10 @@ def test_run_loads_every_table(monkeypatch, paths):
     full_run(monkeypatch, paths)
     counts = {t: int(query(paths, f"SELECT COUNT(*) AS n FROM {t}")["n"][0]) for t in [
         "moh_bed_waits", "moh_ed_attendances", "nuhs_live_waits", "chas_clinics",
-        "pop_65plus_by_area", "annual_ae_attendances", "source_metadata"]}
+        "pop_65plus_by_area", "annual_ae_attendances", "source_metadata", "planning_area_boundaries"]}
     assert counts == {"moh_bed_waits": 5, "moh_ed_attendances": 4, "nuhs_live_waits": 2,
                       "chas_clinics": 2, "pop_65plus_by_area": 2,
-                      "annual_ae_attendances": 2, "source_metadata": 2}
+                      "annual_ae_attendances": 2, "source_metadata": 3, "planning_area_boundaries": 2}
 
 
 def test_signed_download_url_is_not_stored(monkeypatch, paths):

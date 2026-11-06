@@ -48,6 +48,33 @@ def parse_datagov_metadata(payload: dict, source_by_id: dict[str, str]) -> pd.Da
     }])
 
 
+class BoundaryFormatError(ValueError):
+    """The boundary file isn't laid out as expected; stop rather than guess."""
+
+
+def parse_planning_areas(content: bytes, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+    """URA planning-area polygons: planning_area_code, planning_area_name, region_name, geometry_wkt.
+
+    Geometry is kept as WKT text (WGS84 lon/lat) so the warehouse needs no spatial extension.
+    """
+    from shapely.geometry import shape
+
+    data = json.loads(content.decode("utf-8-sig"))
+    if not isinstance(data, dict) or data.get("type") != "FeatureCollection":
+        raise BoundaryFormatError("expected a GeoJSON FeatureCollection")
+    rows = []
+    for feat in data.get("features", []):
+        props = {str(k).upper(): v for k, v in (feat.get("properties") or {}).items()}
+        missing = {"PLN_AREA_N", "PLN_AREA_C", "REGION_N"} - set(props)
+        if missing:
+            raise BoundaryFormatError(f"feature lacks {sorted(missing)}; has {sorted(props)}")
+        rows.append({"planning_area_code": props["PLN_AREA_C"], "planning_area_name": props["PLN_AREA_N"],
+                     "region_name": props["REGION_N"],
+                     "geometry_wkt": shape(feat["geometry"]).wkt if feat.get("geometry") else None})
+    count_read(stats, len(rows))
+    return pd.DataFrame(rows, columns=["planning_area_code", "planning_area_name", "region_name", "geometry_wkt"])
+
+
 def _html_table_to_dict(html: str) -> dict[str, str]:
     """data.gov.sg KML-style GeoJSON hides attributes inside a <th>KEY</th><td>VAL</td> table."""
     soup = BeautifulSoup(html, "lxml")

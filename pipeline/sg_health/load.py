@@ -17,7 +17,7 @@ import pandas as pd
 from .config import ANNUAL_AE_SERIES, DATAGOV_DATASETS, MOH_SOURCES
 from .logs import ParseStats
 from .parsers.datagov import (normalize_clinics, parse_annual_ae, parse_datagov_metadata,
-                              parse_datagov_payload)
+                              parse_datagov_payload, parse_planning_areas)
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
 from .parsers.singstat import parse_residents_zip
@@ -158,6 +158,17 @@ def load_datagov_metadata(wh: Warehouse, rec: RawRecord, content: bytes, stats: 
     return _load(wh, "source_metadata", df, rec, stats)
 
 
+def load_planning_areas(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
+    df = parse_planning_areas(content, stats=stats)       # raises BoundaryFormatError on surprises
+    clean = _gated(wh, "planning_area_boundaries", df, rec, stats)
+    if clean.empty:
+        return 0
+    # A boundary file is a full snapshot: the latest one replaces the previous areas entirely, so
+    # a renamed or merged area doesn't linger.
+    wh.con.execute("DELETE FROM planning_area_boundaries")
+    return _upsert(wh, "planning_area_boundaries", clean, ["planning_area_code"], stats)
+
+
 LOADERS: dict[str, LoaderFn] = {
     "moh_bed_waits": _moh_loader("bed_waits"),
     "moh_ed_attendances": _moh_loader("ed_attendances"),
@@ -165,6 +176,7 @@ LOADERS: dict[str, LoaderFn] = {
     "datagov_chas": _clinic_loader("chas", "chas_clinics"),
     "datagov_annual_ae": load_annual_ae,
     "datagov_metadata": load_datagov_metadata,
+    "datagov_planning_areas": load_planning_areas,
     "singstat_residents": load_singstat_residents,
 }
 # Landed for the record but not parsed into tables (e.g. the MOH pages that link to the files).

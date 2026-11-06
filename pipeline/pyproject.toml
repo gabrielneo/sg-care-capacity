@@ -14,6 +14,9 @@ dependencies = [
     "pandas>=2.1",
     "openpyxl>=3.1",
     "duckdb>=1.0",
+    # Point-in-polygon for clinic -> planning area. Only shapely (GEOS): geopandas would add
+    # pyproj/pyogrio for CRS handling we don't need (both sources are WGS84 lon/lat).
+    "shapely>=2.0",
 ]
 
 [project.optional-dependencies]
