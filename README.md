@@ -13,9 +13,9 @@ sources ──► PoliteHttp (retries, rate limit, robots.txt) ──► parsers
 
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r pipeline/requirements.txt
 python -m playwright install chromium                   # optional: only for JS-rendered pages
-pytest -q                                               # offline tests, no network needed
+pytest -q pipeline/tests                                # offline tests, no network needed
 ```
 
 Or, for a minimal install without the Playwright fallback:
@@ -27,10 +27,10 @@ pip install requests beautifulsoup4 lxml pandas openpyxl duckdb
 ## 2. Run
 
 ```bash
-python sg_health_pipeline.py run                          # all sources, then the report
-python sg_health_pipeline.py run --sources moh,opendata   # a subset
-python sg_health_pipeline.py report                       # rebuild the Excel report from the DB
-python sg_health_pipeline.py -v run --sources live        # verbose logging
+python pipeline/sg_health_pipeline.py run                          # all sources, then the report
+python pipeline/sg_health_pipeline.py run --sources moh,opendata   # a subset
+python pipeline/sg_health_pipeline.py report                       # rebuild the Excel report from the DB
+python pipeline/sg_health_pipeline.py -v run --sources live        # verbose logging
 ```
 
 Optional environment variables:
@@ -89,7 +89,7 @@ Setup:
 MOH's weekly pages only show the latest week, so history has to come from archived copies:
 
 ```bash
-python sg_health_pipeline.py backfill --start 2024-01-01 --max-snapshots 80
+python pipeline/sg_health_pipeline.py backfill --start 2024-01-01 --max-snapshots 80
 ```
 
 How it works:
@@ -116,7 +116,7 @@ Tips:
 
 ## 7. Assumptions to check on your first live run
 
-The parsers were written against the published structure of each source and tested on synthetic fixtures (`tests/`). They have not been run against the live sites from this environment. On your first run, use `-v` and check:
+The parsers were written against the published structure of each source and tested on synthetic fixtures (`pipeline/tests/`). They have not been run against the live sites from this environment. On your first run, use `-v` and check:
 
 - **MOH Excel layout.** The parser handles hospitals-as-columns, dates-as-columns and long layouts, plus time cells, `HH:MM` text and plain numbers. A plain number is read as minutes if the sheet says "min", or if the median is above 24; otherwise as hours. Look for the log line `numeric wait values treated as ...`.
 - **NUHS page.** If the static HTML has no tables, the scraper tries a regex text fallback, then Playwright. Site names come from the table header, or from the nearest heading if there isn't one.

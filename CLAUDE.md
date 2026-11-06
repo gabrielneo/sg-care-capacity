@@ -55,12 +55,13 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 > Placeholders. Fill these in as each piece is built.
 
 ```bash
-# Pipeline
-# setup:        TODO
-# run ETL:      TODO
+# Pipeline (run from the repo root)
+# setup:        python3.12 -m venv .venv && source .venv/bin/activate && pip install -r pipeline/requirements.txt
+# run ETL:      python pipeline/sg_health_pipeline.py run [--sources moh,live,opendata,singstat]
+# backfill:     python pipeline/sg_health_pipeline.py backfill --start 2024-01-01 --max-snapshots 80
 # run checks:   TODO
 # publish:      TODO
-# tests:        TODO
+# tests:        pytest -q pipeline/tests
 
 # API
 # setup:        TODO

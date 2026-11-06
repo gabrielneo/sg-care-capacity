@@ -22,3 +22,5 @@ data/build/*
 # A local DB or report next to the script is not committed.
 /singapore_healthcare.duckdb
 /SG_Healthcare_Scrape_Report.xlsx
+/pipeline/singapore_healthcare.duckdb
+/pipeline/SG_Healthcare_Scrape_Report.xlsx
