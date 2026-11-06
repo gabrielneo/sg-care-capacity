@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { edMeta } from "@/test/fixtures/meta";
 
-import { api, ApiError, REVALIDATE_SECONDS } from "./client";
+import { api, ApiError, REVALIDATE_SECONDS, settle } from "./client";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -57,5 +57,15 @@ describe("api client", () => {
     vi.stubEnv("API_BASE_URL", "");
     await expect(api.meta()).rejects.toMatchObject({ code: "not_configured" });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("settle", () => {
+  it("returns the value or the ApiError, so pages fetch first and render after", async () => {
+    expect(await settle(Promise.resolve(1))).toEqual({ ok: true, value: 1 });
+    const failed = await settle(Promise.reject(new ApiError(503, "unavailable", "down")));
+    expect(failed).toMatchObject({ ok: false, error: { code: "unavailable", status: 503 } });
+    const odd = await settle(Promise.reject(new Error("boom")));
+    expect(odd).toMatchObject({ ok: false, error: { code: "unexpected" } });
   });
 });

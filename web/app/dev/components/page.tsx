@@ -1,0 +1,167 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { type ReactNode, Suspense } from "react";
+
+import { CaveatChip } from "@/components/CaveatChip";
+import { ChartCard } from "@/components/ChartCard";
+import { FreshnessBadge } from "@/components/FreshnessBadge";
+import { KpiTile } from "@/components/KpiTile";
+import { PageHeader } from "@/components/PageHeader";
+import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "@/components/States";
+import { api, settle } from "@/lib/api/client";
+import { devPagesEnabled } from "@/lib/devPages";
+import { colors, mapScale } from "@/lib/palette";
+import { clinicMeta, edMeta } from "@/lib/samples";
+
+export const metadata: Metadata = { title: "Components", robots: { index: false, follow: false } };
+// Rendered per request: the SHOW_DEV_PAGES switch is read at run time, and the live section calls
+// the API when the page is viewed, not when the site is built.
+export const dynamic = "force-dynamic";
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="mb-10">
+      <h2 className="mb-3 border-b border-line pb-1 text-lg font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+const SAMPLE_NOW = new Date("2026-11-06T12:00:00+08:00");
+
+/** Calls the real API through the typed client, so this page also proves the wiring. */
+async function LiveSnapshot() {
+  const result = await settle(Promise.all([api.meta(), api.edSummary()]));
+  if (!result.ok) {
+    return (
+      <ErrorState
+        title="The API isn't reachable from the site"
+        error={{ code: result.error.code, message: result.error.message }}
+        action={
+          <p className="text-sm">
+            Start the API (<code>LOCAL_SNAPSHOT_PATH=data/build/publish uvicorn --factory sg_health_api.main:create_app</code>) and
+            set <code>API_BASE_URL</code> in <code>web/.env.local</code>.
+          </p>
+        }
+      />
+    );
+  }
+  const [snapshot, summary] = result.value;
+  const sgh = summary.data.find((h) => h.hospital_code === "SGH");
+  const wait = sgh?.mean_of_daily_median_wait_hours;
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <KpiTile label="Days of ED data in this snapshot" value={snapshot.data.row_counts.fct_ed_daily ?? null}
+               unit="hospital-days" meta={snapshot.meta} format={(v) => v.toLocaleString("en-SG")} />
+      <KpiTile
+        label={`SGH: average of daily median bed waits, week of ${sgh?.latest_complete_week?.week_start ?? "n/a"}`}
+        value={wait?.latest ?? null}
+        unit="hours"
+        meta={summary.meta}
+        change={{ value: wait?.change_pct ?? null, unit: "%", label: "vs the previous 4-week average" }}
+      />
+    </div>
+  );
+}
+
+export default function ComponentsPage() {
+  if (!devPagesEnabled()) notFound();
+  return (
+    <>
+      <PageHeader
+        title="Components"
+        intro="Every reusable component, with sample data shaped like the real API responses. Not linked from the site."
+      />
+
+      <Section title="Live: typed client against the API">
+        <Suspense fallback={<ChartCardSkeleton title="Live snapshot" />}>
+          <LiveSnapshot />
+        </Suspense>
+      </Section>
+
+      <Section title="KpiTile">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <KpiTile label="Average of daily median bed waits" value={7.82} unit="hours" meta={edMeta} now={SAMPLE_NOW}
+                   change={{ value: -5.7, unit: "%", label: "vs the previous 4-week average" }} />
+          <KpiTile label="Attendances (week)" value={4812} unit="patients" meta={edMeta} now={SAMPLE_NOW}
+                   format={(v) => v.toLocaleString("en-SG")} change={{ value: 3.1, unit: "%", label: "vs the previous 4-week average" }} />
+          <KpiTile label="Attendances (week)" value={null} unit="patients" meta={edMeta} now={SAMPLE_NOW}
+                   change={{ value: null, label: "vs the previous 4-week average" }} caveat="No complete week yet" />
+        </div>
+      </Section>
+
+      <Section title="ChartCard">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ChartCard title="Median wait for a ward bed" meta={edMeta} now={SAMPLE_NOW}
+                     description="Daily median, by hospital. The chart goes here.">
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-sm text-muted">
+              chart slot
+            </div>
+          </ChartCard>
+          <ChartCard title="CHAS clinics near seniors" meta={clinicMeta} now={SAMPLE_NOW}>
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-sm text-muted">
+              chart slot (old source: the badge says so)
+            </div>
+          </ChartCard>
+          <ChartCard title="Without a date" meta={{ ...edMeta, as_of: "" }}>
+            <p>This is never shown.</p>
+          </ChartCard>
+        </div>
+      </Section>
+
+      <Section title="FreshnessBadge">
+        <div className="flex flex-wrap gap-2">
+          <FreshnessBadge asOf="2026-10-31" cadence="weekly" now={SAMPLE_NOW} />
+          <FreshnessBadge asOf="2026-10-20" cadence="weekly" now={SAMPLE_NOW} />
+          <FreshnessBadge asOf="2024-06-06T14:36:42" cadence="irregular" now={SAMPLE_NOW} />
+          <FreshnessBadge asOf="2026-06-30" cadence="annual" now={SAMPLE_NOW} />
+          <FreshnessBadge asOf="" cadence="weekly" now={SAMPLE_NOW} />
+        </div>
+      </Section>
+
+      <Section title="CaveatChip">
+        <div className="flex flex-wrap gap-2">
+          <CaveatChip>Unit inferred, not stated by MOH</CaveatChip>
+          <CaveatChip tone="warning">63 days with a median wait over 24 hours</CaveatChip>
+        </div>
+      </Section>
+
+      <Section title="EmptyState, ErrorState, Skeleton">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <EmptyState title="No clinics in this area" message="Try a wider area, or clear the CDMP filter." />
+          <ErrorState error={{ code: "unknown_hospital", message: "Unknown hospital 'XYZ'; use one of AH, CGH, KTPH, …" }} />
+          <div className="space-y-2 rounded-lg border border-line bg-surface p-4">
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Palette">
+        <p className="mb-3 text-sm text-muted">One accent. Status colours only appear with a text label. Map: Viridis, light = low.</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(colors)
+            .filter(([k]) => !k.startsWith("map"))
+            .map(([name, hex]) => (
+              <div key={name} className="w-28 rounded-md border border-line bg-surface p-2 text-xs">
+                <div className="mb-1 h-8 rounded" style={{ background: hex }} />
+                {name}
+                <br />
+                <span className="font-mono text-muted">{hex}</span>
+              </div>
+            ))}
+        </div>
+        <div className="mt-4 flex items-stretch gap-1" aria-label="Map scale, low to high, then no data">
+          {mapScale.map((hex, i) => (
+            <div key={hex} className="h-8 flex-1 rounded" style={{ background: hex }} title={`Class ${i + 1}`} />
+          ))}
+          <div className="bg-nodata h-8 flex-1 rounded border border-line" title="No data" />
+        </div>
+        <div className="mt-1 flex justify-between text-xs text-muted">
+          <span>Low</span>
+          <span>High · then “no data” (hatched)</span>
+        </div>
+      </Section>
+    </>
+  );
+}

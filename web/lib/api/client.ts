@@ -90,3 +90,17 @@ export const api = {
   quality: () => call(() => client().GET("/api/v1/quality")),
   liveNuhsLatest: () => call(() => client().GET("/api/v1/live/nuhs/latest")),
 };
+
+export type Settled<T> = { ok: true; value: T } | { ok: false; error: ApiError };
+
+/**
+ * Await an API call and return the result or the ApiError, so a page can fetch first and render
+ * after (React can't catch render errors in try/catch; this keeps fetching and rendering apart).
+ */
+export async function settle<T>(promise: Promise<T>): Promise<Settled<T>> {
+  try {
+    return { ok: true, value: await promise };
+  } catch (err) {
+    return { ok: false, error: err instanceof ApiError ? err : new ApiError(0, "unexpected", String(err)) };
+  }
+}

@@ -24,9 +24,9 @@ describe("states", () => {
     expect(screen.getByText("Data-quality note:")).toHaveClass("sr-only");
   });
   it("EmptyState shows its message and action", () => {
-    render(<EmptyState title="No clinics here" message="Try a wider area." action={<a href="/">Reset</a>} />);
+    render(<EmptyState title="No clinics here" message="Try a wider area." action={<button type="button">Reset</button>} />);
     expect(screen.getByText("No clinics here")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Reset" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
   });
   it("ErrorState is announced and shows the API's code", () => {
     render(<ErrorState error={{ code: "unreachable", message: "The API could not be reached" }} />);
