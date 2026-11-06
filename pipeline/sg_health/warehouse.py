@@ -101,6 +101,21 @@ class Warehouse:
         self.con.execute("DELETE FROM raw_manifest")
         return self.upsert("raw_manifest", df, ["seq"])
 
+    def reset(self) -> None:
+        """Drop and recreate every table (parsed tables and raw_manifest), on the current schema.
+
+        Used by `reparse`. Dropping rather than deleting also picks up schema changes.
+        """
+        for table in (*PARSED_TABLES, "raw_manifest"):
+            self.con.execute(f"DROP TABLE IF EXISTS {table}")
+        for stmt in DDL:
+            self.con.execute(stmt)
+
+    def snapshot(self, table: str) -> pd.DataFrame:
+        """Every row of ``table`` in a stable order (all columns), for comparing two builds."""
+        cols = ", ".join(f'"{c}"' for c in self._column_types(table))
+        return self.query(f"SELECT * FROM {table} ORDER BY {cols}")
+
     def mark_inactive(self, table: str) -> None:
         """Before loading a full snapshot, flag every row inactive; the reload re-activates current ones."""
         self.con.execute(f"UPDATE {table} SET is_active = FALSE")

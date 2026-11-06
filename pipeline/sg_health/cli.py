@@ -1,4 +1,4 @@
-"""Command line: run | backfill | report."""
+"""Command line: run | backfill | reparse | report."""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +9,7 @@ from typing import Optional
 
 from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR, SINGSTAT_POP_TABLE_ID
 from .http import PoliteHttp
-from .load import Loader
+from .load import Loader, reparse
 from .raw import RawStore
 from .report import export_report
 from .sources.datagov import ingest_opendata
@@ -53,6 +53,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     bf.add_argument("--max-snapshots", type=int, default=60, help="per metric, newest first")
     bf.add_argument("--force", action="store_true")
 
+    rp = sub.add_parser("reparse", help="rebuild every parsed table from data/raw alone (no network)")
+    rp.add_argument("--no-report", action="store_true")
+
     sub.add_parser("report", help="rebuild the Excel report from the warehouse only")
 
     args = parser.parse_args(argv)
@@ -61,10 +64,17 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     wh = Warehouse(args.db)
     store = RawStore(args.raw_dir)
-    http = PoliteHttp()
-    loader = Loader.for_run(wh, store, force=getattr(args, "force", False))
     results: dict[str, int] = {}
+    failed_records = 0
     try:
+        if args.command == "reparse":
+            results, failed_records = reparse(wh, store)
+            if not args.no_report:
+                export_report(wh, args.report)
+            return 1 if failed_records else 0
+        if args.command in ("run", "backfill"):
+            http = PoliteHttp()       # only commands that fetch get an HTTP client
+            loader = Loader.for_run(wh, store, force=getattr(args, "force", False))
         if args.command == "run":
             wanted = {s.strip() for s in args.sources.split(",") if s.strip()}
             unknown = wanted - set(ALL_SOURCES)
@@ -87,11 +97,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         else:
             export_report(wh, args.report)
     finally:
-        wh.sync_manifest(store.iter_records())
+        if args.command != "reparse":
+            wh.sync_manifest(store.iter_records())
         wh.close()
+        LOG.info("Summary (rows upserted, -1 = failed): %s", results)
 
-    LOG.info("Summary (rows upserted, -1 = failed): %s", results)
-    # Exit with 1 only if every step failed, so partial data still gets committed in CI.
+    # Exit with 1 only if every step failed, so partial data still gets published in CI.
     return 1 if results and all(v < 0 for v in results.values()) else 0
 
 

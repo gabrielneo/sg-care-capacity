@@ -175,3 +175,28 @@ class Loader:
             return 0
         self.seen.add(key)
         return fn(self.wh, rec, self.store.read(rec))
+
+
+def reparse(wh: Warehouse, store: RawStore) -> tuple[dict[str, int], int]:
+    """Rebuild every parsed table from data/raw alone. No network access.
+
+    Drops the parsed tables, reloads raw_manifest from manifest.jsonl, then replays every
+    record in fetch order through the same loaders `run` uses. Returns (rows upserted per
+    source, number of raw records that failed to load).
+    """
+    wh.reset()
+    records = store.records()
+    wh.sync_manifest(records)
+    loader = Loader(wh, store)            # nothing seen yet: the replay starts from empty
+    totals: dict[str, int] = {}
+    failed = 0
+    for rec in records:
+        try:
+            n = loader.process(rec)
+        except Exception:                 # one bad file must not stop the replay
+            LOG.exception("reparse: could not load %s (%s)", rec.path, rec.source)
+            failed += 1
+            continue
+        totals[rec.source] = totals.get(rec.source, 0) + n
+    LOG.info("reparse: %d raw records replayed, %d failed", len(records), failed)
+    return totals, failed
