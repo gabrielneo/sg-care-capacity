@@ -13,7 +13,7 @@ sources ──► PoliteHttp (retries, rate limit, robots.txt) ──► parsers
 
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r pipeline/requirements.txt
+pip install -e "pipeline[dev,browser]"
 python -m playwright install chromium                   # optional: only for JS-rendered pages
 pytest -q pipeline/tests                                # offline tests, no network needed
 ```
@@ -21,16 +21,16 @@ pytest -q pipeline/tests                                # offline tests, no netw
 Or, for a minimal install without the Playwright fallback:
 
 ```bash
-pip install requests beautifulsoup4 lxml pandas openpyxl duckdb
+pip install -e "pipeline[dev]"
 ```
 
 ## 2. Run
 
 ```bash
-python pipeline/sg_health_pipeline.py run                          # all sources, then the report
-python pipeline/sg_health_pipeline.py run --sources moh,opendata   # a subset
-python pipeline/sg_health_pipeline.py report                       # rebuild the Excel report from the DB
-python pipeline/sg_health_pipeline.py -v run --sources live        # verbose logging
+sg-health run                          # all sources, then the report
+sg-health run --sources moh,opendata   # a subset
+sg-health report                       # rebuild the Excel report from the DB
+sg-health -v run --sources live        # verbose logging
 ```
 
 Optional environment variables:
@@ -89,7 +89,7 @@ Setup:
 MOH's weekly pages only show the latest week, so history has to come from archived copies:
 
 ```bash
-python pipeline/sg_health_pipeline.py backfill --start 2024-01-01 --max-snapshots 80
+sg-health backfill --start 2024-01-01 --max-snapshots 80
 ```
 
 How it works:

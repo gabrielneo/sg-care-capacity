@@ -39,12 +39,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: pipeline/requirements.txt
+          cache-dependency-path: pipeline/pyproject.toml
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r pipeline/requirements.txt
+          pip install -e "pipeline[dev,browser]"
 
       - name: Install Chromium for the Playwright fallback
         run: python -m playwright install --with-deps chromium
@@ -55,7 +55,7 @@ jobs:
       - name: Run pipeline
         run: |
           mkdir -p data reports
-          python pipeline/sg_health_pipeline.py --db "$DB_PATH" --report "$REPORT_PATH" \
+          sg-health --db "$DB_PATH" --report "$REPORT_PATH" \
             run --sources "${{ github.event.inputs.sources || 'moh,live,opendata,singstat' }}"
 
       - name: Commit updated snapshot

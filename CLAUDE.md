@@ -56,9 +56,9 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 
 ```bash
 # Pipeline (run from the repo root)
-# setup:        python3.12 -m venv .venv && source .venv/bin/activate && pip install -r pipeline/requirements.txt
-# run ETL:      python pipeline/sg_health_pipeline.py run [--sources moh,live,opendata,singstat]
-# backfill:     python pipeline/sg_health_pipeline.py backfill --start 2024-01-01 --max-snapshots 80
+# setup:        python3.12 -m venv .venv && source .venv/bin/activate && pip install -e "pipeline[dev]"
+# run ETL:      sg-health run [--sources moh,live,opendata,singstat]
+# backfill:     sg-health backfill --start 2024-01-01 --max-snapshots 80
 # run checks:   TODO
 # publish:      TODO
 # tests:        pytest -q pipeline/tests

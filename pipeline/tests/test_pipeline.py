@@ -4,16 +4,13 @@ Run:  pytest -q
 """
 import io
 import json
-import sys
 from datetime import date, datetime, time
-from pathlib import Path
 
 import pandas as pd
 import pytest
 from openpyxl import Workbook, load_workbook
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import sg_health_pipeline as p  # noqa: E402
+import sg_health as p
 
 
 def _xlsx(rows, sheet="Sheet1") -> bytes:

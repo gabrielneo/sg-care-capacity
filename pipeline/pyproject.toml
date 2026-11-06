@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sg-health-pipeline"
+version = "0.2.0"
+description = "ETL for Singapore ED bed waits, attendances, live waits and clinic access for residents 65+"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "pandas>=2.1",
+    "openpyxl>=3.1",
+    "duckdb>=1.0",
+]
+
+[project.optional-dependencies]
+browser = ["playwright>=1.44"]   # optional fallback for JavaScript-rendered pages
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sg-health = "sg_health.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sg_health*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
