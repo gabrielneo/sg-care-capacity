@@ -8,9 +8,19 @@ from __future__ import annotations
 import os
 import re
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 SGT = timezone(timedelta(hours=8))  # Singapore has no DST, so a fixed offset is safe
+
+# Paths. Defaults are resolved from the repo root (this file is pipeline/sg_health/config.py),
+# so commands behave the same from any working directory. SG_HEALTH_DATA_DIR overrides.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = Path(os.getenv("SG_HEALTH_DATA_DIR", REPO_ROOT / "data"))
+RAW_DIR = DATA_DIR / "raw"                     # immutable landing zone (gitignored)
+BUILD_DIR = DATA_DIR / "build"                 # working outputs (gitignored)
+DEFAULT_DB = BUILD_DIR / "warehouse.duckdb"    # the pipeline's working DB, not what the API reads
+DEFAULT_REPORT = BUILD_DIR / "SG_Healthcare_Scrape_Report.xlsx"
 
 # Identify the crawler honestly. Replace the URL with your public repo so site
 # owners can see what the bot is. Do NOT put a personal email address here.

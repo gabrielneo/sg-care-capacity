@@ -7,7 +7,7 @@ import sys
 from datetime import date
 from typing import Optional
 
-from .config import SINGSTAT_POP_TABLE_ID
+from .config import DEFAULT_DB, DEFAULT_REPORT, SINGSTAT_POP_TABLE_ID
 from .http import PoliteHttp
 from .report import export_report
 from .sources.datagov import ingest_opendata
@@ -32,8 +32,8 @@ def _run_step(name: str, fn, *args) -> int:
 
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(prog="sg-health", description="Singapore healthcare capacity ETL pipeline")
-    parser.add_argument("--db", default="singapore_healthcare.duckdb")
-    parser.add_argument("--report", default="SG_Healthcare_Scrape_Report.xlsx")
+    parser.add_argument("--db", default=str(DEFAULT_DB), help="working warehouse (default: %(default)s)")
+    parser.add_argument("--report", default=str(DEFAULT_REPORT), help="Excel report (default: %(default)s)")
     parser.add_argument("-v", "--verbose", action="store_true")
     sub = parser.add_subparsers(dest="command", required=True)
 
