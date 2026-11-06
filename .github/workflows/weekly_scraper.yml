@@ -79,13 +79,23 @@ jobs:
           echo "manifest_lines=${before:-0}" >> "$GITHUB_OUTPUT"
           echo "Restored ${before:-0} manifest lines."
 
+      # The pipeline steps may fail (a source down, a transform stop) without ending the job:
+      # everything they downloaded must still reach the raw archive below. The job is failed at
+      # the very end instead, so a failure is never silent.
       - name: Rebuild the warehouse from data/raw
+        id: reparse
+        continue-on-error: true
         run: sg-health reparse --no-report
 
       - name: Run pipeline
+        id: run
+        continue-on-error: true
         run: sg-health run --sources "${{ github.event.inputs.sources || 'moh,live,opendata,singstat' }}"
 
+      # Runs whenever the restore succeeded, even if the pipeline failed.
       - name: Check data/raw only grew
+        id: grew
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
         run: |
           set -euo pipefail
           after=$(grep -c . data/raw/manifest.jsonl 2>/dev/null || true)
@@ -97,6 +107,7 @@ jobs:
           fi
 
       - name: Upload data/raw to the release
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' && steps.grew.outcome == 'success' }}
         run: |
           set -euo pipefail
           tar -czf "$RUNNER_TEMP/$RAW_ASSET" -C data raw
@@ -111,7 +122,16 @@ jobs:
       # lose raw history. Exits 1 if any file- or dataset-level ERROR fails (docs/data_quality.md);
       # a future publish step goes after this one and therefore never runs on bad data.
       - name: Validate data quality
+        id: validate
+        if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
         run: sg-health validate
+
+      # Now report the pipeline steps' result: the raw archive is already safe.
+      - name: Fail the job if the pipeline failed
+        if: ${{ !cancelled() && (steps.reparse.outcome == 'failure' || steps.run.outcome == 'failure') }}
+        run: |
+          echo "::error::reparse: ${{ steps.reparse.outcome }}, run: ${{ steps.run.outcome }}. Raw data was archived; see the logs above."
+          exit 1
 
       - name: Upload report as a build artifact
         if: always()
