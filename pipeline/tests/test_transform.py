@@ -224,3 +224,32 @@ def test_live_snapshot_without_a_page_timestamp_uses_the_fetch_time(monkeypatch,
     finally:
         wh.close()
     assert set(rows["as_of_basis"]) == {"fetched"} and (rows["as_of"] == rows["fetched_at"]).all()
+
+
+# ------------------------------------------------------------ documentation #
+
+import re  # noqa: E402
+
+from sg_health import config  # noqa: E402
+
+MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot"]
+
+
+def documented_columns(mart: str) -> set[str]:
+    doc = (config.REPO_ROOT / "docs" / "data_dictionary.md").read_text()
+    section = re.search(rf"^### `marts\.{mart}`\n(.*?)(?=^##)", doc, re.S | re.M)
+    assert section, f"marts.{mart} has no section in docs/data_dictionary.md"
+    cols = set()
+    for line in section.group(1).splitlines():
+        if line.startswith("| `"):
+            cols |= set(re.findall(r"`([a-z0-9_]+)`", line.split("|")[1]))
+    return cols
+
+
+@pytest.mark.parametrize("mart", MARTS)
+def test_every_mart_column_is_in_the_data_dictionary(built, mart):
+    actual = set(q(built, f"SELECT * FROM marts.{mart} LIMIT 0").columns)
+    documented = documented_columns(mart)
+    assert actual - documented == set(), f"undocumented columns in marts.{mart}"
+    assert documented - actual == set(), f"documented but not in marts.{mart}"
+    assert {"as_of", "as_of_basis"} <= actual and any("sha256" in c for c in actual)

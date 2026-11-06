@@ -1,11 +1,139 @@
 # Data dictionary
 
-Every metric shown to users is defined here, with its unit, source and known caveats.
-Entries for the CHAS, NUHS and SingStat metrics are still to be written.
+Every metric shown to users is defined here, with its unit, source and known caveats. Start with
+the marts: they are what the API and site read. Entries for the SingStat population tables are still
+to be written (no SingStat table ID is configured yet).
 
 All timestamps are Singapore time (SGT, UTC+8, no daylight saving), stored without a time zone.
 
-## MOH emergency department metrics
+## Marts (what the API and site read)
+
+Built by `sg-health transform` from the clean tables (`pipeline/sql/marts/`), via typed staging
+views (`pipeline/sql/staging/`). Quarantined rows never reach a mart. Every model's row counts are
+reconciled into `transform_log`, and a row lost without a logged reason stops the build.
+
+**`as_of` and `as_of_basis`, on every mart.** `as_of` is when the figure was current, by the best
+evidence available. `as_of_basis` says which evidence:
+
+| `as_of_basis` | Meaning | Used by |
+|---|---|---|
+| `source_updated` | The publisher's own "last updated" time | `dim_clinic` (data.gov.sg `lastUpdatedAt`), `fct_live_ed_snapshot` (NUHS "Last updated at") |
+| `fetched` | When we downloaded the file; the publisher gives no per-figure date | `fct_ed_daily`, `fct_ed_weekly` (MOH); fallback for the two above |
+| `reference_checked` | When the reference list in code was last verified | `dim_hospital` |
+
+Show `as_of` next to every number. For CHAS it is **2024-06-06** even though the file was
+downloaded in November 2026: the clinic list itself is that old.
+
+### `marts.dim_hospital`
+
+**Grain:** one row per MOH-reported site (9). **Source:** the reference in `sg_health/config.py`
+(`HOSPITAL_REFERENCE`, `HOSPITAL_CLUSTER`, `HOSPITAL_COVERAGE_NOTE`), seeded into `main.ref_hospital`
+on every build. Clusters were checked on 2026-11-06 against NHG Health's corporate profile, MOH's
+2017 cluster notice and the Alexandra Hospital and NHG Health records.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `hospital_code` | Short code MOH uses in its workbook headers | text | config | `NUH` is MOH's `NUH(A)`. |
+| `hospital_name` | Full site name | text | config | AH is named "Alexandra Hospital (UCC)" to make its type visible. |
+| `cluster` | Public healthcare cluster: `SingHealth`, `NHG Health` or `NUHS` | text | config | SingHealth: SGH, CGH, SKH. NHG Health: TTSH, KTPH, WH ("NHG" until 1 Jul 2025). NUHS: NUH, NTFGH, AH (since 1 Jun 2018). Unchanged over MOH's series (2023 onward). |
+| `facility_type` | `ED` (emergency department) or `UCC` (urgent care centre) | text | config | **AH is a UCC.** Don't rank it against EDs without saying so. |
+| `reported_from` | First day MOH reports the site; NULL = from the start of the series (2023-01-01) | date | config | WH from 2024-06-23. Completeness checks don't expect a site before this date. |
+| `coverage_note` | What MOH's figures for this site cover, where it isn't obvious | text | config | Set for AH (UCC), NUH (adults only), WH (not yet on MOH's page text). |
+| `exclusions_note` | What MOH leaves out of these statistics altogether | text | config | KK Women's and Children's Hospital and NUH Children's Emergency. |
+| `source_url` | MOH page the reference was checked against | text | config | |
+| `source_sha256` | SHA-256 of the reference rows | text | computed from config | Changes whenever the reference changes, so a build can be traced to its reference. |
+| `as_of` | When the reference was last verified | date | `config.REFERENCE_CHECKED` | |
+| `as_of_basis` | Always `reference_checked` | text | constant | |
+
+### `marts.fct_ed_daily`
+
+**Grain:** one row per hospital per day. **Source:** MOH *Waiting Time for Admission to Ward* and
+*Attendances at Emergency Medicine Departments* (weekly .xlsx) → `moh_bed_waits` /
+`moh_ed_attendances` → `staging.stg_moh_*` → FULL OUTER JOIN on hospital and date.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `hospital_code` | Site (see `dim_hospital`) | text | staging | Every value is in `dim_hospital` (reconciled). |
+| `hospital_name` | Full site name | text | staging | |
+| `report_date` | The day the figures describe | date (SGT) | staging | |
+| `iso_year`, `iso_week` | ISO 8601 year and week (Monday to Sunday) of `report_date` | integer | DuckDB `isoyear()`, `week()` | 2023-01-01 is ISO 2022-W52. ISO weeks don't align with MOH's Sunday-to-Saturday files. |
+| `median_wait_hours` | **MOH's definition:** daily median (50th percentile) waiting time for admission to ward, from *"Decision by doctor to admit patient"* to *"Time patient exits EMD"* (to go to the inpatient ward) | hours | staging, unchanged | **Unit inferred, not stated** by MOH (see the MOH metric entry below). Covers only patients admitted that day. NULL if MOH gave no value (e.g. WH before 2024-06-23): missing, never 0. |
+| `attendances` | Patients who presented at the EMD that day, *"regardless of urgency of medical conditions"* (MOH) | patients | staging, renamed from `total_attendances` | Includes non-urgent cases: demand, not acuity. NULL if MOH gave no value. |
+| `is_complete_week` | TRUE if this hospital has all 7 days of **both** metrics in this ISO week | boolean | window count over hospital × ISO week | The newest ISO week is usually FALSE (6 of 7 days) until MOH's next file, because MOH files end on Saturday. |
+| `dq_flags` | Comma-separated WARN checks this row tripped, e.g. `range.bed_wait_over_24h` | text | `dq_findings` (WARN, row) joined on hospital and date | NULL = no warnings. The row is published; show the flag with it. See `docs/data_quality.md`. |
+| `wait_source_url`, `wait_source_sha256` | The raw MOH bed-waits file this day's `median_wait_hours` came from | text | staging lineage | NULL when `median_wait_hours` is NULL. |
+| `attendance_source_url`, `attendance_source_sha256` | The raw MOH attendances file this day's `attendances` came from | text | staging lineage | Separate from the wait lineage: the two metrics come from different files. |
+| `as_of` | When the later of the two source files was downloaded | timestamp (SGT) | `greatest(wait_fetched_at, attendance_fetched_at)` | MOH gives no per-figure date. MOH restates history weekly; an unchanged file isn't re-parsed, so `as_of` is the first fetch of the file that last changed the row. |
+| `as_of_basis` | Always `fetched` | text | constant | |
+
+### `marts.fct_ed_weekly`
+
+**Grain:** one row per hospital per ISO week that has at least one reported day. **Source:**
+`marts.fct_ed_daily`, grouped by hospital, `iso_year`, `iso_week`.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `hospital_code`, `hospital_name` | Site | text | daily | |
+| `iso_year`, `iso_week` | ISO 8601 week | integer | daily | |
+| `week_start`, `week_end` | Monday and Sunday of the ISO week | date | `date_trunc('week', …)`, +6 days | |
+| `mean_of_daily_median_wait_hours` | **The mean of the daily median waits reported that week.** NOT a weekly median | hours | `avg(median_wait_hours)` over the days reported | MOH publishes only daily medians, and the median of a week's patients can't be derived from them. Say "average of daily medians" wherever it's shown. Uses only the days reported (`days_reported_wait`); missing days are not filled in. |
+| `total_attendances` | Sum of daily attendances reported that week | patients | `sum(attendances)` | **Only complete when `days_reported_attendances` = 7.** A partial week is an undercount, not a weekly total: show it with its day count, or not at all. NULL if no day has attendances. |
+| `days_reported_wait` | Days in the week with a `median_wait_hours` value | days (0–7) | `count(median_wait_hours)` | |
+| `days_reported_attendances` | Days in the week with an `attendances` value | days (0–7) | `count(attendances)` | Counted separately: a week can have 7 of one metric and 6 of the other. |
+| `is_complete_week` | TRUE if both day counts are 7 | boolean | | |
+| `source_sha256` | Every raw file contributing to the week, comma-separated, sorted | text | distinct wait and attendance hashes | Usually one or two files. |
+| `as_of` | Latest `as_of` of the week's days | timestamp (SGT) | `max(as_of)` | |
+| `as_of_basis` | Always `fetched` | text | constant | |
+
+### `marts.dim_clinic`
+
+**Grain:** one row per CHAS clinic ever seen (inactive = not in the latest snapshot).
+**Source:** data.gov.sg *CHAS Clinics* (GeoJSON, `d_548c33ea2d99e29ec63a7cc9edcccedc`) →
+`chas_clinics` → `staging.stg_chas_clinics`, with that dataset's metadata for `as_of`.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `clinic_key` | Clinic identifier: the HCI code, or name and postcode if there is none | text | staging | |
+| `hci_code` | MOH healthcare institution code | text | staging | |
+| `clinic_name`, `address` | As published | text | staging | Address is built from block, street, unit and building fields when there is no single address field. |
+| `postal_code` | 6-digit postcode | text | staging | Kept as text: leading zeros matter. Non-6-digit codes are published with a WARN. |
+| `latitude`, `longitude` | Location | degrees (WGS84) | staging, from the GeoJSON point | Rows outside Singapore are quarantined, not corrected (`clinic.coordinates_in_singapore`). |
+| `programmes` | Programme codes as published, e.g. `CDMP,CHAS` | text | staging | Real values seen: CHAS, CDMP, ISP. |
+| `has_cdmp` | TRUE if the clinic participates in the Chronic Disease Management Programme | boolean | `'CDMP' in programmes` | NULL if `programmes` is missing. |
+| `is_active` | TRUE if the clinic is in the latest snapshot | boolean | staging | A clinic quarantined in a later snapshot keeps its last good row, still active. |
+| `source_url`, `source_sha256` | The raw CHAS file the row came from | text | staging lineage | The signed query string is removed from the URL. |
+| `fetched_at` | When that file was downloaded | timestamp (SGT) | staging | |
+| `as_of` | When data.gov.sg last updated the CHAS dataset | timestamp (SGT) | metadata `lastUpdatedAt`, matched by the dataset id in `source_url` | **2024-06-06 on the real data**, so clinics opened or closed since then aren't reflected. Falls back to `fetched_at` if metadata is unavailable. |
+| `as_of_basis` | `source_updated`, or `fetched` for the fallback | text | | |
+
+**Not included: `on_has`.** The Health Appointment System clinic list was unpublished on
+data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing to match against.
+
+### `marts.fct_live_ed_snapshot`
+
+**Grain:** one row per NUHS site, department and snapshot. **Source:** the NUHS ED wait-time page
+→ `nuhs_live_waits` → `staging.stg_nuhs_live`.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `hospital_code` | `NUH`, `NTFGH` or `AH` | text | matched on `site_name` | NULL if NUHS lists a site we don't recognise (the row is kept). |
+| `site_name` | Site as named on the page | text | staging | |
+| `department` | Page section, e.g. `Adult Emergency`, `Children's Emergency` | text | staging | NUH appears in both. MOH's figures cover NUH **adults only**. |
+| `measure_type` | Always `estimate` | text | constant | Every figure here is NUHS's live estimate, not a measured statistic. |
+| `patients_waiting` | Patients waiting for consultation at that moment | patients | staging | |
+| `est_wait_to_see_doctor_hours` | NUHS's estimated wait to see a doctor | hours | staging, renamed from `est_consult_wait_hours` | Whole hours in every reading so far ("1 hour(s)"), so it is coarse. |
+| `est_bed_wait_hours` | NUHS's estimated wait for a ward bed | hours | staging | **Not the same measure as MOH's `median_wait_hours`** (a daily median of admitted patients). Compare only side by side, with both labels: see `reconcile.nuhs_vs_moh_nuh`. |
+| `snapshot_at` | Time key of the reading: NUHS's "Last updated at" if stated, else our fetch time to the minute | timestamp (SGT) | staging | |
+| `source_updated_at` | NUHS's "Last updated at" | timestamp (SGT) | staging | NULL if the page didn't state it. |
+| `source_url`, `source_sha256`, `fetched_at` | The raw page snapshot and when it was fetched | text / timestamp | staging lineage | |
+| `as_of` | `source_updated_at`, else `fetched_at` | timestamp (SGT) | `COALESCE` | |
+| `as_of_basis` | `source_updated` or `fetched` | text | | |
+
+## Source tables
+
+The clean tables the marts are built from.
+
+### MOH emergency department metrics
 
 **Publisher:** Ministry of Health, *Healthcare Institution Statistics*. Each workbook's footnote
 gives the underlying source as "Weekly Hospital Submissions". Files are published weekly (week

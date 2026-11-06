@@ -66,6 +66,7 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 # paths:        data/raw/ (immutable raw zone + manifest.jsonl), data/build/warehouse.duckdb (working DB)
 #               override with --raw-dir / --db / --report or SG_HEALTH_DATA_DIR
 # run checks:   sg-health validate     # all data-quality checks; exit 1 = publish blocked (docs/data_quality.md)
+# transform:    sg-health transform    # SQL in pipeline/sql/{staging,marts}; marts.* = what the API reads
 # publish:      TODO
 # tests:        pytest -q pipeline/tests
 

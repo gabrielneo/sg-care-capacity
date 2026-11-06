@@ -42,6 +42,7 @@ sg-health run --sources moh,opendata   # a subset (moh, live, opendata, singstat
 sg-health backfill --start 2024-01-01 --max-snapshots 80   # MOH history from the Wayback Machine
 sg-health reparse                      # rebuild every table from data/raw alone (no network)
 sg-health validate                     # every data-quality check; exit 1 if publishing is blocked
+sg-health transform                    # build staging views and mart tables (also runs after run/reparse)
 sg-health report                       # rebuild the Excel report from the warehouse
 sg-health -v run --sources live        # debug-level logging
 ```
@@ -112,7 +113,25 @@ WHERE report_date >= current_date - INTERVAL 7 DAY
 GROUP BY 1 ORDER BY 2 DESC;
 ```
 
-## 5. Data quality
+## 5. Marts
+
+`sg-health transform` runs plain SQL files in DuckDB: `pipeline/sql/staging/` (views over the clean
+tables, typed and renamed) then `pipeline/sql/marts/` (tables). These are what the API and site
+read:
+
+| Mart | Grain | Contents |
+|---|---|---|
+| `marts.dim_hospital` | site (9) | Cluster (SingHealth, NHG Health, NUHS), ED or UCC, first reporting date, coverage notes |
+| `marts.fct_ed_daily` | hospital × day | MOH median bed wait and attendances, ISO week, `is_complete_week`, WARN `dq_flags`, per-metric lineage |
+| `marts.fct_ed_weekly` | hospital × ISO week | **Mean of daily medians** (not a weekly median), total attendances, days reported per metric |
+| `marts.dim_clinic` | CHAS clinic | `has_cdmp`, `is_active`, location; `as_of` is data.gov.sg's own update date |
+| `marts.fct_live_ed_snapshot` | NUHS site × department × snapshot | Live readings, labelled `estimate` |
+
+Every mart has `as_of` and `as_of_basis` (`source_updated`, `fetched` or `reference_checked`) and
+source hashes. Row counts are reconciled at every step into `transform_log`; a row lost without a
+logged reason stops the build. Column definitions: [docs/data_dictionary.md](docs/data_dictionary.md).
+
+## 6. Data quality
 
 Parsed rows pass through a **load gate** before reaching a clean table. Rows that fail an ERROR
 check go to `quarantine_<table>` and never into the clean table; WARN rows are published and
@@ -133,7 +152,7 @@ Only file- or dataset-level ERRORs block publishing (e.g. a minutes/hours unit e
 than 28 days old). A quarantined row doesn't: it is already excluded. Every check, its threshold
 and why is in [docs/data_quality.md](docs/data_quality.md).
 
-## 6. Logging
+## 7. Logging
 
 Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `reparse`, each source logs exactly one summary line:
 
@@ -150,7 +169,7 @@ Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `repars
 sg-health run 2> run.log && grep '"source_summary"' run.log
 ```
 
-## 7. Automation
+## 8. Automation
 
 `.github/workflows/weekly_scraper.yml` runs every Sunday at 00:00 UTC (08:00 SGT) and can also be triggered manually. Nothing is committed back to the repo. `data/raw/` is kept between runs as `raw.tar.gz` on a rolling GitHub Release tagged `data-latest`:
 
@@ -181,7 +200,7 @@ Setup:
 
 **Live snapshots:** once a week gives you only one NUHS reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. It must share the `weekly-scraper` concurrency group, because both read and re-upload the same archive.
 
-## 8. Historical backfill (Wayback Machine)
+## 9. Historical backfill (Wayback Machine)
 
 MOH's weekly pages only show the latest week, so history has to come from archived copies:
 
@@ -203,7 +222,7 @@ Tips:
 - **Other historical sources.** MOH parliamentary replies and annual statistics, plus the data.gov.sg annual series (A&E attendances back to 2007), are useful for long-run trend lines.
 - **Fill gaps going forward.** Gaps in coverage are normal. Keep the weekly job running and every week becomes permanent history.
 
-## 9. Ethics and robustness
+## 10. Ethics and robustness
 
 - Requests are 1.5–3 s apart, with a 15 s timeout, retries with exponential backoff on 429/5xx, and `Retry-After` honoured.
 - robots.txt is checked before scraping HTML pages. A disallowed page is skipped and logged, not bypassed. Official APIs (data.gov.sg, SingStat, Wayback CDX) skip the check.
@@ -212,7 +231,7 @@ Tips:
 - Cells that can't be parsed become `None` and are dropped before upsert, so they never overwrite good data. Every drop is counted, with its reason, in the source's summary log line.
 - Every downloaded file is kept unchanged in `data/raw/`, so a parser bug can be fixed and the history replayed with `sg-health reparse`.
 
-## 10. Assumptions to check on your first live run
+## 11. Assumptions to check on your first live run
 
 The parsers were written against the published structure of each source and tested on synthetic fixtures (`pipeline/tests/`). They have not been run against the live sites from this environment. On your first run, use `-v` and check (after a fix, `sg-health reparse` re-parses everything already downloaded):
 
