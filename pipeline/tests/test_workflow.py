@@ -90,3 +90,18 @@ def test_ci_runs_on_pull_requests_and_pushes_to_main_with_lint_types_and_tests()
     assert "duckdb" in text and "parquet" in text                       # binary data guard
     for job in ("pipeline:", "api:", "web:"):
         assert f"\n  {job}" in text
+
+
+# ----------------------------------------------------------------- Makefile #
+
+def test_make_test_runs_every_suite_separately():
+    import shutil
+    import subprocess
+
+    import pytest
+    if shutil.which("make") is None:
+        pytest.skip("make is not installed")
+    out = subprocess.run(["make", "-n", "test", "PYTHON=python3"], cwd=config.REPO_ROOT,
+                         capture_output=True, text=True, check=True).stdout.splitlines()
+    assert out == ["python3 -m pytest -q pipeline/tests", "python3 -m pytest -q api",
+                   "python3 -m pytest -q pipeline/acceptance"]
