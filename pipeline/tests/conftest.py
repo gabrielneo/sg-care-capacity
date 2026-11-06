@@ -111,6 +111,9 @@ SINGSTAT_JSON = json.dumps({"Data": {"title": "Residents by Planning Area and Ag
         {"key": "90 & Over", "value": "1,200"}]}]},
 ]}}).encode()
 
+ANNUAL_AE_CSV = (b"year,level_1,value\n2023,Accident & Emergency Departments,1050400.0\n"
+                 b"2023,Polyclinics,5000000.0\n2022,Accident & Emergency Departments,1023000.0\n")
+ANNUAL_AE_DOWNLOAD = "https://s3.example.com/annual.csv"
 SINGSTAT_TABLE = "M810001"
 CHAS_DOWNLOAD = "https://s3.example.com/chas.geojson?X-Amz-Signature=secret&X-Amz-Expires=60"
 
@@ -128,6 +131,9 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
         poll.format(config.DATAGOV_DATASETS["chas"]):
             (json.dumps({"data": {"url": CHAS_DOWNLOAD}}).encode(), JSON),
         CHAS_DOWNLOAD: (chas, "application/geo+json"),
+        poll.format(config.DATAGOV_DATASETS["annual_ae"]):
+            (json.dumps({"data": {"url": ANNUAL_AE_DOWNLOAD}}).encode(), JSON),
+        ANNUAL_AE_DOWNLOAD: (ANNUAL_AE_CSV, "text/csv"),
         config.SINGSTAT_URL.format(table_id=SINGSTAT_TABLE): (SINGSTAT_JSON, JSON),
     }
 

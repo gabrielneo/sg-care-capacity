@@ -139,3 +139,49 @@ def test_every_run_is_logged_in_dq_results(paths, monkeypatch):
     per_run = log.groupby("run_id").size()
     assert (per_run == per_run.iloc[0]).all() and per_run.iloc[0] >= 40     # every check, every run
     assert set(log["status"]) <= {"pass", "fail", "skipped"}
+
+
+# ------------------------------------------------------------- reconciliation #
+
+def put_annual(wh, year, value):
+    wh.upsert("annual_ae_attendances", pd.DataFrame([{"year": year, "attendances": value,
+              "series": "Accident & Emergency Departments", **LINEAGE}]), ["year"])
+
+
+@pytest.mark.parametrize("annual, status", [(900_000, "pass"), (1_000_000, "fail")])   # -18.9% / -27.0%
+def test_annual_reconciliation(wh, annual, status):
+    put_moh(wh, date(2023, 1, 1), 365, codes=("CGH", "SGH"), attend=lambda c, i: 1000)   # 730,000 a year
+    put_annual(wh, 2023, annual)
+    r = result(dq.run_validation(wh, today=date(2024, 1, 2)), "reconcile.annual_ae", "moh_ed_attendances")
+    assert r.status == status and "2023: MOH daily 730,000 (365 days)" in r.details
+    assert not r.blocking
+
+
+def test_annual_reconciliation_annualises_a_partial_year_and_skips_a_thin_one(wh):
+    put_moh(wh, date(2024, 1, 1), 200, codes=("CGH",), attend=lambda c, i: 1000)   # 200 days of 2024
+    put_moh(wh, date(2025, 1, 1), 30, codes=("CGH",), attend=lambda c, i: 1000)    # too thin
+    put_annual(wh, 2024, 366_000)
+    put_annual(wh, 2025, 1)
+    r = result(dq.run_validation(wh, today=date(2025, 2, 1)), "reconcile.annual_ae", "moh_ed_attendances")
+    assert r.status == "pass" and r.details == "2024: MOH daily 366,000 (200 days) vs annual 366,000 (+0.0%)"
+
+
+def test_nuhs_vs_moh_reports_direction_and_gap_without_failing(wh):
+    put_moh(wh, date(2026, 11, 1), 7, codes=("NUH",), wait=lambda c, i: 4.0)
+    wh.upsert("nuhs_live_waits", pd.DataFrame([{
+        "site_name": "National University Hospital", "department": "Adult Emergency", "patients_waiting": 18,
+        "est_bed_wait_hours": 20.0, "est_consult_wait_hours": 2.0, "source_updated_at": None,
+        "snapshot_timestamp": datetime(2026, 11, 6, 12, 1), **LINEAGE}]), ["site_name", "department", "snapshot_timestamp"])
+    r = result(dq.run_validation(wh, today=date(2026, 11, 8)), "reconcile.nuhs_vs_moh_nuh", "nuhs_live_waits")
+    assert r.status == "pass"
+    assert r.details == "2026-11-06 12:01: live 20.0 h vs MOH median 4.0 h (above, +16.0 h)"
+
+
+def test_nuhs_vs_moh_skips_when_moh_has_not_published_that_day(wh):
+    put_moh(wh, date(2026, 10, 25), 7, codes=("NUH",))
+    wh.upsert("nuhs_live_waits", pd.DataFrame([{
+        "site_name": "National University Hospital", "department": "Adult Emergency", "patients_waiting": 1,
+        "est_bed_wait_hours": 2.0, "est_consult_wait_hours": 1.0, "source_updated_at": None,
+        "snapshot_timestamp": datetime(2026, 11, 6, 12, 1), **LINEAGE}]), ["site_name", "department", "snapshot_timestamp"])
+    r = result(dq.run_validation(wh, today=date(2026, 11, 8)), "reconcile.nuhs_vs_moh_nuh", "nuhs_live_waits")
+    assert r.status == "skipped" and "MOH has published" in r.details

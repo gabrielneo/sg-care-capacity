@@ -13,7 +13,8 @@ from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 
-RUN_SOURCES = {"moh_bed_waits", "moh_ed_attendances", "nuhs_live", "datagov_chas", "singstat"}
+RUN_SOURCES = {"moh_bed_waits", "moh_ed_attendances", "nuhs_live", "datagov_chas", "datagov_annual_ae",
+               "singstat"}
 
 
 def summaries(capsys) -> list[dict]:

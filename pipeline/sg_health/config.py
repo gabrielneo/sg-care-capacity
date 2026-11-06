@@ -63,7 +63,12 @@ DATAGOV_DATASETS = {
     # DATASET_DOES_NOT_EXIST. If this breaks again, look the ID up from the collection:
     # https://api-production.data.gov.sg/v2/public/api/collections/2036/metadata
     "chas": "d_548c33ea2d99e29ec63a7cc9edcccedc",
+    # MOH "Hospital Admissions And Public Sector Outpatient Attendances, Annual" (CSV:
+    # year, level_1, value), 1984-2023 as of 2026-11-06. Used only to reconcile MOH's daily
+    # ED attendances (data-quality check reconcile.annual_ae).
+    "annual_ae": "d_a5267c58f60b20f8e04576261abfac93",
 }
+ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in that CSV
 DATAGOV_API_KEY = os.getenv("DATAGOV_API_KEY")      # optional, gives higher rate limits
 
 # SingStat Table Builder resource ID for "residents by planning area x age group".

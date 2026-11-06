@@ -1,4 +1,4 @@
-"""data.gov.sg payloads: CHAS clinics."""
+"""data.gov.sg payloads: CHAS clinics, and the annual A&E attendance series."""
 from __future__ import annotations
 
 import io
@@ -11,6 +11,21 @@ from bs4 import BeautifulSoup
 
 from ..logs import ParseStats, count_drop, count_read
 from .common import is_blank
+
+
+def parse_annual_ae(content: bytes, series: str, stats: Optional[ParseStats] = None) -> pd.DataFrame:
+    """Rows of one series from the annual admissions/attendances CSV: year, attendances, series.
+
+    Matches the series label exactly. A missing value stays missing (NULL), never zero.
+    """
+    raw = pd.read_csv(io.BytesIO(content))
+    needed = {"year", "level_1", "value"}
+    if not needed <= set(raw.columns):
+        raise ValueError(f"annual A&E CSV: expected columns {sorted(needed)}, got {list(raw.columns)}")
+    rows = raw[raw["level_1"] == series]
+    count_read(stats, len(rows))
+    return pd.DataFrame({"year": rows["year"], "attendances": pd.to_numeric(rows["value"], errors="coerce"),
+                         "series": series}).reset_index(drop=True)
 
 
 def _html_table_to_dict(html: str) -> dict[str, str]:

@@ -38,6 +38,11 @@ DDL = [
         planning_area VARCHAR NOT NULL, year INTEGER NOT NULL, residents_65plus BIGINT,
         source_table VARCHAR, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (planning_area, year))""",
+    # Annual A&E attendances (all public-sector A&E departments). Reconciliation only.
+    """CREATE TABLE IF NOT EXISTS annual_ae_attendances (
+        year INTEGER NOT NULL, attendances BIGINT, series VARCHAR NOT NULL,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (year))""",
     # One row per fetch, mirrored from data/raw/manifest.jsonl (the source of truth).
     """CREATE TABLE IF NOT EXISTS raw_manifest (
         seq INTEGER PRIMARY KEY, source VARCHAR NOT NULL, url VARCHAR NOT NULL,
@@ -61,7 +66,7 @@ LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
 PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_live_waits",
-                 "singstat_tabledata", "pop_65plus_by_area")
+                 "singstat_tabledata", "pop_65plus_by_area", "annual_ae_attendances")
 # Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
 RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits")
 
@@ -74,6 +79,7 @@ TABLE_KEYS: dict[str, tuple[str, ...]] = {
     "nuhs_live_waits": ("site_name", "department", "snapshot_timestamp"),
     "singstat_tabledata": ("table_id", "row_label", "column_path"),
     "pop_65plus_by_area": ("planning_area", "year"),
+    "annual_ae_attendances": ("year",),
 }
 QUARANTINE_TABLES = tuple(f"quarantine_{t}" for t in TABLE_KEYS)
 # Everything `reparse` drops and rebuilds from data/raw. dq_results (a log) is kept.

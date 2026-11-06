@@ -6,6 +6,7 @@ across whole clean tables and run here. Nothing in this module changes a clean t
 """
 from __future__ import annotations
 
+import calendar
 import json
 import uuid
 from dataclasses import dataclass
@@ -157,6 +158,67 @@ def weekly_shift(wh: Warehouse, today: date) -> list[Result]:
                for r in flagged.itertuples()]
     return [Result(SHIFT, "moh_bed_waits", "fail" if len(flagged) else "pass", len(flagged),
                    "; ".join(samples[:DETAIL_SAMPLES]))]
+
+
+# --------------------------------------------------------------------------- #
+# Reconciliation (WARN only)
+# --------------------------------------------------------------------------- #
+
+RECONCILE_TOLERANCE = 0.25        # annualised MOH daily vs annual series
+RECONCILE_MIN_DAYS = 180          # don't annualise a year from less than half a year of days
+
+RECONCILE_ANNUAL = register(
+    "reconcile.annual_ae", Severity.WARN, Scope.DATASET,
+    f"Annualised MOH daily ED attendances within {RECONCILE_TOLERANCE:.0%} of the annual A&E series",
+    ("moh_ed_attendances",))
+RECONCILE_NUHS = register(
+    "reconcile.nuhs_vs_moh_nuh", Severity.WARN, Scope.DATASET,
+    "NUHS live bed-wait estimate vs MOH's NUH (adult) median for the same day: direction and gap, "
+    "reported only", ("nuhs_live_waits",))
+
+
+@dataset_check
+def reconcile_annual(wh: Warehouse, today: date) -> list[Result]:
+    daily = wh.query("""
+        SELECT year(report_date) AS year, count(DISTINCT report_date) AS days, sum(total_attendances) AS total
+        FROM moh_ed_attendances GROUP BY 1""")
+    annual = wh.query("SELECT year, attendances FROM annual_ae_attendances WHERE attendances IS NOT NULL")
+    both = daily.merge(annual, on="year")
+    both = both[both["days"] >= RECONCILE_MIN_DAYS]
+    if both.empty:
+        return [Result(RECONCILE_ANNUAL, "moh_ed_attendances", "skipped", details="no overlapping years "
+                       f"with at least {RECONCILE_MIN_DAYS} days of MOH daily data")]
+    lines, off = [], 0
+    for r in both.sort_values("year").itertuples():
+        days_in_year = 366 if calendar.isleap(int(r.year)) else 365
+        annualised = r.total * days_in_year / r.days
+        gap = (annualised - r.attendances) / r.attendances
+        off += abs(gap) > RECONCILE_TOLERANCE
+        lines.append(f"{int(r.year)}: MOH daily {annualised:,.0f} ({int(r.days)} days) vs annual "
+                     f"{int(r.attendances):,} ({gap:+.1%})")
+    return [Result(RECONCILE_ANNUAL, "moh_ed_attendances", "fail" if off else "pass", int(off), "; ".join(lines))]
+
+
+@dataset_check
+def reconcile_nuhs(wh: Warehouse, today: date) -> list[Result]:
+    pairs = wh.query("""
+        SELECT CAST(n.snapshot_timestamp AS DATE) AS day, n.snapshot_timestamp, n.est_bed_wait_hours AS live,
+               b.median_wait_hours AS moh
+        FROM nuhs_live_waits n
+        JOIN moh_bed_waits b ON b.hospital_code = 'NUH' AND b.report_date = CAST(n.snapshot_timestamp AS DATE)
+        WHERE n.site_name ILIKE '%National University Hospital%' AND n.department ILIKE '%adult%'
+          AND n.est_bed_wait_hours IS NOT NULL ORDER BY n.snapshot_timestamp""")
+    if pairs.empty:
+        n_live = wh.con.execute("SELECT count(*) FROM nuhs_live_waits").fetchall()[0][0]
+        return [Result(RECONCILE_NUHS, "nuhs_live_waits", "skipped",
+                       details="no NUHS adult snapshot falls on a day MOH has published yet"
+                       if n_live else "no rows")]
+    lines = [f"{r.snapshot_timestamp:%Y-%m-%d %H:%M}: live {r.live:.1f} h vs MOH median {r.moh:.1f} h "
+             f"({'above' if r.live > r.moh else 'below' if r.live < r.moh else 'equal'}, {r.live - r.moh:+.1f} h)"
+             for r in pairs.itertuples()]
+    # Informational: a point-in-time estimate and a daily median of admitted patients measure
+    # different things, so a gap is expected and never fails the check.
+    return [Result(RECONCILE_NUHS, "nuhs_live_waits", "pass", 0, "; ".join(lines[:DETAIL_SAMPLES]))]
 
 
 # --------------------------------------------------------------------------- #
