@@ -1,4 +1,4 @@
-"""Command line: run | backfill | reparse | validate | report."""
+"""Command line: run | backfill | reparse | validate | transform | report."""
 from __future__ import annotations
 
 import argparse
@@ -12,6 +12,7 @@ from .http import PoliteHttp
 from . import logs
 from .load import Loader, reparse
 from .quality import validate as dq
+from .transform import TransformError, run_transform
 from .raw import RawStore
 from .report import export_report
 from .sources.datagov import ingest_opendata
@@ -39,6 +40,15 @@ def _run_step(name: str, fn, *args) -> int:
     except Exception:  # one broken source must not stop the others
         LOG.exception("Step %s failed", name)
         return -1
+
+
+def _transform(wh) -> bool:
+    try:
+        run_transform(wh)
+        return True
+    except TransformError as exc:
+        LOG.error("%s", exc, extra={"fields": {"event": "transform_failed"}})
+        return False
 
 
 def _log_validation(results, run_id: str) -> None:
@@ -80,6 +90,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     rp.add_argument("--no-report", action="store_true")
 
     sub.add_parser("validate", help="run every data-quality check; exit 1 if any check blocks publishing")
+    sub.add_parser("transform", help="build staging views and mart tables from the clean tables")
 
     sub.add_parser("report", help="rebuild the Excel report from the warehouse only")
 
@@ -102,11 +113,14 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(dq.summary_table(checks, run_id))
             _log_validation(checks, run_id)
             return 1 if any(r.blocking for r in checks) else 0
+        if args.command == "transform":
+            return 0 if _transform(wh) else 1
         if args.command == "reparse":
             results, failed_records = reparse(wh, store)
+            transformed = _transform(wh)
             if not args.no_report:
                 export_report(wh, args.report)
-            return 1 if failed_records else 0
+            return 1 if failed_records or not transformed else 0
         if args.command in ("run", "backfill"):
             http = PoliteHttp()       # only commands that fetch get an HTTP client
             loader = Loader.for_run(wh, store, force=getattr(args, "force", False))
@@ -131,6 +145,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             # which CI runs as the publish gate.
             checks = dq.run_validation(wh)
             _log_validation(checks, dq.record(wh, checks))
+            if not _transform(wh):
+                return 1
         elif args.command == "backfill":
             loader.expect(*STEP_SOURCES["moh"])
             results["backfill"] = _run_step("backfill", backfill_moh, http, loader, args.start, args.end,

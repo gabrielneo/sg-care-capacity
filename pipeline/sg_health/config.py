@@ -103,6 +103,28 @@ HOSPITAL_REFERENCE: dict[str, tuple[str, "date | None"]] = {
     "TTSH":  ("ED", None),
     "WH":    ("ED", date(2024, 6, 23)),   # first value in MOH's workbooks
 }
+# Public healthcare cluster of each site, and what MOH's figures for it cover.
+# Clusters: SingHealth (SGH, CGH, SKH); NHG Health (TTSH, KTPH, WH; "NHG" was renamed NHG Health
+# on 1 Jul 2025); NUHS (NUH, NTFGH, AH; AH has been run by NUHS since 1 Jun 2018). Membership has
+# not changed since 2018, so one value per site is correct for MOH's series (2023 onward).
+# Checked 2026-11-06 against NHG Health's corporate profile (nhghealth.com.sg/about-us), MOH's
+# 2017 cluster reorganisation notice and the Alexandra Hospital and NHG Health records.
+HOSPITAL_CLUSTER: dict[str, str] = {
+    "SGH": "SingHealth", "CGH": "SingHealth", "SKH": "SingHealth",
+    "TTSH": "NHG Health", "KTPH": "NHG Health", "WH": "NHG Health",
+    "NUH": "NUHS", "NTFGH": "NUHS", "AH": "NUHS",
+}
+HOSPITAL_COVERAGE_NOTE: dict[str, str] = {
+    "AH": "Urgent Care Centre at Alexandra Hospital, not a full emergency department.",
+    "NUH": "Adult emergency department only; NUH Children's Emergency is excluded by MOH.",
+    "WH": "MOH reports Woodlands Hospital from 2024-06-23; its page text does not list it yet.",
+}
+MOH_EXCLUSIONS_NOTE = ("MOH excludes KK Women's and Children's Hospital and NUH Children's Emergency "
+                       "from these statistics.")
+REFERENCE_CHECKED = date(2026, 11, 6)       # when the hospital reference above was last verified
+REFERENCE_SOURCE_URL = ("https://www.moh.gov.sg/others/resources-and-statistics/"
+                        "healthcare-institution-statistics-waiting-time-for-admission-to-ward/")
+
 EXCLUDE_HOSPITAL = re.compile(r"child|paediatric|pediatric|kk\s*women|\bkkh\b", re.I)
 
 
