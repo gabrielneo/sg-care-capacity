@@ -7,7 +7,7 @@ from typing import Optional
 
 import requests
 
-from ..config import DATAGOV_API_KEY, DATAGOV_BASE, DATAGOV_DATASETS
+from ..config import DATAGOV_API_KEY, DATAGOV_BASE, DATAGOV_DATASETS, DATAGOV_METADATA_URL
 from ..http import PoliteHttp
 from ..load import Loader
 
@@ -47,4 +47,9 @@ def ingest_opendata(http: PoliteHttp, loader: Loader) -> int:
         url, resp = got
         # save_response strips the signature from the signed download URL before recording it
         total += loader.process(loader.store.save_response(source, url, resp))
+        # The dataset's own "last updated" date, used as as_of for its figures.
+        meta_url = DATAGOV_METADATA_URL.format(dataset_id=DATAGOV_DATASETS[key])
+        meta = http.get(meta_url, check_robots=False)
+        if meta is not None:
+            loader.process(loader.store.save_response("datagov_metadata", meta_url, meta))
     return total

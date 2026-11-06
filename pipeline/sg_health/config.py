@@ -69,6 +69,9 @@ DATAGOV_DATASETS = {
     "annual_ae": "d_a5267c58f60b20f8e04576261abfac93",
 }
 ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in that CSV
+# Dataset metadata (name, publisher, lastUpdatedAt). lastUpdatedAt is the as_of shown to users
+# for that dataset: the CHAS file, for instance, was last updated upstream on 2024-06-06.
+DATAGOV_METADATA_URL = "https://api-production.data.gov.sg/v2/public/api/datasets/{dataset_id}/metadata"
 DATAGOV_API_KEY = os.getenv("DATAGOV_API_KEY")      # optional, gives higher rate limits
 
 # SingStat Table Builder resource ID for "residents by planning area x age group".

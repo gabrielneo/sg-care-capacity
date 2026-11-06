@@ -161,3 +161,41 @@ def test_marts_are_identical_when_rebuilt(built):
     run_transform(built)
     for t in tables:
         pd.testing.assert_frame_equal(first[t], q(built, f"SELECT * FROM marts.{t}"), obj=t)
+
+
+# ------------------------------------------------------------------ clinics #
+
+def test_dim_clinic_as_of_is_the_upstream_update_not_our_download(built):
+    rows = q(built, "SELECT clinic_key, as_of, as_of_basis, fetched_at FROM marts.dim_clinic")
+    assert len(rows) == 2
+    assert (rows["as_of"] == pd.Timestamp("2024-06-06 14:36:42")).all()      # SGT, from lastUpdatedAt
+    assert set(rows["as_of_basis"]) == {"source_updated"}
+    assert (rows["fetched_at"] > rows["as_of"]).all()                         # downloaded much later
+    assert "on_has" not in rows.columns and "on_has" not in q(built, "SELECT * FROM marts.dim_clinic LIMIT 0").columns
+
+
+def test_dim_clinic_falls_back_to_fetch_time_without_metadata(monkeypatch, paths):
+    from sg_health import config
+    from conftest import source_routes
+    routes = {u: v for u, v in source_routes().items() if "/metadata" not in u}
+    full_run(monkeypatch, paths, routes)
+    wh = Warehouse(paths["db"])
+    try:
+        rows = q(wh, "SELECT as_of, as_of_basis, fetched_at FROM marts.dim_clinic")
+    finally:
+        wh.close()
+    assert set(rows["as_of_basis"]) == {"fetched"} and (rows["as_of"] == rows["fetched_at"]).all()
+
+
+def test_dim_clinic_keeps_is_active_and_has_cdmp(monkeypatch, paths):
+    from conftest import CHAS_V2
+    from conftest import source_routes
+    full_run(monkeypatch, paths)
+    full_run(monkeypatch, paths, source_routes(chas=CHAS_V2))
+    wh = Warehouse(paths["db"])
+    try:
+        rows = q(wh, "SELECT clinic_key, is_active, has_cdmp FROM marts.dim_clinic ORDER BY 1").to_dict("records")
+    finally:
+        wh.close()
+    assert rows == [{"clinic_key": "15M0211", "is_active": True, "has_cdmp": True},
+                    {"clinic_key": "15M0999", "is_active": False, "has_cdmp": False}]

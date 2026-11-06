@@ -14,9 +14,10 @@ from typing import Callable, Iterable, Optional
 
 import pandas as pd
 
-from .config import ANNUAL_AE_SERIES, MOH_SOURCES
+from .config import ANNUAL_AE_SERIES, DATAGOV_DATASETS, MOH_SOURCES
 from .logs import ParseStats
-from .parsers.datagov import normalize_clinics, parse_annual_ae, parse_datagov_payload
+from .parsers.datagov import (normalize_clinics, parse_annual_ae, parse_datagov_metadata,
+                              parse_datagov_payload)
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
 from .parsers.singstat import derive_pop65, parse_singstat_tabledata, title_year
@@ -162,12 +163,29 @@ def load_annual_ae(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSt
     return _load(wh, "annual_ae_attendances", df, rec, stats)
 
 
+def load_datagov_metadata(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
+    from .sources.datagov import DATASET_SOURCES       # dataset key -> raw source name
+    source_by_id = {DATAGOV_DATASETS[key]: src for key, src in DATASET_SOURCES}
+    try:
+        payload = json.loads(decode_text(rec, content))
+    except ValueError:
+        stats.files_skipped["not_json"] += 1
+        return 0
+    df = parse_datagov_metadata(payload, source_by_id)
+    stats.read(len(df))
+    if df.empty:
+        stats.files_skipped["no_dataset_id"] += 1
+        return 0
+    return _load(wh, "source_metadata", df, rec, stats)
+
+
 LOADERS: dict[str, LoaderFn] = {
     "moh_bed_waits": _moh_loader("bed_waits"),
     "moh_ed_attendances": _moh_loader("ed_attendances"),
     "nuhs_live": load_nuhs_live,
     "datagov_chas": _clinic_loader("chas", "chas_clinics"),
     "datagov_annual_ae": load_annual_ae,
+    "datagov_metadata": load_datagov_metadata,
     "singstat": load_singstat,
 }
 # Landed for the record but not parsed into tables (e.g. the MOH pages that link to the files).

@@ -34,9 +34,11 @@ MODELS: list[tuple[str, str]] = [
     ("staging", "stg_moh_ed_attendances"),
     ("staging", "stg_chas_clinics"),
     ("staging", "stg_nuhs_live"),
+    ("staging", "stg_datagov_metadata"),
     ("marts", "dim_hospital"),
     ("marts", "fct_ed_daily"),
     ("marts", "fct_ed_weekly"),
+    ("marts", "dim_clinic"),
 ]
 
 
@@ -60,6 +62,11 @@ RECONCILIATIONS: list[Reconciliation] = [
                    "SELECT count(*) FROM main.chas_clinics", "SELECT count(*) FROM staging.stg_chas_clinics"),
     Reconciliation("staging.stg_nuhs_live", "main.nuhs_live_waits",
                    "SELECT count(*) FROM main.nuhs_live_waits", "SELECT count(*) FROM staging.stg_nuhs_live"),
+    Reconciliation("staging.stg_datagov_metadata", "main.source_metadata",
+                   "SELECT count(*) FROM main.source_metadata", "SELECT count(*) FROM staging.stg_datagov_metadata"),
+    # One clinic row per staged clinic: the metadata join must never duplicate or drop clinics.
+    Reconciliation("marts.dim_clinic", "staging.stg_chas_clinics",
+                   "SELECT count(*) FROM staging.stg_chas_clinics", "SELECT count(*) FROM marts.dim_clinic"),
     Reconciliation("marts.dim_hospital", "main.ref_hospital",
                    "SELECT count(*) FROM main.ref_hospital", "SELECT count(*) FROM marts.dim_hospital"),
     # Every staged value lands in exactly one daily row.
@@ -89,6 +96,7 @@ UPSTREAM_QUARANTINE = {
     "staging.stg_moh_ed_attendances": "quarantine_moh_ed_attendances",
     "staging.stg_chas_clinics": "quarantine_chas_clinics",
     "staging.stg_nuhs_live": "quarantine_nuhs_live_waits",
+    "staging.stg_datagov_metadata": "quarantine_source_metadata",
 }
 
 

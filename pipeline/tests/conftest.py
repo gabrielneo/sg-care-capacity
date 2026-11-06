@@ -115,7 +115,9 @@ ANNUAL_AE_CSV = (b"year,level_1,value\n2023,Accident & Emergency Departments,105
                  b"2023,Polyclinics,5000000.0\n2022,Accident & Emergency Departments,1023000.0\n")
 ANNUAL_AE_DOWNLOAD = "https://s3.example.com/annual.csv"
 SINGSTAT_TABLE = "M810001"
-CHAS_DOWNLOAD = "https://s3.example.com/chas.geojson?X-Amz-Signature=secret&X-Amz-Expires=60"
+# Same shape as the real signed link: the object path is the dataset id.
+CHAS_DOWNLOAD = (f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['chas']}.geojson"
+                 "?X-Amz-Signature=secret&X-Amz-Expires=60")
 
 
 def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
@@ -134,6 +136,11 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
         poll.format(config.DATAGOV_DATASETS["annual_ae"]):
             (json.dumps({"data": {"url": ANNUAL_AE_DOWNLOAD}}).encode(), JSON),
         ANNUAL_AE_DOWNLOAD: (ANNUAL_AE_CSV, "text/csv"),
+        **{config.DATAGOV_METADATA_URL.format(dataset_id=ds): (json.dumps({"code": 0, "data": {
+            "datasetId": ds, "name": name, "managedBy": "Ministry of Health",
+            "lastUpdatedAt": updated}}).encode(), JSON)
+           for ds, name, updated in [(config.DATAGOV_DATASETS["chas"], "CHAS Clinics", "2024-06-06T14:36:42+08:00"),
+                                     (config.DATAGOV_DATASETS["annual_ae"], "Annual", "2026-10-28T08:54:55+08:00")]},
         config.SINGSTAT_URL.format(table_id=SINGSTAT_TABLE): (SINGSTAT_JSON, JSON),
     }
 

@@ -28,6 +28,26 @@ def parse_annual_ae(content: bytes, series: str, stats: Optional[ParseStats] = N
                          "series": series}).reset_index(drop=True)
 
 
+def parse_datagov_metadata(payload: dict, source_by_id: dict[str, str]) -> pd.DataFrame:
+    """One row from a data.gov.sg metadata response. Timestamps are converted to SGT, naive."""
+    data = (payload or {}).get("data") or {}
+    dataset_id = data.get("datasetId")
+    if not dataset_id:
+        return pd.DataFrame()
+
+    def sgt(value):
+        ts = pd.to_datetime(value, errors="coerce", utc=True)
+        return None if pd.isna(ts) else ts.tz_convert("Asia/Singapore").tz_localize(None).to_pydatetime()
+
+    return pd.DataFrame([{
+        "dataset_id": dataset_id,
+        "source": source_by_id.get(dataset_id),
+        "dataset_name": data.get("name"),
+        "managed_by": data.get("managedBy"),
+        "last_updated_at": sgt(data.get("lastUpdatedAt")),
+    }])
+
+
 def _html_table_to_dict(html: str) -> dict[str, str]:
     """data.gov.sg KML-style GeoJSON hides attributes inside a <th>KEY</th><td>VAL</td> table."""
     soup = BeautifulSoup(html, "lxml")
