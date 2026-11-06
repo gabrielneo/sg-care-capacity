@@ -31,3 +31,12 @@ def fresh_snapshot(snapshot_dir, tmp_path) -> Path:
 @pytest.fixture
 def local_settings(snapshot_dir) -> Settings:
     return Settings(local_snapshot_path=snapshot_dir)
+
+
+@pytest.fixture
+def client(local_settings):
+    from fastapi.testclient import TestClient
+
+    from sg_health_api.main import create_app
+    with TestClient(create_app(local_settings)) as c:
+        yield c
