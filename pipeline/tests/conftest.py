@@ -215,6 +215,18 @@ def reset_log_handlers():
             root.removeHandler(h)
 
 
+@pytest.fixture(autouse=True)
+def singstat_reference(tmp_path, monkeypatch):
+    """Point the SingStat reference file at the small fixture (2 planning areas), not the real one."""
+    import hashlib
+    path = tmp_path / "reference" / "respopagesextod2026.zip"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(SINGSTAT_ZIP)
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_FILE", path)
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SHA256", hashlib.sha256(SINGSTAT_ZIP).hexdigest())
+    return path
+
+
 @pytest.fixture
 def paths(tmp_path):
     return {"db": tmp_path / "build" / "warehouse.duckdb", "raw": tmp_path / "raw",

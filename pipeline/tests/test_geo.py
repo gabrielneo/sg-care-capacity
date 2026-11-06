@@ -81,7 +81,7 @@ def test_missing_population_maps_to_null_rather_than_failing(monkeypatch, paths)
     from conftest import source_routes
     routes = source_routes()
     del routes[config.SINGSTAT_RESIDENTS_URL]
-    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SEED", paths["raw"] / "no-seed.zip")
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_FILE", paths["raw"] / "missing.zip")
     full_run(monkeypatch, paths, routes)
     nmap = query(paths, "SELECT * FROM main.ref_area_name_map")
     assert nmap["population_name"].isna().all() and set(nmap["match_method"]) == {"population_missing"}
