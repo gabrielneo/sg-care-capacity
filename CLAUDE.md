@@ -65,7 +65,7 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 # logs:         JSON lines on stderr; one "source_summary" line per source: sg-health run 2>&1 | grep source_summary
 # paths:        data/raw/ (immutable raw zone + manifest.jsonl), data/build/warehouse.duckdb (working DB)
 #               override with --raw-dir / --db / --report or SG_HEALTH_DATA_DIR
-# run checks:   TODO
+# run checks:   sg-health validate     # all data-quality checks; exit 1 = publish blocked (docs/data_quality.md)
 # publish:      TODO
 # tests:        pytest -q pipeline/tests
 

@@ -44,10 +44,20 @@ KK Women's and Children's Hospital and NUH (Children) are **excluded**. The work
 | **Source** | MOH, *Attendances at Emergency Medicine Departments* (weekly .xlsx). |
 | **Caveats** | Includes non-urgent cases, so it measures demand on the department, not acuity. AH is an urgent care centre (see above). |
 
+### `annual_ae_attendances.attendances`
+
+| | |
+|---|---|
+| **Definition** | Total attendances at public-sector Accident & Emergency departments in the year (series `level_1 = "Accident & Emergency Departments"`). |
+| **Unit** | Patients (count) per year. |
+| **Grain** | One value per year, 1984–2023 as of 2026-11-06. |
+| **Source** | MOH via data.gov.sg, *Hospital Admissions And Public Sector Outpatient Attendances, Annual* (`d_a5267c58f60b20f8e04576261abfac93`). |
+| **Caveats** | **Used only to reconcile** the daily MOH series (`reconcile.annual_ae`), not shown as a headline metric. Covers all public-sector A&E departments, **including** KKH and NUH Children's, which MOH's daily figures exclude, so the daily total is expected to be lower (−17.3% in 2023). The 2022 and 2023 values are rounded to the nearest hundred, unlike earlier years; they may be provisional. |
+
 ## Lineage columns (on every parsed table)
 
 Every row in `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
-`singstat_tabledata` and `pop_65plus_by_area` carries these three columns. None of them may be null.
+`singstat_tabledata`, `pop_65plus_by_area` and `annual_ae_attendances` carries these three columns. None of them may be null.
 
 | Column | Type | Definition |
 |---|---|---|
@@ -74,7 +84,7 @@ and on `reparse`.
 | Column | Type | Definition |
 |---|---|---|
 | `seq` | integer | Position in `manifest.jsonl`, from 0. This is the replay order. |
-| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `singstat`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch` and `datagov_has` (kept, not parsed). |
+| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `datagov_annual_ae`, `singstat`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch` and `datagov_has` (kept, not parsed). |
 | `url` | text | Where the bytes came from (see `source_url` above). |
 | `sha256` | text | SHA-256 of the bytes. |
 | `bytes` | integer | Size in bytes. |
@@ -102,4 +112,56 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `datagov_chas` | OK, but **stale upstream** | Dataset `d_548c33ea2d99e29ec63a7cc9edcccedc` (collection 2036): 1,193 clinics, 1,049 with CDMP. data.gov.sg reports it **last updated 2024-06-06**. Clinics that opened or closed since then are not reflected. |
 | `datagov_has` | **Retired** (not fetched) | Dataset `d_3cd840069e95b6a521aa5301a084b25a` is unpublished (`DATASET_DOES_NOT_EXIST`), no replacement is named, and it isn't needed for the project. |
 | `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
+| `datagov_annual_ae` | OK | 1984–2023; only 2023 overlaps the daily MOH series. Reconciliation only. |
 | `singstat` | Not configured | Needs `SINGSTAT_POP_TABLE_ID`. |
+
+## Data-quality tables
+
+See [data_quality.md](data_quality.md) for every check, its threshold and the reasoning.
+
+### `quarantine_<table>`
+
+One per gated table (`quarantine_moh_bed_waits`, `quarantine_chas_clinics`, ...). Rows that failed
+an ERROR check, **never** present in the clean table.
+
+| Column | Type | Definition |
+|---|---|---|
+| `row_key` | text | The row's primary key as JSON, e.g. `{"clinic_key": "19M0103"}`. |
+| `check_ids` | text | Comma-separated ERROR checks the row failed. |
+| `details` | text | What each check found. |
+| *every column of the clean table* | text | The values **exactly as parsed**, stored as text so a value of the wrong type still fits. Lineage columns say which raw file it came from. |
+
+Kept current per key: a later good value for the same key clears the row. Rebuilt by `reparse`.
+
+### `dq_findings`
+
+Every current failure from the load gate, ERROR or WARN, row or file level. Rebuilt by `reparse`.
+
+| Column | Type | Definition |
+|---|---|---|
+| `table_name` | text | The clean table checked. |
+| `check_id` | text | The check that failed. |
+| `severity` | text | `ERROR` or `WARN`. |
+| `scope` | text | `row` (one row) or `file` (a whole file or sheet). |
+| `row_key` | text | Primary key as JSON for a row finding; empty for a file finding. |
+| `failing_rows` | integer | 1 for a row finding; rows (or columns) covered for a file finding. |
+| `detail` | text | What was found, with the offending value. |
+| `source_url`, `source_sha256` | text | The raw file checked. |
+
+### `dq_results`
+
+One row per check per `sg-health validate` run (also written at the end of `sg-health run`).
+**Append-only**: it is the history of data quality over time and is not rebuilt by `reparse`.
+
+| Column | Type | Definition |
+|---|---|---|
+| `check_id` | text | The check. |
+| `table` | text | The table it applies to. |
+| `severity` | text | `ERROR` or `WARN`. |
+| `status` | text | `pass`, `fail`, or `skipped` (no rows to check yet). |
+| `failing_rows` | integer | Rows (or, for completeness, missing days) that failed. |
+| `details` | text | Up to 10 examples, or the measured value (e.g. data age, reconciliation gap). |
+| `run_id` | text | `YYYYMMDDTHHMMSS-xxxxxx`, shared by every row of one run. |
+| `checked_at` | timestamp (SGT) | When the run happened. |
+| `scope` | text | `row`, `file` or `dataset`. |
+| `blocks_publish` | boolean | Whether a failure of this check blocks publishing (ERROR at file or dataset scope). |

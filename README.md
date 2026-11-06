@@ -13,7 +13,7 @@ sources ──► PoliteHttp ──► data/raw (immutable) ──► parsers �
                                     └──── sg-health reparse: rebuild every table from data/raw, offline
 ```
 
-Sources: MOH weekly .xlsx · NUHS live ED waits · data.gov.sg CHAS clinics · SingStat · Wayback Machine (backfill only). Retired on 2026-11-06: SingHealth X-ray QWatch (page removed) and data.gov.sg HAS clinics (dataset unpublished); their tables are gone, but any raw files already landed are kept.
+Sources: MOH weekly .xlsx · NUHS live ED waits · data.gov.sg CHAS clinics · SingStat · Wayback Machine (backfill only) · data.gov.sg annual A&E attendances (reconciliation only). Retired on 2026-11-06: SingHealth X-ray QWatch (page removed) and data.gov.sg HAS clinics (dataset unpublished); their tables are gone, but any raw files already landed are kept.
 
 ## 1. Install
 
@@ -41,6 +41,7 @@ sg-health run                          # fetch all sources, land raw files, load
 sg-health run --sources moh,opendata   # a subset (moh, live, opendata, singstat)
 sg-health backfill --start 2024-01-01 --max-snapshots 80   # MOH history from the Wayback Machine
 sg-health reparse                      # rebuild every table from data/raw alone (no network)
+sg-health validate                     # every data-quality check; exit 1 if publishing is blocked
 sg-health report                       # rebuild the Excel report from the warehouse
 sg-health -v run --sources live        # debug-level logging
 ```
@@ -88,7 +89,11 @@ data/raw/manifest.jsonl                            one line per fetch: source, u
 | `nuhs_live_waits` | site_name, department, snapshot_timestamp | Patients waiting, estimated consult and bed waits (hours). `department` is the page section, e.g. "Adult Emergency" or "Children's Emergency": NUH appears in both. |
 | `singstat_tabledata` | table_id, row_label, column_path | Raw flattened SingStat cells |
 | `pop_65plus_by_area` | planning_area, year | Derived 65+ residents per planning area |
+| `annual_ae_attendances` | year | MOH annual public-sector A&E attendances, for reconciliation only |
 | `raw_manifest` | seq | Every fetch, mirrored from `data/raw/manifest.jsonl` |
+| `quarantine_<table>` | (none) | Rows that failed an ERROR data-quality check, values as parsed. Never in the clean table. |
+| `dq_findings` | (none) | Every current failure from the load gate (ERROR and WARN) |
+| `dq_results` | run_id, check_id, table | Append-only log of every `validate` run |
 
 **Lineage.** Every row of every table above except `raw_manifest` carries `source_url`, `source_sha256` and `ingested_at`, pointing at the raw file it came from. `ingested_at` is when that file was **fetched**. See [docs/data_dictionary.md](docs/data_dictionary.md) for definitions and caveats.
 
@@ -107,7 +112,28 @@ WHERE report_date >= current_date - INTERVAL 7 DAY
 GROUP BY 1 ORDER BY 2 DESC;
 ```
 
-## 5. Logging
+## 5. Data quality
+
+Parsed rows pass through a **load gate** before reaching a clean table. Rows that fail an ERROR
+check go to `quarantine_<table>` and never into the clean table; WARN rows are published and
+flagged. The gate never changes a value. `sg-health validate` adds the dataset-level checks
+(completeness, freshness, outliers, reconciliation), logs every check to `dq_results`, prints a
+summary table, and **exits 1 if publishing must be blocked**:
+
+```
+STATUS              SEVERITY  CHECK                            TABLE               ROWS  DETAILS
+FAIL (quarantined)  ERROR     clinic.coordinates_in_singapore  chas_clinics        1     19M0103: lat 1.0162... is outside Singapore
+WARN                WARN      range.bed_wait_over_24h          moh_bed_waits       63    Ng Teng Fong General Hospital, 2023-02-01: ...
+PASS                ERROR     unit.file_vs_stored              moh_bed_waits       0
+...
+run 20261106T131133-92b674: 52 checks, 4 failing, 0 blocking publish -> OK to publish
+```
+
+Only file- or dataset-level ERRORs block publishing (e.g. a minutes/hours unit error, data more
+than 28 days old). A quarantined row doesn't: it is already excluded. Every check, its threshold
+and why is in [docs/data_quality.md](docs/data_quality.md).
+
+## 6. Logging
 
 Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `reparse`, each source logs exactly one summary line:
 
@@ -124,7 +150,7 @@ Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `repars
 sg-health run 2> run.log && grep '"source_summary"' run.log
 ```
 
-## 6. Automation
+## 7. Automation
 
 `.github/workflows/weekly_scraper.yml` runs every Sunday at 00:00 UTC (08:00 SGT) and can also be triggered manually. Nothing is committed back to the repo. `data/raw/` is kept between runs as `raw.tar.gz` on a rolling GitHub Release tagged `data-latest`:
 
@@ -133,9 +159,10 @@ sg-health run 2> run.log && grep '"source_summary"' run.log
 3. **Rebuild** the warehouse with `sg-health reparse`.
 4. **Fetch** new data with `sg-health run`.
 5. **Check** that `manifest.jsonl` has at least as many lines as before; otherwise refuse to upload.
-6. **Upload** the grown `raw.tar.gz` to the release, replacing the old one. The Excel report is attached to the workflow run as an artifact (kept 30 days).
+6. **Upload** the grown `raw.tar.gz` to the release, replacing the old one. This happens **before** validation, so a data-quality failure can never lose raw history.
+7. **Validate** with `sg-health validate`. If a check blocks publishing, the job fails here. The Excel report is attached to the workflow run as an artifact (kept 30 days) either way.
 
-The warehouse is rebuilt from `data/raw` on every run and is **not** published yet. Publishing a "last good snapshot" for the site waits until error-level data checks exist.
+The warehouse is rebuilt from `data/raw` on every run and is **not** published yet. When publishing is added, it will run only after a passing `validate` step, so the site keeps the last good snapshot whenever a blocking check fails.
 
 To get the data locally:
 
@@ -154,7 +181,7 @@ Setup:
 
 **Live snapshots:** once a week gives you only one NUHS reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. It must share the `weekly-scraper` concurrency group, because both read and re-upload the same archive.
 
-## 7. Historical backfill (Wayback Machine)
+## 8. Historical backfill (Wayback Machine)
 
 MOH's weekly pages only show the latest week, so history has to come from archived copies:
 
@@ -176,7 +203,7 @@ Tips:
 - **Other historical sources.** MOH parliamentary replies and annual statistics, plus the data.gov.sg annual series (A&E attendances back to 2007), are useful for long-run trend lines.
 - **Fill gaps going forward.** Gaps in coverage are normal. Keep the weekly job running and every week becomes permanent history.
 
-## 8. Ethics and robustness
+## 9. Ethics and robustness
 
 - Requests are 1.5–3 s apart, with a 15 s timeout, retries with exponential backoff on 429/5xx, and `Retry-After` honoured.
 - robots.txt is checked before scraping HTML pages. A disallowed page is skipped and logged, not bypassed. Official APIs (data.gov.sg, SingStat, Wayback CDX) skip the check.
@@ -185,7 +212,7 @@ Tips:
 - Cells that can't be parsed become `None` and are dropped before upsert, so they never overwrite good data. Every drop is counted, with its reason, in the source's summary log line.
 - Every downloaded file is kept unchanged in `data/raw/`, so a parser bug can be fixed and the history replayed with `sg-health reparse`.
 
-## 9. Assumptions to check on your first live run
+## 10. Assumptions to check on your first live run
 
 The parsers were written against the published structure of each source and tested on synthetic fixtures (`pipeline/tests/`). They have not been run against the live sites from this environment. On your first run, use `-v` and check (after a fix, `sg-health reparse` re-parses everything already downloaded):
 

@@ -108,6 +108,12 @@ jobs:
           fi
           gh release upload "$RAW_RELEASE_TAG" "$RUNNER_TEMP/$RAW_ASSET" --clobber
 
+      # The publish gate. Runs after the raw upload on purpose: a data-quality failure must never
+      # lose raw history. Exits 1 if any file- or dataset-level ERROR fails (docs/data_quality.md);
+      # a future publish step goes after this one and therefore never runs on bad data.
+      - name: Validate data quality
+        run: sg-health validate
+
       - name: Upload report as a build artifact
         if: always()
         uses: actions/upload-artifact@v4
