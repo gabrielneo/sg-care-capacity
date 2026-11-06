@@ -139,6 +139,7 @@ class Warehouse:
     def __init__(self, path: str | Path, check_schema: bool = True) -> None:
         import duckdb  # imported here so the parsers can be unit-tested without DuckDB
         Path(path).parent.mkdir(parents=True, exist_ok=True)
+        self.path = Path(path)
         self.con = duckdb.connect(str(path))
         _create_schema(self.con)
         if check_schema:

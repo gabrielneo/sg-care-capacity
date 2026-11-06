@@ -138,6 +138,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sg-healthcare-report
-          path: data/build/SG_Healthcare_Scrape_Report.xlsx
+          path: |
+            data/build/SG_Healthcare_Scrape_Report.xlsx
+            data/build/web/planning_area_access.geojson
           if-no-files-found: ignore
           retention-days: 30

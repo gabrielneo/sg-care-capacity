@@ -230,6 +230,12 @@ def run_transform(wh: Warehouse) -> pd.DataFrame:
     if len(unexplained):
         raise TransformError("rows lost without a logged reason: " + "; ".join(
             f"{r.model} <- {r.input}: {r.rows_dropped} rows" for r in unexplained.itertuples()))
+    # Web map layer, only after every model reconciled.
+    if wh.con.execute("SELECT count(*) FROM marts.fct_area_access").fetchall()[0][0]:
+        try:
+            geo.write_web_geojson(wh)
+        except geo.WebGeometryError as exc:
+            raise TransformError(f"web GeoJSON: {exc}") from exc
     return log
 
 

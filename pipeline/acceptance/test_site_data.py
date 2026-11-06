@@ -479,3 +479,70 @@ def test_inferred_units_say_so_in_their_caveat(sql):
     inferred = sql("SELECT metric_id, caveat FROM marts.dim_metric WHERE unit_basis = 'inferred'")
     assert "fct_ed_daily.median_wait_hours" in set(inferred["metric_id"])
     assert inferred["caveat"].str.contains("inferred", case=False).all()
+
+
+# =========================================================================== #
+# Web map layer (data/build/web/planning_area_access.geojson)
+# =========================================================================== #
+
+import json  # noqa: E402
+
+from conftest import DB  # noqa: E402
+
+WEB = DB.parent / "web" / "planning_area_access.geojson"
+
+
+@pytest.fixture(scope="module")
+def web_layer():
+    if not WEB.exists():
+        pytest.skip(f"no web layer at {WEB}")
+    return json.loads(WEB.read_text())
+
+
+def test_web_layer_is_under_1_mb():
+    assert WEB.stat().st_size < 1_000_000, f"{WEB.stat().st_size:,} bytes"
+
+
+def test_web_layer_has_every_planning_area_once_with_valid_geometry(web_layer, sql):
+    from shapely.geometry import shape
+    codes = [f["properties"]["planning_area_code"] for f in web_layer["features"]]
+    expected = set(sql("SELECT planning_area_code FROM marts.fct_area_access")["planning_area_code"])
+    assert len(codes) == len(set(codes)) == 55 and set(codes) == expected
+    bad = [f["properties"]["planning_area"] for f in web_layer["features"]
+           if not shape(f["geometry"]).is_valid or shape(f["geometry"]).is_empty]
+    assert not bad, bad
+
+
+def test_web_layer_properties_are_the_mart_values(web_layer, sql):
+    import math
+    mart = sql("SELECT * FROM marts.fct_area_access").set_index("planning_area_code")
+    off = []
+    for f in web_layer["features"]:
+        p = f["properties"]; m = mart.loc[p["planning_area_code"]]
+        for k in ("residents_65plus", "cdmp_clinics", "cdmp_clinics_per_1k_seniors", "pct_area_within_1km_of_cdmp",
+                  "approx_km_centroid_to_nearest_polyclinic"):
+            mv, pv = m[k], p[k]
+            mnull = mv is None or (isinstance(mv, float) and math.isnan(mv))
+            if mnull != (pv is None) or (not mnull and abs(float(mv) - pv) > 1e-4):
+                off.append((p["planning_area"], k, mv, pv))
+    assert not off, off[:5]
+
+
+def test_web_layer_neighbours_do_not_gap_or_overlap(web_layer, sql):
+    """Simplification must not open visible gaps or overlaps between areas (allowance: 1,000 m2 in total)."""
+    import geopandas as gpd
+    from shapely.geometry import Polygon, shape
+    w = gpd.GeoSeries([shape(f["geometry"]) for f in web_layer["features"]], crs=4326).to_crs(3414)
+    o = sql("SELECT geometry_wkt FROM main.planning_area_boundaries")
+    o = gpd.GeoSeries.from_wkt(o["geometry_wkt"], crs=4326).to_crs(3414)
+    holes = lambda g: sum(Polygon(r).area for p in getattr(g.union_all(), "geoms", [g.union_all()]) for r in p.interiors)
+    assert w.area.sum() - w.union_all().area < 1000, "overlap between neighbours"
+    assert holes(w) - holes(o) < 1000, "new gaps between neighbours"
+    assert abs(w.area.sum() / o.area.sum() - 1) < 0.001
+
+
+def test_every_area_note_shown_on_the_map_comes_from_the_mart(web_layer, sql):
+    notes = sql("SELECT planning_area_code, dq_note FROM marts.fct_area_access").set_index("planning_area_code")["dq_note"]
+    for f in web_layer["features"]:
+        m = notes.loc[f["properties"]["planning_area_code"]]
+        assert (f["properties"]["dq_note"] or None) == (m if isinstance(m, str) else None)

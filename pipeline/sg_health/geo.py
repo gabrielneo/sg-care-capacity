@@ -162,3 +162,87 @@ def area_geo_metrics(wh: Warehouse) -> pd.DataFrame:
         out["polyclinic_source_sha256"] = ",".join(sorted(poly["source_sha256"].unique()))
     _write(wh, "area_geo_metrics", out, "planning_area_code")
     return out
+
+
+# --------------------------------------------------------------------------- #
+# 4. Simplified GeoJSON for the web map
+# --------------------------------------------------------------------------- #
+
+WEB_GEOJSON_NAME = "planning_area_access.geojson"
+WEB_MAX_BYTES = 1_000_000
+SIMPLIFY_TOLERANCES_M = (5, 10, 20, 30, 50, 80, 120)   # tried in order; the first that fits is used
+COORD_DECIMALS = 5                                      # ~1.1 m at Singapore's latitude
+WEB_PROPERTIES = ["planning_area_code", "planning_area", "region_name", "population_year", "residents_total",
+                  "residents_65plus", "chas_clinics", "cdmp_clinics", "clinics_per_1k_seniors",
+                  "cdmp_clinics_per_1k_seniors", "pct_area_within_1km_of_cdmp",
+                  "approx_km_centroid_to_nearest_polyclinic", "nearest_polyclinic", "dq_note", "as_of", "as_of_basis"]
+
+
+class WebGeometryError(RuntimeError):
+    """The simplified web geometry is invalid or too large."""
+
+
+def _json_value(v):
+    if v is None or (pd.api.types.is_scalar(v) and pd.isna(v)):  # None, NaN, NaT, pd.NA -> null
+        return None
+    if hasattr(v, "isoformat"):
+        return v.isoformat()
+    if hasattr(v, "item"):                                       # numpy scalars
+        v = v.item()
+    return round(v, 4) if isinstance(v, float) else v
+
+
+def _round_coords(geom):
+    return shapely.transform(geom, lambda xy: xy.round(COORD_DECIMALS))
+
+
+def web_geojson(wh: Warehouse, max_bytes: int = WEB_MAX_BYTES) -> tuple[dict, int]:
+    """Build the web GeoJSON dict. Returns (geojson, simplification tolerance in metres)."""
+    a = areas(wh)
+    metrics = wh.query("SELECT * FROM marts.fct_area_access")
+    a = a[["planning_area_code", "geometry"]].merge(metrics, on="planning_area_code", how="left", validate="1:1")
+    if len(a) != len(metrics):
+        raise WebGeometryError(f"{len(a)} boundaries vs {len(metrics)} access rows")
+    original_union = a.geometry.union_all()
+    for tol in SIMPLIFY_TOLERANCES_M:
+        # coverage_simplify moves each shared border once, so neighbours keep sharing it exactly:
+        # no gaps or slivers open between areas (per-polygon simplify would create them).
+        simple = gpd.GeoSeries(shapely.coverage_simplify(a.geometry.values, tol), crs=SVY21)
+        web = gpd.GeoSeries(simple.to_crs(WGS84).map(_round_coords), crs=WGS84)
+        features = []
+        for geom, (_, row) in zip(web, a.iterrows()):
+            features.append({"type": "Feature",
+                             "properties": {k: _json_value(row[k]) for k in WEB_PROPERTIES},
+                             "geometry": shapely.geometry.mapping(geom)})
+        doc = {"type": "FeatureCollection",
+               "metadata": {"title": "Clinic access for residents aged 65+, by planning area",
+                            "boundaries": "URA Master Plan 2025 Planning Area (No Sea)",
+                            "computed_in": "SVY21 (EPSG:3414); output WGS84 (EPSG:4326)",
+                            "simplification_tolerance_m": tol, "coordinate_decimals": COORD_DECIMALS,
+                            "boundary_source_sha256": a["boundary_source_sha256"].dropna().iloc[0]
+                            if a["boundary_source_sha256"].notna().any() else None,
+                            "methodology": "docs/methodology.md"},
+               "features": features}
+        if len(json.dumps(doc, separators=(",", ":")).encode()) <= max_bytes:
+            break
+    else:
+        raise WebGeometryError(f"web GeoJSON exceeds {max_bytes} bytes even at {SIMPLIFY_TOLERANCES_M[-1]} m")
+    invalid = [f["properties"]["planning_area"] for f, g in zip(features, web) if not g.is_valid or g.is_empty]
+    if invalid:
+        raise WebGeometryError(f"simplified geometry invalid or empty for {invalid}")
+    lost = abs(simple.union_all().area - original_union.area) / original_union.area
+    if lost > 0.01:
+        raise WebGeometryError(f"simplification changed the total area by {lost:.2%}")
+    return doc, tol
+
+
+def write_web_geojson(wh: Warehouse, out_dir: Path | None = None) -> Path:
+    """Write the web GeoJSON next to the warehouse (data/build/web/), compact and deterministic."""
+    out_dir = Path(out_dir) if out_dir else wh.path.parent / "web"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    doc, tol = web_geojson(wh)
+    path = out_dir / WEB_GEOJSON_NAME
+    path.write_text(json.dumps(doc, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    LOG.info("web GeoJSON written: %s (%d bytes, simplified at %d m)", path, path.stat().st_size, tol,
+             extra={"fields": {"event": "web_geojson", "bytes": path.stat().st_size, "tolerance_m": tol}})
+    return path

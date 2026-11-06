@@ -144,3 +144,60 @@ def test_no_geometry_is_invalid_after_reprojection(monkeypatch, paths):
         wh.close()
     assert a.geometry.is_valid.all() and not a.geometry.is_empty.any()
     assert a.crs.to_epsg() == 3414
+
+
+# ---------------------------------------------------------------- web GeoJSON #
+
+import json  # noqa: E402
+
+from shapely.geometry import shape  # noqa: E402
+
+
+def test_web_geojson_is_written_next_to_the_warehouse_with_every_area(monkeypatch, paths):
+    full_run(monkeypatch, paths)
+    path = paths["db"].parent / "web" / geo.WEB_GEOJSON_NAME
+    doc = json.loads(path.read_text())
+    assert path.stat().st_size < geo.WEB_MAX_BYTES
+    assert [f["properties"]["planning_area"] for f in doc["features"]] == ["Bedok", "Tuas"]
+    assert set(doc["features"][0]["properties"]) == set(geo.WEB_PROPERTIES)
+    assert doc["metadata"]["computed_in"].startswith("SVY21")
+    for f in doc["features"]:
+        g = shape(f["geometry"])
+        assert g.is_valid and not g.is_empty
+        lon, lat = g.representative_point().coords[0]
+        assert 103.5 < lon < 104.2 and 1.1 < lat < 1.5                            # output is WGS84 lon/lat
+
+
+def test_missing_values_are_null_in_the_geojson_not_nan_or_zero(monkeypatch, paths):
+    full_run(monkeypatch, paths)
+    text = (paths["db"].parent / "web" / geo.WEB_GEOJSON_NAME).read_text()
+    assert "NaN" not in text
+    tuas = next(f for f in json.loads(text)["features"] if f["properties"]["planning_area"] == "Tuas")
+    assert tuas["properties"]["cdmp_clinics_per_1k_seniors"] is None             # no residents aged 65+
+    assert "No residents" in tuas["properties"]["dq_note"]
+
+
+def test_web_geojson_is_deterministic(monkeypatch, paths):
+    full_run(monkeypatch, paths)
+    path = paths["db"].parent / "web" / geo.WEB_GEOJSON_NAME
+    first = path.read_bytes()
+    wh = Warehouse(paths["db"])
+    try:
+        from sg_health.transform import run_transform
+        run_transform(wh)
+    finally:
+        wh.close()
+    assert path.read_bytes() == first
+
+
+def test_simplification_tries_coarser_tolerances_until_it_fits(monkeypatch, paths):
+    full_run(monkeypatch, paths)
+    wh = Warehouse(paths["db"])
+    try:
+        _, tol_easy = geo.web_geojson(wh)
+        smallest = len(json.dumps(geo.web_geojson(wh, max_bytes=10**9)[0], separators=(",", ":")))
+        with pytest.raises(geo.WebGeometryError, match="exceeds"):
+            geo.web_geojson(wh, max_bytes=100)                                    # impossible budget: loud
+    finally:
+        wh.close()
+    assert tol_easy == geo.SIMPLIFY_TOLERANCES_M[0] and smallest > 100
