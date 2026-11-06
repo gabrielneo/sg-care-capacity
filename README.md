@@ -128,6 +128,8 @@ read:
 | `marts.fct_area_access` | planning area | Seniors, CHAS and CDMP clinics, **CDMP clinics per 1,000 aged 65+** (lead), % of area within 1 km of a CDMP clinic, approximate distance to the nearest polyclinic, per-area `dq_note`; computed in SVY21 |
 | `marts.dim_metric` | metric | Label, unit, whether the unit is stated or inferred, and the caveat to show |
 
+`sg-health transform` also writes **`data/build/web/planning_area_access.geojson`** (342 KB): the 55 planning areas, simplified, in WGS84, with the access metrics and a per-area data note as properties, for the site's choropleth. How the access measures are computed, why a choropleth and why SVY21, and their limitations: [docs/methodology.md](docs/methodology.md).
+
 Every mart has `as_of` and `as_of_basis` (`source_updated`, `fetched` or `reference_checked`) and
 source hashes. Row counts are reconciled at every step into `transform_log`; a row lost without a
 logged reason stops the build. Column definitions: [docs/data_dictionary.md](docs/data_dictionary.md).

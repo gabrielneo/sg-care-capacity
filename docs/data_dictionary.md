@@ -184,6 +184,37 @@ ratios are NULL and the blocking check `completeness.population_present` fails.
 | `as_of` | The **older** of `clinics_as_of` and `population_as_of` | timestamp | `least(...)` | |
 | `as_of_basis` | Basis of whichever input is older | text | | |
 
+### Web map layer: `data/build/web/planning_area_access.geojson`
+
+A GeoJSON FeatureCollection written after every successful transform, for the site's choropleth.
+**One feature per planning area (55)**, geometry in **WGS84 (EPSG:4326)**, simplified from the URA
+Master Plan 2025 polygons in SVY21 with shared borders kept (see
+[methodology.md](methodology.md)). Under 1 MB (342 KB at a 5 m tolerance today); coordinates to 5
+decimals (about 1 m).
+
+**Properties** are the `marts.fct_area_access` columns of the same name: `planning_area_code`,
+`planning_area`, `region_name`, `population_year`, `residents_total`, `residents_65plus`,
+`chas_clinics`, `cdmp_clinics`, `clinics_per_1k_seniors`, `cdmp_clinics_per_1k_seniors`,
+`pct_area_within_1km_of_cdmp`, `approx_km_centroid_to_nearest_polyclinic`, `nearest_polyclinic`,
+`dq_note`, `as_of`, `as_of_basis`. Decimals are rounded to 4 places. **Missing values are `null`**
+(never `0` or `NaN`): style them as "no data", not as the lowest class. `metadata` records the
+boundary source and its hash, the CRS, the tolerance used and a pointer to the methodology.
+
+Caveat: rounding coordinates after simplification leaves 52 m² of gaps and 49 m² of overlap in total
+across all 55 areas (invisible at map scale; a test fails above 1,000 m²).
+
+### `main.ref_area_name_map`
+
+The explicit match between boundary-file and population planning-area names, rebuilt on every
+transform. One row per boundary area.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `planning_area_code` | URA planning-area code | text | boundaries | |
+| `boundary_name` | Name in the URA boundary file (upper case) | text | boundaries | |
+| `population_name` | Matching SingStat name | text | exact match after normalising case and whitespace | NULL only if no population is loaded (`match_method` = `population_missing`). Any other mismatch **stops the build** with the names listed. |
+| `match_method` | How the pair was matched | text | | `exact_after_case_and_space_normalisation` for all 55 today. |
+
 ### `marts.dim_metric`
 
 **Grain:** one row per published metric. **Source:** `sg_health/metrics.py`, seeded into
