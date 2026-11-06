@@ -266,3 +266,26 @@ def test_dim_clinic_tidies_whitespace_for_display_but_staging_keeps_it(monkeypat
         wh.close()
     assert mart == "BUKIT TIMAH NAM SANG CLINIC"
     assert staged == "BUKIT TIMAH NAM SANG  CLINIC"           # as published (the parser trims edges only)
+
+
+def test_is_adult_ed_separates_nuh_sections_and_matches_the_reconciliation_rule(monkeypatch, paths):
+    from sg_health import config
+    from conftest import HTML, source_routes
+    from test_nuhs import TWO_DEPARTMENTS
+    routes = source_routes()
+    routes[config.NUHS_LIVE_URL] = (TWO_DEPARTMENTS + b"<h3>Urgent Care</h3><table><tr><th></th><th>Somewhere</th></tr>"
+                                    b"<tr><td>Number of Patients Waiting for Consult</td><td>1 patient(s)</td></tr></table>", HTML)
+    full_run(monkeypatch, paths, routes)
+    wh = Warehouse(paths["db"])
+    try:
+        rows = q(wh, "SELECT hospital_code, department, is_adult_ed FROM marts.fct_live_ed_snapshot ORDER BY 1, 2")
+        adult_by_rule = q(wh, "SELECT site_name, department FROM main.nuhs_live_waits WHERE department ILIKE '%adult%'")
+    finally:
+        wh.close()
+    nuh = rows[rows["hospital_code"] == "NUH"].set_index("department")["is_adult_ed"]
+    assert bool(nuh["Adult Emergency"]) and not bool(nuh["Children's Emergency"])
+    unknown = rows[rows["department"] == "Urgent Care"]
+    assert len(unknown) == 1 and pd.isna(unknown["is_adult_ed"].iloc[0])     # neither: NULL, not guessed
+    assert len(rows[rows["is_adult_ed"] == True]) == len(adult_by_rule)     # noqa: E712  same rows as the check
+    one_per_hospital = rows[rows["is_adult_ed"] == True].groupby("hospital_code").size()   # noqa: E712
+    assert (one_per_hospital == 1).all()

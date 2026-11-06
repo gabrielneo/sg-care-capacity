@@ -327,11 +327,23 @@ def test_one_live_reading_per_hospital_department_and_time(sql):
     assert dupes(l, ["hospital_code", "department", "snapshot_at"]).empty
 
 
-def test_widget_showing_hospital_code_alone_gets_one_figure_per_hospital(sql):
-    """A widget keyed only by hospital (the usual join to dim_hospital) must not get two NUH figures."""
+def test_widget_filtering_adult_eds_gets_one_figure_per_hospital(sql):
+    """The widget shows one figure per hospital, matching MOH's coverage (NUH = adults): filter is_adult_ed."""
     l = sql("""SELECT hospital_code, snapshot_at, count(*) n FROM marts.fct_live_ed_snapshot
-               GROUP BY 1, 2 HAVING count(*) > 1""")
+               WHERE is_adult_ed GROUP BY 1, 2 HAVING count(*) > 1""")
     assert l.empty, l.to_dict("records")
+
+
+def test_every_live_reading_is_classified_adult_or_children(sql):
+    """If a section is neither, the adult filter would silently hide it: it must be caught, not dropped."""
+    unknown = sql("SELECT site_name, department FROM marts.fct_live_ed_snapshot WHERE is_adult_ed IS NULL")
+    assert unknown.empty, unknown.to_dict("records")
+
+
+def test_every_hospital_in_the_live_widget_has_an_adult_reading(sql):
+    missing = sql("""SELECT DISTINCT hospital_code FROM marts.fct_live_ed_snapshot
+                     WHERE hospital_code NOT IN (SELECT hospital_code FROM marts.fct_live_ed_snapshot WHERE is_adult_ed)""")
+    assert missing.empty, list(missing["hospital_code"])
 
 
 def test_live_figures_are_plausible(sql):

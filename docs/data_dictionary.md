@@ -119,6 +119,7 @@ data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing t
 | `hospital_code` | `NUH`, `NTFGH` or `AH` | text | matched on `site_name` | NULL if NUHS lists a site we don't recognise (the row is kept). |
 | `site_name` | Site as named on the page | text | staging | |
 | `department` | Page section, e.g. `Adult Emergency`, `Children's Emergency` | text | staging | NUH appears in both. MOH's figures cover NUH **adults only**. |
+| `is_adult_ed` | TRUE for an adult emergency section, FALSE for a children's one | boolean | `'adult'` / `'child'` in `department` | **Filter on `is_adult_ed` to show one reading per hospital**: NUH has both sections, and only the adult one matches what MOH's NUH figures cover. NULL if the section name says neither (not guessed). The same rule picks NUH's row for `reconcile.nuhs_vs_moh_nuh`. |
 | `measure_type` | Always `estimate` | text | constant | Every figure here is NUHS's live estimate, not a measured statistic. |
 | `patients_waiting` | Patients waiting for consultation at that moment | patients | staging | |
 | `est_wait_to_see_doctor_hours` | NUHS's estimated wait to see a doctor | hours | staging, renamed from `est_consult_wait_hours` | Whole hours in every reading so far ("1 hour(s)"), so it is coarse. |
