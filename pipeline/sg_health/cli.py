@@ -18,7 +18,7 @@ from .sources.live import ingest_live
 from .sources.moh import ingest_moh
 from .sources.singstat import ingest_singstat
 from .sources.wayback import backfill_moh
-from .warehouse import Warehouse
+from .warehouse import SchemaOutOfDate, Warehouse
 
 LOG = logging.getLogger("sg_health")
 
@@ -69,7 +69,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
     logs.configure(verbose=args.verbose)
 
-    wh = Warehouse(args.db)
+    try:
+        wh = Warehouse(args.db, check_schema=args.command != "reparse")
+    except SchemaOutOfDate as exc:
+        LOG.error("%s", exc, extra={"fields": {"event": "schema_out_of_date"}})
+        return 2
     store = RawStore(args.raw_dir)
     results: dict[str, int] = {}
     failed_records = 0

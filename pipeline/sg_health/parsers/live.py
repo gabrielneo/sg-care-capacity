@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 from ..logs import ParseStats, count_drop, count_read
 from .common import parse_duration_hours, to_int
 
+NOT_STATED = "(not stated)"   # department label when the page gives none (text fallback)
+
 _NUHS_LABELS = {
     "patients_waiting": re.compile(r"patients?\s+waiting", re.I),
     "est_consult_wait_hours": re.compile(r"(see|to)\s+(a\s+)?doctor|consult(ation)?\s+wait", re.I),
@@ -34,7 +36,11 @@ def _nearest_heading(node) -> Optional[str]:
 
 
 def parse_nuhs_live(html: str, stats: Optional[ParseStats] = None) -> list[dict[str, Any]]:
-    """Parse the NUHS ED wait-time page into one dict per site.
+    """Parse the NUHS ED wait-time page into one dict per (site, department).
+
+    The page has one table per department (e.g. "Adult Emergency", "Children's Emergency"),
+    and the same hospital can appear in more than one. ``department`` is the table's heading,
+    so the two are never merged. Text-fallback rows have department "(not stated)".
 
     Primary strategy: look for tables with label rows (patients waiting, time to
     see a doctor, bed wait) and site-name header rows.
@@ -70,7 +76,7 @@ def parse_nuhs_live(html: str, stats: Optional[ParseStats] = None) -> list[dict[
                 site = heading
             else:
                 site = f"{heading} - site {j + 1}"
-            rec = {"site_name": site, "patients_waiting": None,
+            rec = {"site_name": site, "department": heading, "patients_waiting": None,
                    "est_consult_wait_hours": None, "est_bed_wait_hours": None}
             for key, vals in metrics.items():
                 cell = vals[j] if j < len(vals) else ""
@@ -108,7 +114,8 @@ def _parse_nuhs_text(text: str) -> list[dict[str, Any]]:
                       re.findall(r"\d+(?:\.\d+)?\s*(?:hour|hr|min)[a-z()]*(?:\s*\d+\s*min[a-z()]*)?",
                                  segment, re.I)]
         for j, v in enumerate(values):
-            rec = sites.setdefault(j, {"site_name": f"NUHS site {j + 1}", "patients_waiting": None,
+            rec = sites.setdefault(j, {"site_name": f"NUHS site {j + 1}", "department": NOT_STATED,
+                                       "patients_waiting": None,
                                        "est_consult_wait_hours": None, "est_bed_wait_hours": None})
             if rec[key] is None:
                 rec[key] = v

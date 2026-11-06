@@ -96,7 +96,8 @@ def load_nuhs_live(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSt
     snap = rec.fetched_at.replace(second=0)
     df["snapshot_timestamp"] = df["source_updated_at"].fillna(snap) \
         if "source_updated_at" in df else snap
-    return _upsert(wh, "nuhs_live_waits", _with_lineage(df, rec), ["site_name", "snapshot_timestamp"], stats)
+    return _upsert(wh, "nuhs_live_waits", _with_lineage(df, rec),
+                   ["site_name", "department", "snapshot_timestamp"], stats)
 
 
 def load_singhealth_qwatch(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:

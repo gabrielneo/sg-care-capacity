@@ -94,8 +94,9 @@ def export_report(wh: Warehouse, path: str | Path) -> Path:
         SELECT clinic_name, address, postal_code, latitude, longitude, has_cdmp, programmes, ingested_at
         FROM chas_clinics WHERE is_active ORDER BY clinic_name""")
     live = wh.query("""
-        SELECT snapshot_timestamp, site_name, patients_waiting, est_consult_wait_hours, est_bed_wait_hours
-        FROM nuhs_live_waits ORDER BY snapshot_timestamp DESC, site_name LIMIT 5000""")
+        SELECT snapshot_timestamp, site_name, department, patients_waiting, est_consult_wait_hours,
+               est_bed_wait_hours
+        FROM nuhs_live_waits ORDER BY snapshot_timestamp DESC, site_name, department LIMIT 5000""")
     out = build_excel_report({"MOH_Weekly_Summary": summary, "CHAS_Clinic_Directory": chas,
                               "NUHS_Live_Snapshots": live}, path)
     LOG.info("Report written to %s", out)

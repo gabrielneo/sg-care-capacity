@@ -86,13 +86,15 @@ data/raw/manifest.jsonl                            one line per fetch: source, u
 | `moh_ed_attendances` | hospital_name, report_date | Daily ED attendances |
 | `chas_clinics` | clinic_key (HCI code) | Name, address, postal code, lat/long, `has_cdmp`, programmes, `is_active` |
 | `has_clinics` | clinic_key | Clinics on the Health Appointment System, plus a `raw_json` copy of the source row |
-| `nuhs_live_waits` | site_name, snapshot_timestamp | Patients waiting, estimated consult and bed waits (hours) |
+| `nuhs_live_waits` | site_name, department, snapshot_timestamp | Patients waiting, estimated consult and bed waits (hours). `department` is the page section, e.g. "Adult Emergency" or "Children's Emergency": NUH appears in both. |
 | `singhealth_xray_waits` | site_name, snapshot_timestamp | X-ray queue wait (minutes) or CLOSED |
 | `singstat_tabledata` | table_id, row_label, column_path | Raw flattened SingStat cells |
 | `pop_65plus_by_area` | planning_area, year | Derived 65+ residents per planning area |
 | `raw_manifest` | seq | Every fetch, mirrored from `data/raw/manifest.jsonl` |
 
 **Lineage.** Every row of every table above except `raw_manifest` carries `source_url`, `source_sha256` and `ingested_at`, pointing at the raw file it came from. `ingested_at` is when that file was **fetched**. See [docs/data_dictionary.md](docs/data_dictionary.md) for definitions and caveats.
+
+If the code's schema changes, commands refuse to open an older warehouse (exit code 2) and ask you to run `sg-health reparse`, which rebuilds it from `data/raw`.
 
 All tables use `INSERT OR REPLACE` on their key, so re-running the pipeline never duplicates rows. An MOH file that is downloaded again unchanged (same sha256) is not parsed again. Clinic tables are full snapshots: rows missing from the latest download are kept, with `is_active = FALSE`. All timestamps are SGT.
 

@@ -30,10 +30,10 @@ DDL = [
         postal_code VARCHAR, latitude DOUBLE, longitude DOUBLE, raw_json VARCHAR,
         is_active BOOLEAN, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS nuhs_live_waits (
-        site_name VARCHAR NOT NULL, patients_waiting INTEGER, est_bed_wait_hours DOUBLE,
+        site_name VARCHAR NOT NULL, department VARCHAR NOT NULL, patients_waiting INTEGER, est_bed_wait_hours DOUBLE,
         est_consult_wait_hours DOUBLE, source_updated_at TIMESTAMP,
         snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
-        PRIMARY KEY (site_name, snapshot_timestamp))""",
+        PRIMARY KEY (site_name, department, snapshot_timestamp))""",
     """CREATE TABLE IF NOT EXISTS singhealth_xray_waits (
         site_group VARCHAR, site_name VARCHAR NOT NULL, wait_minutes INTEGER, status VARCHAR,
         snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
@@ -62,15 +62,49 @@ PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "has_cli
                  "pop_65plus_by_area")
 
 
-class Warehouse:
-    """A thin DuckDB layer: creates the schema and upserts idempotently."""
+class SchemaOutOfDate(RuntimeError):
+    """The warehouse file was built with an older schema than the code defines."""
 
-    def __init__(self, path: str | Path) -> None:
+
+def _table_sql(con, tables) -> dict[str, str]:
+    rows = con.execute("SELECT table_name, sql FROM duckdb_tables() WHERE table_name IN "
+                       f"({', '.join('?' for _ in tables)})", list(tables)).fetchall()
+    return dict(rows)
+
+
+class Warehouse:
+    """A thin DuckDB layer: creates the schema and upserts idempotently.
+
+    With ``check_schema`` (the default), opening a warehouse whose tables differ from DDL
+    raises SchemaOutOfDate: CREATE TABLE IF NOT EXISTS cannot change an existing table, so
+    loading into it would silently use the old columns and keys. `reparse` opens with
+    check_schema=False because it drops and recreates every table anyway.
+    """
+
+    def __init__(self, path: str | Path, check_schema: bool = True) -> None:
         import duckdb  # imported here so the parsers can be unit-tested without DuckDB
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.con = duckdb.connect(str(path))
         for stmt in DDL:
             self.con.execute(stmt)
+        if check_schema:
+            self._check_schema(duckdb)
+
+    def _check_schema(self, duckdb) -> None:
+        tables = (*PARSED_TABLES, "raw_manifest")
+        expected_con = duckdb.connect(":memory:")
+        try:
+            for stmt in DDL:
+                expected_con.execute(stmt)
+            expected = _table_sql(expected_con, tables)
+        finally:
+            expected_con.close()
+        stale = sorted(t for t, sql in _table_sql(self.con, tables).items() if sql != expected.get(t))
+        if stale:
+            self.con.close()
+            raise SchemaOutOfDate(
+                f"warehouse tables {stale} were built with an older schema. "
+                "Rebuild them from data/raw with: sg-health reparse")
 
     def _column_types(self, table: str) -> dict[str, str]:
         rows = self.con.execute(
