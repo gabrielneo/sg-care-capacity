@@ -126,17 +126,33 @@ sg-health run 2> run.log && grep '"source_summary"' run.log
 
 ## 6. Automation
 
-`.github/workflows/weekly_scraper.yml` runs every Sunday at 00:00 UTC (08:00 SGT) and can also be triggered manually. It runs the tests and the pipeline, then commits `data/singapore_healthcare.duckdb` and `reports/SG_Healthcare_Scrape_Report.xlsx` back to the repo.
+`.github/workflows/weekly_scraper.yml` runs every Sunday at 00:00 UTC (08:00 SGT) and can also be triggered manually. Nothing is committed back to the repo. `data/raw/` is kept between runs as `raw.tar.gz` on a rolling GitHub Release tagged `data-latest`:
+
+1. Run the tests.
+2. **Restore** `data/raw/` from the `data-latest` release. On the very first run there is no release yet, so it starts empty. If the release exists but the download fails, the job stops, so an empty `data/raw` can never overwrite history.
+3. **Rebuild** the warehouse with `sg-health reparse`.
+4. **Fetch** new data with `sg-health run`.
+5. **Check** that `manifest.jsonl` has at least as many lines as before; otherwise refuse to upload.
+6. **Upload** the grown `raw.tar.gz` to the release, replacing the old one. The Excel report is attached to the workflow run as an artifact (kept 30 days).
+
+The warehouse is rebuilt from `data/raw` on every run and is **not** published yet. Publishing a "last good snapshot" for the site waits until error-level data checks exist.
+
+To get the data locally:
+
+```bash
+gh release download data-latest --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data
+sg-health reparse
+```
 
 Setup:
 1. Push this folder to a GitHub repo.
-2. Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions**.
+2. Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions** (needed to create the release and upload the archive).
 3. Optional: add a `DATAGOV_API_KEY` secret and a `SINGSTAT_POP_TABLE_ID` repository variable.
-4. Open the **Actions** tab and run the workflow once manually to check it works.
+4. Open the **Actions** tab and run the workflow once manually to check it works. The first run creates the `data-latest` release.
 
-**Repo size:** committing a binary DuckDB file every week grows git history. This is fine for a portfolio (a few MB a year). If it gets large, use Git LFS for `*.duckdb`, or publish the DB as a release asset and commit Parquet exports instead.
+**Size:** the archive only grows. Unchanged files are stored once, so most weeks add only the new MOH workbooks and the live-page snapshots. A release asset can be up to 2 GB.
 
-**Live snapshots:** once a week gives you only one NUHS/QWatch reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. Have it write to a separate small DB or CSV, so the weekly snapshot doesn't churn.
+**Live snapshots:** once a week gives you only one NUHS/QWatch reading per week. For intraday patterns, add a second workflow that runs `--sources live` every 2–3 hours. It must share the `weekly-scraper` concurrency group, because both read and re-upload the same archive.
 
 ## 7. Historical backfill (Wayback Machine)
 

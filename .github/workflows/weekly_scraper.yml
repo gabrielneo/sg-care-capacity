@@ -1,5 +1,11 @@
 name: Weekly SG healthcare scrape
 
+# The raw landing zone (data/raw) is the pipeline's memory. It is gitignored, so between
+# runs it lives as raw.tar.gz on a rolling GitHub Release tagged `data-latest`.
+# Each run: restore data/raw -> rebuild the warehouse from it (reparse) -> fetch new data
+# -> upload the grown archive. The warehouse itself is rebuilt every run and is not
+# published here: publishing waits until error-level data checks exist (CLAUDE.md, principle 5).
+
 on:
   schedule:
     - cron: "0 0 * * 0"        # Sundays 00:00 UTC = 08:00 SGT
@@ -11,19 +17,22 @@ on:
         default: "moh,live,opendata,singstat"
 
 permissions:
-  contents: write               # needed to push the updated DuckDB snapshot
+  contents: write               # needed to create the release and upload the raw archive
 
 concurrency:
   group: weekly-scraper
-  cancel-in-progress: false     # never let two runs write the DB at the same time
+  cancel-in-progress: false     # never let two runs read and re-upload data/raw at the same time
+
+env:
+  RAW_RELEASE_TAG: data-latest
+  RAW_ASSET: raw.tar.gz
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DB_PATH: data/singapore_healthcare.duckdb
-      REPORT_PATH: reports/SG_Healthcare_Scrape_Report.xlsx
+      GH_TOKEN: ${{ github.token }}
       DATAGOV_API_KEY: ${{ secrets.DATAGOV_API_KEY }}          # optional
       SINGSTAT_POP_TABLE_ID: ${{ vars.SINGSTAT_POP_TABLE_ID }} # optional repo variable
       CRAWLER_USER_AGENT: >-
@@ -52,30 +61,58 @@ jobs:
       - name: Run tests
         run: pytest -q pipeline/tests
 
-      - name: Run pipeline
+      - name: Restore data/raw from the release
+        id: restore
         run: |
-          mkdir -p data reports
-          sg-health --db "$DB_PATH" --report "$REPORT_PATH" \
-            run --sources "${{ github.event.inputs.sources || 'moh,live,opendata,singstat' }}"
-
-      - name: Commit updated snapshot
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$DB_PATH" "$REPORT_PATH"
-          if git diff --cached --quiet; then
-            echo "No data changes this week."
-            exit 0
+          set -euo pipefail
+          mkdir -p data
+          if gh release view "$RAW_RELEASE_TAG" >/dev/null 2>&1; then
+            # The release exists, so the archive must download. Failing here is deliberate:
+            # carrying on with an empty data/raw would overwrite history on upload.
+            gh release download "$RAW_RELEASE_TAG" --pattern "$RAW_ASSET" --dir "$RUNNER_TEMP"
+            tar -xzf "$RUNNER_TEMP/$RAW_ASSET" -C data
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No $RAW_RELEASE_TAG release yet: starting with an empty data/raw."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
-          git commit -m "data: weekly scrape $(date -u +%Y-%m-%d)"
-          git pull --rebase --autostash
-          git push
+          before=$(grep -c . data/raw/manifest.jsonl 2>/dev/null || true)
+          echo "manifest_lines=${before:-0}" >> "$GITHUB_OUTPUT"
+          echo "Restored ${before:-0} manifest lines."
+
+      - name: Rebuild the warehouse from data/raw
+        run: sg-health reparse --no-report
+
+      - name: Run pipeline
+        run: sg-health run --sources "${{ github.event.inputs.sources || 'moh,live,opendata,singstat' }}"
+
+      - name: Check data/raw only grew
+        run: |
+          set -euo pipefail
+          after=$(grep -c . data/raw/manifest.jsonl 2>/dev/null || true)
+          before="${{ steps.restore.outputs.manifest_lines }}"
+          echo "manifest lines: before=$before after=${after:-0}"
+          if [ "${after:-0}" -lt "$before" ]; then
+            echo "::error::data/raw shrank ($before -> ${after:-0}); refusing to upload."
+            exit 1
+          fi
+
+      - name: Upload data/raw to the release
+        run: |
+          set -euo pipefail
+          tar -czf "$RUNNER_TEMP/$RAW_ASSET" -C data raw
+          if [ "${{ steps.restore.outputs.exists }}" != "true" ]; then
+            gh release create "$RAW_RELEASE_TAG" --latest=false \
+              --title "Raw landing zone (rolling)" \
+              --notes "data/raw from the weekly pipeline: every downloaded file, unchanged, plus manifest.jsonl. Replaced on every run. Restore with: tar -xzf raw.tar.gz -C data && sg-health reparse"
+          fi
+          gh release upload "$RAW_RELEASE_TAG" "$RUNNER_TEMP/$RAW_ASSET" --clobber
 
       - name: Upload report as a build artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sg-healthcare-report
-          path: ${{ env.REPORT_PATH }}
+          path: data/build/SG_Healthcare_Scrape_Report.xlsx
           if-no-files-found: ignore
           retention-days: 30

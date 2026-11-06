@@ -18,10 +18,6 @@ data/raw/*
 data/build/*
 !data/build/.gitkeep
 
-# Legacy (until the weekly workflow publishes to a GitHub Release instead):
-# CI still commits data/singapore_healthcare.duckdb and reports/SG_Healthcare_Scrape_Report.xlsx.
-# A local DB or report next to the script is not committed.
+# Local outputs written next to the code by older versions of the pipeline
 /singapore_healthcare.duckdb
 /SG_Healthcare_Scrape_Report.xlsx
-/pipeline/singapore_healthcare.duckdb
-/pipeline/SG_Healthcare_Scrape_Report.xlsx
