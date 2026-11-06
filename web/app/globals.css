@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Mirrors lib/palette.ts exactly (a test compares them). Tailwind's default colour
+ * palette is switched off, so only these colours exist: neutral greys, one accent, status
+ * colours (always paired with a text label) and the map's Viridis scale.
+ */
+@theme {
+  --color-*: initial;
+  --color-page: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-ink: #0F172A;
+  --color-muted: #475569;
+  --color-line: #CBD5E1;
+  --color-accent: #0F766E;
+  --color-accent-strong: #115E59;
+  --color-accent-soft: #F0FDFA;
+  --color-ok: #166534;
+  --color-ok-soft: #F0FDF4;
+  --color-warn: #92400E;
+  --color-warn-soft: #FFFBEB;
+  --color-bad: #991B1B;
+  --color-bad-soft: #FEF2F2;
+  --color-map-1: #FDE725;
+  --color-map-2: #5EC962;
+  --color-map-3: #21918C;
+  --color-map-4: #3B528B;
+  --color-map-5: #440154;
+  --color-map-none: #E2E8F0;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    background: var(--color-page);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+  a {
+    color: var(--color-accent);
+    text-underline-offset: 3px;
+  }
+  /* Visible keyboard focus everywhere (WCAG 2.4.7): accent ring, 3:1 against the page. */
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* "No data" on the map: hatched, so it can never be read as the lowest class. */
+.bg-nodata {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--color-map-none) 0 4px,
+    var(--color-surface) 4px 8px
+  );
+}
