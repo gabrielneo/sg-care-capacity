@@ -48,7 +48,7 @@ function ChangeLine({ change }: { change: KpiChange }) {
 export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, cadence, now }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
-    <div className="rounded-lg border border-line bg-surface p-4 shadow-sm">
+    <div data-testid="kpi-tile" className="rounded-lg border border-line bg-surface p-4 shadow-sm">
       <p className="text-sm font-medium text-muted">{label}</p>
       {problems.length ? (
         <div className="mt-2">

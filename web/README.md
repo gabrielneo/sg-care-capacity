@@ -4,8 +4,25 @@ The website for *Right-siting care in a super-aged Singapore*. It's built with N
 Router), TypeScript in strict mode and Tailwind.
 
 The site reads only from the [API](../api/README.md), and only on the server. The browser never
-calls the API, so the site needs no CORS settings. The chart pages aren't built yet: this is the
-shell, the components and the typed client.
+calls the API, so the site needs no CORS settings. Data Quality, Methodology and Case Study are
+still placeholders.
+
+## Pages
+
+| Page | What it shows |
+|---|---|
+| **Overview** `/` | The latest **complete** week: a plain-English summary built from the numbers by fixed rules, not an LLM (`lib/summary.ts`). Plus the attendance total against the 4-week average, the number of hospitals above their 4-week average wait (out of those that have one), and one tile per hospital. Waits are labelled "average of daily medians" |
+| **ED Trends** `/ed-trends` | Daily median wait by hospital, the day-of-week pattern, and wait against attendances (Recharts). Hospitals and dates are chosen in a plain GET form, so URLs can be shared. A **missing day is a gap in the line, never joined**, and each chart counts the gaps. Tooltips give the exact date and units. AH = urgent care centre, NUH = adults only |
+| **Access Map** `/access-map` | Choropleth by planning area (Leaflet) with a metric switcher. Clinic points can be limited to CDMP. Click an area, or tab to it and press Enter, to open a side panel. The legend uses **quantile** classes and states the method. A **Table** view shows the same data |
+| **Live** `/live` | The latest NUHS readings, each labelled "Estimate from NUHS public page, at {time} SGT". They come from the weekly snapshot, not a live feed |
+
+Each page has a loading skeleton (`loading.tsx`), an empty state and an error state, and renders on
+request. The API's responses are cached for an hour.
+
+**Map basemap:** [OneMap](https://www.onemap.gov.sg/docs/maps/) Grey, from the Singapore Land
+Authority. OneMap's terms require its logo and attribution. Both are reproduced exactly from
+OneMap's own snippet in `components/map/LeafletMap.tsx`, and an end-to-end test checks they show.
+The tiles are the only content the browser loads from outside the site.
 
 ## Run it
 
@@ -38,6 +55,7 @@ live API, so it's also a quick check that everything is wired up.
 | `npm run lint` | ESLint (Next's core-web-vitals and TypeScript rules) |
 | `npm run typecheck` | Next's route types, then `tsc --noEmit` in strict mode |
 | `npm test` | Vitest and Testing Library |
+| `npm run e2e` | Playwright end to end (see below). First time: `npm run e2e:install` |
 | `npm run gen:api` | Regenerate `lib/api/schema.d.ts` from `../api/openapi.json` |
 | `npm run check:api-types` | Regenerate, then fail if the result differs from the committed file (this runs in CI) |
 
@@ -115,6 +133,35 @@ them as SGT, so a date-only value isn't mistaken for UTC midnight.
 - **Mobile first:** the layout starts at 375 px. The nav scrolls sideways on narrow screens, so
   there's no hidden menu, and its links are 44 px tap targets. Fonts are system fonts, so nothing
   is downloaded from a third party.
+
+## End-to-end tests (Playwright)
+
+`npm run e2e` starts three things:
+- the **real API** on its fixture snapshot (`api/tests/fixture_snapshot.py`), so the data is
+  fixed and known;
+- the **production build** of the site;
+- a second copy of the site pointed at an API that isn't running, for the error states.
+
+Every test runs at **1280 px** and at **375 px** with touch. Map tiles are blocked, so nothing
+depends on the network. The tests cover:
+- **Every chart card and KPI tile shows a visible "Data as of {date}" and a source.** I confirmed
+  this fails when one tile's footer is removed.
+- Exact figures from the fixture, for example "ranged from 2.0 hours at Alexandra Hospital (an
+  urgent care centre) to 5.0 hours at Singapore General Hospital".
+- Gaps counted on ED Trends, the hospital filter, the empty state, and the API's 2-year error.
+- Tooltips by hover, and by tap on touch screens.
+- Map: the metric switcher, the CDMP filter, opening the panel from the keyboard, the table and
+  its sorting, and the OneMap attribution.
+- Live: readings labelled with their own times.
+- An error and no figures on every data page when the API is down.
+- The navigation, skip link and the production 404 for `/dev/components`.
+- **axe WCAG 2.1 A/AA** on every page, and no sideways scrolling at 375 px.
+
+Running these tests uncovered real problems, now fixed:
+- a link told apart by colour only;
+- a 200 status instead of 404 for a hidden page, caused by streaming from a root `loading.tsx`;
+- a 445 px-wide control on the map at 375 px;
+- legend text read by screen readers without spaces.
 
 ## Known issue
 

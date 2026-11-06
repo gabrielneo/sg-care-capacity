@@ -90,7 +90,10 @@ def test_ci_runs_on_pull_requests_and_pushes_to_main_with_lint_types_and_tests()
     assert "duckdb" in text and "parquet" in text                       # binary data guard
     for job in ("pipeline:", "api:", "web:"):
         assert f"\n  {job}" in text
-    web = text.split("\n  web:", 1)[1]
+    e2e = text.split("\n  e2e:", 1)[1]
+    for cmd in ("pip install -e ../api", "npx playwright install --with-deps chromium", "npm run e2e"):
+        assert cmd in e2e
+    web = text.split("\n  web:", 1)[1].split("\n  e2e:", 1)[0]
     for cmd in ("npm ci", "npm run check:api-types", "npm run lint", "npm run typecheck", "npm test", "npm run build"):
         assert cmd in web
 

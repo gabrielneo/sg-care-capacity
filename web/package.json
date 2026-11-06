@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:api": "openapi-typescript ../api/openapi.json -o lib/api/schema.d.ts",
-    "check:api-types": "npm run gen:api && git diff --exit-code -- lib/api/schema.d.ts"
+    "check:api-types": "npm run gen:api && git diff --exit-code -- lib/api/schema.d.ts",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
     "leaflet": "1.9.4",

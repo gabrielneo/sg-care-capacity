@@ -41,8 +41,11 @@
     font-family: var(--font-sans);
     line-height: 1.6;
   }
+  /* Links are underlined unless a component opts out (nav, tabs, cards): colour alone must not
+     be the only cue (WCAG 1.4.1). */
   a {
     color: var(--color-accent);
+    text-decoration-line: underline;
     text-underline-offset: 3px;
   }
   /* Visible keyboard focus everywhere (WCAG 2.4.7): accent ring, 3:1 against the page. */

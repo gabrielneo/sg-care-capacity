@@ -26,7 +26,7 @@ export function ChartCard({ title, meta, children, description, caveat, cadence,
   const id = `chart-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
   return (
-    <section aria-labelledby={id} className="rounded-lg border border-line bg-surface p-4 shadow-sm">
+    <section aria-labelledby={id} data-testid="chart-card" className="rounded-lg border border-line bg-surface p-4 shadow-sm">
       <h2 id={id} className="text-base font-semibold text-ink">
         {title}
       </h2>

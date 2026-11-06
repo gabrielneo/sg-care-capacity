@@ -11,6 +11,7 @@ export interface SeriesInfo {
 }
 
 export const CHART_HEIGHT = 320;
+
 export const AXIS = { stroke: "#475569", fontSize: 12 } as const;
 export const GRID = "#E2E8F0";
 

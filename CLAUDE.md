@@ -86,5 +86,7 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 # build:        cd web && npm run build && npm start
 # lint/type:    cd web && npm run lint && npm run typecheck
 # tests:        cd web && npm test             # Vitest + Testing Library
+# e2e:          cd web && npm run e2e          # Playwright: real API on its fixture snapshot; 1280 + 375 px; axe (make e2e)
+#               first time: cd web && npm run e2e:install
 # api types:    cd web && npm run gen:api      # after api/openapi.json changes; CI fails if stale
 ```

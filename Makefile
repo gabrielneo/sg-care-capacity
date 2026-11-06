@@ -6,6 +6,7 @@
 #   make test-api          API tests (fixture snapshot, contract, openapi.json drift)
 #   make test-web          web tests (Vitest); needs `npm ci` in web/ once
 #   make test-acceptance   real built data (skips if data/build/warehouse.duckdb isn't built)
+#   make e2e               Playwright end to end (real API on its fixture snapshot; builds the site)
 #   make lint              ruff and mypy (pipeline, api); eslint and tsc (web)
 #   make check             lint, then test (what CI runs, minus the Docker smoke test)
 
@@ -14,7 +15,7 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 # repo path may contain spaces). A bare command such as python3 is left to PATH.
 RUN = $(if $(filter /%,$(PYTHON)),"$(PYTHON)",$(if $(findstring /,$(PYTHON)),"$(CURDIR)/$(PYTHON)",$(PYTHON)))
 
-.PHONY: test test-pipeline test-api test-web test-acceptance lint check
+.PHONY: test test-pipeline test-api test-web test-acceptance e2e lint check
 
 test: test-pipeline test-api test-web test-acceptance
 
@@ -26,6 +27,9 @@ test-api:
 
 test-web:
 	cd web && npm test
+
+e2e:
+	cd web && npm run e2e
 
 test-acceptance:
 	$(PYTHON) -m pytest -q pipeline/acceptance
