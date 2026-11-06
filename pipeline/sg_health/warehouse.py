@@ -43,6 +43,17 @@ DDL = [
         seq INTEGER PRIMARY KEY, source VARCHAR NOT NULL, url VARCHAR NOT NULL,
         sha256 VARCHAR NOT NULL, bytes BIGINT NOT NULL, http_status INTEGER,
         content_type VARCHAR, fetched_at TIMESTAMP NOT NULL, path VARCHAR NOT NULL)""",
+    # Data quality (see docs/data_quality.md). dq_findings holds the current findings of the
+    # load gate (rebuilt by reparse); dq_results is the append-only log of `validate` runs.
+    """CREATE TABLE IF NOT EXISTS dq_findings (
+        table_name VARCHAR NOT NULL, check_id VARCHAR NOT NULL, severity VARCHAR NOT NULL,
+        scope VARCHAR NOT NULL, row_key VARCHAR, failing_rows INTEGER NOT NULL, detail VARCHAR,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS dq_results (
+        check_id VARCHAR NOT NULL, "table" VARCHAR NOT NULL, severity VARCHAR NOT NULL,
+        status VARCHAR NOT NULL, failing_rows INTEGER NOT NULL, details VARCHAR,
+        run_id VARCHAR NOT NULL, checked_at TIMESTAMP NOT NULL, scope VARCHAR NOT NULL,
+        blocks_publish BOOLEAN NOT NULL, PRIMARY KEY (run_id, check_id, "table"))""",
 ]
 
 # Lineage columns carried by every parsed row (see docs/data_dictionary.md).
@@ -53,6 +64,32 @@ PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_li
                  "singstat_tabledata", "pop_65plus_by_area")
 # Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
 RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits")
+
+# Primary key of every table that goes through the data-quality gate. Each one gets a
+# quarantine_<table> with the same columns (as VARCHAR, so any rejected value fits).
+TABLE_KEYS: dict[str, tuple[str, ...]] = {
+    "moh_bed_waits": ("hospital_name", "report_date"),
+    "moh_ed_attendances": ("hospital_name", "report_date"),
+    "chas_clinics": ("clinic_key",),
+    "nuhs_live_waits": ("site_name", "department", "snapshot_timestamp"),
+    "singstat_tabledata": ("table_id", "row_label", "column_path"),
+    "pop_65plus_by_area": ("planning_area", "year"),
+}
+QUARANTINE_TABLES = tuple(f"quarantine_{t}" for t in TABLE_KEYS)
+# Everything `reparse` drops and rebuilds from data/raw. dq_results (a log) is kept.
+REBUILT_TABLES = (*PARSED_TABLES, *QUARANTINE_TABLES, "dq_findings", "raw_manifest")
+
+
+def _create_schema(con) -> None:
+    """Run DDL, then derive each quarantine table from its clean table's columns."""
+    for stmt in DDL:
+        con.execute(stmt)
+    for table in TABLE_KEYS:
+        cols = con.execute("SELECT column_name FROM information_schema.columns WHERE table_name = ? "
+                           "ORDER BY ordinal_position", [table]).fetchall()
+        body = ", ".join(f'"{c}" VARCHAR' for (c,) in cols)
+        con.execute(f"CREATE TABLE IF NOT EXISTS quarantine_{table} (row_key VARCHAR NOT NULL, "
+                    f"check_ids VARCHAR NOT NULL, details VARCHAR, {body})")
 
 
 class SchemaOutOfDate(RuntimeError):
@@ -78,17 +115,15 @@ class Warehouse:
         import duckdb  # imported here so the parsers can be unit-tested without DuckDB
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         self.con = duckdb.connect(str(path))
-        for stmt in DDL:
-            self.con.execute(stmt)
+        _create_schema(self.con)
         if check_schema:
             self._check_schema(duckdb)
 
     def _check_schema(self, duckdb) -> None:
-        tables = (*PARSED_TABLES, "raw_manifest")
+        tables = (*REBUILT_TABLES, "dq_results")
         expected_con = duckdb.connect(":memory:")
         try:
-            for stmt in DDL:
-                expected_con.execute(stmt)
+            _create_schema(expected_con)
             expected = _table_sql(expected_con, tables)
         finally:
             expected_con.close()
@@ -100,11 +135,61 @@ class Warehouse:
                 f"warehouse tables {stale} were built with an older schema. "
                 "Rebuild them from data/raw with: sg-health reparse")
 
-    def _column_types(self, table: str) -> dict[str, str]:
+    def column_types(self, table: str) -> dict[str, str]:
         rows = self.con.execute(
-            "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ?",
-            [table]).fetchall()
+            "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ? "
+            "ORDER BY ordinal_position", [table]).fetchall()
         return {name: dtype for name, dtype in rows}
+
+    _column_types = column_types
+
+    def not_null_columns(self, table: str) -> list[str]:
+        rows = self.con.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = ? "
+            "AND is_nullable = 'NO' ORDER BY ordinal_position", [table]).fetchall()
+        return [r[0] for r in rows]
+
+    # -- data-quality state, written by quality.gate ------------------------ #
+    def replace_batch_state(self, table: str, batch_keys: pd.DataFrame, rec: RawRecord) -> None:
+        """Forget earlier findings/quarantine rows for these keys, and earlier file-level findings."""
+        self.con.register("_batch_keys", batch_keys)
+        try:
+            self.con.execute("DELETE FROM dq_findings WHERE table_name = ? AND scope = 'row' "
+                             "AND row_key IN (SELECT row_key FROM _batch_keys)", [table])
+            self.con.execute(f"DELETE FROM quarantine_{table} WHERE row_key IN (SELECT row_key FROM _batch_keys)")
+        finally:
+            self.con.unregister("_batch_keys")
+        self.con.execute("DELETE FROM dq_findings WHERE table_name = ? AND scope <> 'row'", [table])
+
+    def insert_quarantine(self, table: str, rows: pd.DataFrame) -> int:
+        """Store rejected rows as text, exactly as parsed (None stays NULL)."""
+        cols = [c for c in self.column_types(f"quarantine_{table}") if c in rows.columns]
+        text = rows[cols].astype(object).where(rows[cols].notna(), None)
+        text = text.map(lambda v: None if v is None else str(v))
+        col_list = ", ".join(f'"{c}"' for c in cols)
+        self.con.register("_q", text)
+        try:
+            self.con.execute(f"INSERT INTO quarantine_{table} ({col_list}) SELECT {col_list} FROM _q")
+        finally:
+            self.con.unregister("_q")
+        return len(text)
+
+    def insert_findings(self, findings: list, rec: RawRecord) -> int:
+        if not findings:
+            return 0
+        from .quality.model import key_json
+        df = pd.DataFrame([{
+            "table_name": f.table, "check_id": f.check_id, "severity": f.check.severity.value,
+            "scope": f.check.scope.value, "row_key": key_json(f.row_key) if f.row_key else None,
+            "failing_rows": int(f.extra.get("failing_rows", 1)), "detail": f.detail,
+            "source_url": rec.url, "source_sha256": rec.sha256} for f in findings])
+        self.con.register("_f", df)
+        try:
+            self.con.execute("INSERT INTO dq_findings SELECT table_name, check_id, severity, scope, row_key, "
+                             "failing_rows, detail, source_url, source_sha256 FROM _f")
+        finally:
+            self.con.unregister("_f")
+        return len(df)
 
     def upsert(self, table: str, df: pd.DataFrame, keys: list[str]) -> int:
         """INSERT OR REPLACE on the primary key. Re-running never creates duplicate rows."""
@@ -130,23 +215,32 @@ class Warehouse:
         return self.upsert("raw_manifest", df, ["seq"])
 
     def reset(self) -> None:
-        """Drop and recreate every table (parsed tables and raw_manifest), on the current schema.
+        """Drop and recreate every table rebuilt from data/raw, on the current schema.
 
         Used by `reparse`. Dropping rather than deleting also picks up schema changes.
+        dq_results is a log of past validation runs and is kept.
         """
-        for table in (*PARSED_TABLES, *RETIRED_TABLES, "raw_manifest"):
+        for table in (*REBUILT_TABLES, *RETIRED_TABLES):
             self.con.execute(f"DROP TABLE IF EXISTS {table}")
-        for stmt in DDL:
-            self.con.execute(stmt)
+        _create_schema(self.con)
 
     def snapshot(self, table: str) -> pd.DataFrame:
         """Every row of ``table`` in a stable order (all columns), for comparing two builds."""
         cols = ", ".join(f'"{c}"' for c in self._column_types(table))
         return self.query(f"SELECT * FROM {table} ORDER BY {cols}")
 
-    def mark_inactive(self, table: str) -> None:
-        """Before loading a full snapshot, flag every row inactive; the reload re-activates current ones."""
-        self.con.execute(f"UPDATE {table} SET is_active = FALSE")
+    def mark_inactive(self, table: str, key: str, present: Iterable[str]) -> None:
+        """Before loading a full snapshot, flag rows inactive if their key is NOT in the snapshot.
+
+        ``present`` is every key in the new snapshot, including rows the gate quarantined: a
+        quarantined clinic is still listed upstream, so its last good row must stay active
+        rather than look closed.
+        """
+        self.con.register("_present", pd.DataFrame({"k": list(present)}))
+        try:
+            self.con.execute(f'UPDATE {table} SET is_active = FALSE WHERE "{key}" NOT IN (SELECT k FROM _present)')
+        finally:
+            self.con.unregister("_present")
 
     def query(self, sql: str) -> pd.DataFrame:
         return self.con.execute(sql).df()

@@ -73,7 +73,7 @@ def test_reparse_logs_a_summary_for_every_loader(monkeypatch, paths, capsys):
     assert all(line["command"] == "reparse" for line in lines)
 
 
-def test_moh_parser_counts_unparseable_and_duplicate_cells():
+def test_moh_parser_counts_unparseable_and_blank_cells():
     import io
     from openpyxl import Workbook
     wb = Workbook()
@@ -88,9 +88,11 @@ def test_moh_parser_counts_unparseable_and_duplicate_cells():
     stats = ParseStats()
     df = parse_moh_workbook(buf.getvalue(), "bed_waits", stats=stats)
     assert stats.rows_read == 8
-    # "not a time" can't be read; the empty cell is blank; SGH 26/10 appears on both sheets
-    assert stats.drop_reasons == {"unparseable_value": 1, "blank": 1, "duplicate_key": 1}
-    assert len(df) == stats.rows_read - stats.dropped == 5
+    # "not a time" can't be read; the empty cell is blank. SGH 26/10 appears on both sheets with
+    # different values: the parser keeps both and leaves the decision to the data-quality gate.
+    assert stats.drop_reasons == {"unparseable_value": 1, "blank": 1}
+    assert len(df) == stats.rows_read - stats.dropped == 6
+    assert df.duplicated(["hospital_code", "report_date"]).sum() == 1
 
 
 def test_moh_parser_stats_on_the_shared_fixture():

@@ -20,8 +20,10 @@ from .parsers.datagov import normalize_clinics, parse_datagov_payload
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
 from .parsers.singstat import derive_pop65, parse_singstat_tabledata, title_year
+from .quality import rules  # noqa: F401  (registers the table rules with the gate)
+from .quality.gate import GateContext, gate
 from .raw import RawRecord, RawStore
-from .warehouse import Warehouse
+from .warehouse import TABLE_KEYS, Warehouse
 
 LOG = logging.getLogger(__name__)
 
@@ -65,6 +67,15 @@ def _upsert(wh: Warehouse, table: str, df: pd.DataFrame, keys: list[str], stats:
     return n
 
 
+def _gated(wh: Warehouse, table: str, df: pd.DataFrame, rec: RawRecord, stats: ParseStats) -> pd.DataFrame:
+    """Add lineage and run the data-quality gate. Returns only the rows that may be stored."""
+    return gate(_with_lineage(df, rec), GateContext(wh, table, list(TABLE_KEYS[table]), rec, stats))
+
+
+def _load(wh: Warehouse, table: str, df: pd.DataFrame, rec: RawRecord, stats: ParseStats) -> int:
+    return _upsert(wh, table, _gated(wh, table, df, rec, stats), list(TABLE_KEYS[table]), stats)
+
+
 # --------------------------------------------------------------------------- #
 # One function per source
 # --------------------------------------------------------------------------- #
@@ -78,7 +89,7 @@ def _moh_loader(metric: str) -> LoaderFn:
             stats.files_skipped["not_a_workbook"] += 1
             return 0
         df = parse_moh_workbook(content, metric, source_file=rec.url.rsplit("/", 1)[-1], stats=stats)
-        n = _upsert(wh, table, _with_lineage(df, rec), ["hospital_name", "report_date"], stats)
+        n = _load(wh, table, df, rec, stats)
         if n:
             LOG.debug("MOH %s: %d rows (%s to %s) from %s", metric, n,
                       df["report_date"].min(), df["report_date"].max(), rec.url)
@@ -96,8 +107,7 @@ def load_nuhs_live(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSt
     snap = rec.fetched_at.replace(second=0)
     df["snapshot_timestamp"] = df["source_updated_at"].fillna(snap) \
         if "source_updated_at" in df else snap
-    return _upsert(wh, "nuhs_live_waits", _with_lineage(df, rec),
-                   ["site_name", "department", "snapshot_timestamp"], stats)
+    return _load(wh, "nuhs_live_waits", df, rec, stats)
 
 
 def _clinic_loader(label: str, table: str) -> LoaderFn:
@@ -108,8 +118,12 @@ def _clinic_loader(label: str, table: str) -> LoaderFn:
             LOG.warning("data.gov.sg %s: no clinics parsed (columns: %s)", label, list(raw.columns)[:15])
             return 0
         df["is_active"] = True
-        wh.mark_inactive(table)   # full snapshot: rows missing from it stay, flagged inactive
-        return _upsert(wh, table, _with_lineage(df, rec), ["clinic_key"], stats)
+        present = df["clinic_key"].dropna().astype(str).unique()
+        clean = _gated(wh, table, df, rec, stats)
+        # Full snapshot: clinics missing from it stay, flagged inactive. Quarantined clinics are
+        # in the snapshot, so their last good row (if any) stays active.
+        wh.mark_inactive(table, "clinic_key", present)
+        return _upsert(wh, table, clean, ["clinic_key"], stats)
     return load
 
 
@@ -125,15 +139,16 @@ def load_singstat(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSta
         return 0
     m = re.search(r"/tabledata/([^/?#]+)", rec.url)
     table_id = m.group(1) if m else rec.url
-    flat = _with_lineage(parse_singstat_tabledata(payload, table_id, stats=stats), rec)
+    flat = _gated(wh, "singstat_tabledata", parse_singstat_tabledata(payload, table_id, stats=stats), rec, stats)
     n = _upsert(wh, "singstat_tabledata", flat, ["table_id", "row_label", "column_path"], stats)
-    pop = derive_pop65(flat, title_year(payload))
+    pop = derive_pop65(flat, title_year(payload))      # from clean cells only
     if not pop.empty:
         pop["source_table"] = table_id
         no_year = int(pop["year"].isna().sum())
         if no_year:   # derived rows we cannot place in a year are not stored
             LOG.warning("SingStat %s: %d planning-area rows have no year, not stored", table_id, no_year)
-        pop = _with_lineage(pop.dropna(subset=["year"]), rec)
+        derived = ParseStats()
+        pop = _gated(wh, "pop_65plus_by_area", pop.dropna(subset=["year"]), rec, derived)
         stats.derived["pop_65plus_by_area"] += wh.upsert("pop_65plus_by_area", pop, ["planning_area", "year"])
     return n
 

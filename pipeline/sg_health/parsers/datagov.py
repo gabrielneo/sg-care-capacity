@@ -94,8 +94,6 @@ def normalize_clinics(raw: pd.DataFrame, stats: Optional[ParseStats] = None) -> 
         return df
     named = df["clinic_name"].notna()
     count_drop(stats, "missing_name", int((~named).sum()))
-    df = df[named]
-    before = len(df)
-    df = df.drop_duplicates(subset=["clinic_key"], keep="last").reset_index(drop=True)
-    count_drop(stats, "duplicate_key", before - len(df))
-    return df
+    # Duplicate clinic_keys are kept: the data-quality gate merges identical copies and
+    # quarantines conflicting ones.
+    return df[named].reset_index(drop=True)

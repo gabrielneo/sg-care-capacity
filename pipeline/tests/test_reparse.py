@@ -9,14 +9,14 @@ import pytest
 
 from sg_health import cli
 from sg_health.raw import RawStore
-from sg_health.warehouse import PARSED_TABLES, Warehouse
+from sg_health.warehouse import REBUILT_TABLES, Warehouse
 
 from conftest import CHAS_V2, source_routes
 from test_ingest import full_run
 
 pytest.importorskip("duckdb")
 
-ALL_TABLES = (*PARSED_TABLES, "raw_manifest")
+ALL_TABLES = REBUILT_TABLES   # clean, quarantine, dq_findings, raw_manifest
 
 
 def snapshots(db) -> dict[str, pd.DataFrame]:

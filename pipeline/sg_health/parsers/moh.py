@@ -180,9 +180,8 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
     count_drop(stats, "blank", blank)                       # e.g. a hospital before its ED opened
     count_drop(stats, "unparseable_value", unparseable)
     out = out.dropna(subset=[value_col])
-    before = len(out)
-    out = out.drop_duplicates(subset=["hospital_code", "report_date"], keep="last")
-    count_drop(stats, "duplicate_key", before - len(out))   # same hospital and date twice in one file
+    # Duplicate (hospital, date) pairs are kept: the data-quality gate decides (identical copies
+    # are merged, conflicting ones quarantined) instead of the parser silently picking one.
     out["hospital_name"] = out["hospital_code"].map(lambda c: HOSPITALS[c][0])
     out["source_file"] = source_file
     return out[["hospital_code", "hospital_name", "report_date", value_col, "source_file"]] \
