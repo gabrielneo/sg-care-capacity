@@ -72,6 +72,14 @@ describe("summaryParagraph", () => {
       "No hospital has a complete week of MOH data in this snapshot yet, so there is nothing to summarise.");
   });
 
+  it("names the hospital when only one can be compared", () => {
+    const rows = [row("AH", "Alexandra Hospital (UCC)", 2, null, 700, null), row("SGH", "Singapore General Hospital", 5, 4, 3150, 2800)];
+    expect(summaryParagraph(weekKpis(rows))).toContain(
+      "The one hospital with a comparison, Singapore General Hospital, was above its previous 4-week average.");
+    const down = [row("SGH", "Singapore General Hospital", 3, 4, 3150, 2800)];
+    expect(summaryParagraph(weekKpis(down))).toContain("was not above its previous 4-week average.");
+  });
+
   it("says when nothing can be compared", () => {
     const text = summaryParagraph(weekKpis([row("SGH", "Singapore General Hospital", 7, null, 3000, null)]));
     expect(text).toContain("was 7.0 hours at Singapore General Hospital.");

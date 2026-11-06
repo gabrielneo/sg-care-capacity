@@ -107,7 +107,10 @@ export function summaryParagraph(k: WeekKpis, hospitalList: Hospital[] = []): st
   }
   const { count: n, outOf: m } = k.above;
   if (m === 0) out.push("No hospital had four complete earlier weeks to compare with.");
-  else if (n === 0) out.push(`None of the ${m} hospitals with a comparison was above its previous 4-week average.`);
+  else if (m === 1) {
+    const only = k.current.find((h) => h.waitChangePct != null);
+    out.push(`The one hospital with a comparison${only ? `, ${only.name},` : ""} was ${n === 1 ? "above" : "not above"} its previous 4-week average.`);
+  } else if (n === 0) out.push(`None of the ${m} hospitals with a comparison was above its previous 4-week average.`);
   else out.push(`${n} of ${m} hospitals ${n === 1 ? "was" : "were"} above ${n === 1 ? "its" : "their"} previous 4-week average.`);
   const a = k.attendances;
   if (a.total != null) {
