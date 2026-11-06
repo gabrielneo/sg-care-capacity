@@ -9,10 +9,10 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }));
 import { Nav } from "./Nav";
 
 describe("Nav", () => {
-  it("lists the six sections in order", () => {
+  it("lists the sections in order", () => {
     render(<Nav />);
     expect(screen.getAllByRole("link").map((a) => a.textContent)).toEqual([
-      "Overview", "ED Trends", "Access Map", "Data Quality", "Methodology", "Case Study"]);
+      "Overview", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
     expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
   });
 
