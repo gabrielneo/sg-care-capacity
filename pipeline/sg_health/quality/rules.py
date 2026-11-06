@@ -150,3 +150,47 @@ def _stored_bed_waits(ctx: GateContext, df: pd.DataFrame):
         return None
     stored["report_date"] = pd.to_datetime(stored["report_date"]).dt.date
     return stored
+
+
+# --------------------------------------------------------------------------- #
+# Clinics
+# --------------------------------------------------------------------------- #
+
+SG_LAT = (1.15, 1.48)            # Singapore's bounding box, including the southern islands
+SG_LON = (103.6, 104.1)
+CLINIC_COUNT_TOLERANCE = 0.10    # snapshot-to-snapshot change in clinic count that is unremarkable
+
+COORDS_IN_SG = register(
+    "clinic.coordinates_in_singapore", Severity.ERROR, Scope.ROW,
+    f"latitude {SG_LAT[0]}-{SG_LAT[1]}, longitude {SG_LON[0]}-{SG_LON[1]}")
+POSTAL_6_DIGITS = register(
+    "clinic.postal_code_6_digits", Severity.WARN, Scope.ROW,
+    "postal_code is exactly 6 digits")
+COUNT_VS_PREVIOUS = register(
+    "clinic.count_vs_previous", Severity.WARN, Scope.FILE,
+    f"Clinic count within {CLINIC_COUNT_TOLERANCE:.0%} of the previous snapshot")
+
+
+@rule("chas_clinics")
+def clinic_location(df: pd.DataFrame, ctx: GateContext):
+    lat = pd.to_numeric(df["latitude"], errors="coerce")
+    lon = pd.to_numeric(df["longitude"], errors="coerce")
+    inside = lat.between(*SG_LAT) & lon.between(*SG_LON)        # missing coordinates fail too
+    text = "lat " + lat.astype(str) + ", lon " + lon.astype(str) + " is outside Singapore"
+    postal = df["postal_code"].astype("string")
+    bad_postal = ~postal.str.fullmatch(r"\d{6}").fillna(False)
+    return [(COORDS_IN_SG.check_id, ~inside, text),
+            (POSTAL_6_DIGITS.check_id, bad_postal, "postal_code " + postal.fillna("<missing>") + " is not 6 digits")]
+
+
+@rule("chas_clinics")
+def clinic_count(df: pd.DataFrame, ctx: GateContext):
+    # Runs before the snapshot marks missing clinics inactive, so "active" = the previous snapshot.
+    prev = ctx.wh.con.execute("SELECT count(*) FROM chas_clinics WHERE is_active").fetchall()[0][0]
+    new = int(df["clinic_key"].nunique())
+    if not prev:
+        return []                                                    # first snapshot: nothing to compare
+    change = (new - prev) / prev
+    n = 1 if abs(change) > CLINIC_COUNT_TOLERANCE else 0
+    return [(COUNT_VS_PREVIOUS.check_id, n,
+             f"{new} clinics vs {prev} in the previous snapshot ({change:+.1%})")]

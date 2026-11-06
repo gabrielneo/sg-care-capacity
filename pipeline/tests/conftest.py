@@ -90,15 +90,16 @@ NUHS_HTML = b"""<h2>Emergency Department</h2><table>
  <p>Last updated at 18 May 2026, 09:30:04 AM.</p>"""
 
 
-def chas_geojson(clinics: list[tuple[str, str, str]]) -> bytes:
-    """clinics: (hci_code, name, programmes)."""
+def chas_geojson(clinics: list[tuple], postal: str = "629117") -> bytes:
+    """clinics: (hci_code, name, programmes[, (lon, lat)])."""
     feats = []
-    for hci, name, prog in clinics:
+    for hci, name, prog, *where in clinics:
+        lon, lat = where[0] if where else (103.68, 1.33)
         desc = (f"<table><tr><th>HCI_CODE</th><td>{hci}</td></tr><tr><th>HCI_NAME</th><td>{name}</td></tr>"
-                f"<tr><th>POSTAL_CD</th><td>629117</td></tr>"
+                f"<tr><th>POSTAL_CD</th><td>{postal}</td></tr>"
                 f"<tr><th>CLINIC_PROGRAMME_CODE</th><td>{prog}</td></tr></table>")
         feats.append({"type": "Feature", "properties": {"Name": "kml_1", "Description": desc},
-                      "geometry": {"type": "Point", "coordinates": [103.68, 1.33]}})
+                      "geometry": {"type": "Point", "coordinates": [lon, lat]}})
     return json.dumps({"type": "FeatureCollection", "features": feats}).encode()
 
 

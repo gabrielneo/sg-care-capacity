@@ -154,3 +154,52 @@ def test_a_real_one_hospital_dip_is_not_a_unit_error(env):
          fetched_at=datetime(2026, 2, 23, 8))
     assert table(env, "SELECT * FROM dq_findings WHERE check_id LIKE 'unit.%'").empty
     assert len(table(env, "SELECT * FROM moh_bed_waits")) == (28 + 21) * 3
+
+
+# ---------------------------------------------------------------------- clinics #
+
+from conftest import chas_geojson  # noqa: E402
+
+
+def load_chas(env, content, fetched_at=FETCHED):
+    wh, store, loader = env
+    rec = store.save("datagov_chas", "https://s3.example.com/chas.geojson", content, http_status=200,
+                     content_type="application/geo+json", fetched_at=fetched_at)
+    return loader.process(rec)
+
+
+def test_clinic_outside_singapore_is_quarantined(env):
+    """Shaped like the real 'DA clinic @ Taman Jurong': latitude 1.016 is in the sea."""
+    load_chas(env, chas_geojson([("C1", "GOOD CLINIC", "CHAS"),
+                                 ("C2", "DA CLINIC @ TAMAN JURONG", "CHAS", (103.581752, 1.016264))]))
+    assert list(table(env, "SELECT clinic_key FROM chas_clinics")["clinic_key"]) == ["C1"]
+    q = table(env, "SELECT clinic_key, check_ids, latitude FROM quarantine_chas_clinics")
+    assert q.to_dict("records") == [{"clinic_key": "C2", "check_ids": "clinic.coordinates_in_singapore",
+                                     "latitude": "1.016264"}]
+
+
+def test_quarantined_clinic_keeps_its_last_good_row_active(env):
+    load_chas(env, chas_geojson([("C1", "CLINIC ONE", "CHAS"), ("C2", "CLINIC TWO", "CHAS")]),
+              fetched_at=datetime(2026, 10, 1))
+    load_chas(env, chas_geojson([("C1", "CLINIC ONE", "CHAS"), ("C2", "CLINIC TWO", "CHAS", (0.0, 0.0))]),
+              fetched_at=datetime(2026, 11, 1))
+    rows = table(env, "SELECT clinic_key, is_active, latitude FROM chas_clinics ORDER BY 1")
+    assert rows.to_dict("records") == [{"clinic_key": "C1", "is_active": True, "latitude": 1.33},
+                                       {"clinic_key": "C2", "is_active": True, "latitude": 1.33}]  # not "closed"
+
+
+def test_bad_postal_code_is_published_with_a_warning(env):
+    load_chas(env, chas_geojson([("C1", "CLINIC", "CHAS")], postal="12AB34"))
+    assert len(table(env, "SELECT * FROM chas_clinics")) == 1
+    f = findings(env, "clinic.postal_code_6_digits")
+    assert len(f) == 1 and f["severity"][0] == "WARN"
+
+
+def test_clinic_count_swing_is_warned(env):
+    ten = [(f"C{i}", f"CLINIC {i}", "CHAS") for i in range(10)]
+    load_chas(env, chas_geojson(ten), fetched_at=datetime(2026, 10, 1))
+    load_chas(env, chas_geojson(ten[:9]), fetched_at=datetime(2026, 10, 8))     # -10%: fine
+    assert findings(env, "clinic.count_vs_previous").empty
+    load_chas(env, chas_geojson(ten[:7]), fetched_at=datetime(2026, 10, 15))    # 7 vs 9: -22%
+    f = findings(env, "clinic.count_vs_previous")
+    assert len(f) == 1 and "-22.2%" in f["detail"][0]
