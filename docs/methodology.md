@@ -1,9 +1,9 @@
 # Methodology
 
 How the figures on this site are sourced, checked, transformed and computed, and what they can't tell
-you. Every column is defined in [data_dictionary.md](data_dictionary.md); every data-quality check is
-described in [data_quality.md](data_quality.md); the decisions behind the design are in the
-[architecture decision records](adr/README.md).
+you. Every column is defined in the [data dictionary](data_dictionary.md); every data-quality check
+is described in [the data-quality checks](data_quality.md); the decisions behind the design are in
+the [architecture decision records](adr/README.md).
 
 ## Sources
 
