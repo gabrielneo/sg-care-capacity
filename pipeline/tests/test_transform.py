@@ -64,3 +64,100 @@ def test_quarantined_rows_are_logged_as_withheld_upstream(monkeypatch, paths):
     finally:
         wh.close()
     assert (row.rows_dropped, row.status) == (1, "explained") and "data-quality gate" in row.reason
+
+
+# --------------------------------------------------------------- MOH marts #
+
+from sg_health.config import HOSPITAL_CLUSTER, HOSPITAL_REFERENCE, HOSPITALS  # noqa: E402
+
+LINEAGE = {"source_url": "https://x/f.xlsx", "source_sha256": "a" * 64, "ingested_at": datetime(2026, 11, 2, 8)}
+
+
+@pytest.fixture
+def wh(tmp_path):
+    w = Warehouse(tmp_path / "w.duckdb")
+    yield w
+    w.close()
+
+
+def put(wh, table, value_col, rows, sha="a" * 64):
+    """rows: (code, date, value)."""
+    df = pd.DataFrame([{"hospital_code": c, "hospital_name": HOSPITALS[c][0], "report_date": d, value_col: v,
+                        **LINEAGE, "source_sha256": sha} for c, d, v in rows])
+    wh.upsert(table, df, ["hospital_name", "report_date"])
+
+
+def week_of(start: date, values: dict[str, list]):
+    return [(code, start + timedelta(days=i), v) for code, vals in values.items() for i, v in enumerate(vals) if v is not None]
+
+
+def test_weekly_matches_a_hand_computation_for_one_week_of_all_nine_hospitals(wh):
+    monday = date(2026, 10, 19)                                         # ISO 2026-W43
+    waits = {code: [1.0 + n + d * 0.25 for d in range(7)] for n, code in enumerate(HOSPITAL_REFERENCE)}
+    attend = {code: [100 * (n + 1) + d for d in range(7)] for n, code in enumerate(HOSPITAL_REFERENCE)}
+    put(wh, "moh_bed_waits", "median_wait_hours", week_of(monday, waits))
+    put(wh, "moh_ed_attendances", "total_attendances", week_of(monday, attend))
+    run_transform(wh)
+    mart = q(wh, "SELECT * FROM marts.fct_ed_weekly ORDER BY hospital_code").set_index("hospital_code")
+    assert len(mart) == 9
+    for code in HOSPITAL_REFERENCE:
+        row = mart.loc[code]
+        assert row.mean_of_daily_median_wait_hours == pytest.approx(sum(waits[code]) / 7, abs=1e-12)
+        assert row.total_attendances == sum(attend[code])
+        assert (row.iso_year, row.iso_week, row.days_reported_wait, row.is_complete_week) == (2026, 43, 7, True)
+        assert row.week_start.date() == monday and row.week_end.date() == date(2026, 10, 25)
+    assert str(mart["total_attendances"].dtype) == "int64"            # a count, not a float
+
+
+def test_partial_week_is_not_filled_in(wh):
+    monday = date(2026, 10, 26)
+    put(wh, "moh_bed_waits", "median_wait_hours", week_of(monday, {"CGH": [2.0, 4.0, None, 6.0, None, None, None]}))
+    run_transform(wh)
+    row = q(wh, "SELECT * FROM marts.fct_ed_weekly").iloc[0]
+    assert row.mean_of_daily_median_wait_hours == pytest.approx(4.0)   # mean of the 3 days reported
+    assert (row.days_reported_wait, row.days_reported_attendances, row.is_complete_week) == (3, 0, False)
+    assert pd.isna(row.total_attendances)                              # no attendance data: NULL, not 0
+
+
+def test_a_day_with_only_one_metric_keeps_the_other_null(wh):
+    d = date(2026, 10, 20)
+    put(wh, "moh_bed_waits", "median_wait_hours", [("CGH", d, 5.0)], sha="w" * 64)
+    put(wh, "moh_ed_attendances", "total_attendances", [("SGH", d, 400)], sha="e" * 64)
+    run_transform(wh)
+    daily = q(wh, "SELECT hospital_code, median_wait_hours, attendances, wait_source_sha256, "
+                  "attendance_source_sha256 FROM marts.fct_ed_daily ORDER BY 1").to_dict("records")
+    assert daily[0]["hospital_code"] == "CGH" and daily[0]["median_wait_hours"] == 5.0
+    assert pd.isna(daily[0]["attendances"]) and pd.isna(daily[0]["attendance_source_sha256"])
+    assert daily[1]["attendances"] == 400 and pd.isna(daily[1]["median_wait_hours"])
+    assert daily[0]["wait_source_sha256"] == "w" * 64 and daily[1]["attendance_source_sha256"] == "e" * 64
+
+
+def test_daily_carries_warn_flags_and_as_of(wh):
+    d = date(2026, 10, 20)
+    put(wh, "moh_bed_waits", "median_wait_hours", [("KTPH", d, 30.0), ("CGH", d, 3.0)])
+    wh.con.execute("INSERT INTO dq_findings VALUES ('moh_bed_waits', 'range.bed_wait_over_24h', 'WARN', 'row', "
+                   "'{\"hospital_name\": \"Khoo Teck Puat Hospital\", \"report_date\": \"2026-10-20\"}', 1, "
+                   "'30 h', 'u', 's')")
+    run_transform(wh)
+    rows = q(wh, "SELECT hospital_code, dq_flags, as_of, as_of_basis FROM marts.fct_ed_daily ORDER BY 1")
+    assert rows.set_index("hospital_code").loc["KTPH", "dq_flags"] == "range.bed_wait_over_24h"
+    assert pd.isna(rows.set_index("hospital_code").loc["CGH", "dq_flags"])
+    assert (rows["as_of"] == pd.Timestamp(LINEAGE["ingested_at"])).all() and set(rows["as_of_basis"]) == {"fetched"}
+
+
+def test_dim_hospital_matches_the_reference_in_code(wh):
+    run_transform(wh)
+    dim = q(wh, "SELECT * FROM marts.dim_hospital").set_index("hospital_code")
+    assert set(dim.index) == set(HOSPITAL_REFERENCE)
+    for code, (ftype, valid_from) in HOSPITAL_REFERENCE.items():
+        assert dim.loc[code, "facility_type"] == ftype and dim.loc[code, "cluster"] == HOSPITAL_CLUSTER[code]
+    assert dim.loc["AH", "facility_type"] == "UCC" and "adult" in dim.loc["NUH", "coverage_note"].lower()
+    assert dim.loc["WH", "reported_from"].date() == date(2024, 6, 23) and dim["source_sha256"].nunique() == 1
+
+
+def test_marts_are_identical_when_rebuilt(built):
+    tables = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly"]
+    first = {t: q(built, f"SELECT * FROM marts.{t}") for t in tables}
+    run_transform(built)
+    for t in tables:
+        pd.testing.assert_frame_equal(first[t], q(built, f"SELECT * FROM marts.{t}"), obj=t)

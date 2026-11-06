@@ -34,6 +34,9 @@ MODELS: list[tuple[str, str]] = [
     ("staging", "stg_moh_ed_attendances"),
     ("staging", "stg_chas_clinics"),
     ("staging", "stg_nuhs_live"),
+    ("marts", "dim_hospital"),
+    ("marts", "fct_ed_daily"),
+    ("marts", "fct_ed_weekly"),
 ]
 
 
@@ -57,6 +60,26 @@ RECONCILIATIONS: list[Reconciliation] = [
                    "SELECT count(*) FROM main.chas_clinics", "SELECT count(*) FROM staging.stg_chas_clinics"),
     Reconciliation("staging.stg_nuhs_live", "main.nuhs_live_waits",
                    "SELECT count(*) FROM main.nuhs_live_waits", "SELECT count(*) FROM staging.stg_nuhs_live"),
+    Reconciliation("marts.dim_hospital", "main.ref_hospital",
+                   "SELECT count(*) FROM main.ref_hospital", "SELECT count(*) FROM marts.dim_hospital"),
+    # Every staged value lands in exactly one daily row.
+    Reconciliation("marts.fct_ed_daily", "staging.stg_moh_bed_waits",
+                   "SELECT count(*) FROM staging.stg_moh_bed_waits",
+                   "SELECT count(median_wait_hours) FROM marts.fct_ed_daily"),
+    Reconciliation("marts.fct_ed_daily", "staging.stg_moh_ed_attendances",
+                   "SELECT count(*) FROM staging.stg_moh_ed_attendances",
+                   "SELECT count(attendances) FROM marts.fct_ed_daily"),
+    # Every daily row belongs to a hospital in dim_hospital.
+    Reconciliation("marts.fct_ed_daily", "marts.dim_hospital (referential)",
+                   "SELECT count(*) FROM marts.fct_ed_daily",
+                   "SELECT count(*) FROM marts.fct_ed_daily JOIN marts.dim_hospital USING (hospital_code)"),
+    # Every daily value is counted in exactly one week.
+    Reconciliation("marts.fct_ed_weekly", "marts.fct_ed_daily (wait days)",
+                   "SELECT count(median_wait_hours) FROM marts.fct_ed_daily",
+                   "SELECT sum(days_reported_wait) FROM marts.fct_ed_weekly"),
+    Reconciliation("marts.fct_ed_weekly", "marts.fct_ed_daily (attendance days)",
+                   "SELECT count(attendances) FROM marts.fct_ed_daily",
+                   "SELECT sum(days_reported_attendances) FROM marts.fct_ed_weekly"),
 ]
 
 # Rows withheld before staging, by the data-quality gate. Logged so the chain from raw file to
