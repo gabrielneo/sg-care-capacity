@@ -52,13 +52,19 @@ Each top-level package owns its own dependencies and tests (`pipeline/tests/`, `
 
 ## Commands
 
-> Placeholders. Fill these in as each piece is built.
+> Fill these in as each piece is built. TODO = not built yet.
 
 ```bash
-# Pipeline (run from the repo root)
+# Pipeline (run from the repo root; package: pipeline/sg_health, CLI: sg-health)
 # setup:        python3.12 -m venv .venv && source .venv/bin/activate && pip install -e "pipeline[dev]"
-# run ETL:      sg-health run [--sources moh,live,opendata,singstat]
-# backfill:     sg-health backfill --start 2024-01-01 --max-snapshots 80
+#               (add ,browser to the extras + `python -m playwright install chromium` for JS pages)
+# run ETL:      sg-health run [--sources moh,live,opendata,singstat]   # fetch → data/raw → parse → warehouse
+# backfill:     sg-health backfill --start 2024-01-01 --max-snapshots 80   # MOH history via Wayback
+# reparse:      sg-health reparse        # rebuild all tables from data/raw only; no network
+# report:       sg-health report         # Excel summary from the warehouse
+# logs:         JSON lines on stderr; one "source_summary" line per source: sg-health run 2>&1 | grep source_summary
+# paths:        data/raw/ (immutable raw zone + manifest.jsonl), data/build/warehouse.duckdb (working DB)
+#               override with --raw-dir / --db / --report or SG_HEALTH_DATA_DIR
 # run checks:   TODO
 # publish:      TODO
 # tests:        pytest -q pipeline/tests
