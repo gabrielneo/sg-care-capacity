@@ -28,10 +28,12 @@ def make_xlsx(rows, sheet="Sheet1") -> bytes:
 
 
 class FakeResponse:
-    def __init__(self, content: bytes, content_type: str, status: int = 200) -> None:
+    def __init__(self, content: bytes, content_type: str, status: int = 200,
+                 url: Optional[str] = None) -> None:
         self.content = content
         self.status_code = status
         self.headers = {"Content-Type": content_type}
+        self.url = url               # final URL after redirects (requests.Response.url)
 
     @property
     def text(self) -> str:
@@ -51,7 +53,10 @@ class FakeHttp:
     def get(self, url: str, **_: Any) -> Optional[FakeResponse]:
         self.calls.append(url)
         hit = self.routes.get(url)
-        return FakeResponse(*hit) if hit else None
+        if not hit:
+            return None
+        content, ctype, *final = hit           # optional 3rd item: the URL it redirected to
+        return FakeResponse(content, ctype, url=final[0] if final else url)
 
     def get_text(self, url, **kw):
         r = self.get(url, **kw)

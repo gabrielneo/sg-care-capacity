@@ -95,6 +95,11 @@ class PoliteHttp:
         if resp.status_code >= 400:
             LOG.warning("GET %s -> HTTP %s", url, resp.status_code)
             return None
+        if resp.history and resp.url != url:
+            # Not an error by itself, but a page that moved may now serve something else
+            # entirely (e.g. a retired page redirecting to a homepage). Lineage records resp.url.
+            LOG.warning("GET %s redirected to %s", url, resp.url,
+                        extra={"fields": {"event": "redirected", "requested": url, "final": resp.url}})
         return resp
 
     def get_text(self, url: str, **kw) -> Optional[str]:

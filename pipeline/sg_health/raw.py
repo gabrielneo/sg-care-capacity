@@ -22,7 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Iterator, Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from .config import now_sgt
 from .parsers.common import sha256
@@ -61,6 +61,19 @@ class RawRecord:
         return cls(**d)
 
 
+def strip_signature(url: str) -> str:
+    """Drop the query string from a pre-signed download URL.
+
+    Some sources (data.gov.sg) hand out short-lived signed links. The signature is a
+    credential and expires within minutes, so it is never kept in lineage; the path still
+    identifies the file.
+    """
+    parts = urlsplit(url)
+    if "signature" in parts.query.lower():
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+    return url
+
+
 def guess_ext(url: str, content_type: Optional[str]) -> str:
     """Extension for the stored file: the URL's if it's a known data type, else from Content-Type."""
     suffix = Path(urlparse(url).path).suffix.lower().lstrip(".")
@@ -94,7 +107,7 @@ class RawStore:
             self._write_once(target, content)
         else:
             target = existing
-        rec = RawRecord(seq=self._next_seq(), source=source, url=url, sha256=digest,
+        rec = RawRecord(seq=self._next_seq(), source=source, url=strip_signature(url), sha256=digest,
                         bytes=len(content), http_status=http_status, content_type=content_type,
                         fetched_at=fetched_at, path=target.relative_to(self.root).as_posix())
         self.root.mkdir(parents=True, exist_ok=True)
@@ -105,9 +118,9 @@ class RawStore:
         return rec
 
     def save_response(self, source: str, url: str, resp) -> RawRecord:
-        """Convenience wrapper for a requests.Response."""
-        return self.save(source, url, resp.content, http_status=resp.status_code,
-                         content_type=resp.headers.get("Content-Type"))
+        """Store a requests.Response. Records the URL the bytes came from, i.e. after redirects."""
+        return self.save(source, getattr(resp, "url", None) or url, resp.content,
+                         http_status=resp.status_code, content_type=resp.headers.get("Content-Type"))
 
     @staticmethod
     def _write_once(target: Path, content: bytes) -> None:

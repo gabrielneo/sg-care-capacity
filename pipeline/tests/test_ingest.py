@@ -85,3 +85,14 @@ def test_clinic_missing_from_new_snapshot_is_kept_inactive(monkeypatch, paths):
     rows = query(paths, "SELECT clinic_key, is_active FROM chas_clinics ORDER BY clinic_key")
     assert rows.to_dict("records") == [{"clinic_key": "15M0211", "is_active": True},
                                        {"clinic_key": "15M0999", "is_active": False}]
+
+
+def test_redirected_page_records_the_url_the_bytes_came_from(monkeypatch, paths):
+    """2026-11-06: the QWatch URL redirected to the SingHealth homepage. Lineage must say so."""
+    from sg_health import config
+    routes = source_routes()
+    content, ctype = routes[config.SINGHEALTH_QWATCH_URL]
+    routes[config.SINGHEALTH_QWATCH_URL] = (content, ctype, "https://www.singhealth.com.sg/")
+    full_run(monkeypatch, paths, routes)
+    rec = next(r for r in RawStore(paths["raw"]).records() if r.source == "singhealth_qwatch")
+    assert rec.url == "https://www.singhealth.com.sg/"

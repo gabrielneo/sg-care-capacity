@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 import time
 from typing import Optional
-from urllib.parse import urlsplit, urlunsplit
 
 import requests
 
@@ -15,18 +14,6 @@ from ..load import Loader
 LOG = logging.getLogger(__name__)
 
 DATASET_SOURCES = (("chas", "datagov_chas"), ("has", "datagov_has"))
-
-
-def strip_signature(url: str) -> str:
-    """Drop the query string from a pre-signed download URL.
-
-    data.gov.sg hands out short-lived signed links. The signature is a credential and
-    expires within minutes, so it is not kept in lineage; the path still identifies the file.
-    """
-    parts = urlsplit(url)
-    if "signature" in parts.query.lower():
-        return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
-    return url
 
 
 def fetch_datagov_dataset(http: PoliteHttp, dataset_id: str
@@ -58,5 +45,6 @@ def ingest_opendata(http: PoliteHttp, loader: Loader) -> int:
         if not got:
             continue
         url, resp = got
-        total += loader.process(loader.store.save_response(source, strip_signature(url), resp))
+        # save_response strips the signature from the signed download URL before recording it
+        total += loader.process(loader.store.save_response(source, url, resp))
     return total
