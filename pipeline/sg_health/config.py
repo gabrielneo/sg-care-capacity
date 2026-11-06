@@ -85,6 +85,12 @@ DATAGOV_API_KEY = os.getenv("DATAGOV_API_KEY")      # optional, gives higher rat
 # floor-area file leaves out residents in the "Others" type of dwelling, 35,280 residents of whom
 # 20,410 are aged 65+ (checked 2026-11-06), so it undercounts exactly the population we need.
 SINGSTAT_RESIDENTS_URL = "https://www.singstat.gov.sg/files/c6755f50-4bfb-4bfa-b7d3-00259b9509ed.zip"
+# Pinned copy of that exact file, committed to the repo. Used ONLY when SingStat refuses the live
+# download (it returns HTTP 403 to GitHub's runners; the same request works elsewhere), and only if
+# its SHA-256 matches. Live is always tried first, so a new edition is picked up automatically
+# wherever SingStat answers. Update both lines with the URL each September.
+SINGSTAT_RESIDENTS_SEED = REPO_ROOT / "pipeline" / "seeds" / "singstat" / "respopagesextod2026.zip"
+SINGSTAT_RESIDENTS_SEED_SHA256 = "09641d04b86723637867da4c89dd1a79cb9971d8db409e65986632e5e8484610"
 SINGSTAT_RESIDENTS_PAGE = ("https://www.singstat.gov.sg/find-data/explore-data-themes/population/"
                            "geographic-distribution/latest-news-data")
 EXPECTED_PLANNING_AREAS = 55     # URA Master Plan 2025, as used by SingStat for June 2026

@@ -95,3 +95,62 @@ def test_redirected_page_records_the_url_the_bytes_came_from(monkeypatch, paths)
     full_run(monkeypatch, paths, routes)
     rec = next(r for r in RawStore(paths["raw"]).records() if r.source == "nuhs_live")
     assert rec.url == "https://www.nuhs.edu.sg/moved"
+
+
+# ------------------------------------------------- SingStat: live first, pinned copy second #
+
+def _singstat_records(paths):
+    return [r for r in RawStore(paths["raw"]).records() if r.source == "singstat_residents"]
+
+
+def _pin(monkeypatch, tmp_path, content):
+    import hashlib
+    seed = tmp_path / "seed.zip"
+    seed.write_bytes(content)
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SEED", seed)
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SEED_SHA256", hashlib.sha256(content).hexdigest())
+    return seed
+
+
+def test_singstat_live_download_is_used_when_it_works(monkeypatch, paths, tmp_path):
+    from conftest import singstat_residents_zip
+    _pin(monkeypatch, tmp_path, singstat_residents_zip(rows=[("Old", "X", "65_to_69", "Males", "Others", 10, 2025)]))
+    full_run(monkeypatch, paths)                                          # live route serves SINGSTAT_ZIP
+    recs = _singstat_records(paths)
+    assert len(recs) == 1 and recs[0].http_status == 200
+    assert set(query(paths, "SELECT planning_area FROM pop_65plus_by_area")["planning_area"]) == {"Bedok", "Tuas"}
+
+
+def test_pinned_copy_is_used_when_singstat_refuses(monkeypatch, paths, tmp_path):
+    from sg_health import config
+    from conftest import SINGSTAT_ZIP
+    _pin(monkeypatch, tmp_path, SINGSTAT_ZIP)
+    routes = source_routes()
+    del routes[config.SINGSTAT_RESIDENTS_URL]                            # SingStat refuses (403 -> None)
+    full_run(monkeypatch, paths, routes)
+    recs = _singstat_records(paths)
+    assert len(recs) == 1 and recs[0].http_status is None              # not from an HTTP response
+    assert recs[0].url == config.SINGSTAT_RESIDENTS_URL                 # provenance: SingStat's file
+    assert len(query(paths, "SELECT * FROM pop_65plus_by_area")) == 2
+
+
+def test_pinned_copy_with_the_wrong_hash_is_refused(monkeypatch, paths, tmp_path):
+    from sg_health import config
+    from conftest import SINGSTAT_ZIP
+    _pin(monkeypatch, tmp_path, SINGSTAT_ZIP)
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SEED_SHA256", "0" * 64)
+    routes = source_routes()
+    del routes[config.SINGSTAT_RESIDENTS_URL]
+    full_run(monkeypatch, paths, routes)
+    assert _singstat_records(paths) == []
+    assert query(paths, "SELECT * FROM pop_65plus_by_area").empty
+
+
+def test_the_committed_pinned_copy_matches_its_recorded_hash_and_parses():
+    import hashlib
+    from sg_health import config
+    from sg_health.parsers.singstat import parse_residents_zip
+    content = config.SINGSTAT_RESIDENTS_SEED.read_bytes()
+    assert hashlib.sha256(content).hexdigest() == config.SINGSTAT_RESIDENTS_SEED_SHA256
+    out = parse_residents_zip(content)
+    assert out["planning_area"].nunique() == 55 and int(out["residents_65plus"].sum()) == 828_010

@@ -63,7 +63,7 @@ Optional environment variables (see `.env.example`):
 | `DATAGOV_API_KEY` | data.gov.sg API key, for higher rate limits (free; register on data.gov.sg). |
 | `SG_HEALTH_DATA_DIR` | Use a different `data/` directory. |
 
-**SingStat population:** the planning-area resident counts come from SingStat's yearly file *Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling* (June 2026). Its URL is pinned in `config.SINGSTAT_RESIDENTS_URL`; update it when the next June edition is published (around September). The *Floor Area of Residence* edition is not used: it leaves out about 20,000 residents aged 65+.
+**SingStat population:** the planning-area resident counts come from SingStat's yearly file *Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling* (June 2026). Its URL is pinned in `config.SINGSTAT_RESIDENTS_URL`; update it when the next June edition is published (around September). The *Floor Area of Residence* edition is not used: it leaves out about 20,000 residents aged 65+. SingStat refuses downloads from GitHub's runners (HTTP 403), so the same file is pinned in `pipeline/seeds/singstat/` and used when the live download fails, only if its SHA-256 matches `config.SINGSTAT_RESIDENTS_SEED_SHA256`. Each September, download the new edition locally and update the URL, the pinned file and the hash together.
 
 ## 3. Raw landing zone and `reparse`
 

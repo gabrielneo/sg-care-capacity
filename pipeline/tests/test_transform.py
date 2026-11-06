@@ -371,6 +371,7 @@ def test_access_keeps_every_area_with_empty_ratios_when_population_is_missing(mo
     from conftest import chas_geojson, source_routes
     routes = source_routes(chas=chas_geojson([("C1", "A", "CHAS,CDMP", (103.68, 1.33))]))
     del routes[config.SINGSTAT_RESIDENTS_URL]
+    monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SEED", paths["raw"] / "no-seed.zip")
     full_run(monkeypatch, paths, routes)
     wh = Warehouse(paths["db"])
     try:

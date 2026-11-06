@@ -281,7 +281,7 @@ and on `reparse`.
 | `url` | text | Where the bytes came from (see `source_url` above). |
 | `sha256` | text | SHA-256 of the bytes. |
 | `bytes` | integer | Size in bytes. |
-| `http_status` | integer | HTTP status of the response. **Empty for a page rendered with Playwright**, which has no HTTP response of its own. |
+| `http_status` | integer | HTTP status of the response. **Empty when the bytes did not come from an HTTP response:** a page rendered with Playwright, or the pinned SingStat copy used when SingStat refuses the download (its `url` is still SingStat's, and its `sha256` matches SingStat's file). |
 | `content_type` | text | The `Content-Type` header, as sent by the server. |
 | `fetched_at` | timestamp (SGT) | When the fetch finished. |
 | `path` | text | Location of the file, relative to `data/raw/`. |
@@ -307,7 +307,7 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
 | `datagov_planning_areas` | OK | URA Master Plan 2025 Planning Area Boundary (No Sea), `d_2cc750190544007400b2cfd5d7f53209`, updated upstream 2026-02-27: 55 areas, names match SingStat 55 of 55. Not collection 2104 (that is the 2019 edition). |
 | `datagov_annual_ae` | OK | 1984–2023; only 2023 overlaps the daily MOH series. Reconciliation only. |
-| `singstat_residents` | OK | June 2026, 55 planning areas: 4,240,430 residents, 828,010 aged 65+ (19.5%). Updated yearly around September; the URL in `config.py` must be updated then. |
+| `singstat_residents` | OK, with a pinned fallback | June 2026, 55 planning areas: 4,240,430 residents, 828,010 aged 65+ (19.5%). SingStat returns HTTP 403 to GitHub's runners (works elsewhere), so CI falls back to `pipeline/seeds/singstat/respopagesextod2026.zip`, used only if its SHA-256 matches `config.SINGSTAT_RESIDENTS_SEED_SHA256`. Live is always tried first. Each September: update the URL, the pinned file and its hash together. |
 
 ## Data-quality tables
 
