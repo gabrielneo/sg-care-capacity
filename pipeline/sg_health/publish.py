@@ -30,6 +30,7 @@ from .warehouse import Warehouse
 
 ANALYTICS_DB = "analytics.duckdb"
 MANIFEST = "manifest.json"
+INSIGHTS_JSON = "insights.json"
 SNAPSHOT_PREFIX = "data-"
 KEEP_SNAPSHOTS = 12
 
@@ -171,10 +172,14 @@ def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dic
     if blocking:
         raise PublishBlocked("not publishing: " + "; ".join(
             f"{r.check.check_id} ({r.table}): {r.details[:120]}" for r in blocking))
-    marts = mart_names(wh)
-    if not marts:
+    if not mart_names(wh):
         raise PublishBlocked("not publishing: no marts built (run sg-health transform)")
     day = day or config.now_sgt().date()
+    # Insight engine: after transform, before the snapshot. Builds marts.fct_insight and logs its
+    # skipped detectors into this validation run, so the published dq_results include them.
+    from . import insights
+    insight_run = insights.run_in_warehouse(wh, run_id, day)
+    marts = mart_names(wh)
     out_dir = Path(out_dir)
     _fresh_dir(out_dir)
 
@@ -204,6 +209,7 @@ def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dic
     web = wh.path.parent / "web" / WEB_GEOJSON_NAME
     if web.exists():
         shutil.copyfile(web, out_dir / WEB_GEOJSON_NAME)
+    (out_dir / INSIGHTS_JSON).write_text(json.dumps(insights.to_json(insight_run), indent=2, sort_keys=True, default=str) + "\n")
 
     manifest = {
         "snapshot_id": snapshot_id(day),
@@ -213,6 +219,9 @@ def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dic
         "row_counts": {m: int(con.execute(f"SELECT count(*) FROM marts.{m}").fetchall()[0][0]) for m in marts},
         "coverage_per_hospital": coverage_per_hospital(wh),
         "checks": check_summary(results, run_id, wh),
+        "insights": {"published": len(insight_run.insights), "skipped": len(insight_run.skips),
+                     "headline": [r["insight_id"] for r in sorted(insight_run.insights, key=lambda r: r["headline_rank"] or 99)
+                                  if r["headline_rank"]]},
         "artefacts": {p.relative_to(out_dir).as_posix(): {"sha256": _sha256(p), "bytes": p.stat().st_size}
                       for p in sorted(out_dir.rglob("*")) if p.is_file()},
     }

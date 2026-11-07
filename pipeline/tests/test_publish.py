@@ -55,7 +55,11 @@ def test_manifest_contents_and_hashes(built, tmp_path):
     out = tmp_path / "publish"
     m = publish(built, out)
     assert m["snapshot_id"] == "data-2026-10-27" and verify_manifest(out) == []
-    assert set(m["artefacts"]) >= {"analytics.duckdb", "parquet/fct_ed_daily.parquet", "planning_area_access.geojson"}
+    assert set(m["artefacts"]) >= {"analytics.duckdb", "parquet/fct_ed_daily.parquet", "planning_area_access.geojson",
+                                   "insights.json", "parquet/fct_insight.parquet"}
+    assert "fct_insight" in m["row_counts"] and set(m["insights"]) == {"published", "skipped", "headline"}
+    ins = json.loads((out / "insights.json").read_text())
+    assert ins["engine_version"] == 1 and len(ins["insights"]) == m["insights"]["published"]
     assert json.loads((out / "manifest.json").read_text()) == json.loads(json.dumps(m, default=str))
     assert m["checks"]["blocking"] == 0 and set(m["checks"]["counts"]) == {"pass", "warn", "fail", "skipped"}
     assert m["sources"]["moh_bed_waits"]["as_of"] == "2026-10-26"

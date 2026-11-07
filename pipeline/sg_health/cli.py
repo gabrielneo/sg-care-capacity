@@ -99,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
     pr = sub.add_parser("snapshots-to-prune", help="read release tags on stdin, print snapshot tags beyond the newest N")
     pr.add_argument("--keep", type=int, default=12)
     sub.add_parser("transform", help="build staging views and mart tables from the clean tables")
+    ins = sub.add_parser("insights", help="validate, then compute insights from the marts (marts.fct_insight)")
+    ins.add_argument("--out", default=str(DEFAULT_DB.parent / "insights.json"), help="also write insights.json here")
 
     sub.add_parser("report", help="rebuild the Excel report from the warehouse only")
 
@@ -141,6 +143,20 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "transform":
             return 0 if _transform(wh) else 1
+        if args.command == "insights":
+            import json
+
+            from . import insights
+            checks = dq.run_validation(wh)
+            run_id = dq.record(wh, checks)
+            result = insights.run_in_warehouse(wh, run_id)
+            Path(args.out).write_text(json.dumps(insights.to_json(result), indent=2, sort_keys=True, default=str) + "\n")
+            for r in result.insights:
+                mark = f"#{r['headline_rank']}" if r["headline_rank"] else "  "
+                print(f"{mark} {r['rank_score']:.3f}  {r['type']:<15} {r['headline']}")
+            print(f"{len(result.insights)} insights published, {len(result.skips)} skipped, {result.tests} tests corrected "
+                  f"(run {run_id}); details in {args.out}")
+            return 0
         if args.command == "reparse":
             results, failed_records = reparse(wh, store)
             transformed = True if args.no_transform else _transform(wh)
