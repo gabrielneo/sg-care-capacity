@@ -1,0 +1,133 @@
+# docs/insight_actions.yml
+#
+# The "so what" for each finding from the insight engine (Prompt 8B).
+# The engine finds and measures each finding; this file says who should act on it
+# and what they could do. Code never writes these lines.
+#
+# THIS IS A DRAFT. Every entry starts with reviewed: false. Before publishing:
+#   1. Read each entry and rewrite anything that doesn't sound like your own judgement.
+#   2. Check each stakeholder's role against a public source (MOH, AIC, cluster
+#      or Synapxe websites, ministerial speeches) and add it to `sources`.
+#   3. Set reviewed: true. The engine should skip any entry still set to false.
+#
+# Wording rules (from docs/language_rules.md):
+#   - No causal words: never "causes", "drives", "leads to" or "because".
+#   - Actions are suggestions to consider, not instructions to an organisation.
+#   - Under 25 words per line.
+#
+# Placeholders the engine fills in: {hospital}, {cluster}, {area}, {region},
+# {weekday}, {n_areas}
+
+version: 1
+
+defaults:
+  disclaimer: >-
+    Suggested actions are the author's analysis of public data, not the view of
+    any organisation named.
+
+detectors:
+
+  trend:
+    question: Are bed waits rising or falling?
+    by_direction:
+      worse:
+        who_acts: "{cluster} hospital operations and bed management teams"
+        action: >-
+          Review inpatient discharge timing and ward bed availability at {hospital};
+          a sustained rise suggests a capacity issue, not a one-off spike.
+        measure_of_success: "Weekly bed wait returns to its 26-week median or lower"
+        moscow: Must
+      better:
+        who_acts: "{cluster} hospital operations"
+        action: >-
+          Record what changed at {hospital} over this period so the practice can be
+          shared with other hospitals.
+        measure_of_success: "Improvement holds for 8 more complete weeks"
+        moscow: Could
+    reviewed: false
+    sources: []
+
+  anomaly:
+    question: Was this week unusual?
+    by_direction:
+      worse:
+        who_acts: "{hospital} ED and bed management teams"
+        action: >-
+          Check for a known event this week, such as a seasonal flu surge or ward
+          closure, before treating it as a trend.
+        measure_of_success: "Next week's bed wait is back within its usual range"
+        moscow: Should
+      better:
+        who_acts: "{hospital} ED and bed management teams"
+        action: "Note what was different this week; one good week is not yet a trend."
+        measure_of_success: "Not tracked; informational only"
+        moscow: Won't
+    reviewed: false
+    sources: []
+
+  weekday:
+    question: Is there a peak day?
+    who_acts: "Hospital operations and ward staffing planners"
+    action: >-
+      Plan discharges and ward staffing ahead of {weekday}, so beds free up before
+      the peak rather than during it.
+    measure_of_success: "{weekday} bed wait gap vs the weekly average shrinks by half"
+    moscow: Should
+    reviewed: false
+    sources: []
+
+  volume_vs_wait:
+    question: Do more ED visits mean longer bed waits?
+    by_strength:
+      negligible_or_weak:
+        who_acts: "MOH and cluster leadership"
+        action: >-
+          Focus on inpatient bed flow, not only on reducing ED visits; bed waits
+          barely move with daily visit numbers.
+        measure_of_success: "Bed waits fall without a matching fall in ED visits"
+        moscow: Must
+      moderate_or_strong:
+        who_acts: "MOH, clusters and primary care partners"
+        action: >-
+          Keep shifting suitable cases from the ED to GPs and polyclinics; bed waits
+          move with daily visit numbers.
+        measure_of_success: "Share of non-urgent ED visits falls year on year"
+        moscow: Must
+    reviewed: false
+    sources: []
+
+  access_gap:
+    question: Which areas have the biggest clinic shortfall?
+    who_acts: "Agency for Integrated Care (AIC), regional health systems and Healthier SG teams"
+    action: >-
+      Prioritise CDMP clinic recruitment and Healthier SG enrolment drives in {area}
+      and the other {n_areas} priority areas.
+    measure_of_success: "CDMP clinics per 1,000 seniors in priority areas rises toward the national rate"
+    moscow: Must
+    synapxe_angle: >-
+      HealthHub could show seniors in priority areas the nearest CDMP clinic and
+      Healthier SG enrolment steps.
+    reviewed: false
+    sources: []
+
+  regional:
+    question: How do regions compare?
+    who_acts: "Regional health systems led by {cluster}"
+    action: >-
+      Look at {region} first when planning primary care capacity; it pairs lower
+      clinic access with longer bed waits. This is an association, not a cause.
+    measure_of_success: "Gap between {region} and the national average narrows"
+    moscow: Should
+    reviewed: false
+    sources: []
+
+  source_gap:
+    question: Does the live estimate match the official figure?
+    who_acts: "NUHS and Synapxe digital teams"
+    action: >-
+      Show on the public page how the live estimate is calculated and how it
+      differs from MOH's official figure, so the public reads it correctly.
+    measure_of_success: "Public page states its method; median gap is published"
+    moscow: Could
+    reviewed: false
+    sources: []
