@@ -20,6 +20,7 @@ export const CAVEAT = {
   live: "NUHS lists adult and children's emergency separately. These are estimates at one moment, up to 7 days old.",
   childrensEmergency: "Children's emergency is not part of MOH's NUH figures, which cover adults only.",
   quality: "These are the checks behind this week's data release. Failed checks set data aside; they never change it.",
+  population: "Residents are citizens and permanent residents. The total adds up SingStat's figures for each area, rounded to the nearest 10.",
 } as const;
 
 // "Basis" of each source's date, in plain words (the API gives internal names).

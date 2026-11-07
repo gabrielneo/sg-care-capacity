@@ -21,7 +21,7 @@ const USER_PROPS = new Set(["title", "label", "description", "caveat", "message"
 const WRAPPERS = new Set(["Term", "Glossed"]);
 // The nav is site chrome; the glossary page shows terms as definitions; /dev is not public.
 const EXEMPT = [/^app\/dev\//, /^app\/glossary\//, /^components\/Nav\.tsx$/, /^components\/terms\//, /\.test\.tsx?$/];
-const COPY_MODULES = ["lib/copy.ts", "lib/summary.ts"];
+const COPY_MODULES = ["lib/copy.ts", "lib/story.ts"];
 const PUBLIC_DOCS = ["case_study.md", "methodology.md"];
 const MAX_WORDS = 25;
 

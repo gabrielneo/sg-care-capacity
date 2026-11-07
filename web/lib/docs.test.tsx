@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { extractSection, renderDoc, renderMarkdown } from "./docs";
+import { docWords, extractList, extractSection, renderDoc, renderDocList, renderMarkdown } from "./docs";
 
 const SAMPLE = `# Title
 
@@ -54,7 +54,7 @@ describe("renderMarkdown", () => {
 });
 
 describe("the real docs render", () => {
-  it.each(["methodology.md", "data_dictionary.md", "data_quality.md", "runbook.md", "case_study.md",
+  it.each(["methodology.md", "data_dictionary.md", "data_quality.md", "runbook.md", "case_study.md", "insights_method.md",
            "adr/0001-published-snapshot.md"])("%s", async (file) => {
     const doc = await renderDoc(file);
     expect(doc.headings.length).toBeGreaterThan(0);
@@ -68,5 +68,33 @@ describe("the real docs render", () => {
   it("the case study's TODO(me)s are counted, the methodology has none", async () => {
     expect((await renderDoc("case_study.md")).todos).toBeGreaterThan(20);
     expect((await renderDoc("methodology.md")).todos).toBe(0);
+  });
+});
+
+describe("extractList", () => {
+  const md = "Intro.\n\n**What it can't show** (see more):\n\n- one;\n- two, which\n  wraps;\n- three.\n\nAfter.\n";
+
+  it("takes the bullet list after the marker line, continuation lines included", () => {
+    expect(extractList(md, "**What it can't show**")).toBe("- one;\n- two, which\n  wraps;\n- three.");
+  });
+
+  it("fails loudly when the marker or its list is missing", () => {
+    expect(() => extractList(md, "**Nope**")).toThrow('"**Nope**" not found');
+    expect(() => extractList("**Marker**\n\nNo list.\n", "**Marker**")).toThrow("no list after");
+  });
+
+  it("reads the case study's three limits, as written there", async () => {
+    const doc = await renderDocList("case_study.md", "**What the data can't show**");
+    expect(doc.items).toBe(3);
+    render(<ul>{doc.content}</ul>);
+    expect(document.querySelectorAll("li")).toHaveLength(3);
+    expect(document.body.textContent).toContain("how many could have been handled in primary care");
+  });
+
+  it("counts a doc's words, or one section's", async () => {
+    const all = await docWords("case_study.md");
+    const part = await docWords("case_study.md", "Problem statement");
+    expect(part).toBeGreaterThan(100);
+    expect(all).toBeGreaterThan(part);
   });
 });

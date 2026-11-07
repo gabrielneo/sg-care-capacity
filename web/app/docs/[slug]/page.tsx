@@ -8,6 +8,7 @@ const DOCS: Record<string, { file: string; title: string }> = {
   "data-dictionary": { file: "data_dictionary.md", title: "Data dictionary" },
   "data-quality": { file: "data_quality.md", title: "Data quality checks" },
   runbook: { file: "runbook.md", title: "Runbook" },
+  "insights-method": { file: "insights_method.md", title: "How findings are tested" },
 };
 
 export const dynamicParams = false;

@@ -8,9 +8,9 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { EdSummary } from "@/lib/api/types";
-import { BED_WAIT_EXPLAINER } from "@/lib/copy";
-import { formatWeek, summaryParagraph, weekKpis } from "@/lib/summary";
+import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
+import { storySample } from "@/lib/samples";
+import { ACTION_PENDING } from "@/lib/story";
 
 import { fleschKincaid, proseFromMarkdown, sentences, syllables } from "../scripts/text-tools.mjs";
 
@@ -43,20 +43,12 @@ function report(name: string, text: string) {
 
 describe("readability report", () => {
   it("Overview", () => {
-    const row = (code: string, name: string, wait: number, base: number, att: number, attBase: number): EdSummary => ({
-      hospital_code: code, hospital_name: name, facility_type: code === "AH" ? "UCC" : "ED",
-      latest_complete_week: { iso_year: 2026, iso_week: 43, week_start: "2026-10-19", week_end: "2026-10-25" }, is_current: true,
-      baseline_weeks: ["2026-09-21"], note: null,
-      mean_of_daily_median_wait_hours: { unit: "hours", latest: wait, baseline_mean: base, change: wait - base, change_pct: ((wait - base) / base) * 100 },
-      total_attendances: { unit: "patients", latest: att, baseline_mean: attBase, change: att - attBase, change_pct: ((att - attBase) / attBase) * 100 },
-    });
-    const k = weekKpis([row("AH", "Alexandra Hospital (UCC)", 2.1, 1.6, 1100, 1060), row("SGH", "Singapore General Hospital", 7.8, 8.3, 3400, 3510),
-                        row("CGH", "Changi General Hospital", 3.4, 3.6, 3600, 3540)]);
+    // The story's text: the engine's headlines, details, labels and first caveats (data-2026-11-08),
+    // and the site's own sentences around them.
+    const sentence = (t: string) => (/[.!?]$/.test(t) ? t : `${t}.`);
     const text = [
-      `The latest complete week published by MOH: ${formatWeek(k.week!)}. A week is complete when all 7 days have both figures.`,
-      summaryParagraph(k),
-      `Hours, average of each day's median, for the week of ${formatWeek(k.week!)}.`,
-      BED_WAIT_EXPLAINER,
+      ...storySample.flatMap((i) => [i.headline, i.detail, sentence(i.display.metric_label), sentence(i.caveats[0] ?? "")]),
+      BED_WAIT_EXPLAINER, ACTION_PENDING, CAVEAT.population,
     ].join(" ");
     expect(report("Overview", text).sentences).toBeGreaterThan(3);
   });

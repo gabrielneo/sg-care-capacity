@@ -13,6 +13,7 @@ export const DOC_ROUTES: Record<string, string> = {
   "data_dictionary.md": "/docs/data-dictionary",
   "data_quality.md": "/docs/data-quality",
   "runbook.md": "/docs/runbook",
+  "insights_method.md": "/docs/insights-method",
   "adr/README.md": "/decisions",
 };
 

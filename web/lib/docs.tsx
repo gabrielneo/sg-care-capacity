@@ -78,3 +78,35 @@ export async function renderDoc(file: string, section?: string): Promise<Rendere
   const source = await readFile(path.join(DOCS_DIR, file), "utf8");
   return renderMarkdown(extractSection(source, section), file);
 }
+
+/**
+ * The bullet list right after the line that starts with `marker`, e.g. "**What the data can't
+ * show**" in case_study.md. The Overview shows it as written there, so the text isn't duplicated.
+ */
+export function extractList(source: string, marker: string): string {
+  const lines = source.split("\n");
+  const start = lines.findIndex((l) => l.startsWith(marker));
+  if (start === -1) throw new Error(`"${marker}" not found`);
+  let i = start + 1;
+  while (i < lines.length && lines[i]?.trim() === "") i++;
+  const out: string[] = [];
+  for (; i < lines.length; i++) {
+    const line = lines[i] as string;
+    if (line.startsWith("- ") || (out.length > 0 && /^\s+\S/.test(line))) out.push(line);
+    else break;
+  }
+  if (!out.length) throw new Error(`no list after "${marker}"`);
+  return out.join("\n");
+}
+
+/** Render the list after `marker` in docs/<file>; `items` is its number of bullets. */
+export async function renderDocList(file: string, marker: string): Promise<RenderedDoc & { items: number }> {
+  const list = extractList(await readFile(path.join(DOCS_DIR, file), "utf8"), marker);
+  return { ...(await renderMarkdown(list, file)), items: list.split("\n").filter((l) => l.startsWith("- ")).length };
+}
+
+/** Words in docs/<file> (or one "## " section), for a reading-time estimate. */
+export async function docWords(file: string, section?: string): Promise<number> {
+  const text = extractSection(await readFile(path.join(DOCS_DIR, file), "utf8"), section);
+  return text.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
+}
