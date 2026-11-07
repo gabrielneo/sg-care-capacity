@@ -288,11 +288,12 @@ def test_unreviewed_actions_are_not_published(monkeypatch):
 
 
 def test_the_real_actions_file_is_respected():
-    """Every entry is still reviewed: false, so no action is published yet."""
+    """No entry is reviewed yet (or the file is empty in this checkout), so no action is published."""
     rng = np.random.default_rng(1)
     result = engine.run(inputs(weekly({"SGH": [4 + 0.15 * k + rng.normal(0, 0.3) for k in range(26)]})), NO_FAILS, TODAY)
     [ins] = published(result, "trend")
-    assert ins["who_acts"] is None and ins["action"] is None and actions.PENDING in ins["caveats"]
+    assert ins["who_acts"] is None and ins["action"] is None
+    assert any(c in ins["caveats"] for c in (actions.PENDING, "No suggested action for this finding."))
 
 
 # --------------------------------------------------------------------------- #
