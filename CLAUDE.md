@@ -89,6 +89,8 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 # e2e:          cd web && npm run e2e          # Playwright: real API on its fixture snapshot; 1280 + 375 px; axe (make e2e)
 #               first time: cd web && npm run e2e:install
 # api types:    cd web && npm run gen:api      # after api/openapi.json changes; CI fails if stale
+# glossary:     docs/glossary.yml (from docs/language_rules.md) -> cd web && npm run gen:glossary
+# wording:      cd web && npm run lint:terms && npm run readability   # both part of npm run lint
 # docs pages:   docs/*.md (methodology, case_study, adr/, ...) are rendered by the site at build time;
 #               TODO(me) marks text only the author can write (never fill it with invented content)
 ```
