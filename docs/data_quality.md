@@ -65,6 +65,15 @@ failing check shows as `FAIL (blocks)`, `FAIL (quarantined)` or `WARN`.
 
 ---
 
+## Insight engine skips (`insight.*`)
+
+The insight engine ([insights_method.md](insights_method.md)) adds one row to the published
+validation run for each detector, hospital or area it skipped: check `insight.<detector>.<entity>`,
+table `fct_insight`, severity WARN, status `skipped`, never blocking, with the reason (for example
+"16 of 26 weeks complete (62%), below 80%", or "the planning area to cluster mapping has not been
+approved yet"). These are not data-quality failures: they record where the engine chose to say
+nothing.
+
 ## Schema checks (every gated table)
 
 Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,

@@ -328,3 +328,16 @@ def test_fct_insight_columns_are_in_the_data_dictionary():
         if line.startswith("| `"):
             documented |= set(re.findall(r"`([a-z0-9_]+)`", line.split("|")[1]))
     assert documented == set(engine.COLUMNS)
+
+
+@pytest.mark.parametrize("detector", ["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"])
+def test_every_detector_is_documented(detector):
+    import re
+
+    from sg_health import config
+    doc = (config.REPO_ROOT / "docs" / "insights_method.md").read_text()
+    section = re.search(rf"^## \d\. {detector}\n(.*?)(?=^## |\Z)", doc, re.S | re.M)
+    assert section, f"{detector} has no section in docs/insights_method.md"
+    for part in ("Question", "ethod", "Gate", "Why this method", "Limitations"):
+        assert part in section.group(1), f"{detector}: missing {part}"
+    assert detector in thresholds(), f"{detector} has no block in thresholds.yml"

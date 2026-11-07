@@ -44,6 +44,9 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
    The run verifies every hash, then uploads the files to release **`data-YYYY-MM-DD`**. Parquet files
    are uploaded under their mart name (`fct_ed_daily.parquet`); in the manifest they appear as
    `parquet/fct_ed_daily.parquet`. A second run on the same day **replaces** that day's files.
+   The snapshot also carries `insights.json` and `marts.fct_insight` from the insight engine
+   ([insights_method.md](insights_method.md)). Skipped detectors are logged in `dq_results` as
+   `insight.*`; they never block publishing.
 8. **Prune**: snapshot releases beyond the newest 12 are deleted (`sg-health snapshots-to-prune`).
    `data-latest`, `live-latest` and any other tag are never touched.
 9. **Fail the job** if any stage failed, after the archive is safe, so GitHub emails you.

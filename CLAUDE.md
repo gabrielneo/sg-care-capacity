@@ -39,6 +39,14 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 5. **Failed error-level data checks block publishing;** the site keeps the last good snapshot.
 6. **Every warehouse row keeps lineage:** `source_url`, `source_sha256`, `ingested_at`.
 
+## Insight principles
+
+1. **Insights are computed by deterministic code from the marts.** No LLM, no hand-written numbers.
+2. **An insight that fails its statistical gate is not published.** Missing evidence means no sentence, not a weaker sentence.
+3. **Never use causal words** (causes, drives, leads to, because). Use "moves with", "is associated with", "is higher in".
+
+Method and gates per detector: `docs/insights_method.md`. Suggested actions come only from reviewed entries in `docs/insight_actions.yml`.
+
 ## Working rules
 
 - **Plan first, then wait for approval** before writing or moving code.
@@ -65,6 +73,7 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 #               override with --raw-dir / --db / --report or SG_HEALTH_DATA_DIR
 # run checks:   sg-health validate     # all data-quality checks; exit 1 = publish blocked (docs/data_quality.md)
 # transform:    sg-health transform    # SQL in pipeline/sql/{staging,marts}; marts.* = what the API reads
+# insights:     sg-health insights     # validate + insight engine -> marts.fct_insight, data/build/insights.json (also runs inside publish)
 # publish:      sg-health publish --out data/build/publish   # validates first; refuses if blocked (docs/runbook.md)
 # all checks:   make test (pipeline, api, web, acceptance) · make lint · make check   # not bare `pytest` at the root
 # tests:        pytest -q pipeline/tests            # offline unit tests (fixtures only)
