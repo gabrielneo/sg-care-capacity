@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/lint-terms.mjs && npm run readability",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -20,7 +20,9 @@
     "gen:glossary": "node scripts/gen-glossary.mjs",
     "check:glossary": "npm run gen:glossary && git diff --exit-code -- lib/glossary.generated.ts",
     "predev": "npm run gen:glossary",
-    "prebuild": "npm run gen:glossary"
+    "prebuild": "npm run gen:glossary",
+    "lint:terms": "node scripts/lint-terms.mjs",
+    "readability": "vitest run test/readability.test.ts --silent=false"
   },
   "dependencies": {
     "@mdx-js/mdx": "3.1.1",

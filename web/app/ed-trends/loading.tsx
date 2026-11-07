@@ -6,7 +6,7 @@ export default function Loading() {
       <Skeleton className="h-8 w-1/3" label="Loading emergency department trends" />
       <ChartCardSkeleton title="Time waiting for a ward bed after the decision to admit" />
       <ChartCardSkeleton title="Bed wait by day of the week" />
-      <ChartCardSkeleton title="Bed wait and ED visits on the same day" />
+      <ChartCardSkeleton title="Bed wait and emergency department visits on the same day" />
     </div>
   );
 }

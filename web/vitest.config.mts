@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "."),
+      "@": path.resolve(import.meta.dirname, "."),
       // `server-only` throws outside a React Server Component build; tests run the module directly.
-      "server-only": path.resolve(__dirname, "test/server-only-stub.ts"),
+      "server-only": path.resolve(import.meta.dirname, "test/server-only-stub.ts"),
     },
   },
   test: {

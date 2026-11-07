@@ -101,7 +101,9 @@ jobs:
         run: npm ci
       - name: API types match api/openapi.json (regenerate with npm run gen:api)
         run: npm run check:api-types
-      - name: Lint
+      - name: Glossary module matches docs/glossary.yml (regenerate with npm run gen:glossary)
+        run: npm run check:glossary
+      - name: Lint (ESLint, terminology lint, readability report)
         run: npm run lint
       - name: Type-check (strict)
         run: npm run typecheck

@@ -94,7 +94,8 @@ def test_ci_runs_on_pull_requests_and_pushes_to_main_with_lint_types_and_tests()
     for cmd in ("pip install -e ../api", "npx playwright install --with-deps chromium", "npm run e2e"):
         assert cmd in e2e
     web = text.split("\n  web:", 1)[1].split("\n  e2e:", 1)[0]
-    for cmd in ("npm ci", "npm run check:api-types", "npm run lint", "npm run typecheck", "npm test", "npm run build"):
+    for cmd in ("npm ci", "npm run check:api-types", "npm run check:glossary", "npm run lint", "npm run typecheck", "npm test",
+                "npm run build"):
         assert cmd in web
 
 

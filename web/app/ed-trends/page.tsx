@@ -113,7 +113,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
           <DayOfWeekChart data={dayOfWeek(rows, selected)} series={series} />
         </ChartCard>
 
-        <ChartCard title="Bed wait and ED visits on the same day" meta={meta} caveat={CAVEAT.edVisits}
+        <ChartCard title={<Glossed text="Bed wait and ED visits on the same day" />} slug="bed-wait-and-visits" meta={meta} caveat={CAVEAT.edVisits}
                    description={description("Each point is one hospital on one day. A busier day does not always come with a longer bed wait.")}>
           <WaitAttendanceScatter points={scatter.points} series={series} />
           {scatter.excluded ? (

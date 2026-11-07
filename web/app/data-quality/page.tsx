@@ -79,7 +79,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
           <CheckResults report={quality.data} />
         </ChartCard>
 
-        <ChartCard title="ED coverage: hospital × day" meta={daily?.ok ? daily.value.meta : snapshot.meta} caveat={null}
+        <ChartCard title={<Glossed text="ED coverage: hospital × day" />} slug="ed-coverage" meta={daily?.ok ? daily.value.meta : snapshot.meta} caveat={null}
                    description={
                      <>
                        <Glossed text="Whether MOH published both figures (the bed wait and ED visits) for each hospital on each day." />{" "}

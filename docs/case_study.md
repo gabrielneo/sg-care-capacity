@@ -17,12 +17,13 @@ unless stated otherwise.
 - **ED demand at a high, steady level.** The 8 public EDs MOH reported throughout recorded 868,644
   ED visits in 2023, 863,988 in 2024 and 869,131 in 2025 (MOH). The all-site total of 949,568 in
   2025 includes Woodlands Hospital, which MOH added to the figures in June 2024.
-- **Long waits for a ward bed, which vary by hospital.** In 2025, the typical daily median wait from
-  the decision to admit to leaving the ED ranged from 2.5 hours (KTPH, NTFGH) to 6.2 hours (CGH) at
-  the EDs, and 1.3 hours at Alexandra Hospital's UCC (MOH; the middle value of each year's daily medians).
-- **Uneven community capacity.** Among the 32 areas (URA planning areas) with at least 1,000 residents aged 65+,
-  CDMP clinics per 1,000 seniors range from **0** (River Valley, Tengah) to **5.02** (Rochor), with a
-  median of **1.16** (data.gov.sg CHAS list, June 2024; SingStat June 2026).
+- **Long waits for a ward bed, which vary by hospital.** In 2025, the typical time waiting for a ward
+  bed after the decision to admit ranged from 2.5 hours (KTPH, NTFGH) to 6.2 hours (CGH). It was
+  1.3 hours at Alexandra Hospital's UCC. "Typical" is the middle value of each hospital's daily
+  medians for the year (MOH).
+- **Uneven community capacity.** This covers the 32 areas (URA planning areas) with at least 1,000
+  residents aged 65+. CDMP GP clinics per 1,000 seniors range from **0** (River Valley, Tengah) to
+  **5.02** (Rochor). The median is **1.16** (data.gov.sg CHAS list, June 2024; SingStat, June 2026).
 
 **What the data can't show** (see [methodology](methodology.md#what-this-data-cant-tell-you)):
 
