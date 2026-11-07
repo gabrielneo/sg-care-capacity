@@ -1,0 +1,56 @@
+planning_area,ura_region,cluster,cluster_region,basis,operator_source,operator_verified,approximate
+Ang Mo Kio,North-East Region,NHG Health,Central,polyclinic in the area: Ang Mo Kio Polyclinic,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Bedok,East Region,SingHealth,Eastern,"polyclinic in the area: Bedok Polyclinic, Eunos Polyclinic",https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Bishan,Central Region,NHG Health,Central,nearest polyclinic: Ang Mo Kio Polyclinic (2.2 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Boon Lay,West Region,NUHS,Western,nearest polyclinic: Pioneer Polyclinic (2.7 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Bukit Batok,West Region,NUHS,Western,polyclinic in the area: Bukit Batok Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Bukit Merah,Central Region,SingHealth,Eastern,"polyclinic in the area: Bukit Merah Polyclinic, Outram Polyclinic",https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Bukit Panjang,West Region,NUHS,Western,polyclinic in the area: Bukit Panjang Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Bukit Timah,Central Region,NUHS,Western,nearest polyclinic: Clementi Polyclinic (3.4 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Central Water Catchment,North Region,NUHS,Western,nearest polyclinic: Bukit Panjang Polyclinic (4.6 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Changi,East Region,SingHealth,Eastern,nearest polyclinic: Pasir Ris Polyclinic (4.8 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Changi Bay,East Region,SingHealth,Eastern,nearest polyclinic: Pasir Ris Polyclinic (9.4 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Choa Chu Kang,West Region,NUHS,Western,polyclinic in the area: Choa Chu Kang Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Clementi,West Region,NUHS,Western,polyclinic in the area: Clementi Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Downtown Core,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (2.1 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Geylang,Central Region,NHG Health,Central,polyclinic in the area: Geylang Polyclinic,,to verify: no source found,yes
+Hougang,North-East Region,NHG Health,Central,polyclinic in the area: Hougang Polyclinic,,to verify: no source found,yes
+Jurong East,West Region,NUHS,Western,polyclinic in the area: Jurong Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Jurong West,West Region,NUHS,Western,polyclinic in the area: Pioneer Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Kallang,Central Region,NHG Health,Central,polyclinic in the area: Kallang Polyclinic,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Lim Chu Kang,North Region,NHG Health,Central,nearest polyclinic: Woodlands Polyclinic (6.2 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Mandai,North Region,NHG Health,Central,nearest polyclinic: Woodlands Polyclinic (3.1 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Marina East,Central Region,NHG Health,Central,nearest polyclinic: Kallang Polyclinic (3.5 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Marina South,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (3.0 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Marine Parade,Central Region,SingHealth,Eastern,polyclinic in the area: Marine Parade Polyclinic,https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Museum,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (2.1 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Newton,Central Region,NHG Health,Central,nearest polyclinic: Kallang Polyclinic (2.5 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+North-Eastern Islands,North-East Region,SingHealth,Eastern,nearest polyclinic: Pasir Ris Polyclinic (9.2 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Novena,Central Region,NHG Health,Central,nearest polyclinic: Toa Payoh Polyclinic (2.8 km from the area's centre),,to verify: no source found,yes
+Orchard,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (2.8 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Outram,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (0.6 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Pasir Ris,East Region,SingHealth,Eastern,polyclinic in the area: Pasir Ris Polyclinic,https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Paya Lebar,East Region,SingHealth,Eastern,nearest polyclinic: Tampines North Polyclinic (2.6 km from the area's centre),,to verify: not in the sources found,yes
+Pioneer,West Region,NUHS,Western,nearest polyclinic: Pioneer Polyclinic (4.1 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Punggol,North-East Region,SingHealth,Eastern,polyclinic in the area: Punggol Polyclinic,https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Queenstown,Central Region,NUHS,Western,polyclinic in the area: Queenstown Polyclinic,https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+River Valley,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (2.1 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Rochor,Central Region,NHG Health,Central,nearest polyclinic: Kallang Polyclinic (1.5 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Seletar,North-East Region,SingHealth,Eastern,nearest polyclinic: SengKang Polyclinic (3.0 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Sembawang,North Region,NHG Health,Central,polyclinic in the area: Sembawang Polyclinic,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Sengkang,North-East Region,SingHealth,Eastern,polyclinic in the area: SengKang Polyclinic,https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Serangoon,North-East Region,NHG Health,Central,nearest polyclinic: Hougang Polyclinic (2.4 km from the area's centre),,to verify: no source found,yes
+Simpang,North Region,NHG Health,Central,nearest polyclinic: Yishun Polyclinic (2.2 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Singapore River,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (1.2 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Southern Islands,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (4.0 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Straits View,Central Region,SingHealth,Eastern,nearest polyclinic: Outram Polyclinic (2.4 km from the area's centre),https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,yes,yes
+Sungei Kadut,North Region,NHG Health,Central,nearest polyclinic: Woodlands Polyclinic (2.4 km from the area's centre),https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Tampines,East Region,SingHealth,Eastern,"polyclinic in the area: Tampines North Polyclinic, Tampines Polyclinic",https://singhealthacademy.edu.sg/residency/life-singhealth-residency/our-campuses,"yes (Tampines Polyclinic; Tampines North not yet confirmed, same cluster)",yes
+Tanglin,Central Region,NUHS,Western,nearest polyclinic: Queenstown Polyclinic (2.2 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Tengah,West Region,NUHS,Western,nearest polyclinic: Jurong Polyclinic (1.6 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Toa Payoh,Central Region,NHG Health,Central,polyclinic in the area: Toa Payoh Polyclinic,,to verify: no source found,yes
+Tuas,West Region,NUHS,Western,nearest polyclinic: Pioneer Polyclinic (9.8 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Western Islands,West Region,NUHS,Western,nearest polyclinic: Clementi Polyclinic (9.4 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Western Water Catchment,West Region,NUHS,Western,nearest polyclinic: Pioneer Polyclinic (4.9 km from the area's centre),https://www.nuhs.edu.sg/For-Patients-Visitors/NUHS-Diagnostics/Pages/locations-opening-hours.aspx,yes,yes
+Woodlands,North Region,NHG Health,Central,polyclinic in the area: Woodlands Polyclinic,https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes
+Yishun,North Region,NHG Health,Central,"polyclinic in the area: Khatib Polyclinic, Yishun Polyclinic",https://www.sgdi.gov.sg/ministries/moh/others/nhg-polyclinics,yes,yes

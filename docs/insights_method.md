@@ -203,6 +203,14 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
     published polyclinic list.
   - Areas without a polyclinic go to the cluster of the nearest polyclinic (SVY21 distance).
   - The result is marked **approximate**.
+- **The proposed table:** [regional_mapping.csv](regional_mapping.csv), 55 rows. For each area it
+  gives the cluster, the basis (a polyclinic in the area, or the nearest one and its distance), and
+  a source for the polyclinic's operator.
+  - **Not yet approved.** Six areas rest on polyclinics whose operator I couldn't confirm from a
+    source: Geylang, Hougang, Novena, Paya Lebar, Serangoon and Toa Payoh. They're marked
+    `to verify`.
+  - The detector stays off (`thresholds.yml`: `regional.enabled: false`) until the author approves
+    the table.
 - **Gate when on:** descriptive only (three regions, too few to test). A finding is published only
   if a region is both below the national access rate and above the national median bed wait.
 - **Why this method:** regions are how clusters plan care, so a side-by-side comparison is the
