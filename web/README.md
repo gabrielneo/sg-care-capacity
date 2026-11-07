@@ -10,7 +10,7 @@ calls the API, so the site needs no CORS settings.
 
 | Page | What it shows |
 |---|---|
-| **Overview** `/` | The latest **complete** week: a plain-English summary built from the numbers by fixed rules, not an LLM (`lib/summary.ts`). Plus the attendance total against the 4-week average, the number of hospitals above their 4-week average wait (out of those that have one), and one tile per hospital. Waits are labelled "average of daily medians" |
+| **Overview** `/` | A scroll story driven by `/api/v1/insights`. The top finding's key number counts up, with its headline as the page title. Then the share of residents aged 65+ (`/api/v1/population`) and the top findings as steps beside a sticky chart panel; on phones each chart sits under its step. Then the case study's limits, read from `docs/case_study.md`, and links by reading time. No finding text or number is written in the site's code (`lib/story.ts`, `components/story/`) |
 | **ED Trends** `/ed-trends` | Daily median wait by hospital, the day-of-week pattern, and wait against attendances (Recharts). Hospitals and dates are chosen in a plain GET form, so URLs can be shared. A **missing day is a gap in the line, never joined**, and each chart counts the gaps. Tooltips give the exact date and units. AH = urgent care centre, NUH = adults only |
 | **Access Map** `/access-map` | Choropleth by planning area (Leaflet) with a metric switcher. Clinic points can be limited to CDMP. Click an area, or tab to it and press Enter, to open a side panel. The legend uses **quantile** classes and states the method. A **Table** view shows the same data |
 | **Live** `/live` | The latest NUHS readings, each labelled "Estimate from NUHS public page, at {time} SGT". They come from the weekly snapshot, not a live feed |
@@ -18,4 +18,19 @@ calls the API, so the site needs no CORS settings.
 | **Methodology** `/methodology` | `docs/methodology.md` plus the data dictionary's metric definitions: sources, how data gets from download to the site, ED and access measures, the geospatial method, limitations, and what this data can't tell you |
 | **Case Study** `/case-study` | `docs/case_study.md`: problem, stakeholders, personas, as-is and to-be patient flow (Mermaid), MoSCoW, success metrics, decision log, limitations. Shows a draft banner while `TODO(me)` items remain |
 | **Decisions** `/decisions` | The architecture decision records in `docs/adr/` |
-| **Docs** `/docs/data-dictionary`, `/docs/data-quality`, `/docs/runbook` | The rest of `docs/`, rendered |
+| **Docs** `/docs/data-dictionary`, `/docs/data-quality`, `/docs/runbook`, `/docs/insights-method` | The rest of `docs/`, rendered |
+
+## Performance budget (Lighthouse CI)
+
+`npm run lighthouse` (or `make lighthouse` from the repo root) runs Lighthouse three times on the
+Overview, as CI does. It uses the production build and the API on its fixture snapshot, on
+Lighthouse's default mobile emulation (a mid-range phone, 4× CPU slowdown, throttled 4G). The
+median run must meet the budgets in `lighthouserc.json`:
+
+| Budget | Limit | Last measured |
+|---|---|---|
+| Largest Contentful Paint | ≤ 2.5 s | 2.2 s (the headline; it paints as soon as the page arrives, and Lighthouse's estimate adds the scripts loading alongside it) |
+| Cumulative Layout Shift | ≤ 0.01 | 0 (the count-up uses fixed-width digits; the hero is in the first HTML) |
+| JavaScript transferred | ≤ 200 kB | 149 kB, almost all of it Next.js and React |
+
+Reports are written to `web/.lighthouseci/` (git-ignored). Nothing is uploaded.

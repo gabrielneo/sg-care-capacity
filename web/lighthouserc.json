@@ -1,0 +1,20 @@
+{
+  "ci": {
+    "collect": {
+      "url": ["http://127.0.0.1:3320/"],
+      "numberOfRuns": 3,
+      "settings": {
+        "onlyCategories": ["performance"],
+        "skipAudits": ["uses-http2", "redirects-http"]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500, "aggregationMethod": "median-run" }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.01, "aggregationMethod": "median-run" }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 200000, "aggregationMethod": "median-run" }]
+      }
+    },
+    "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
+  }
+}

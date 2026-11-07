@@ -97,6 +97,7 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 # tests:        cd web && npm test             # Vitest + Testing Library
 # e2e:          cd web && npm run e2e          # Playwright: real API on its fixture snapshot; 1280 + 375 px; axe (make e2e)
 #               first time: cd web && npm run e2e:install
+# lighthouse:   cd web && npm run lighthouse   # Overview budgets: LCP <= 2.5 s, CLS <= 0.01, JS <= 200 kB (web/lighthouserc.json; make lighthouse)
 # api types:    cd web && npm run gen:api      # after api/openapi.json changes; CI fails if stale
 # glossary:     docs/glossary.yml (from docs/language_rules.md) -> cd web && npm run gen:glossary
 # wording:      cd web && npm run lint:terms && npm run readability   # both part of npm run lint

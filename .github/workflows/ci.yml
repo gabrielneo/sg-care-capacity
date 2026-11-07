@@ -148,3 +148,41 @@ jobs:
           name: playwright-report
           path: web/playwright-report
           retention-days: 14
+
+  lighthouse:
+    # Lighthouse CI on the Overview: the real API on its fixture snapshot, the production build,
+    # Lighthouse's mobile emulation, three runs. Budgets in web/lighthouserc.json: LCP <= 2.5 s,
+    # CLS <= 0.01, JavaScript <= 200 kB transferred.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: api/pyproject.toml
+      - name: Install the API
+        run: pip install -e ../api
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Lighthouse CI
+        run: npm run lighthouse
+        env:
+          E2E_PYTHON: python
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse
+          path: web/.lighthouseci
+          retention-days: 14
