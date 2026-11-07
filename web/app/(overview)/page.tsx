@@ -4,7 +4,7 @@ import { type DepthCard, DepthCards, Findings, Hero, Limits, WhyNow } from "@/co
 import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
 import { docWords, renderDocList } from "@/lib/docs";
-import { readingMinutes, storySteps } from "@/lib/story";
+import { EMPTY_STORY, emptyReason, readingMinutes, storySteps } from "@/lib/story";
 
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
@@ -50,8 +50,7 @@ export default async function OverviewPage() {
       ) : (
         <>
           <PageHeader title={SITE_TITLE} />
-          <EmptyState title="No findings in this data release"
-                      message="No finding passed its statistical check this week, so there is nothing to show here." />
+          <EmptyState title="No findings to show" message={EMPTY_STORY[emptyReason(insights.value.data)]} />
         </>
       )}
 

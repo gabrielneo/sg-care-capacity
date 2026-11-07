@@ -21,6 +21,19 @@ export function storySteps(insights: Insight[], max = 3): StoryInsight[] {
     .slice(0, max);
 }
 
+/**
+ * Why the story has nothing to show: no headline finding passed its check ("none"), or the data
+ * release predates the labels and charts the story needs ("old_release").
+ */
+export function emptyReason(insights: Insight[]): "none" | "old_release" {
+  return insights.some((i) => i.headline_rank != null && !isStoryInsight(i)) ? "old_release" : "none";
+}
+
+export const EMPTY_STORY = {
+  none: "No finding passed its statistical check in this data release, so there is nothing to show here.",
+  old_release: "This data release was published before the site could show its findings this way. They will appear from the next weekly release.",
+} as const;
+
 /** Which measure each detector's chart shows (docs/insights_method.md). */
 const MEASURE: Record<Insight["type"], "bed_wait" | "clinics"> = {
   trend: "bed_wait",

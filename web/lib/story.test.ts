@@ -12,6 +12,7 @@ import {
   populationShare,
   primaryCaveat,
   readingMinutes,
+  emptyReason,
   storySteps,
   whoActs,
 } from "./story";
@@ -29,6 +30,14 @@ describe("storySteps", () => {
     const notHeadline = { ...weekday, insight_id: "x", headline_rank: null };
     const noChart: Insight = { ...anomaly, chart: null };
     expect(storySteps([notHeadline, noChart, volume]).map((i) => i.insight_id)).toEqual([volume.insight_id]);
+  });
+});
+
+describe("emptyReason", () => {
+  it("tells a release with no passing finding from one that predates the story's charts", () => {
+    expect(emptyReason([])).toBe("none");
+    expect(emptyReason([{ ...weekday, headline_rank: null }])).toBe("none");
+    expect(emptyReason([{ ...weekday, display: null, chart: null }])).toBe("old_release");
   });
 });
 
