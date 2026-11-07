@@ -341,3 +341,131 @@ def test_every_detector_is_documented(detector):
     for part in ("Question", "ethod", "Gate", "Why this method", "Limitations"):
         assert part in section.group(1), f"{detector}: missing {part}"
     assert detector in thresholds(), f"{detector} has no block in thresholds.yml"
+
+
+# --------------------------------------------------------------------------- #
+# chart and display: what the site draws, from the values each detector tested
+# --------------------------------------------------------------------------- #
+
+def busy_run():
+    """Every ED detector fires: a trend, a Monday peak, a last-week spike, visits that move with waits."""
+    def fn(rng, code, i, wd):
+        visits = 400 + 40 * rng.normal()
+        return 4 + 0.02 * i + (2.0 if wd == 0 else 0) + 0.02 * (visits - 400) + rng.normal(0, 0.3), visits
+    d = daily(fn, codes=("SGH", "CGH"), seed=5)
+    return engine.run(inputs(weekly_from(d), d, hospitals("SGH", "CGH"), areas_frame()), NO_FAILS, TODAY), d
+
+
+def test_every_published_insight_has_a_chart_and_labels():
+    result, _ = busy_run()
+    assert {r["type"] for r in result.insights} >= {"trend", "weekday", "volume_vs_wait", "access_gap"}
+    for r in result.insights:
+        disp, ch = r["display"], r["chart"]
+        assert disp["value_text"] and disp["metric_label"] and disp["change"] in (None, "up", "down")
+        keys = [p["key"] for p in ch["points"]]
+        assert ch["kind"] in ("bar", "line") and len(keys) >= 2 and set(ch["highlight"]) <= set(keys)
+        assert ch["callout"] and ch["y_label"]
+        for text in (disp["metric_label"], disp["comparison_label"], disp["change_word"], ch["callout"], ch["y_label"]):
+            if text:
+                assert not wording.CAUSAL.search(text) and len(text.split()) <= wording.MAX_LABEL_WORDS, text
+
+
+def test_the_weekday_chart_is_the_tested_weekday_means():
+    result, d = busy_run()
+    sgh = next(r for r in published(result, "weekday") if r["entity"] == "SGH")
+    rows = d[d["hospital_code"] == "SGH"]
+    means = rows.groupby(pd.to_datetime(rows["report_date"]).dt.day_of_week)["median_wait_hours"].mean()
+    bars = sgh["chart"]["points"]
+    assert [p["label"] for p in bars] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    assert [p["value"] for p in bars] == pytest.approx(list(means), abs=1e-4)
+    assert sgh["chart"]["highlight"] == ["mon"] and bars[0]["value"] == pytest.approx(sgh["metric_value"], abs=1e-4)
+    assert sgh["chart"]["reference"] == {"value": pytest.approx(sgh["comparison_value"], abs=1e-4), "label": "Weekly average"}
+    pct = sgh["headline"].split(", ")[-1].split("%")[0]                 # "... on Mondays, 49% above ..."
+    assert sgh["chart"]["callout"] == f"Mondays: {pct}% above average"
+    assert sgh["display"]["value_text"] == f"{sgh['metric_value']:.1f}" and sgh["display"]["unit_text"] == "hours"
+    assert sgh["display"]["comparison_label"].endswith(", its weekly average") and sgh["display"]["change"] == "up"
+    assert sgh["evidence"]["endpoint"] == "/api/v1/ed/daily?hospital=SGH&from=2026-04-27&to=2026-10-25"
+
+
+def test_the_anomaly_chart_shows_the_week_against_the_usual_level():
+    vals = [4.0, 4.2, 3.9, 4.1, 4.0, 4.3, 3.8, 4.1, 9.0]
+    [c] = anomaly.detect(weekly({"SGH": vals}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0).candidates
+    assert [p["value"] for p in c.chart["points"]] == vals and c.chart["highlight"] == [LATEST.isoformat()]
+    assert c.chart["points"][-1]["label"] == "19 Oct" and c.chart["reference"] == {"value": 4.05, "label": "Usual level"}
+    assert c.display == {"value_text": "9.0", "unit_text": "hours", "change": "up"}
+    assert c.caveats[0] == "One unusual week is not a trend."         # the step's caveat chip shows the first
+
+
+def test_a_missing_week_is_a_gap_in_the_trend_chart_not_a_zero():
+    rng = np.random.default_rng(1)
+    w = weekly({"SGH": [4 + 0.15 * k + rng.normal(0, 0.3) for k in range(26)]})
+    w.loc[w.index[5], "is_complete_week"] = False
+    result = engine.run(inputs(w), NO_FAILS, TODAY)
+    [ins] = published(result, "trend")
+    points = ins["chart"]["points"]
+    assert len(points) == 26 and points[5]["value"] is None and all(p["value"] is not None for p in points[6:])
+    line = ins["chart"]["trend_line"]
+    assert line["last"] > line["first"] and ins["display"]["change"] == "up" and ins["display"]["change_word"] == "rising"
+    assert ins["display"]["comparison_label"] is None                  # a slope and a level aren't the same unit
+
+
+def test_the_volume_chart_groups_days_into_fifths():
+    result, _ = busy_run()
+    ins = next(r for r in published(result, "volume_vs_wait") if r["entity"] == "SGH")
+    bars = ins["chart"]["points"]
+    assert [p["label"] for p in bars] == ["Quietest", "Quieter", "Middle", "Busier", "Busiest"]
+    assert bars[-1]["value"] > bars[0]["value"] and ins["chart"]["highlight"] == ["q5"]
+    assert ins["chart"]["reference"] == {"value": 0.0, "label": "Usual for that weekday"}
+    assert "longer than after the quietest" in ins["chart"]["callout"]
+    assert ins["display"]["change"] is None and ins["display"]["change_word"].endswith(" link")
+
+
+def test_the_access_gap_chart_compares_the_area_with_singapore():
+    out = access_gap.detect(areas_frame(), thresholds()["access_gap"], MIN_C)
+    first = out.candidates[0]
+    assert [p["label"] for p in first.chart["points"]] == ["Big Low", "Singapore overall"]
+    assert first.chart["points"][1]["value"] == pytest.approx(1000 * 55 / 48900, abs=1e-4)
+    assert first.display["change"] == "down"
+
+
+@pytest.mark.parametrize("points, highlight", [
+    ([{"key": "a", "label": "A", "value": 1.0}], ["a"]),                                                  # one point
+    ([{"key": "a", "label": "A", "value": 1.0}, {"key": "b", "label": "B", "value": 2.0}], ["c"]),      # unknown key
+    ([{"key": "a", "label": "A", "value": 1.0}, {"key": "a", "label": "B", "value": 2.0}], ["a"]),      # duplicate key
+])
+def test_a_chart_without_a_valid_highlight_is_refused(points, highlight):
+    from sg_health.insights.model import chart
+    with pytest.raises(ValueError):
+        chart("bar", "Hours", points, highlight)
+
+
+@pytest.mark.parametrize("bad", ["Busy days cause long waits", "a label that is far too long to sit beside a number on the page",
+                                 "Not a phrase."])
+def test_the_label_check_rejects_causal_long_and_sentence_labels(bad):
+    with pytest.raises(wording.WordingError):
+        wording.check(bad, kind="label")
+
+
+def test_every_template_variant_has_a_metric_label_and_a_callout():
+    for detector, variants in wording.templates().items():
+        for variant, t in variants.items():
+            assert t.get("metric_label") and t.get("callout"), f"{detector}.{variant}"
+            for key in wording.DISPLAY_FIELDS:
+                if key in t:
+                    assert not wording.CAUSAL.search(t[key]), f"{detector}.{variant}.{key}"
+
+
+def test_display_and_chart_round_trip_through_fct_insight(tmp_path):
+    from sg_health.warehouse import Warehouse
+    result, _ = busy_run()
+    wh = Warehouse(tmp_path / "w.duckdb")
+    try:
+        engine.write_mart(wh, result)
+        rows = wh.con.execute("SELECT insight_id, display, chart FROM marts.fct_insight ORDER BY insight_id").fetchall()
+    finally:
+        wh.close()
+    by_id = {r["insight_id"]: r for r in result.insights}
+    assert len(rows) == len(by_id)
+    for insight_id, disp, ch in rows:
+        assert disp == by_id[insight_id]["display"] and ch == by_id[insight_id]["chart"]
+    assert json.loads(json.dumps(engine.to_json(result)))["headline_findings"][0]["chart"]["points"]

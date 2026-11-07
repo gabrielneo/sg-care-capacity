@@ -47,10 +47,15 @@ FCT_INSIGHT_DDL = """CREATE OR REPLACE TABLE marts.fct_insight (
     unit VARCHAR, comparison_value DOUBLE, direction VARCHAR, effect_size DOUBLE, p_value DOUBLE, p_adjusted DOUBLE,
     n INTEGER, method VARCHAR, caveats VARCHAR[], who_acts VARCHAR, action VARCHAR,
     evidence STRUCT(endpoint VARCHAR, query VARCHAR), as_of DATE, as_of_basis VARCHAR, rank_score DOUBLE,
-    headline_rank INTEGER)"""
+    headline_rank INTEGER,
+    display STRUCT(value_text VARCHAR, unit_text VARCHAR, metric_label VARCHAR, comparison_label VARCHAR, change VARCHAR,
+                   change_word VARCHAR),
+    chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
+                 highlight VARCHAR[], callout VARCHAR, reference STRUCT(value DOUBLE, label VARCHAR),
+                 trend_line STRUCT(first DOUBLE, last DOUBLE)))"""
 COLUMNS = ["insight_id", "type", "entity", "headline", "detail", "metric_value", "unit", "comparison_value", "direction",
            "effect_size", "p_value", "p_adjusted", "n", "method", "caveats", "who_acts", "action", "evidence", "as_of",
-           "as_of_basis", "rank_score", "headline_rank"]
+           "as_of_basis", "rank_score", "headline_rank", "display", "chart"]
 
 
 @dataclass
@@ -202,6 +207,18 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
     for text in caveats:
         if wording.CAUSAL.search(text):
             raise wording.WordingError(f"causal word in a caveat: {text!r}")
+    labels = wording.render_display(c.type, c.variant, values, forbidden)
+    display = {"value_text": c.display.get("value_text"), "unit_text": c.display.get("unit_text"),
+               "metric_label": labels["metric_label"], "comparison_label": labels["comparison_label"],
+               "change": c.display.get("change"), "change_word": labels["change_word"]}
+    if not display["value_text"] or display["change"] not in (None, "up", "down"):
+        raise ValueError(f"{c.type} {c.entity}: display needs value_text and change up / down / None: {display}")
+    chart = None if c.chart is None else {**c.chart, "callout": labels["callout"]}
+    if chart:
+        texts = [chart["y_label"], chart["x_label"], *(p["label"] for p in chart["points"]),
+                 chart["reference"]["label"] if chart["reference"] else None]
+        for text in (t for t in texts if t):
+            wording.check(text, kind="label", forbidden=forbidden)
     recency = ranking.recency_weight(c.source, (dates or {}).get(c.source, c.as_of), today)
     return {
         "insight_id": c.insight_id, "type": c.type, "entity": c.entity, "headline": headline, "detail": detail,
@@ -211,6 +228,7 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
         "action": act, "evidence": c.evidence, "as_of": c.as_of,
         "as_of_basis": "source_updated" if c.source == "datagov_chas" else "latest_data",
         "rank_score": ranking.rank_score(c.effect_norm, c.p_adjusted, c.completeness, recency), "headline_rank": None,
+        "display": display, "chart": chart,
     }
 
 

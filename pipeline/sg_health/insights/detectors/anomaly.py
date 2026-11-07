@@ -6,10 +6,20 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip
+from ..model import Candidate, DetectorResult, Skip, chart, point
 from ..stats import robust_z
 from ..wording import hours
-from .common import UNIT_CAVEAT, WEEKLY_CAVEAT, hospital_caveats, hospital_name, latest_complete_week, week_text
+from .common import (
+    UNIT_CAVEAT,
+    WEEKLY_AXIS,
+    WEEKLY_CAVEAT,
+    hospital_caveats,
+    hospital_name,
+    hours_parts,
+    latest_complete_week,
+    short_date,
+    week_text,
+)
 
 SQL = ("SELECT week_start, mean_of_daily_median_wait_hours FROM marts.fct_ed_weekly "
        "WHERE hospital_code = '{code}' AND week_start BETWEEN DATE '{start}' AND DATE '{end}' ORDER BY week_start")
@@ -42,6 +52,8 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
             continue
         z, med, _ = r
         direction = "worse" if x > med else "better"
+        points = [point(s.isoformat(), short_date(s), float(rows[s])) for s in [*trailing, latest]]
+        value_text, unit_text = hours_parts(x)
         out.candidates.append(Candidate(
             type="anomaly", entity=code, variant=direction, method="Robust z-score (median and MAD of the 8 weeks before)",
             n=k + 1, effect_size=z, effect_norm=min(abs(z) / full_effect, 1.0), metric_value=x, unit="hours",
@@ -49,9 +61,11 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
             completeness=completeness, as_of=latest + timedelta(days=6), source="moh_bed_waits",
             values={"hospital": hospital_name(h), "week": week_text(latest), "value": hours(x), "usual": hours(med),
                     "trailing": k, "window": latest.isoformat()},
-            caveats=[WEEKLY_CAVEAT, UNIT_CAVEAT, "One unusual week is not a trend.", *hospital_caveats(h)],
+            caveats=["One unusual week is not a trend.", WEEKLY_CAVEAT, UNIT_CAVEAT, *hospital_caveats(h)],
             evidence={"endpoint": f"/api/v1/ed/weekly?hospital={code}&weeks={k + 1}",
                       "query": SQL.format(code=code, start=trailing[0].isoformat(), end=latest.isoformat())},
             action_key=direction, action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
+            chart=chart("line", WEEKLY_AXIS, points, [latest.isoformat()], reference=(med, "Usual level")),
+            display={"value_text": value_text, "unit_text": unit_text, "change": "up" if x > med else "down"},
         ))
     return out

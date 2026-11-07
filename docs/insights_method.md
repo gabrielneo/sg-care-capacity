@@ -64,6 +64,39 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
     - **Outputs:** `marts.fct_insight` and `insights.json` (a release file, hashed in the
       manifest).
 
+## What the site shows with each insight
+
+The Overview page tells the top findings as a story. Everything it shows about a finding comes from
+the engine, so the website writes no finding text and computes no finding number.
+
+- **The key number** (`display.value_text`, `unit_text`) is rounded as in the headline. Its label
+  (`metric_label`) says what it is, for example "Average bed wait on Tuesdays".
+- **The comparison** (`comparison_label`) carries its own value, for example "1.4 hours, usual for
+  this hospital". It is left out where the comparison isn't in the same unit: a trend's slope
+  against a level, or a correlation.
+- **The arrow and its word** (`change`, `change_word`) say which way the number moved. Colour comes
+  only from `direction`: more clinics is better and a longer wait is worse. A neutral finding, such
+  as a peak day, gets no colour.
+- **The chart** (`chart`) holds the values the detector tested:
+
+  | Detector | Chart | Highlighted | Reference line |
+  |---|---|---|---|
+  | trend | the weekly values, with the Theil-Sen line; a missing week is a gap | the latest week | none |
+  | anomaly | the 8 weeks before and the latest week | the latest week | the usual level (median) |
+  | weekday | the average for each day of the week | the peak day | the weekly average |
+  | volume_vs_wait | days in five equal groups by visits, with the median bed wait for each | the busiest group | the usual for that weekday (0) |
+  | access_gap | the area's rate and Singapore's overall rate | the area | none |
+  | source_gap | the median NUHS estimate and the median MOH figure | the NUHS estimate | none |
+
+  For visits and waits, the five groups describe the same pairs the correlation was tested on.
+  They are not a second test.
+- **The callout** (`chart.callout`) is the annotation pointing at the highlighted point. It comes
+  from `templates.yml`.
+- **Checks:** these labels pass the same word checks as the headlines (no causal words, no column
+  names), and are phrases of at most 12 words.
+- **The first caveat** is the finding's own, for example "One unusual week is not a trend." The site
+  shows it beside the finding.
+
 ## Why scipy
 
 The tests here (Kendall's tau, Theil-Sen, Kruskal-Wallis, Spearman, Wilcoxon, Benjamini-Hochberg)

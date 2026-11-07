@@ -6,11 +6,12 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip
+from ..model import Candidate, DetectorResult, Skip, chart, point
 from ..wording import count
 
 SQL = ("SELECT planning_area, residents_65plus, cdmp_clinics, cdmp_clinics_per_1k_seniors FROM marts.fct_area_access "
        "WHERE planning_area = '{area}'")
+AXIS = "CDMP GP clinics per 1,000 residents aged 65+"
 CAVEATS = ["The clinic list dates from June 2024 and residents from June 2026.",
            "Clinics are counted where they are, not where their patients live.",
            "Area averages don't describe individual people.", "Resident counts are rounded to the nearest 10."]
@@ -48,19 +49,24 @@ def detect(areas: pd.DataFrame, cfg: dict[str, Any], min_completeness: float) ->
     for i, (_, r) in enumerate(inc.iterrows()):
         shortfall = float(r["shortfall"])
         as_of = pd.to_datetime(r.get("as_of")).date() if pd.notna(r.get("as_of")) else date.min
+        rate = float(r["cdmp_clinics_per_1k_seniors"])
+        points = [point("area", str(r["planning_area"]), rate), point("national", "Singapore overall", national * 1000)]
         out.candidates.append(Candidate(
             type="access_gap", entity=str(r["planning_area"]), variant="worse",
             method="Expected CDMP clinics at the national rate per senior; priority = seniors percentile x (1 - access percentile)",
             n=int(r["residents_65plus"]), effect_size=float(r["priority"]), effect_norm=float(r["priority"]),
-            metric_value=float(r["cdmp_clinics_per_1k_seniors"]), unit="CDMP GP clinics per 1,000 residents aged 65+",
+            metric_value=rate, unit="CDMP GP clinics per 1,000 residents aged 65+",
             comparison_value=national * 1000, direction="worse", p_value=None,
             passes_effect=i < top and shortfall >= float(cfg["min_shortfall_clinics"]), completeness=1.0,
             as_of=as_of, source="datagov_chas",
             values={"area": r["planning_area"], "shortfall": count(shortfall), "shortfall_n": round(shortfall),
                     "actual": count(r["cdmp_clinics"]), "actual_n": int(r["cdmp_clinics"]), "seniors": count(r["residents_65plus"]),
-                    "expected": count(r["expected"]), "window": "access", "rank": i + 1},
+                    "expected": count(r["expected"]), "window": "access", "rank": i + 1, "national": f"{national * 1000:.2f}"},
             caveats=list(CAVEATS),
             evidence={"endpoint": "/api/v1/areas/access", "query": SQL.format(area=str(r["planning_area"]).replace("'", "''"))},
             action_key=None, action_values={"area": r["planning_area"], "n_areas": max(min(top, len(inc)) - 1, 0)},
+            chart=chart("bar", AXIS, points, ["area"]),
+            display={"value_text": f"{rate:.2f}", "unit_text": "per 1,000 residents aged 65+",
+                     "change": "down" if rate < national * 1000 else "up"},
         ))
     return out

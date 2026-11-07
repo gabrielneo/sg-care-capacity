@@ -6,17 +6,20 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip
+from ..model import Candidate, DetectorResult, Skip, chart, point
 from ..stats import mann_kendall, theil_sen
 from ..wording import hours
 from .common import (
     UNIT_CAVEAT,
+    WEEKLY_AXIS,
     WEEKLY_CAVEAT,
     expected_weeks,
     hospital_caveats,
     hospital_name,
+    hours_parts,
     latest_complete_week,
     reported_from,
+    short_date,
     window_starts,
 )
 
@@ -51,6 +54,10 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
         mk = mann_kendall(y, correct=cfg.get("autocorrelation_correction") == "yue_wang")
         start, end = intercept, intercept + slope * (len(starts) - 1)
         direction = "worse" if slope > 0 else "better"
+        by_week = dict(zip(rows["week_start"], y, strict=True))
+        points = [point(s.isoformat(), short_date(s), by_week.get(s)) for s in starts]   # a missing week stays a gap
+        last_seen = max(rows["week_start"]).isoformat()
+        value_text, unit_text = hours_parts(abs(slope))
         out.candidates.append(Candidate(
             type="trend", entity=code, variant=direction,
             method=f"Theil-Sen slope; Mann-Kendall test with Yue-Wang autocorrelation correction (lag-1 r = {mk.lag1:.2f})",
@@ -60,10 +67,12 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
             as_of=rows["week_start"].iloc[-1] + pd.Timedelta(days=6), source="moh_bed_waits",
             values={"hospital": hospital_name(h), "slope": hours(abs(slope)), "weeks": len(starts),
                     "start": hours(start), "end": hours(end), "window": starts[0].isoformat()},
-            caveats=[WEEKLY_CAVEAT, UNIT_CAVEAT, "Weeks next to each other are similar; the test allows for that.",
+            caveats=["Weeks next to each other are similar; the test allows for that.", WEEKLY_CAVEAT, UNIT_CAVEAT,
                      *hospital_caveats(h)],
             evidence={"endpoint": f"/api/v1/ed/weekly?hospital={code}&weeks={cfg['weeks']}",
                       "query": SQL.format(code=code, start=starts[0].isoformat())},
             action_key=direction, action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
+            chart=chart("line", WEEKLY_AXIS, points, [last_seen], trend_line=(start, end)),
+            display={"value_text": value_text, "unit_text": f"{unit_text} a week", "change": "up" if slope > 0 else "down"},
         ))
     return out

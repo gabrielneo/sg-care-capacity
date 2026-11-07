@@ -6,8 +6,9 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip
+from ..model import Candidate, DetectorResult, Skip, chart, point
 from ..stats import spearman, strength_label
+from ..wording import hours
 from .common import (
     UNIT_CAVEAT,
     daily_window,
@@ -19,6 +20,8 @@ from .common import (
 )
 
 LAG_PHRASE = {0: "on the same day", 1: "the day before", 2: "two days before"}
+AFTER_PHRASE = {0: "on the same day", 1: "the day after", 2: "two days after"}      # from the visits' side
+GROUPS = ["Quietest", "Quieter", "Middle", "Busier", "Busiest"]
 ADVERB = {"negligible": "negligibly", "weak": "weakly", "moderate": "moderately", "strong": "strongly"}
 SQL = ("SELECT report_date, attendances, median_wait_hours FROM marts.fct_ed_daily WHERE hospital_code = '{code}' "
        "AND report_date BETWEEN DATE '{start}' AND DATE '{end}' ORDER BY report_date")
@@ -27,6 +30,17 @@ SQL = ("SELECT report_date, attendances, median_wait_hours FROM marts.fct_ed_dai
 def _adjust(s: pd.Series, weekday: pd.Series) -> pd.Series:
     """Remove the usual weekday pattern: subtract each weekday's median."""
     return s - s.groupby(weekday).transform("median")
+
+
+def _fifths(pair: pd.DataFrame) -> tuple[list[dict[str, Any]], float]:
+    """Days in five equal groups by visits (v); the median bed wait (w) in each. The chart, not the test.
+
+    Returns the five points and the busiest group's median minus the quietest's.
+    """
+    group = pd.qcut(pair["v"].rank(method="first"), 5, labels=False)
+    med = pair.groupby(group)["w"].median()
+    points = [point(f"q{k + 1}", GROUPS[k], float(med[k])) for k in range(5)]
+    return points, float(med[4] - med[0])
 
 
 def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any],
@@ -66,6 +80,9 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             rho, p = spearman(pair["v"].to_numpy(), pair["w"].to_numpy())
             label = strength_label(rho, cfg["strength"])
             variant = "positive" if rho >= 0 else "negative"
+            adjusted = bool(cfg.get("adjust_for_weekday", True))
+            points, diff = _fifths(pair)
+            after = AFTER_PHRASE[int(lag)]
             out.candidates.append(Candidate(
                 type="volume_vs_wait", entity=code, variant=variant,
                 method=f"Spearman correlation, visits on day t vs bed wait on day t+{lag}"
@@ -74,12 +91,17 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
                 comparison_value=None, direction="neutral", p_value=p, passes_effect=label != "negligible",
                 completeness=min(completeness, 1.0), as_of=last, source="moh_bed_waits",
                 values={"hospital": hospital_name(h), "strength": ADVERB[label], "lag_phrase": LAG_PHRASE[int(lag)],
-                        "n": f"{len(pair):,d}", "window": f"{first}|lag{lag}"},
+                        "n": f"{len(pair):,d}", "window": f"{first}|lag{lag}", "strength_label": label,
+                        "after_phrase": after, "diff": hours(abs(diff)), "longer_shorter": "longer" if diff >= 0 else "shorter"},
                 caveats=[f"The link is {label} (Spearman correlation {rho:.2f}).", "This is an association only.",
                          UNIT_CAVEAT, *hospital_caveats(h)],
                 evidence={"endpoint": f"/api/v1/ed/daily?hospital={code}&from={first}&to={last}",
                           "query": SQL.format(code=code, start=first, end=last)},
                 action_key="negligible_or_weak" if label in ("negligible", "weak") else "moderate_or_strong",
                 action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
+                chart=chart("bar", f"Bed wait {after}, hours" + (" vs usual for that weekday" if adjusted else ""), points,
+                            ["q5"], x_label="Days in five equal groups by ED visits" + (" vs usual" if adjusted else ""),
+                            reference=(0.0, "Usual for that weekday") if adjusted else None),
+                display={"value_text": f"{rho:.2f}", "unit_text": None, "change": None},
             ))
     return out

@@ -8,6 +8,18 @@ import pandas as pd
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 UNIT_CAVEAT = "MOH doesn't state the unit; the values are read as hours."
 WEEKLY_CAVEAT = "A week's figure is the average of each day's median."
+WEEKLY_AXIS = "Hours, average of each day's median"
+
+
+def hours_parts(v: float) -> tuple[str, str]:
+    """The key number and its unit, rounded as in the sentences: ("2.1", "hours")."""
+    r = round(v, 1)
+    return f"{r:.1f}", "hour" if r == 1.0 else "hours"
+
+
+def short_date(d: date) -> str:
+    """A chart axis label: "19 Oct"."""
+    return f"{d.day} {d.strftime('%b')}"
 
 
 def latest_complete_week(weekly: pd.DataFrame) -> date | None:

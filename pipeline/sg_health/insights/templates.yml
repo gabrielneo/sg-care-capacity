@@ -4,45 +4,88 @@
 #   placeholders are filled with formatted values: hours to 1 decimal, percentages whole,
 #   counts with thousands separators; {n|area|areas} picks singular or plural
 #   {hospital} and {area} are full names (first mention)
+#
+# The site's labels around each insight's key number, also checked (a phrase of at most 12 words,
+# no full stop, same word rules):
+#   metric_label      what the key number is (required)
+#   comparison_label  what it is compared with, with that value; shown after "vs" (optional)
+#   change_word       the word beside the arrow, e.g. "higher than usual" (optional)
+#   callout           the chart annotation pointing at the difference the headline describes (required)
 
 trend:
   worse:
     headline: "Bed waits at {hospital} have risen about {slope} a week over the last {weeks} weeks."
     detail: "Its trend line moved from {start} to {end}: a steady rise, not one bad week. This is unlikely to be chance (adjusted p {p})."
+    metric_label: "Average change in bed wait each week"
+    change_word: "rising"
+    callout: "About {slope} a week over {weeks} weeks"
   better:
     headline: "Bed waits at {hospital} have fallen about {slope} a week over the last {weeks} weeks."
     detail: "Its trend line moved from {start} to {end}: a steady fall, not one good week. This is unlikely to be chance (adjusted p {p})."
+    metric_label: "Average change in bed wait each week"
+    change_word: "falling"
+    callout: "About {slope} a week over {weeks} weeks"
 
 anomaly:
   worse:
     headline: "Bed waits at {hospital} were unusually long in the week of {week}: {value}."
     detail: "The usual level over the {trailing} weeks before was {usual}. A week this far out happens rarely by chance."
+    metric_label: "Average bed wait, week of {week}"
+    comparison_label: "{usual}, usual for this hospital"
+    change_word: "higher than usual"
+    callout: "{week}: {value}"
   better:
     headline: "Bed waits at {hospital} were unusually short in the week of {week}: {value}."
     detail: "The usual level over the {trailing} weeks before was {usual}. One good week is not yet a trend."
+    metric_label: "Average bed wait, week of {week}"
+    comparison_label: "{usual}, usual for this hospital"
+    change_word: "lower than usual"
+    callout: "{week}: {value}"
 
 weekday:
   hospital:
     headline: "At {hospital}, bed waits are longest on {weekday}s, {pct} above its weekly average."
     detail: "Waits differ by day of the week over {weeks} complete weeks. This is unlikely to be chance (adjusted p {p})."
+    metric_label: "Average bed wait on {weekday}s"
+    comparison_label: "{mean}, its weekly average"
+    change_word: "higher than average"
+    callout: "{weekday}s: {pct} above average"
   pooled:
     headline: "Across all hospitals, bed waits are longest on {weekday}s, {pct} above each hospital's weekly average."
     detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks. This is unlikely to be chance (adjusted p {p})."
+    metric_label: "Bed wait on {weekday}s, compared with each hospital's average"
+    comparison_label: "{mean}, each hospital's own average"
+    change_word: "higher than average"
+    callout: "{weekday}s: {pct} above average"
 
 volume_vs_wait:
   positive:
     headline: "At {hospital}, bed waits move {strength} with ED visits {lag_phrase}."
     detail: "Busier days come with longer bed waits, over {n} days after removing the usual weekday pattern. It is an association only."
+    metric_label: "Correlation of ED visits with the bed wait {after_phrase}"
+    change_word: "{strength_label} link"
+    callout: "After the busiest days: {diff} {longer_shorter} than after the quietest"
   negative:
     headline: "At {hospital}, bed waits move {strength} against ED visits {lag_phrase}."
     detail: "Busier days come with shorter bed waits, over {n} days after removing the usual weekday pattern. It is an association only."
+    metric_label: "Correlation of ED visits with the bed wait {after_phrase}"
+    change_word: "{strength_label} link"
+    callout: "After the busiest days: {diff} {longer_shorter} than after the quietest"
 
 access_gap:
   worse:
     headline: "{area} has about {shortfall} fewer CDMP GP {shortfall_n|clinic|clinics} than the national rate would give its seniors."
     detail: "It has {actual} {actual_n|clinic|clinics} for {seniors} residents aged 65+, where the national rate suggests {expected}. Clinics are counted where they are, not where patients go."
+    metric_label: "CDMP GP clinics per 1,000 residents aged 65+ in {area}"
+    comparison_label: "{national}, the national rate"
+    change_word: "lower than the national rate"
+    callout: "About {shortfall} {shortfall_n|clinic|clinics} short of the national rate"
 
 source_gap:
   neutral:
     headline: "NUHS's live bed-wait estimate for NUH differs from MOH's daily figure by a median {gap}."
     detail: "This compares {n} days with both figures. They measure different things: a moment's estimate against the day's median for admitted patients."
+    metric_label: "Median daily gap, NUHS estimate minus MOH figure"
+    comparison_label: "{moh}, MOH's median daily figure"
+    change_word: "{above_below} MOH's figure"
+    callout: "Median daily gap: {gap}"

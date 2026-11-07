@@ -5,9 +5,10 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip
+from ..model import Candidate, DetectorResult, Skip, chart, point
 from ..stats import wilcoxon_median
 from ..wording import hours
+from .common import hours_parts
 
 SQL = ("-- daily median of NUHS adult estimates for NUH, joined to MOH's NUH daily median on the same date\n"
        "SELECT CAST(l.snapshot_at AS DATE) AS day, median(l.est_bed_wait_hours) AS nuhs, any_value(d.median_wait_hours) AS moh "
@@ -30,15 +31,22 @@ def detect(live: pd.DataFrame, daily: pd.DataFrame, cfg: dict[str, Any], full_ef
         return out
     diffs = (pair["nuhs"] - pair["moh"]).to_numpy(dtype=float)
     med, p = wilcoxon_median(diffs)
+    moh_median, nuhs_median = float(pair["moh"].median()), float(pair["nuhs"].median())
+    points = [point("nuhs", "NUHS estimate", nuhs_median), point("moh", "MOH figure", moh_median)]
+    value_text, unit_text = hours_parts(abs(med))
+    above_below = "above" if med > 0 else "below" if med < 0 else "level with"
     out.candidates.append(Candidate(
         type="source_gap", entity="NUH", variant="neutral", method="Median of paired daily differences; Wilcoxon signed-rank test",
         n=len(pair), effect_size=med, effect_norm=min(abs(med) / full_effect, 1.0), metric_value=med, unit="hours",
-        comparison_value=float(pair["moh"].median()), direction="neutral", p_value=p, passes_effect=True,
+        comparison_value=moh_median, direction="neutral", p_value=p, passes_effect=True,
         completeness=1.0, as_of=max(pair.index), source="nuhs_live",
-        values={"gap": hours(abs(med)), "n": f"{len(pair):,d}", "window": str(min(pair.index))},
+        values={"gap": hours(abs(med)), "n": f"{len(pair):,d}", "window": str(min(pair.index)), "moh": hours(moh_median),
+                "above_below": above_below},
         caveats=["The two figures measure different things: an estimate at one moment, and the day's median for admitted patients.",
                  "NUHS's figures cover its adult emergency department."],
         evidence={"endpoint": "/api/v1/live/nuhs/latest", "query": SQL},
         action_key=None, action_values={"hospital": "National University Hospital", "cluster": "NUHS"},
+        chart=chart("bar", "Hours, median of the days with both figures", points, ["nuhs"]),
+        display={"value_text": value_text, "unit_text": unit_text, "change": "up" if med > 0 else "down" if med < 0 else None},
     ))
     return out

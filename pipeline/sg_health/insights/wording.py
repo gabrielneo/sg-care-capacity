@@ -11,6 +11,9 @@ from .model import TEMPLATES_FILE
 
 MAX_HEADLINE_WORDS = 20
 MAX_DETAIL_SENTENCES = 2
+MAX_LABEL_WORDS = 12          # the labels around the key number, chart labels and the callout
+DISPLAY_FIELDS = ("metric_label", "comparison_label", "change_word", "callout")   # templates.yml keys
+REQUIRED_DISPLAY = ("metric_label", "callout")
 # Rule 5 (docs/language_rules.md): never causal words. Word forms included.
 CAUSAL = re.compile(r"\b(caus(e|es|ed|ing)|driv(e|es|en|ing)|drove|lead(s|ing)? to|led to|because)\b", re.I)
 
@@ -73,6 +76,11 @@ def check(text: str, *, kind: str, forbidden: frozenset[str] = frozenset()) -> N
             raise WordingError(f"headline over {MAX_HEADLINE_WORDS} words ({len(text.split())}): {text!r}")
     if kind == "detail" and len(sentences(text)) > MAX_DETAIL_SENTENCES:
         raise WordingError(f"detail over {MAX_DETAIL_SENTENCES} sentences: {text!r}")
+    if kind == "label":
+        if len(text.split()) > MAX_LABEL_WORDS:
+            raise WordingError(f"label over {MAX_LABEL_WORDS} words ({len(text.split())}): {text!r}")
+        if len(sentences(text)) > 1 or text.endswith("."):
+            raise WordingError(f"a label is a phrase, not a sentence: {text!r}")
 
 
 def render(detector: str, variant: str, values: dict[str, Any], forbidden: frozenset[str] = frozenset()) -> tuple[str, str]:
@@ -82,3 +90,25 @@ def render(detector: str, variant: str, values: dict[str, Any], forbidden: froze
     check(headline, kind="headline", forbidden=forbidden)
     check(detail, kind="detail", forbidden=forbidden)
     return headline, detail
+
+
+def render_display(detector: str, variant: str, values: dict[str, Any],
+                   forbidden: frozenset[str] = frozenset()) -> dict[str, str | None]:
+    """The labels around an insight's key number and its chart callout, from templates.yml.
+
+    metric_label: what the key number is. comparison_label: what it is compared with, with the
+    comparison's own value ("1.4 hours, usual for this hospital"); the site shows it after "vs".
+    change_word: the word beside the arrow ("higher than usual"). callout: the chart's annotation.
+    """
+    t = templates()[detector][variant]
+    out: dict[str, str | None] = {}
+    for key in DISPLAY_FIELDS:
+        if key not in t:
+            if key in REQUIRED_DISPLAY:
+                raise WordingError(f"templates.yml {detector}.{variant} has no {key}")
+            out[key] = None
+            continue
+        text = fill(t[key], values)
+        check(text, kind="label", forbidden=forbidden)
+        out[key] = text
+    return out

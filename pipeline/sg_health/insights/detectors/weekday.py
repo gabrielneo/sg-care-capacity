@@ -4,24 +4,25 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip
+from ..model import Candidate, DetectorResult, Skip, chart, point
 from ..stats import kruskal_epsilon2
-from ..wording import percent
+from ..wording import hours, percent
 from .common import (
     UNIT_CAVEAT,
     WEEKDAYS,
     daily_window,
     hospital_caveats,
     hospital_name,
+    hours_parts,
     latest_complete_week,
     reported_from,
 )
 
 SQL = ("SELECT report_date, median_wait_hours FROM marts.fct_ed_daily WHERE hospital_code = '{code}' "
        "AND is_complete_week AND report_date BETWEEN DATE '{start}' AND DATE '{end}' ORDER BY report_date")
+WEEKDAY_AXIS = "Hours, average of the daily medians on that weekday"
 CAVEAT = "The test shows that weekdays differ; the peak day is the one with the highest average."
 
 
@@ -62,34 +63,55 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             continue
         _, p, eps2 = kruskal_epsilon2(groups)
         day, pct = _peak(rows["median_wait_hours"], rows["weekday"])
-        out.candidates.append(_candidate(code, "hospital", eps2, p, pct, day, len(rows), n_weeks, completeness, last, cfg,
-                                         full_effect, {"hospital": hospital_name(h)}, hospital_caveats(h),
-                                         SQL.format(code=code, start=first, end=last), float(rows["median_wait_hours"].mean()),
-                                         float(rows.loc[rows["weekday"] == day, "median_wait_hours"].mean()),
-                                         {"hospital": hospital_name(h), "cluster": h["cluster"]}))
+        out.candidates.append(_candidate(
+            code, "hospital", eps2, p, pct, day, len(rows), n_weeks, completeness, last, cfg, full_effect,
+            {"hospital": hospital_name(h)}, hospital_caveats(h), SQL.format(code=code, start=first, end=last),
+            f"/api/v1/ed/daily?hospital={code}&from={first}&to={last}",
+            _day_means(rows["median_wait_hours"], rows["weekday"]), float(rows["median_wait_hours"].mean()),
+            {"hospital": hospital_name(h), "cluster": h["cluster"]}))
         pooled.append(rows.assign(rel=rows["median_wait_hours"] / rows["median_wait_hours"].mean()))
     if len(pooled) >= 2:
         allrows = pd.concat(pooled)
         groups = [allrows.loc[allrows["weekday"] == k, "rel"].to_numpy(dtype=float) for k in range(7)]
         _, p, eps2 = kruskal_epsilon2(groups)
         day, pct = _peak(allrows["rel"], allrows["weekday"])
-        out.candidates.append(_candidate("All hospitals", "pooled", eps2, p, pct, day, len(allrows), weeks, 1.0, last, cfg,
-                                         full_effect, {"n_hospitals": len(pooled)},
-                                         ["Each hospital's waits are compared with its own weekly average before pooling."],
-                                         "-- each hospital's daily values divided by its own mean, then pooled by weekday",
-                                         1.0, float(np.mean(allrows.loc[allrows["weekday"] == day, "rel"])), {}))
+        out.candidates.append(_candidate(
+            "All hospitals", "pooled", eps2, p, pct, day, len(allrows), weeks, 1.0, last, cfg, full_effect,
+            {"n_hospitals": len(pooled)}, ["Each hospital's waits are compared with its own weekly average before pooling."],
+            "-- each hospital's daily values divided by its own mean, then pooled by weekday",
+            f"/api/v1/ed/daily?from={first}&to={last}", _day_means(allrows["rel"], allrows["weekday"]), 1.0, {}))
     return out
 
 
+def _day_means(values: pd.Series, weekday: pd.Series) -> list[float]:
+    """The average for each weekday, Monday first: the bars of the chart (the peak is the highest)."""
+    means = values.groupby(weekday).mean()
+    return [float(means[k]) for k in range(7)]
+
+
 def _candidate(entity, variant, eps2, p, pct, day, n, n_weeks, completeness, last, cfg, full_effect, values, caveats,
-               query, mean, peak_mean, action_values) -> Candidate:
+               query, endpoint, day_means, mean, action_values) -> Candidate:
+    hospital = variant == "hospital"
+    peak = day_means[day]
+    keys = [d[:3].lower() for d in WEEKDAYS]
+    points = [point(k, d[:3], v) for k, d, v in zip(keys, WEEKDAYS, day_means, strict=True)]
+    if hospital:
+        axis, reference, (value_text, unit_text) = WEEKDAY_AXIS, (mean, "Weekly average"), hours_parts(peak)
+        mean_text = hours(mean)
+    else:
+        axis, reference = "Times each hospital's own average", (1.0, "Each hospital's own average")
+        value_text, unit_text, mean_text = f"{peak:.2f}", "times each hospital's average", "1.00"
     return Candidate(
         type="weekday", entity=entity, variant=variant, method="Kruskal-Wallis test across weekdays; epsilon-squared",
-        n=n, effect_size=eps2, effect_norm=min(eps2 / full_effect, 1.0), metric_value=peak_mean, unit="hours" if variant == "hospital" else "ratio to own mean",
+        n=n, effect_size=eps2, effect_norm=min(eps2 / full_effect, 1.0), metric_value=peak,
+        unit="hours" if hospital else "ratio to own mean",
         comparison_value=mean, direction="neutral", p_value=p, passes_effect=eps2 >= float(cfg["min_epsilon_squared"]),
         completeness=min(completeness, 1.0), as_of=last, source="moh_bed_waits",
-        values={**values, "weekday": WEEKDAYS[day], "pct": percent(pct), "weeks": n_weeks, "window": str(last)},
+        values={**values, "weekday": WEEKDAYS[day], "pct": percent(pct), "weeks": n_weeks, "window": str(last),
+                "mean": mean_text},
         caveats=[CAVEAT, UNIT_CAVEAT, *caveats],
-        evidence={"endpoint": "/api/v1/ed/daily" + (f"?hospital={entity}" if variant == "hospital" else ""), "query": query},
+        evidence={"endpoint": endpoint, "query": query},
         action_key=None, action_values={**action_values, "weekday": WEEKDAYS[day]},
+        chart=chart("bar", axis, points, [keys[day]], reference=reference),
+        display={"value_text": value_text, "unit_text": unit_text, "change": "up"},
     )
