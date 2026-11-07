@@ -174,6 +174,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/population": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Residents and the share aged 65+, by year */
+        get: operations["population_api_v1_population_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quality": {
         parameters: {
             query?: never;
@@ -637,6 +654,8 @@ export interface components {
             as_of_basis: string;
             /** Caveats */
             caveats: string[];
+            /** @description Null in data releases from before the engine wrote it */
+            chart: components["schemas"]["InsightChart"] | null;
             /** Comparison Value */
             comparison_value: number | null;
             /**
@@ -649,6 +668,8 @@ export interface components {
              * @enum {string}
              */
             direction: "better" | "worse" | "neutral";
+            /** @description Null in data releases from before the engine wrote it */
+            display: components["schemas"]["InsightDisplay"] | null;
             /** Effect Size */
             effect_size: number | null;
             /**
@@ -703,6 +724,98 @@ export interface components {
              */
             who_acts: string | null;
         };
+        /**
+         * InsightChart
+         * @description The values the detector tested, for the site's chart (docs/insights_method.md).
+         */
+        InsightChart: {
+            /**
+             * Callout
+             * @description The annotation pointing at the difference the headline describes
+             */
+            callout: string;
+            /**
+             * Highlight
+             * @description Keys of the points the callout points at
+             */
+            highlight: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "bar" | "line";
+            /** Points */
+            points: components["schemas"]["InsightChartPoint"][];
+            /** @description A horizontal reference line, e.g. the usual level */
+            reference: components["schemas"]["InsightChartReference"] | null;
+            /** @description The fitted trend line (trend only) */
+            trend_line: components["schemas"]["InsightTrendLine"] | null;
+            /** X Label */
+            x_label: string | null;
+            /** Y Label */
+            y_label: string;
+        };
+        /** InsightChartPoint */
+        InsightChartPoint: {
+            /** Key */
+            key: string;
+            /**
+             * Label
+             * @description Axis label, e.g. 'Tue' or '19 Oct'
+             */
+            label: string;
+            /**
+             * Value
+             * @description Null is a gap (e.g. an incomplete week), never 0
+             */
+            value: number | null;
+        };
+        /** InsightChartReference */
+        InsightChartReference: {
+            /**
+             * Label
+             * @description e.g. 'Usual level', 'Weekly average'
+             */
+            label: string;
+            /** Value */
+            value: number;
+        };
+        /**
+         * InsightDisplay
+         * @description What the site shows around the key number. Written by the engine; the site adds no text.
+         */
+        InsightDisplay: {
+            /**
+             * Change
+             * @description The arrow. Colour comes from direction, never from this
+             */
+            change: ("up" | "down") | null;
+            /**
+             * Change Word
+             * @description The word beside the arrow, e.g. 'higher than usual'
+             */
+            change_word: string | null;
+            /**
+             * Comparison Label
+             * @description What it is compared with, with that value, shown after 'vs'; null where the comparison isn't in the same unit
+             */
+            comparison_label: string | null;
+            /**
+             * Metric Label
+             * @description What the key number is, e.g. 'Average bed wait on Tuesdays'
+             */
+            metric_label: string;
+            /**
+             * Unit Text
+             * @description Its unit, e.g. 'hours'; null for a correlation
+             */
+            unit_text: string | null;
+            /**
+             * Value Text
+             * @description The key number as text, rounded as in the headline, e.g. '12.7'
+             */
+            value_text: string;
+        };
         /** InsightEvidence */
         InsightEvidence: {
             /**
@@ -715,6 +828,19 @@ export interface components {
              * @description SQL on the snapshot's analytics.duckdb that reproduces it
              */
             query: string;
+        };
+        /** InsightTrendLine */
+        InsightTrendLine: {
+            /**
+             * First
+             * @description The fitted line's value at the first point
+             */
+            first: number;
+            /**
+             * Last
+             * @description Its value at the last point
+             */
+            last: number;
         };
         /** InsightsResponse */
         InsightsResponse: {
@@ -813,6 +939,48 @@ export interface components {
         MetaResponse: {
             data: components["schemas"]["SnapshotInfo"];
             meta: components["schemas"]["Meta"];
+        };
+        /** PopulationResponse */
+        PopulationResponse: {
+            /**
+             * Data
+             * @description One row per year, oldest first. One row means no trend can be shown
+             */
+            data: components["schemas"]["PopulationYear"][];
+            meta: components["schemas"]["Meta"];
+        };
+        /**
+         * PopulationYear
+         * @description Singapore residents (citizens and permanent residents), the sum of SingStat's planning-area figures.
+         */
+        PopulationYear: {
+            /**
+             * Planning Areas
+             * @description Planning areas in SingStat's table
+             */
+            planning_areas: number;
+            /**
+             * Planning Areas With Figures
+             * @description Areas with both counts; the totals add up only these
+             */
+            planning_areas_with_figures: number;
+            /**
+             * Reference Date
+             * Format: date
+             * @description SingStat's reference date (end of June)
+             */
+            reference_date: string;
+            /** Residents 65Plus */
+            residents_65plus: number;
+            /** Residents Total */
+            residents_total: number;
+            /**
+             * Share 65Plus
+             * @description residents_65plus / residents_total, 0-1
+             */
+            share_65plus: number;
+            /** Year */
+            year: number;
         };
         /** QualityReport */
         QualityReport: {
@@ -1285,6 +1453,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetaResponse"];
+                };
+            };
+        };
+    };
+    population_api_v1_population_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PopulationResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

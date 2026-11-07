@@ -91,6 +91,7 @@ export const api = {
   liveNuhsLatest: () => call(() => client().GET("/api/v1/live/nuhs/latest")),
   insights: (query: Query<"/api/v1/insights"> = {}) =>
     call(() => client().GET("/api/v1/insights", { params: { query } })),
+  population: () => call(() => client().GET("/api/v1/population")),
 };
 
 export type Settled<T> = { ok: true; value: T } | { ok: false; error: ApiError };

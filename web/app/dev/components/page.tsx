@@ -8,10 +8,15 @@ import { FreshnessBadge } from "@/components/FreshnessBadge";
 import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
 import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "@/components/States";
+import { AnnotatedChart, fromInsightChart } from "@/components/story/AnnotatedChart";
+import { CountUp } from "@/components/story/CountUp";
+import { DeltaNumber, deltaFromDisplay } from "@/components/story/DeltaNumber";
+import { HighlightPhrase } from "@/components/story/HighlightPhrase";
 import { api, settle } from "@/lib/api/client";
 import { devPagesEnabled } from "@/lib/devPages";
 import { colors, mapScale } from "@/lib/palette";
-import { clinicMeta, edMeta } from "@/lib/samples";
+import { clinicMeta, edMeta, insightMeta, storySample } from "@/lib/samples";
+import { chartFormat, chartTitle } from "@/lib/story";
 
 export const metadata: Metadata = { title: "Components", robots: { index: false, follow: false } };
 // Rendered per request: the SHOW_DEV_PAGES switch is read at run time, and the live section calls
@@ -134,6 +139,57 @@ export default function ComponentsPage() {
             <Skeleton className="h-5 w-1/2" />
             <Skeleton className="h-24 w-full" />
           </div>
+        </div>
+      </Section>
+
+      <Section title="DeltaNumber">
+        <p className="mb-3 text-sm text-muted">
+          Value, unit, comparison, and the change as an arrow and a word. Colour comes from the insight&apos;s direction, never
+          from the arrow: the same ▲ is red for a longer wait and green for more clinics. Neutral findings have no colour.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {storySample.map((i) => (
+            <div key={i.insight_id} className="rounded-lg border border-line bg-surface p-4">
+              <DeltaNumber {...deltaFromDisplay(i.display, i.direction)} />
+            </div>
+          ))}
+          <div className="rounded-lg border border-line bg-surface p-4">
+            <DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" label="Sample: clinics in an area that gained some"
+                         comparison="1.27, the national rate" change="up" word="higher than the national rate" direction="better" />
+          </div>
+        </div>
+      </Section>
+
+      <Section title="CountUp">
+        <p className="mb-3 text-sm text-muted">
+          Rolling digits, CSS only (transform, 600 ms, once). The final value is in the server HTML; reduced motion shows it at once.
+          Reload to see it again.
+        </p>
+        <p className="text-6xl font-semibold text-ink"><CountUp value="12.7" label="12.7 hours" /></p>
+      </Section>
+
+      <Section title="HighlightPhrase">
+        <p className="mb-3 text-sm text-muted">
+          A marker stroke that draws once when the phrase scrolls into view (drawn in the server HTML; never reset with reduced motion).
+        </p>
+        <p className="text-2xl text-ink"><HighlightPhrase>19.5% of Singapore residents</HighlightPhrase> were aged 65 or over.</p>
+      </Section>
+
+      <Section title="AnnotatedChart">
+        <p className="mb-3 text-sm text-muted">
+          Server-rendered SVG: direct labels, one callout arrow at the highlighted point, gaps for missing values, and a legend only
+          with more than 3 series. The headline findings of data-2026-11-08, then a 4-series sample.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {storySample.map((i) => (
+            <AnnotatedChart key={i.insight_id} id={`dev-${i.insight_id}`} title={chartTitle(i)} description={i.chart.y_label}
+                            meta={{ ...insightMeta, as_of: i.as_of }} format={chartFormat(i)} {...fromInsightChart(i.chart)} />
+          ))}
+          <AnnotatedChart id="dev-legend" title="Sample: four series, so a legend" meta={insightMeta} kind="line"
+                          categories={["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => ({ key: d, label: d }))}
+                          series={[0, 1, 2, 3].map((k) => ({ key: `s${k}`, label: `Sample hospital ${k + 1}`,
+                                                             values: [3 + k, 3.5 + k, k === 2 ? null : 3.2 + k, 3.8 + k, 3.6 + k] }))}
+                          highlight={["Thu"]} callout="Thursday: the highest for all four" format={(v) => v.toFixed(1)} />
         </div>
       </Section>
 

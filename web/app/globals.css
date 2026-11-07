@@ -125,3 +125,49 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 }
 .term-tip[data-open="true"] { display: block; }
 .term-tip strong { font-weight: 600; }
+
+/*
+ * The Overview's scroll story. Motion rules: only opacity and transform are animated, 300-600 ms,
+ * ease-out, once per element, never looping. prefers-reduced-motion turns every one of them off.
+ */
+
+/* CountUp: each digit's column (0 to the digit) slides up once; the real digit is the last line. */
+.countup-digits { display: inline-flex; align-items: flex-start; line-height: 1; font-variant-numeric: tabular-nums; }
+.countup-digits > span { height: 1em; }
+.countup-cell { display: inline-block; overflow: hidden; }
+.countup-roll { display: block; transform: translateY(calc(var(--n, 0) * -1em)); animation: countup-roll 600ms ease-out both; }
+.countup-roll::before { display: block; white-space: pre; }
+.countup-roll[data-digit="1"] { --n: 1; } .countup-roll[data-digit="1"]::before { content: "0"; }
+.countup-roll[data-digit="2"] { --n: 2; } .countup-roll[data-digit="2"]::before { content: "0\A 1"; }
+.countup-roll[data-digit="3"] { --n: 3; } .countup-roll[data-digit="3"]::before { content: "0\A 1\A 2"; }
+.countup-roll[data-digit="4"] { --n: 4; } .countup-roll[data-digit="4"]::before { content: "0\A 1\A 2\A 3"; }
+.countup-roll[data-digit="5"] { --n: 5; } .countup-roll[data-digit="5"]::before { content: "0\A 1\A 2\A 3\A 4"; }
+.countup-roll[data-digit="6"] { --n: 6; } .countup-roll[data-digit="6"]::before { content: "0\A 1\A 2\A 3\A 4\A 5"; }
+.countup-roll[data-digit="7"] { --n: 7; } .countup-roll[data-digit="7"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6"; }
+.countup-roll[data-digit="8"] { --n: 8; } .countup-roll[data-digit="8"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7"; }
+.countup-roll[data-digit="9"] { --n: 9; } .countup-roll[data-digit="9"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8"; }
+@keyframes countup-roll { from { transform: translateY(0); } }
+
+/* HighlightPhrase: a marker stroke under a short phrase, drawn left to right once. */
+.highlight { position: relative; white-space: nowrap; isolation: isolate; }
+.highlight::after {
+  content: ""; position: absolute; left: -0.1em; right: -0.1em; bottom: 0.08em; height: 0.42em; z-index: -1;
+  background: var(--color-map-1); opacity: 0.55; border-radius: 2px;
+  transform-origin: left center; transform: scaleX(1); transition: transform 500ms ease-out;
+}
+.highlight[data-state="waiting"]::after { transform: scaleX(0); transition: none; }
+
+/* Scrolly: the sticky panel's states are stacked in one cell; the current one fades in. */
+.story-chart { grid-area: 1 / 1; transition: opacity 300ms ease-out, transform 300ms ease-out; }
+.story-chart[data-current="false"] { opacity: 0; transform: translateY(0.5rem); pointer-events: none; }
+@media (min-width: 64rem) {
+  .story-inline { display: none; }
+  .story-step { min-height: 70vh; padding-block: 1.5rem; }
+  .story-step[data-current="true"] .story-card { border-color: var(--color-accent); }
+}
+
+/* The base rule above shortens transitions to 0.01 ms, which still turns any change into a tiny
+   transition (the default transition-property is all). The story's changing parts get none at all. */
+@media (prefers-reduced-motion: reduce) {
+  .countup-roll, .highlight::after, .story-chart, .story-card { animation: none !important; transition: none !important; }
+}

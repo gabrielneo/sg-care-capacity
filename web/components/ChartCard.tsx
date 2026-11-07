@@ -22,20 +22,23 @@ export interface ChartCardProps {
   detail?: boolean;
   cadence?: Cadence;
   now?: Date;
+  /** 3 inside a section that already has an h2 (e.g. the Overview's findings). */
+  headingLevel?: 2 | 3;
 }
 
 /**
  * A titled chart with its provenance footer. If meta has no usable as_of or no source, the chart
  * is NOT rendered: a figure without a date and source is never shown.
  */
-export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, cadence, now }: ChartCardProps) {
+export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, cadence, now, headingLevel = 2 }: ChartCardProps) {
   const id = `chart-${(slug ?? (typeof title === "string" ? title : "card")).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
+  const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
     <section aria-labelledby={id} data-testid="chart-card" className="rounded-lg border border-line bg-surface p-4 shadow-sm">
-      <h2 id={id} className="text-base font-semibold text-ink">
+      <Heading id={id} className="text-base font-semibold text-ink">
         {title}
-      </h2>
+      </Heading>
       {description ? <div className="mt-1 text-sm text-muted">{description}</div> : null}
       {problems.length ? (
         <div className="mt-4">

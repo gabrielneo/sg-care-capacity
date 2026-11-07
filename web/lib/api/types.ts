@@ -22,6 +22,9 @@ export type QualityReport = Schemas["QualityReport"];
 export type LiveReading = Schemas["LiveReading"];
 export type SnapshotInfo = Schemas["SnapshotInfo"];
 export type Insight = Schemas["Insight"];
+export type InsightDisplay = Schemas["InsightDisplay"];
+export type InsightChart = Schemas["InsightChart"];
+export type PopulationYear = Schemas["PopulationYear"];
 
 /** Query parameters of a GET endpoint, e.g. Query<"/api/v1/ed/daily">. */
 export type Query<P extends keyof paths> = paths[P] extends { get: { parameters: { query?: infer Q } } }
