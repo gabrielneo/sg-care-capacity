@@ -28,6 +28,12 @@ CREATED_AT = "2026-11-01T16:34:48"
 FIRST_DAY, LAST_DAY = date(2026, 9, 14), date(2026, 10, 31)
 MOH_FETCHED = datetime(2026, 11, 1, 16, 33, 44)
 
+INSIGHT_EXTRA_DDL = """, display STRUCT(value_text VARCHAR, unit_text VARCHAR, metric_label VARCHAR,
+        comparison_label VARCHAR, change VARCHAR, change_word VARCHAR),
+    chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
+        highlight VARCHAR[], callout VARCHAR, reference STRUCT(value DOUBLE, label VARCHAR),
+        trend_line STRUCT(first DOUBLE, last DOUBLE))"""
+
 DDL = {
     "dim_hospital": """hospital_code VARCHAR, hospital_name VARCHAR, cluster VARCHAR, facility_type VARCHAR,
         reported_from DATE, coverage_note VARCHAR, exclusions_note VARCHAR, source_url VARCHAR, source_sha256 VARCHAR,
@@ -64,25 +70,73 @@ DDL = {
         unit VARCHAR, comparison_value DOUBLE, direction VARCHAR, effect_size DOUBLE, p_value DOUBLE, p_adjusted DOUBLE,
         n INTEGER, method VARCHAR, caveats VARCHAR[], who_acts VARCHAR, action VARCHAR,
         evidence STRUCT(endpoint VARCHAR, query VARCHAR), as_of DATE, as_of_basis VARCHAR, rank_score DOUBLE,
-        headline_rank INTEGER""",
+        headline_rank INTEGER""" + INSIGHT_EXTRA_DDL,
 }
 
-INSIGHTS = [  # three published insights: one headline per detector type, one more weekday
+WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _display(value: str, unit: str | None, label: str, comparison: str | None, change: str | None, word: str | None) -> dict:
+    return {"value_text": value, "unit_text": unit, "metric_label": label, "comparison_label": comparison,
+            "change": change, "change_word": word}
+
+
+def _chart(kind: str, y_label: str, points: list[tuple[str, str, float | None]], highlight: list[str], callout: str,
+           reference: tuple[float, str] | None, x_label: str | None = None) -> dict:
+    return {"kind": kind, "y_label": y_label, "x_label": x_label,
+            "points": [{"key": k, "label": lab, "value": v} for k, lab, v in points], "highlight": highlight,
+            "callout": callout, "reference": None if reference is None else {"value": reference[0], "label": reference[1]},
+            "trend_line": None}
+
+
+def _weekday_chart(values: list[float], peak: str, mean: float, callout: str) -> dict:
+    return _chart("bar", "Hours, average of the daily medians on that weekday",
+                  [(d.lower(), d, v) for d, v in zip(WEEKDAY_LABELS, values, strict=True)], [peak], callout, (mean, "Weekly average"))
+
+
+ANOMALY_WEEKS = [date(2026, 8, 24) + timedelta(weeks=k) for k in range(9)]
+
+# Four published insights. The headline findings are one per detector type (ranks 1-3); one more weekday.
+INSIGHTS = [
     ("weekday-aaaaaaaaaa", "weekday", "SGH", "At Singapore General Hospital, bed waits are longest on Mondays, 25% above its weekly average.",
      "Waits differ by day of the week over 6 complete weeks. This is unlikely to be chance (adjusted p = 0.004).",
      5.0, "hours", 4.0, "neutral", 0.21, 0.001, 0.004, 42, "Kruskal-Wallis test across weekdays; epsilon-squared",
      ["The test shows that weekdays differ; the peak day is the one with the highest average."], None, None,
-     {"endpoint": "/api/v1/ed/daily?hospital=SGH", "query": "SELECT 1"}, date(2026, 10, 25), "latest_data", 0.95, 1),
+     {"endpoint": "/api/v1/ed/daily?hospital=SGH", "query": "SELECT 1"}, date(2026, 10, 25), "latest_data", 0.95, 1,
+     _display("5.0", "hours", "Average bed wait on Mondays", "4.0 hours, its weekly average", "up", "higher than average"),
+     _weekday_chart([5.0, 4.1, 3.9, 3.8, 3.9, 3.7, 3.6], "mon", 4.0, "Mondays: 25% above average")),
     ("anomaly-bbbbbbbbbb", "anomaly", "SGH", "Bed waits at Singapore General Hospital were unusually long in the week of 19–25 Oct 2026: 5.0 hours.",
      "The usual level over the 8 weeks before was 4.0 hours. A week this far out happens rarely by chance.",
      5.0, "hours", 4.0, "worse", 4.2, None, None, 9, "Robust z-score (median and MAD of the 8 weeks before)",
      ["One unusual week is not a trend."], None, None,
-     {"endpoint": "/api/v1/ed/weekly?hospital=SGH&weeks=9", "query": "SELECT 2"}, date(2026, 10, 25), "latest_data", 0.6, 2),
+     {"endpoint": "/api/v1/ed/weekly?hospital=SGH&weeks=9", "query": "SELECT 2"}, date(2026, 10, 25), "latest_data", 0.6, 2,
+     _display("5.0", "hours", "Average bed wait, week of 19–25 Oct 2026", "4.0 hours, usual for this hospital", "up",
+              "higher than usual"),
+     _chart("line", "Hours, average of each day's median",
+            [(w.isoformat(), f"{w.day} {w.strftime('%b')}", v)
+             for w, v in zip(ANOMALY_WEEKS, [3.9, 4.1, 4.0, 3.8, 4.2, 4.0, 3.9, 4.1, 5.0], strict=True)],
+            ["2026-10-19"], "19–25 Oct 2026: 5.0 hours", (4.0, "Usual level"))),
+    ("volume_vs_wait-dddddddddd", "volume_vs_wait", "NUH",
+     "At National University Hospital, bed waits move moderately with ED visits the day before.",
+     "Busier days come with longer bed waits, over 40 days after removing the usual weekday pattern. It is an association only.",
+     0.42, "Spearman correlation", None, "neutral", 0.42, 0.001, 0.006, 40,
+     "Spearman correlation, visits on day t vs bed wait on day t+1, after removing each weekday's median",
+     ["The link is moderate (Spearman correlation 0.42).", "This is an association only.",
+      "MOH's figures for this hospital cover adults only."], None, None,
+     {"endpoint": "/api/v1/ed/daily?hospital=NUH&from=2026-09-14&to=2026-10-25", "query": "SELECT 4"},
+     date(2026, 10, 25), "latest_data", 0.4, 3,
+     _display("0.42", None, "Correlation of ED visits with the bed wait the day after", None, None, "moderate link"),
+     _chart("bar", "Bed wait the day after, hours vs usual for that weekday",
+            [("q1", "Quietest", -0.6), ("q2", "Quieter", -0.2), ("q3", "Middle", 0.0), ("q4", "Busier", 0.3),
+             ("q5", "Busiest", 0.5)], ["q5"], "After the busiest days: 1.1 hours longer than after the quietest",
+            (0.0, "Usual for that weekday"), x_label="Days in five equal groups by ED visits vs usual")),
     ("weekday-cccccccccc", "weekday", "AH", "At Alexandra Hospital, bed waits are longest on Tuesdays, 10% above its weekly average.",
      "Waits differ by day of the week over 5 complete weeks. This is unlikely to be chance (adjusted p = 0.03).",
      2.2, "hours", 2.0, "neutral", 0.05, 0.01, 0.03, 35, "Kruskal-Wallis test across weekdays; epsilon-squared",
      ["Alexandra Hospital runs an urgent care centre, not a full emergency department."], None, None,
-     {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None),
+     {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None,
+     _display("2.2", "hours", "Average bed wait on Tuesdays", "2.0 hours, its weekly average", "up", "higher than average"),
+     _weekday_chart([2.0, 2.2, 2.0, 1.9, 2.0, 1.9, 2.0], "tue", 2.0, "Tuesdays: 10% above average")),
 ]
 DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
     details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""
@@ -206,10 +260,13 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(out: Path, *, insights: bool = True) -> Path:
+def build(out: Path, *, insights: bool = True, insight_charts: bool = True) -> Path:
     """Write the fixture snapshot into `out` (created). Returns `out`.
-    insights=False builds a release from before the insight engine (no fct_insight)."""
+    insights=False builds a release from before the insight engine (no fct_insight);
+    insight_charts=False one from before it wrote display and chart."""
     marts = {m: cols for m, cols in DDL.items() if insights or m != "fct_insight"}
+    if not insight_charts:
+        marts["fct_insight"] = marts["fct_insight"].replace(INSIGHT_EXTRA_DDL, "")
     out.mkdir(parents=True, exist_ok=True)
     db = out / "analytics.duckdb"
     con = duckdb.connect(str(db))
@@ -251,7 +308,8 @@ def build(out: Path, *, insights: bool = True) -> Path:
                         [(*m, H) for m in METRICS])
         con.executemany("INSERT INTO main.dq_results VALUES (?,?,?,?,?,?,?,?,?,?)", DQ)
         if insights:
-            con.executemany(f"INSERT INTO marts.fct_insight VALUES ({', '.join('?' * 22)})", INSIGHTS)
+            rows = INSIGHTS if insight_charts else [r[:22] for r in INSIGHTS]
+            con.executemany(f"INSERT INTO marts.fct_insight VALUES ({', '.join('?' * len(rows[0]))})", rows)
         (out / "parquet").mkdir(exist_ok=True)
         for mart in marts:
             con.execute(f"COPY marts.{mart} TO '{out / 'parquet' / (mart + '.parquet')}' (FORMAT parquet)")

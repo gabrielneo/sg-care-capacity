@@ -314,6 +314,45 @@ class InsightEvidence(BaseModel):
     query: str = Field(description="SQL on the snapshot's analytics.duckdb that reproduces it")
 
 
+class InsightDisplay(BaseModel):
+    """What the site shows around the key number. Written by the engine; the site adds no text."""
+    value_text: str = Field(description="The key number as text, rounded as in the headline, e.g. '12.7'")
+    unit_text: str | None = Field(description="Its unit, e.g. 'hours'; null for a correlation")
+    metric_label: str = Field(description="What the key number is, e.g. 'Average bed wait on Tuesdays'")
+    comparison_label: str | None = Field(description="What it is compared with, with that value, shown after 'vs'; "
+                                                     "null where the comparison isn't in the same unit")
+    change: Literal["up", "down"] | None = Field(description="The arrow. Colour comes from direction, never from this")
+    change_word: str | None = Field(description="The word beside the arrow, e.g. 'higher than usual'")
+
+
+class InsightChartPoint(BaseModel):
+    key: str
+    label: str = Field(description="Axis label, e.g. 'Tue' or '19 Oct'")
+    value: float | None = Field(description="Null is a gap (e.g. an incomplete week), never 0")
+
+
+class InsightChartReference(BaseModel):
+    value: float
+    label: str = Field(description="e.g. 'Usual level', 'Weekly average'")
+
+
+class InsightTrendLine(BaseModel):
+    first: float = Field(description="The fitted line's value at the first point")
+    last: float = Field(description="Its value at the last point")
+
+
+class InsightChart(BaseModel):
+    """The values the detector tested, for the site's chart (docs/insights_method.md)."""
+    kind: Literal["bar", "line"]
+    y_label: str
+    x_label: str | None
+    points: list[InsightChartPoint]
+    highlight: list[str] = Field(description="Keys of the points the callout points at")
+    callout: str = Field(description="The annotation pointing at the difference the headline describes")
+    reference: InsightChartReference | None = Field(description="A horizontal reference line, e.g. the usual level")
+    trend_line: InsightTrendLine | None = Field(description="The fitted trend line (trend only)")
+
+
 class Insight(BaseModel):
     insight_id: str
     type: Literal["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
@@ -337,8 +376,26 @@ class Insight(BaseModel):
     as_of_basis: str
     rank_score: float = Field(description="normalised effect x (1 - p_adjusted) x completeness x recency")
     headline_rank: int | None = Field(description="1-3 for the headline findings (at most one per detector)")
+    display: InsightDisplay | None = Field(description="Null in data releases from before the engine wrote it")
+    chart: InsightChart | None = Field(description="Null in data releases from before the engine wrote it")
 
 
 class InsightsResponse(BaseModel):
     data: list[Insight]
+    meta: Meta
+
+
+class PopulationYear(BaseModel):
+    """Singapore residents (citizens and permanent residents), the sum of SingStat's planning-area figures."""
+    year: int
+    reference_date: date = Field(description="SingStat's reference date (end of June)")
+    residents_total: int
+    residents_65plus: int
+    share_65plus: float = Field(description="residents_65plus / residents_total, 0-1")
+    planning_areas: int = Field(description="Planning areas in SingStat's table")
+    planning_areas_with_figures: int = Field(description="Areas with both counts; the totals add up only these")
+
+
+class PopulationResponse(BaseModel):
+    data: list[PopulationYear] = Field(description="One row per year, oldest first. One row means no trend can be shown")
     meta: Meta

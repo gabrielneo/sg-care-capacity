@@ -91,6 +91,8 @@ Definitions of every field are in [`docs/data_dictionary.md`](../docs/data_dicti
 | `GET /areas/access` | | GeoJSON FeatureCollection of the 55 planning areas (access for residents aged 65+) |
 | `GET /quality` | | Results of the validation run behind this snapshot |
 | `GET /live/nuhs/latest` | | Each NUHS site's latest wait estimate **in the snapshot** |
+| `GET /population` | | Residents and the share aged 65+ for each year in the snapshot (the sum of SingStat's planning areas) |
+| `GET /insights` | `type`, `entity`, `top`, `headline` | Findings that passed their statistical gates, each with its key number, labels and chart data ([method](../docs/insights_method.md)) |
 
 `hospital` takes the codes from `/hospitals`, case-insensitive. `bbox` is
 `minLon,minLat,maxLon,maxLat`. `cdmp=false` returns clinics known not to be in CDMP; clinics with

@@ -1235,6 +1235,17 @@
             "title": "Caveats",
             "type": "array"
           },
+          "chart": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InsightChart"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null in data releases from before the engine wrote it"
+          },
           "comparison_value": {
             "anyOf": [
               {
@@ -1259,6 +1270,17 @@
             ],
             "title": "Direction",
             "type": "string"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InsightDisplay"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null in data releases from before the engine wrote it"
           },
           "effect_size": {
             "anyOf": [
@@ -1400,9 +1422,221 @@
           "as_of",
           "as_of_basis",
           "rank_score",
-          "headline_rank"
+          "headline_rank",
+          "display",
+          "chart"
         ],
         "title": "Insight",
+        "type": "object"
+      },
+      "InsightChart": {
+        "description": "The values the detector tested, for the site's chart (docs/insights_method.md).",
+        "properties": {
+          "callout": {
+            "description": "The annotation pointing at the difference the headline describes",
+            "title": "Callout",
+            "type": "string"
+          },
+          "highlight": {
+            "description": "Keys of the points the callout points at",
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlight",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "bar",
+              "line"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/InsightChartPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InsightChartReference"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A horizontal reference line, e.g. the usual level"
+          },
+          "trend_line": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InsightTrendLine"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The fitted trend line (trend only)"
+          },
+          "x_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Label"
+          },
+          "y_label": {
+            "title": "Y Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "y_label",
+          "x_label",
+          "points",
+          "highlight",
+          "callout",
+          "reference",
+          "trend_line"
+        ],
+        "title": "InsightChart",
+        "type": "object"
+      },
+      "InsightChartPoint": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "description": "Axis label, e.g. 'Tue' or '19 Oct'",
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null is a gap (e.g. an incomplete week), never 0",
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value"
+        ],
+        "title": "InsightChartPoint",
+        "type": "object"
+      },
+      "InsightChartReference": {
+        "properties": {
+          "label": {
+            "description": "e.g. 'Usual level', 'Weekly average'",
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "InsightChartReference",
+        "type": "object"
+      },
+      "InsightDisplay": {
+        "description": "What the site shows around the key number. Written by the engine; the site adds no text.",
+        "properties": {
+          "change": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The arrow. Colour comes from direction, never from this",
+            "title": "Change"
+          },
+          "change_word": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The word beside the arrow, e.g. 'higher than usual'",
+            "title": "Change Word"
+          },
+          "comparison_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What it is compared with, with that value, shown after 'vs'; null where the comparison isn't in the same unit",
+            "title": "Comparison Label"
+          },
+          "metric_label": {
+            "description": "What the key number is, e.g. 'Average bed wait on Tuesdays'",
+            "title": "Metric Label",
+            "type": "string"
+          },
+          "unit_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its unit, e.g. 'hours'; null for a correlation",
+            "title": "Unit Text"
+          },
+          "value_text": {
+            "description": "The key number as text, rounded as in the headline, e.g. '12.7'",
+            "title": "Value Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value_text",
+          "unit_text",
+          "metric_label",
+          "comparison_label",
+          "change",
+          "change_word"
+        ],
+        "title": "InsightDisplay",
         "type": "object"
       },
       "InsightEvidence": {
@@ -1423,6 +1657,26 @@
           "query"
         ],
         "title": "InsightEvidence",
+        "type": "object"
+      },
+      "InsightTrendLine": {
+        "properties": {
+          "first": {
+            "description": "The fitted line's value at the first point",
+            "title": "First",
+            "type": "number"
+          },
+          "last": {
+            "description": "Its value at the last point",
+            "title": "Last",
+            "type": "number"
+          }
+        },
+        "required": [
+          "first",
+          "last"
+        ],
+        "title": "InsightTrendLine",
         "type": "object"
       },
       "InsightsResponse": {
@@ -1666,6 +1920,76 @@
           "meta"
         ],
         "title": "MetaResponse",
+        "type": "object"
+      },
+      "PopulationResponse": {
+        "properties": {
+          "data": {
+            "description": "One row per year, oldest first. One row means no trend can be shown",
+            "items": {
+              "$ref": "#/components/schemas/PopulationYear"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "PopulationResponse",
+        "type": "object"
+      },
+      "PopulationYear": {
+        "description": "Singapore residents (citizens and permanent residents), the sum of SingStat's planning-area figures.",
+        "properties": {
+          "planning_areas": {
+            "description": "Planning areas in SingStat's table",
+            "title": "Planning Areas",
+            "type": "integer"
+          },
+          "planning_areas_with_figures": {
+            "description": "Areas with both counts; the totals add up only these",
+            "title": "Planning Areas With Figures",
+            "type": "integer"
+          },
+          "reference_date": {
+            "description": "SingStat's reference date (end of June)",
+            "format": "date",
+            "title": "Reference Date",
+            "type": "string"
+          },
+          "residents_65plus": {
+            "title": "Residents 65Plus",
+            "type": "integer"
+          },
+          "residents_total": {
+            "title": "Residents Total",
+            "type": "integer"
+          },
+          "share_65plus": {
+            "description": "residents_65plus / residents_total, 0-1",
+            "title": "Share 65Plus",
+            "type": "number"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "reference_date",
+          "residents_total",
+          "residents_65plus",
+          "share_65plus",
+          "planning_areas",
+          "planning_areas_with_figures"
+        ],
+        "title": "PopulationYear",
         "type": "object"
       },
       "QualityReport": {
@@ -2557,6 +2881,37 @@
         "summary": "The snapshot being served",
         "tags": [
           "snapshot"
+        ]
+      }
+    },
+    "/api/v1/population": {
+      "get": {
+        "operationId": "population_api_v1_population_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PopulationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          }
+        },
+        "summary": "Residents and the share aged 65+, by year",
+        "tags": [
+          "clinics and planning areas"
         ]
       }
     },

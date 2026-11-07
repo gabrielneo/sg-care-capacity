@@ -16,10 +16,18 @@ InsightType = Literal["trend", "anomaly", "weekday", "volume_vs_wait", "access_g
 INSIGHTS_SQL = """
     SELECT insight_id, type, entity, headline, detail, metric_value, unit, comparison_value, direction, effect_size,
            p_value, p_adjusted, n, method, caveats, who_acts, action, evidence, as_of, as_of_basis, rank_score,
-           headline_rank
+           headline_rank, display, chart
+    FROM marts.fct_insight ORDER BY rank_score DESC, insight_id
+"""
+# Releases from before the engine wrote display and chart still serve their insights, with nulls.
+INSIGHTS_BEFORE_CHARTS_SQL = """
+    SELECT insight_id, type, entity, headline, detail, metric_value, unit, comparison_value, direction, effect_size,
+           p_value, p_adjusted, n, method, caveats, who_acts, action, evidence, as_of, as_of_basis, rank_score,
+           headline_rank, NULL AS display, NULL AS chart
     FROM marts.fct_insight ORDER BY rank_score DESC, insight_id
 """
 HAS_TABLE_SQL = "SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
+COLUMNS_SQL = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
 SOURCES_BY_TYPE = {
     "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"), "access_gap": ("datagov_chas", "singstat_residents"),
@@ -35,7 +43,14 @@ def _all(ctx: Context) -> list[dict[str, Any]] | None:
     """Every published insight, or None if this data release predates the insight engine."""
     if "insights" not in ctx.cache:
         present = ctx.snap.query(HAS_TABLE_SQL)[0]["n"] > 0
-        ctx.cache["insights"] = ctx.snap.query(INSIGHTS_SQL) if present else None
+        if not present:
+            ctx.cache["insights"] = None
+        else:
+            cols = {r["column_name"] for r in ctx.snap.query(COLUMNS_SQL)}
+            if {"display", "chart"} <= cols:
+                ctx.cache["insights"] = ctx.snap.query(INSIGHTS_SQL)
+            else:
+                ctx.cache["insights"] = ctx.snap.query(INSIGHTS_BEFORE_CHARTS_SQL)
     return ctx.cache["insights"]
 
 
@@ -62,6 +77,8 @@ def insights(
         rows = rows[:top]
     if any(r["action"] is None for r in rows):
         notes.append("A suggested action appears only after the author has reviewed it.")
+    if any(r["chart"] is None for r in rows):
+        notes.append("Some insights have no chart data: this data release predates it.")
     types = sorted({r["type"] for r in rows}) or ([type] if type else list(SOURCES_BY_TYPE))
     sources = sorted({s for t in types for s in SOURCES_BY_TYPE[t]})
     as_of = max((r["as_of"] for r in rows), default=None) or ctx.created_at
