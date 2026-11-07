@@ -215,6 +215,38 @@ transform. One row per boundary area.
 | `population_name` | Matching SingStat name | text | exact match after normalising case and whitespace | NULL only if no population is loaded (`match_method` = `population_missing`). Any other mismatch **stops the build** with the names listed. |
 | `match_method` | How the pair was matched | text | | `exact_after_case_and_space_normalisation` for all 55 today. |
 
+### `marts.fct_insight`
+
+**Grain:** one row per published insight. **Source:** the insight engine (`pipeline/sg_health/insights/`), run
+after transform and before publish, from `fct_ed_weekly`, `fct_ed_daily`, `fct_area_access`,
+`fct_live_ed_snapshot` and `dim_hospital`. Only insights that pass their statistical gate are rows; every test
+run, published or not, is in `insights.json` (`candidates`). Method per detector:
+[insights_method.md](insights_method.md).
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `insight_id` | Stable id: detector, entity, variant, window and as-of date, hashed | text | engine | The same data gives the same id. |
+| `type` | Detector: `trend`, `anomaly`, `weekday`, `volume_vs_wait`, `access_gap`, `regional`, `source_gap` | text | engine | |
+| `entity` | What the insight is about: a hospital code, a planning area, or `All hospitals` | text | engine | |
+| `headline` | One sentence, at most 20 words, plain language | text | `templates.yml` | Checked when written: no causal words, no column names. |
+| `detail` | At most two sentences | text | `templates.yml` | Same checks. |
+| `metric_value` | The measured value (slope, week's value, peak-day mean, correlation, area ratio, median gap) | see `unit` | detector | Rounded to 4 decimals. |
+| `unit` | Unit of `metric_value` and `comparison_value` | text | detector | |
+| `comparison_value` | What `metric_value` is compared with (window median, usual level, weekly mean, national rate) | see `unit` | detector | NULL where there is no comparison. |
+| `direction` | `better`, `worse` or `neutral`, for the metric's own sense (a longer wait is worse) | text | detector | |
+| `effect_size` | The detector's effect: Kendall's tau, robust z, epsilon-squared, Spearman rho, priority score, median gap | number | detector | Not comparable across detectors; `rank_score` is. |
+| `p_value` | The test's p-value | probability | scipy | NULL for descriptive detectors (anomaly, access_gap, regional). |
+| `p_adjusted` | Benjamini-Hochberg adjusted p-value, across every test in the run | probability | engine | Published only below `alpha` (0.05). |
+| `n` | Observations behind the insight (weeks, days, pairs, seniors) | count | detector | |
+| `method` | The method, in words | text | detector | |
+| `caveats` | What to keep in mind, including data checks that set records aside | list of text | engine | |
+| `who_acts`, `action` | Suggested owner and action, from `docs/insight_actions.yml` | text | engine | **NULL until the author marks the entry `reviewed: true`**; a caveat says so. |
+| `evidence` | `{endpoint, query}`: the API endpoint and SQL that reproduce the figure | struct | engine | |
+| `as_of` | The latest data date the insight uses | date | engine | The clinic list date for access gaps. |
+| `as_of_basis` | `latest_data` or `source_updated` | text | engine | |
+| `rank_score` | normalised effect x (1 - p_adjusted) x completeness x recency | 0-1 | `ranking.py` | Recency from the source's freshness (green 1, amber 0.7, red 0.4). |
+| `headline_rank` | 1-3 for the headline findings (highest scores, at most one per detector), else NULL | integer | `ranking.py` | |
+
 ### `marts.dim_metric`
 
 **Grain:** one row per published metric. **Source:** `sg_health/metrics.py`, seeded into

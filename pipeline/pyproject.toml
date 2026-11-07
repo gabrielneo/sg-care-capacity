@@ -21,17 +21,24 @@ dependencies = [
     "pyproj>=3.6",
     "geopandas>=1.0",
     "python-dotenv>=1.0",    # loads a local .env if present (never required; env vars win)
+    # Insight engine: tested implementations of Kendall/Mann-Kendall, Theil-Sen, Kruskal-Wallis,
+    # Spearman, Wilcoxon and Benjamini-Hochberg (hand-written versions risk tie/p-value errors).
+    "scipy>=1.11",           # false_discovery_control (BH) needs 1.11+
+    "pyyaml>=6.0",           # thresholds.yml, templates.yml and docs/insight_actions.yml
 ]
 
 [project.optional-dependencies]
 browser = ["playwright>=1.44"]   # optional fallback for JavaScript-rendered pages
-dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-requests"]   # CI lint and type checks
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-requests", "types-PyYAML"]   # CI lint and type checks
 
 [project.scripts]
 sg-health = "sg_health.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["sg_health*"]
+
+[tool.setuptools.package-data]
+"sg_health.insights" = ["*.yml"]     # thresholds and sentence templates ship with the code
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

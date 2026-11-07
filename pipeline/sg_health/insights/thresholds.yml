@@ -1,0 +1,49 @@
+# Insight engine thresholds: one block per detector (docs/insights_method.md explains each).
+# Changing a value changes which insights are published; the file's hash goes into insights.json.
+
+engine:
+  alpha: 0.05                 # Benjamini-Hochberg across every p-value in one run
+  min_completeness: 0.80      # skip a hospital or area below this share of expected data
+  headline_count: 3           # top findings, at most one per detector
+
+ranking:
+  # rank_score = normalised effect x (1 - p_adjusted) x completeness x recency
+  # Recency comes from the source's freshness (same rules as the site's badge).
+  recency: {green: 1.0, amber: 0.7, red: 0.4, unknown: 0.4}
+  normalise:
+    anomaly_z_full: 7.0       # |robust z| at which the effect counts as 1
+    weekday_eps2_full: 0.14   # epsilon-squared of a "large" effect counts as 1
+    source_gap_hours_full: 4.0
+
+trend:
+  weeks: 26                   # window: the last 26 ISO weeks up to the latest complete week
+  min_complete_weeks: 20
+  min_abs_slope_hours_per_week: 0.05
+  autocorrelation_correction: yue_wang   # variance correction for lag-1 autocorrelation (decision 3)
+
+anomaly:
+  trailing_weeks: 8
+  threshold: 3.5              # |robust z| (median and MAD), Iglewicz and Hoaglin
+
+weekday:
+  weeks: 26
+  min_complete_weeks: 12
+  min_epsilon_squared: 0.01   # "small" effect; below this a peak day is not worth a sentence
+
+volume_vs_wait:
+  weeks: 26
+  lags: [0, 1, 2]             # visits on day t vs bed wait on day t + lag
+  min_pairs: 60
+  adjust_for_weekday: true    # remove each hospital's weekday median first (decision 4)
+  strength: {negligible: 0.1, weak: 0.3, moderate: 0.5}   # |rho| below each bound
+
+access_gap:
+  min_seniors: 1000
+  top: 10
+  min_shortfall_clinics: 1.0  # an area must be at least one clinic short to be listed
+
+regional:
+  enabled: false              # off until the planning area -> cluster mapping is approved (decision 7)
+
+source_gap:
+  min_paired_days: 20
