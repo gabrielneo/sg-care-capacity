@@ -303,3 +303,42 @@ class LiveReading(BaseModel):
 class LiveResponse(BaseModel):
     data: list[LiveReading]
     meta: Meta
+
+
+# --------------------------------------------------------------------------- #
+# Insights
+# --------------------------------------------------------------------------- #
+
+class InsightEvidence(BaseModel):
+    endpoint: str = Field(description="API endpoint showing the data behind the insight")
+    query: str = Field(description="SQL on the snapshot's analytics.duckdb that reproduces it")
+
+
+class Insight(BaseModel):
+    insight_id: str
+    type: Literal["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
+    entity: str = Field(description="Hospital code, planning area, or 'All hospitals'")
+    headline: str = Field(description="One sentence, at most 20 words, plain language")
+    detail: str = Field(description="At most two sentences")
+    metric_value: float | None
+    unit: str
+    comparison_value: float | None
+    direction: Literal["better", "worse", "neutral"]
+    effect_size: float | None
+    p_value: float | None = Field(description="Null for descriptive detectors (no test)")
+    p_adjusted: float | None = Field(description="Benjamini-Hochberg across every test in the run")
+    n: int
+    method: str
+    caveats: list[str]
+    who_acts: str | None = Field(description="Null until the author has reviewed the suggested action")
+    action: str | None
+    evidence: InsightEvidence
+    as_of: date
+    as_of_basis: str
+    rank_score: float = Field(description="normalised effect x (1 - p_adjusted) x completeness x recency")
+    headline_rank: int | None = Field(description="1-3 for the headline findings (at most one per detector)")
+
+
+class InsightsResponse(BaseModel):
+    data: list[Insight]
+    meta: Meta

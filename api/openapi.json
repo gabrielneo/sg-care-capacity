@@ -1206,6 +1206,245 @@
         "title": "HospitalsResponse",
         "type": "object"
       },
+      "Insight": {
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "caveats": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Caveats",
+            "type": "array"
+          },
+          "comparison_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Value"
+          },
+          "detail": {
+            "description": "At most two sentences",
+            "title": "Detail",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "better",
+              "worse",
+              "neutral"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "effect_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effect Size"
+          },
+          "entity": {
+            "description": "Hospital code, planning area, or 'All hospitals'",
+            "title": "Entity",
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/InsightEvidence"
+          },
+          "headline": {
+            "description": "One sentence, at most 20 words, plain language",
+            "title": "Headline",
+            "type": "string"
+          },
+          "headline_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-3 for the headline findings (at most one per detector)",
+            "title": "Headline Rank"
+          },
+          "insight_id": {
+            "title": "Insight Id",
+            "type": "string"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "metric_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Value"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Benjamini-Hochberg across every test in the run",
+            "title": "P Adjusted"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for descriptive detectors (no test)",
+            "title": "P Value"
+          },
+          "rank_score": {
+            "description": "normalised effect x (1 - p_adjusted) x completeness x recency",
+            "title": "Rank Score",
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "trend",
+              "anomaly",
+              "weekday",
+              "volume_vs_wait",
+              "access_gap",
+              "regional",
+              "source_gap"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "who_acts": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null until the author has reviewed the suggested action",
+            "title": "Who Acts"
+          }
+        },
+        "required": [
+          "insight_id",
+          "type",
+          "entity",
+          "headline",
+          "detail",
+          "metric_value",
+          "unit",
+          "comparison_value",
+          "direction",
+          "effect_size",
+          "p_value",
+          "p_adjusted",
+          "n",
+          "method",
+          "caveats",
+          "who_acts",
+          "action",
+          "evidence",
+          "as_of",
+          "as_of_basis",
+          "rank_score",
+          "headline_rank"
+        ],
+        "title": "Insight",
+        "type": "object"
+      },
+      "InsightEvidence": {
+        "properties": {
+          "endpoint": {
+            "description": "API endpoint showing the data behind the insight",
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "query": {
+            "description": "SQL on the snapshot's analytics.duckdb that reproduces it",
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint",
+          "query"
+        ],
+        "title": "InsightEvidence",
+        "type": "object"
+      },
+      "InsightsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Insight"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "InsightsResponse",
+        "type": "object"
+      },
       "LiveReading": {
         "properties": {
           "as_of": {
@@ -2155,6 +2394,127 @@
         "summary": "The sites MOH reports, with coverage notes",
         "tags": [
           "emergency departments"
+        ]
+      }
+    },
+    "/api/v1/insights": {
+      "get": {
+        "operationId": "insights_api_v1_insights_get",
+        "parameters": [
+          {
+            "description": "Only this detector",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "trend",
+                    "anomaly",
+                    "weekday",
+                    "volume_vs_wait",
+                    "access_gap",
+                    "regional",
+                    "source_gap"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this detector",
+              "title": "Type"
+            }
+          },
+          {
+            "description": "Only this hospital code or planning area (case-insensitive)",
+            "in": "query",
+            "name": "entity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this hospital code or planning area (case-insensitive)",
+              "title": "Entity"
+            }
+          },
+          {
+            "description": "The N highest rank_score",
+            "in": "query",
+            "name": "top",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The N highest rank_score",
+              "title": "Top"
+            }
+          },
+          {
+            "description": "Only the headline findings (top 3, at most one per detector)",
+            "in": "query",
+            "name": "headline",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Only the headline findings (top 3, at most one per detector)",
+              "title": "Headline",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Findings that passed their statistical gates",
+        "tags": [
+          "insights"
         ]
       }
     },

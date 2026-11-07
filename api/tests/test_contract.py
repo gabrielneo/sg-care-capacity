@@ -22,7 +22,7 @@ EXPECTED = {
     "/api/v1/ed/daily": m.EdDailyResponse, "/api/v1/ed/weekly": m.EdWeeklyResponse,
     "/api/v1/ed/summary": m.EdSummaryResponse, "/api/v1/clinics": m.ClinicsResponse,
     "/api/v1/areas/access": m.AreasResponse, "/api/v1/quality": m.QualityResponse,
-    "/api/v1/live/nuhs/latest": m.LiveResponse,
+    "/api/v1/live/nuhs/latest": m.LiveResponse, "/api/v1/insights": m.InsightsResponse,
 }
 META_KEYS = {"snapshot_id", "as_of", "sources", "coverage", "caveats", "dq_warnings"}
 

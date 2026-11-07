@@ -143,7 +143,7 @@ def test_verified_files_are_not_downloaded_again(snapshot_dir, tmp_path):
     load_from(fake, tmp_path).close()
     first = fake.downloads()
     load_from(fake, tmp_path).close()
-    assert len(first) == 11 and fake.downloads()[len(first):] == ["manifest.json"]
+    assert len(first) == len(fake.files) and fake.downloads()[len(first):] == ["manifest.json"]
 
 
 def test_a_pinned_tag_is_served_even_if_newer_ones_exist(snapshot_dir, tmp_path):

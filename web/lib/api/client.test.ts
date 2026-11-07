@@ -60,6 +60,15 @@ describe("api client", () => {
   });
 });
 
+describe("insights", () => {
+  it("passes its filters as the query string", async () => {
+    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    await api.insights({ type: "weekday", headline: true, top: 3 });
+    const [request] = fetchMock.mock.calls[0] as [Request, RequestInit];
+    expect(request.url).toBe("http://api.test/api/v1/insights?type=weekday&headline=true&top=3");
+  });
+});
+
 describe("settle", () => {
   it("returns the value or the ApiError, so pages fetch first and render after", async () => {
     expect(await settle(Promise.resolve(1))).toEqual({ ok: true, value: 1 });

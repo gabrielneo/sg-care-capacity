@@ -89,6 +89,8 @@ export const api = {
   areasAccess: () => call(() => client().GET("/api/v1/areas/access")),
   quality: () => call(() => client().GET("/api/v1/quality")),
   liveNuhsLatest: () => call(() => client().GET("/api/v1/live/nuhs/latest")),
+  insights: (query: Query<"/api/v1/insights"> = {}) =>
+    call(() => client().GET("/api/v1/insights", { params: { query } })),
 };
 
 export type Settled<T> = { ok: true; value: T } | { ok: false; error: ApiError };

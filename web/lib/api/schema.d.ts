@@ -123,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Findings that passed their statistical gates */
+        get: operations["insights_api_v1_insights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/live/nuhs/latest": {
         parameters: {
             query?: never;
@@ -607,6 +624,104 @@ export interface components {
             data: components["schemas"]["Hospital"][];
             meta: components["schemas"]["Meta"];
         };
+        /** Insight */
+        Insight: {
+            /** Action */
+            action: string | null;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** As Of Basis */
+            as_of_basis: string;
+            /** Caveats */
+            caveats: string[];
+            /** Comparison Value */
+            comparison_value: number | null;
+            /**
+             * Detail
+             * @description At most two sentences
+             */
+            detail: string;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "better" | "worse" | "neutral";
+            /** Effect Size */
+            effect_size: number | null;
+            /**
+             * Entity
+             * @description Hospital code, planning area, or 'All hospitals'
+             */
+            entity: string;
+            evidence: components["schemas"]["InsightEvidence"];
+            /**
+             * Headline
+             * @description One sentence, at most 20 words, plain language
+             */
+            headline: string;
+            /**
+             * Headline Rank
+             * @description 1-3 for the headline findings (at most one per detector)
+             */
+            headline_rank: number | null;
+            /** Insight Id */
+            insight_id: string;
+            /** Method */
+            method: string;
+            /** Metric Value */
+            metric_value: number | null;
+            /** N */
+            n: number;
+            /**
+             * P Adjusted
+             * @description Benjamini-Hochberg across every test in the run
+             */
+            p_adjusted: number | null;
+            /**
+             * P Value
+             * @description Null for descriptive detectors (no test)
+             */
+            p_value: number | null;
+            /**
+             * Rank Score
+             * @description normalised effect x (1 - p_adjusted) x completeness x recency
+             */
+            rank_score: number;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "trend" | "anomaly" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap";
+            /** Unit */
+            unit: string;
+            /**
+             * Who Acts
+             * @description Null until the author has reviewed the suggested action
+             */
+            who_acts: string | null;
+        };
+        /** InsightEvidence */
+        InsightEvidence: {
+            /**
+             * Endpoint
+             * @description API endpoint showing the data behind the insight
+             */
+            endpoint: string;
+            /**
+             * Query
+             * @description SQL on the snapshot's analytics.duckdb that reproduces it
+             */
+            query: string;
+        };
+        /** InsightsResponse */
+        InsightsResponse: {
+            /** Data */
+            data: components["schemas"]["Insight"][];
+            meta: components["schemas"]["Meta"];
+        };
         /** LiveReading */
         LiveReading: {
             /**
@@ -1083,6 +1198,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    insights_api_v1_insights_get: {
+        parameters: {
+            query?: {
+                /** @description Only this detector */
+                type?: ("trend" | "anomaly" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap") | null;
+                /** @description Only this hospital code or planning area (case-insensitive) */
+                entity?: string | null;
+                /** @description The N highest rank_score */
+                top?: number | null;
+                /** @description Only the headline findings (top 3, at most one per detector) */
+                headline?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

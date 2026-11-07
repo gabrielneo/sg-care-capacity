@@ -21,6 +21,7 @@ export type AreaCollection = Schemas["AreaCollection"];
 export type QualityReport = Schemas["QualityReport"];
 export type LiveReading = Schemas["LiveReading"];
 export type SnapshotInfo = Schemas["SnapshotInfo"];
+export type Insight = Schemas["Insight"];
 
 /** Query parameters of a GET endpoint, e.g. Query<"/api/v1/ed/daily">. */
 export type Query<P extends keyof paths> = paths[P] extends { get: { parameters: { query?: infer Q } } }

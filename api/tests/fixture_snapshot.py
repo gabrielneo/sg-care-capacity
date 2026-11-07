@@ -60,7 +60,30 @@ DDL = {
         polyclinic_source_sha256 VARCHAR, as_of TIMESTAMP, as_of_basis VARCHAR""",
     "dim_metric": """metric_id VARCHAR, label VARCHAR, definition VARCHAR, unit VARCHAR, unit_basis VARCHAR,
         caveat VARCHAR, source_name VARCHAR, source_sha256 VARCHAR, as_of DATE, as_of_basis VARCHAR""",
+    "fct_insight": """insight_id VARCHAR, type VARCHAR, entity VARCHAR, headline VARCHAR, detail VARCHAR, metric_value DOUBLE,
+        unit VARCHAR, comparison_value DOUBLE, direction VARCHAR, effect_size DOUBLE, p_value DOUBLE, p_adjusted DOUBLE,
+        n INTEGER, method VARCHAR, caveats VARCHAR[], who_acts VARCHAR, action VARCHAR,
+        evidence STRUCT(endpoint VARCHAR, query VARCHAR), as_of DATE, as_of_basis VARCHAR, rank_score DOUBLE,
+        headline_rank INTEGER""",
 }
+
+INSIGHTS = [  # three published insights: one headline per detector type, one more weekday
+    ("weekday-aaaaaaaaaa", "weekday", "SGH", "At Singapore General Hospital, bed waits are longest on Mondays, 25% above its weekly average.",
+     "Waits differ by day of the week over 6 complete weeks. This is unlikely to be chance (adjusted p = 0.004).",
+     5.0, "hours", 4.0, "neutral", 0.21, 0.001, 0.004, 42, "Kruskal-Wallis test across weekdays; epsilon-squared",
+     ["The test shows that weekdays differ; the peak day is the one with the highest average."], None, None,
+     {"endpoint": "/api/v1/ed/daily?hospital=SGH", "query": "SELECT 1"}, date(2026, 10, 25), "latest_data", 0.95, 1),
+    ("anomaly-bbbbbbbbbb", "anomaly", "SGH", "Bed waits at Singapore General Hospital were unusually long in the week of 19–25 Oct 2026: 5.0 hours.",
+     "The usual level over the 8 weeks before was 4.0 hours. A week this far out happens rarely by chance.",
+     5.0, "hours", 4.0, "worse", 4.2, None, None, 9, "Robust z-score (median and MAD of the 8 weeks before)",
+     ["One unusual week is not a trend."], None, None,
+     {"endpoint": "/api/v1/ed/weekly?hospital=SGH&weeks=9", "query": "SELECT 2"}, date(2026, 10, 25), "latest_data", 0.6, 2),
+    ("weekday-cccccccccc", "weekday", "AH", "At Alexandra Hospital, bed waits are longest on Tuesdays, 10% above its weekly average.",
+     "Waits differ by day of the week over 5 complete weeks. This is unlikely to be chance (adjusted p = 0.03).",
+     2.2, "hours", 2.0, "neutral", 0.05, 0.01, 0.03, 35, "Kruskal-Wallis test across weekdays; epsilon-squared",
+     ["Alexandra Hospital runs an urgent care centre, not a full emergency department."], None, None,
+     {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None),
+]
 DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
     details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""
 
@@ -183,14 +206,16 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(out: Path) -> Path:
-    """Write the fixture snapshot into `out` (created). Returns `out`."""
+def build(out: Path, *, insights: bool = True) -> Path:
+    """Write the fixture snapshot into `out` (created). Returns `out`.
+    insights=False builds a release from before the insight engine (no fct_insight)."""
+    marts = {m: cols for m, cols in DDL.items() if insights or m != "fct_insight"}
     out.mkdir(parents=True, exist_ok=True)
     db = out / "analytics.duckdb"
     con = duckdb.connect(str(db))
     try:
         con.execute("CREATE SCHEMA marts")
-        for mart, cols in DDL.items():
+        for mart, cols in marts.items():
             con.execute(f"CREATE TABLE marts.{mart} ({cols})")
         con.execute(f"CREATE TABLE main.dq_results ({DQ_DDL})")
         con.executemany("INSERT INTO marts.dim_hospital VALUES (?,?,?,?,?,?,?,?,?,?,?)", HOSPITALS)
@@ -225,10 +250,12 @@ def build(out: Path) -> Path:
         con.executemany("INSERT INTO marts.dim_metric VALUES (?,?,?,?,?,?,?,?,DATE '2026-11-06','reference_checked')",
                         [(*m, H) for m in METRICS])
         con.executemany("INSERT INTO main.dq_results VALUES (?,?,?,?,?,?,?,?,?,?)", DQ)
+        if insights:
+            con.executemany(f"INSERT INTO marts.fct_insight VALUES ({', '.join('?' * 22)})", INSIGHTS)
         (out / "parquet").mkdir(exist_ok=True)
-        for mart in DDL:
+        for mart in marts:
             con.execute(f"COPY marts.{mart} TO '{out / 'parquet' / (mart + '.parquet')}' (FORMAT parquet)")
-        row_counts = {m: con.execute(f"SELECT count(*) FROM marts.{m}").fetchall()[0][0] for m in DDL}
+        row_counts = {m: con.execute(f"SELECT count(*) FROM marts.{m}").fetchall()[0][0] for m in marts}
         con.execute("CHECKPOINT")
     finally:
         con.close()
