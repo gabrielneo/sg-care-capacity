@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Hospital } from "./api/types";
-import { hospitalKey, shortNote } from "./hospitalNotes";
+import { pinnedCaveat, shortNote } from "./hospitalNotes";
 
 const h = (code: string, facility_type: "ED" | "UCC", coverage_note: string | null): Hospital => ({
   hospital_code: code, hospital_name: code, cluster: "x", facility_type, reported_from: null, coverage_note,
@@ -16,6 +16,8 @@ describe("hospital notes", () => {
       h("SGH", "ED", null),
     ];
     expect(list.map(shortNote)).toEqual(["Urgent care centre", "Adults only", null, null]);
-    expect(hospitalKey(list)).toEqual(["AH = urgent care centre", "NUH = adults only"]);
+    expect(list.map(pinnedCaveat)).toEqual([
+      "Urgent Care Centre (UCC): not a full ED, so its waits are shorter",
+      "Adults only: MOH's figures leave out children's emergency", null, null]);
   });
 });

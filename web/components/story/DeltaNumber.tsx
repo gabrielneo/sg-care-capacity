@@ -23,13 +23,30 @@ export interface DeltaNumberProps {
   word?: string | null;
   /** From the insight, never from the arrow: a rise in clinics is good, a rise in bed waits is bad. */
   direction: Direction;
+  /** One line (value, arrow and word), for chart rows. */
+  compact?: boolean;
 }
 
 /**
  * A key number with its comparison. The change is shown as an arrow AND a word, and coloured by
  * direction, so colour never carries the meaning alone (docs/language_rules.md, Rule 5).
  */
-export function DeltaNumber({ value, unit, label, comparison, change, word, direction }: DeltaNumberProps) {
+export function DeltaNumber({ value, unit, label, comparison, change, word, direction, compact = false }: DeltaNumberProps) {
+  if (compact) {
+    return (
+      <span data-testid="delta-number" data-direction={direction} className="inline-flex flex-wrap items-baseline gap-x-1.5 text-sm">
+        <span className="font-semibold tabular-nums text-ink">{value}</span>
+        {unit ? <span className="text-muted">{unit}</span> : null}
+        {word ? (
+          <span className={`font-medium ${TONE[direction]}`} data-testid="delta-change">
+            {change ? <span aria-hidden="true">{ARROW[change]} </span> : null}
+            {word}
+            {direction !== "neutral" ? <span className="sr-only"> ({direction === "worse" ? "worse" : "better"})</span> : null}
+          </span>
+        ) : null}
+      </span>
+    );
+  }
   return (
     <div data-testid="delta-number" data-direction={direction} className="my-3">
       {label ? <p className="text-sm text-muted">{label}</p> : null}
