@@ -319,7 +319,7 @@ Values from weekly data release `data-2026-11-08`.
 AIC planners adopted it, usefulness would be measured by:
 
 - **Adoption:** how many planners open it each month.
-- **Decisions informed:** which hospitals or areas were looked into because of a finding.
+- **Decisions informed:** which hospitals or areas were looked into after a finding.
 - **Time saved:** how long a question takes to answer, compared with how planners do it today.
   For example: "which areas have the most seniors per chronic-care clinic?"
 - **Trust:** whether planners would cite its figures in their own work.

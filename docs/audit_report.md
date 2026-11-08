@@ -356,3 +356,31 @@ The findings use "move with", "come with" and "is associated with".
 - **The 2D and 3D maps** (Leaflet and WebGL) were not inspected visually. Their data source (`planning_area_access*.geojson`) and the table view were checked instead. Chart polylines were checked for gaps and point counts, not pixel-to-value mapping.
 - **External citations** (Appendix E) were not fetched. The MP2019 comparison ("Changi Bay 83%…") cannot be checked: no MP2019 file is in the raw zone. The quarantined clinic's area (M-4) was not geocoded.
 - **Auto-loaded context.** At one point the Claude Code environment automatically loaded the project's `CLAUDE.md` into the auditor's context; it was not requested. It holds general principles and commands, no data or implementation logic. No finding relies on it, and every figure here was recomputed from the inputs listed above.
+
+---
+
+## Resolution (added after the audit)
+
+*This section was written by the project, not the auditor. The findings above are left as found.*
+Fixes are in the code from the commits named; the live site shows the data fixes once a new weekly
+data release is published.
+
+| Finding | Status | What changed | Commit |
+|---|---|---|---|
+| C-1 | Fixed | "< 1 hour(s)" kept as a bound with a `<` qualifier; shown as "Under 1 hour"; left out of comparisons; WARN check `live.bounded_estimate` | `6f5389b` |
+| H-1 | Fixed | Charts mixing sources show each source's own date and badge | `20e3d9a` |
+| M-1 | Fixed | Findings dated and badged by their sources; their window stated as "This finding uses data to …" | `20e3d9a` |
+| M-2 | Fixed | Each finding carries `source_ids`; the findings CSV dates and credits each row by them | `20e3d9a` |
+| M-3 | Fixed | Manifest check counts read from the published run, after the insight engine | `2d20cd4` |
+| M-4 | Fixed | Access caveats name set-aside CDMP clinics with postcode and reason; the area is not guessed | `3780622` |
+| M-5 | Fixed | Data dictionary defines the mart `as_of` (download time) and the displayed "Data as of" (source's latest date) | `be946a3` |
+| L-1, L-2, L-8 | Fixed | "Average of daily median bed waits"; "Median bed wait" on the volume chart; Alexandra's UCC called a UCC | `2416f62` |
+| L-7 | Fixed | Each finding's warnings are only those on its own tables (`dq_tables`) | `2416f62`, `8e82014` |
+| L-3, L-4, L-5, L-6, L-9 | Fixed | Weekday table lists only chosen hospitals; loading skeleton matches; "n/a (no residents)"; release-date label without badge; equal-as-shown reads "about the same" | `8e82014` |
+| I-2 | Fixed | WARN check `range.bed_wait_zero` flags daily medians of 0, kept as published | `2416f62` |
+| I-4 | Fixed | The yearly A&E source's basis says it is not the latest year covered | `8e82014` |
+| I-1, I-3, I-5 | No change needed | Consistent with the documented rounding and gap handling | |
+| I-6 | No change needed | The case study presents these as simulated testing and internal status, not outcomes | |
+
+Not changed: the map legend still groups areas with no residents aged 65+ under "No data" (the
+table, area panel and map labels say "n/a (no residents)").
