@@ -31,6 +31,7 @@ GITHUB_API = "https://api.github.com"
 MANIFEST = "manifest.json"
 DATABASE = "analytics.duckdb"
 GEOJSON = "planning_area_access.geojson"
+SVY21_GEOJSON = "planning_area_access_svy21.geojson"     # optional: releases before 2026-11 lack it
 MANIFEST_KEYS = ("snapshot_id", "created_at", "artefacts", "row_counts", "sources", "checks", "coverage_per_hospital")
 # What the API reads. A snapshot without one of these can't be served.
 REQUIRED_MARTS = ("dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",

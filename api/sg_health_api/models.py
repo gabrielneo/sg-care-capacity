@@ -231,6 +231,10 @@ class AreaProperties(BaseModel):
     dq_note: str | None
     as_of: str | None
     as_of_basis: str | None
+    excluded_reason: str | None = Field(None, description="Why the area is left out of the access-gap ranking "
+                                                          "(too few residents aged 65+); null if it is ranked")
+    cdmp_shortfall: float | None = Field(None, description="CDMP clinics the national rate would give its residents "
+                                                           "aged 65+, minus those it has; negative = more. Null if excluded")
 
 
 class Geometry(BaseModel):
@@ -252,6 +256,33 @@ class AreaCollection(BaseModel):
 
 class AreasResponse(BaseModel):
     data: AreaCollection
+    meta: Meta
+
+
+class Svy21Properties(AreaProperties):
+    label_x: float = Field(description="A point inside the area for its label, in the layer's metres")
+    label_y: float
+
+
+class Svy21Geometry(BaseModel):
+    type: Literal["Polygon", "MultiPolygon"]
+    coordinates: list[Any] = Field(description="SVY21 (EPSG:3414) metres, minus metadata.origin: x east, y north")
+
+
+class Svy21Feature(BaseModel):
+    type: Literal["Feature"]
+    geometry: Svy21Geometry
+    properties: Svy21Properties
+
+
+class Svy21Collection(BaseModel):
+    type: Literal["FeatureCollection"]
+    metadata: dict[str, Any] = Field(description="origin: the SVY21 offset subtracted from every coordinate")
+    features: list[Svy21Feature]
+
+
+class Svy21AreasResponse(BaseModel):
+    data: Svy21Collection
     meta: Meta
 
 

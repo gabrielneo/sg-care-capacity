@@ -9,8 +9,18 @@ from fastapi import APIRouter, Depends, Query, Response
 
 from ..context import Context
 from ..errors import ApiError
-from ..models import AreaCollection, AreasResponse, Clinic, ClinicPage, ClinicsResponse
-from ..snapshot import GEOJSON
+from ..models import (
+    AreaCollection,
+    AreasResponse,
+    Clinic,
+    ClinicPage,
+    ClinicsResponse,
+    ErrorResponse,
+    Meta,
+    Svy21AreasResponse,
+    Svy21Collection,
+)
+from ..snapshot import GEOJSON, SVY21_GEOJSON, SnapshotError
 from . import ERRORS, get_ctx
 
 router = APIRouter(tags=["clinics and planning areas"], responses=ERRORS)
@@ -82,21 +92,36 @@ def clinics(
                       tables=("chas_clinics",)))
 
 
-def warm(ctx: Context) -> None:
-    """Validate the map layer at startup and keep the whole response, which never changes, as bytes."""
-    raw: dict[str, Any] = json.loads(ctx.snap.file(GEOJSON).read_text())
-    AreaCollection.model_validate(raw)                   # a malformed layer stops startup
-    feats = [f["properties"] for f in raw["features"]]
-    meta = ctx.meta(as_of=ctx.snap.query(AREA_AS_OF_SQL)[0]["as_of"], sources=AREA_SOURCES,
+def _area_meta(ctx: Context, feats: list[dict[str, Any]], extra: tuple[str, ...] = ()) -> Meta:
+    return ctx.meta(as_of=ctx.snap.query(AREA_AS_OF_SQL)[0]["as_of"], sources=AREA_SOURCES,
                     coverage={"planning_areas": len(feats),
                               "with_population": sum(1 for p in feats if p.get("residents_total") is not None),
                               "with_a_dq_note": sum(1 for p in feats if p.get("dq_note"))},
                     caveats=[*ctx.metric_caveats("fct_area_access."),
                              "Missing values are null: show them as 'no data', never as 0 or the lowest class.",
-                             "as_of is the older of the clinic list and the population reference date."],
+                             "as_of is the older of the clinic list and the population reference date.", *extra],
                     tables=AREA_TABLES)
+
+
+def warm(ctx: Context) -> None:
+    """Validate the map layers at startup and keep the whole responses, which never change, as bytes."""
+    raw: dict[str, Any] = json.loads(ctx.snap.file(GEOJSON).read_text())
+    AreaCollection.model_validate(raw)                   # a malformed layer stops startup
+    meta = _area_meta(ctx, [f["properties"] for f in raw["features"]])
     body = {"data": raw, "meta": meta.model_dump(mode="json")}
     ctx.cache["areas"] = json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode()
+    try:
+        svy: dict[str, Any] | None = json.loads(ctx.snap.file(SVY21_GEOJSON).read_text())
+    except SnapshotError:
+        svy = None                                       # a release from before the 3D layer
+    if svy is not None:
+        Svy21Collection.model_validate(svy)
+        meta = _area_meta(ctx, [f["properties"] for f in svy["features"]],
+                          ("Coordinates are SVY21 (EPSG:3414) metres minus metadata.origin, so no projection is needed.",))
+        ctx.cache["areas_svy21"] = json.dumps({"data": svy, "meta": meta.model_dump(mode="json")},
+                                              separators=(",", ":"), ensure_ascii=False).encode()
+    else:
+        ctx.cache["areas_svy21"] = None
 
 
 @router.get("/areas/access", response_model=AreasResponse,
@@ -105,3 +130,15 @@ def areas_access(ctx: Context = Depends(get_ctx)) -> Response:
     if "areas" not in ctx.cache:
         warm(ctx)
     return Response(content=ctx.cache["areas"], media_type="application/json")
+
+
+@router.get("/areas/access/svy21", response_model=Svy21AreasResponse,
+            responses={404: {"model": ErrorResponse, "description": "This data release has no 3D map layer"}},
+            summary="The same areas in SVY21 metres, for the 3D map (GeoJSON in data)")
+def areas_access_svy21(ctx: Context = Depends(get_ctx)) -> Response:
+    if "areas_svy21" not in ctx.cache:
+        warm(ctx)
+    body = ctx.cache["areas_svy21"]
+    if body is None:
+        raise ApiError(404, "not_in_release", "This data release has no 3D map layer: it was published before the layer existed.")
+    return Response(content=body, media_type="application/json")

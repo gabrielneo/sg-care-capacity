@@ -115,6 +115,18 @@
             ],
             "title": "Cdmp Clinics Per 1K Seniors"
           },
+          "cdmp_shortfall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CDMP clinics the national rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded",
+            "title": "Cdmp Shortfall"
+          },
           "chas_clinics": {
             "anyOf": [
               {
@@ -147,6 +159,18 @@
               }
             ],
             "title": "Dq Note"
+          },
+          "excluded_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the area is left out of the access-gap ranking (too few residents aged 65+); null if it is ranked",
+            "title": "Excluded Reason"
           },
           "nearest_polyclinic": {
             "anyOf": [
@@ -2246,6 +2270,318 @@
         "title": "Source",
         "type": "object"
       },
+      "Svy21AreasResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Svy21Collection"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "Svy21AreasResponse",
+        "type": "object"
+      },
+      "Svy21Collection": {
+        "properties": {
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/Svy21Feature"
+            },
+            "title": "Features",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "description": "origin: the SVY21 offset subtracted from every coordinate",
+            "title": "Metadata",
+            "type": "object"
+          },
+          "type": {
+            "const": "FeatureCollection",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "metadata",
+          "features"
+        ],
+        "title": "Svy21Collection",
+        "type": "object"
+      },
+      "Svy21Feature": {
+        "properties": {
+          "geometry": {
+            "$ref": "#/components/schemas/Svy21Geometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/Svy21Properties"
+          },
+          "type": {
+            "const": "Feature",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "geometry",
+          "properties"
+        ],
+        "title": "Svy21Feature",
+        "type": "object"
+      },
+      "Svy21Geometry": {
+        "properties": {
+          "coordinates": {
+            "description": "SVY21 (EPSG:3414) metres, minus metadata.origin: x east, y north",
+            "items": {},
+            "title": "Coordinates",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "Polygon",
+              "MultiPolygon"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "title": "Svy21Geometry",
+        "type": "object"
+      },
+      "Svy21Properties": {
+        "properties": {
+          "approx_km_centroid_to_nearest_polyclinic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approx Km Centroid To Nearest Polyclinic"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "as_of_basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of Basis"
+          },
+          "cdmp_clinics": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cdmp Clinics"
+          },
+          "cdmp_clinics_per_1k_seniors": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cdmp Clinics Per 1K Seniors"
+          },
+          "cdmp_shortfall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CDMP clinics the national rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded",
+            "title": "Cdmp Shortfall"
+          },
+          "chas_clinics": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chas Clinics"
+          },
+          "clinics_per_1k_seniors": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinics Per 1K Seniors"
+          },
+          "dq_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dq Note"
+          },
+          "excluded_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the area is left out of the access-gap ranking (too few residents aged 65+); null if it is ranked",
+            "title": "Excluded Reason"
+          },
+          "label_x": {
+            "description": "A point inside the area for its label, in the layer's metres",
+            "title": "Label X",
+            "type": "number"
+          },
+          "label_y": {
+            "title": "Label Y",
+            "type": "number"
+          },
+          "nearest_polyclinic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nearest Polyclinic"
+          },
+          "pct_area_within_1km_of_cdmp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct Area Within 1Km Of Cdmp"
+          },
+          "planning_area": {
+            "title": "Planning Area",
+            "type": "string"
+          },
+          "planning_area_code": {
+            "title": "Planning Area Code",
+            "type": "string"
+          },
+          "population_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population Year"
+          },
+          "region_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Name"
+          },
+          "residents_65plus": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residents 65Plus"
+          },
+          "residents_total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residents Total"
+          }
+        },
+        "required": [
+          "planning_area_code",
+          "planning_area",
+          "region_name",
+          "population_year",
+          "residents_total",
+          "residents_65plus",
+          "chas_clinics",
+          "cdmp_clinics",
+          "clinics_per_1k_seniors",
+          "cdmp_clinics_per_1k_seniors",
+          "pct_area_within_1km_of_cdmp",
+          "approx_km_centroid_to_nearest_polyclinic",
+          "nearest_polyclinic",
+          "dq_note",
+          "as_of",
+          "as_of_basis",
+          "label_x",
+          "label_y"
+        ],
+        "title": "Svy21Properties",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2351,6 +2687,47 @@
           }
         },
         "summary": "Clinic access for residents aged 65+ by planning area (GeoJSON in data)",
+        "tags": [
+          "clinics and planning areas"
+        ]
+      }
+    },
+    "/api/v1/areas/access/svy21": {
+      "get": {
+        "operationId": "areas_access_svy21_api_v1_areas_access_svy21_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Svy21AreasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This data release has no 3D map layer"
+          }
+        },
+        "summary": "The same areas in SVY21 metres, for the 3D map (GeoJSON in data)",
         "tags": [
           "clinics and planning areas"
         ]

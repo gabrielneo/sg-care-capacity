@@ -82,6 +82,34 @@ def test_areas_returns_the_geojson_with_nulls_kept(client):
     assert any("never as 0" in c for c in meta["caveats"])
 
 
+def test_areas_carry_the_access_gap_exclusions_and_shortfall(client):
+    props = {f["properties"]["planning_area_code"]: f["properties"] for f in get(client, "/areas/access")[1]["data"]["features"]}
+    assert (props["BD"]["excluded_reason"], props["BD"]["cdmp_shortfall"]) == (None, 1.0)
+    assert (props["TS"]["excluded_reason"], props["TS"]["cdmp_shortfall"]) == ("no residents aged 65+", None)
+
+
+def test_the_svy21_layer_serves_metres_with_its_origin_and_label_points(client):
+    status, body = get(client, "/areas/access/svy21")
+    assert status == 200
+    fc = body["data"]
+    assert fc["metadata"]["origin"] == [29537, 33000] and len(fc["features"]) == 2
+    bedok = next(f for f in fc["features"] if f["properties"]["planning_area_code"] == "BD")
+    assert bedok["geometry"]["coordinates"][0][0] == [9000, -1000]                     # metres, not degrees
+    assert (bedok["properties"]["label_x"], bedok["properties"]["label_y"]) == (9500, -500)
+    assert bedok["properties"]["cdmp_shortfall"] == 1.0
+    assert any("SVY21" in c for c in body["meta"]["caveats"]) and body["meta"]["as_of"] == "2024-06-06T14:36:42"
+
+
+def test_a_release_without_the_3d_layer_says_so_with_a_404(tmp_path):
+    from fixture_snapshot import build
+
+    snap = build(tmp_path / "old", svy21=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        r = c.get(f"{API}/areas/access/svy21")
+        assert c.get(f"{API}/areas/access").status_code == 200                       # the 2D layer is unaffected
+    assert r.status_code == 404 and r.json()["error"]["code"] == "not_in_release"
+
+
 def replace_and_rehash(snap, rel, content: bytes):
     (snap / rel).write_bytes(content)
     m = json.loads((snap / "manifest.json").read_text())

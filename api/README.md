@@ -89,6 +89,7 @@ Definitions of every field are in [`docs/data_dictionary.md`](../docs/data_dicti
 | `GET /ed/summary` | | Latest **complete** week per hospital vs the mean of the 4 complete weeks before it (see below) |
 | `GET /clinics` | `cdmp`, `bbox`, `limit` (≤ 500), `offset` | Active CHAS clinics, paged, with `total` |
 | `GET /areas/access` | | GeoJSON FeatureCollection of the 55 planning areas (access for residents aged 65+) |
+| `GET /areas/access/svy21` | | The same areas in SVY21 metres around Singapore's centre, for the 3D map (no projection in the browser). 404 `not_in_release` for releases from before the layer |
 | `GET /quality` | | Results of the validation run behind this snapshot |
 | `GET /live/nuhs/latest` | | Each NUHS site's latest wait estimate **in the snapshot** |
 | `GET /population` | | Residents and the share aged 65+ for each year in the snapshot (the sum of SingStat's planning areas) |

@@ -241,18 +241,44 @@ def _square(lon: float, lat: float, d: float = 0.01) -> dict:
     return {"type": "Polygon", "coordinates": [ring]}
 
 
-def geojson() -> dict:
-    features = []
-    for (code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, _km2, pct, km, poly, _cin, note), (lon, lat) in zip(
-            AREAS, [(103.92, 1.32), (103.63, 1.31)], strict=True):
-        features.append({"type": "Feature", "geometry": _square(lon, lat), "properties": {
-            "planning_area_code": code, "planning_area": name, "region_name": region, "population_year": 2026,
+# The national rate is all CDMP clinics over all residents aged 65+ (2 / 61,000): Bedok is 1 short;
+# Tuas has no residents aged 65+, so it isn't ranked.
+ACCESS_GAP = {"BD": (None, 1.0), "TS": ("no residents aged 65+", None)}
+SVY21_ORIGIN = [29537, 33000]
+
+
+def _area_properties(code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, pct, km, poly, note) -> dict:
+    reason, short = ACCESS_GAP[code]
+    return {"planning_area_code": code, "planning_area": name, "region_name": region, "population_year": 2026,
             "residents_total": total, "residents_65plus": aged, "chas_clinics": chas, "cdmp_clinics": cdmp,
             "clinics_per_1k_seniors": per1k, "cdmp_clinics_per_1k_seniors": cdmp1k,
             "pct_area_within_1km_of_cdmp": pct, "approx_km_centroid_to_nearest_polyclinic": km,
             "nearest_polyclinic": poly, "dq_note": note, "as_of": CHAS_AS_OF.isoformat(),
-            "as_of_basis": "source_updated"}})
+            "as_of_basis": "source_updated", "excluded_reason": reason, "cdmp_shortfall": short}
+
+
+def geojson() -> dict:
+    features = []
+    for (code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, _km2, pct, km, poly, _cin, note), (lon, lat) in zip(
+            AREAS, [(103.92, 1.32), (103.63, 1.31)], strict=True):
+        features.append({"type": "Feature", "geometry": _square(lon, lat),
+                         "properties": _area_properties(code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, pct, km,
+                                                        poly, note)})
     return {"type": "FeatureCollection", "metadata": {"title": "fixture", "methodology": "docs/methodology.md"},
+            "features": features}
+
+
+def geojson_svy21() -> dict:
+    """The same two areas as squares in SVY21 metres around Singapore's centre (the 3D map layer)."""
+    features = []
+    for (code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, _km2, pct, km, poly, _cin, note), (x, y) in zip(
+            AREAS, [(9000, -1000), (-20000, -2000)], strict=True):
+        ring = [[x, y], [x + 1000, y], [x + 1000, y + 1000], [x, y + 1000], [x, y]]
+        props = _area_properties(code, name, region, total, aged, chas, cdmp, per1k, cdmp1k, pct, km, poly, note)
+        features.append({"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [ring]},
+                         "properties": {**props, "label_x": x + 500, "label_y": y + 500}})
+    return {"type": "FeatureCollection",
+            "metadata": {"title": "fixture", "crs": "SVY21 (EPSG:3414), metres, translated", "origin": SVY21_ORIGIN},
             "features": features}
 
 
@@ -260,10 +286,10 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(out: Path, *, insights: bool = True, insight_charts: bool = True) -> Path:
+def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy21: bool = True) -> Path:
     """Write the fixture snapshot into `out` (created). Returns `out`.
     insights=False builds a release from before the insight engine (no fct_insight);
-    insight_charts=False one from before it wrote display and chart."""
+    insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer."""
     marts = {m: cols for m, cols in DDL.items() if insights or m != "fct_insight"}
     if not insight_charts:
         marts["fct_insight"] = marts["fct_insight"].replace(INSIGHT_EXTRA_DDL, "")
@@ -318,8 +344,12 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True) -> P
     finally:
         con.close()
     (out / "planning_area_access.geojson").write_text(json.dumps(geojson()))
+    layers = [out / "planning_area_access.geojson"]
+    if svy21:
+        (out / "planning_area_access_svy21.geojson").write_text(json.dumps(geojson_svy21()))
+        layers.append(out / "planning_area_access_svy21.geojson")
 
-    files = [db, out / "planning_area_access.geojson", *sorted((out / "parquet").glob("*.parquet"))]
+    files = [db, *layers, *sorted((out / "parquet").glob("*.parquet"))]
     latest = [d for d in DQ if d[6] == LATEST_RUN]
     manifest = {
         "snapshot_id": SNAPSHOT_ID,
