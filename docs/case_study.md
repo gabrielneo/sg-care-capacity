@@ -1,9 +1,8 @@
 # Case study: right-siting care in a super-aged Singapore
 
-**Draft.** Paragraphs starting with **TODO(me)** need the author's own judgement, research or
-interviews. Everything else follows from the published data and the project's docs. No quotes,
-interview findings or outcomes are invented. Figures are from weekly data release `data-2026-11-06`
-unless stated otherwise.
+Everything here follows from the published data, official sources and the project's docs.
+Assumptions are labelled as such; no quotes, interview findings or outcomes are invented. Figures
+are from weekly data release `data-2026-11-08` unless stated otherwise.
 
 ## Problem statement
 
@@ -356,9 +355,40 @@ Each record has the full technical reasoning; follow the number.
   the clinic list is from June 2024. These describe areas, not people.
 - **The NUHS readings are moments,** from the weekly data release, not a live feed.
 
-**Next steps:**
+**Next steps,** in the order recommended:
 
-- Candidates from the documented limitations: travel-time access (S1), more frequent NUHS
-  estimates (S2), and subzone access once boundaries are published (S3).
-- TODO(me): Which of these, if any, you would prioritise and why.
-- TODO(me): What you would do differently with this project, and what you learned.
+1. **A printable one-page summary (S4) and CSV export (S3).** Both can be built now from data the
+   site already has, and both serve the two personas directly.
+2. **Travel-time access (S1).** The biggest gain in accuracy; it needs a routing service, such as
+   OneMap's.
+3. **Access by subzone (S2),** once URA publishes the Master Plan 2025 subzone boundaries.
+4. **Validate the personas.** Not a build, but the most valuable step: talk to one MOH and one AIC
+   planner, with the three questions in the Personas section.
+5. **Look beyond the ED.** Data on other factors would strengthen the checks and the tests behind
+   the findings: bed occupancy, discharges, and admissions by age or urgency.
+
+### What surprised, what was hard, what would change
+
+- **What surprised:** how much bed waits differ. They differ between hospitals: the 2025 typical
+  wait ran from 2.5 hours (KTPH, NTFGH) to 6.2 hours (CGH). They differ by day of the week. At some
+  hospitals they also move with the number of ED visits. How beds are allocated isn't in the public
+  data, so why waits differ is still an open question.
+- **What was hardest:** getting the right data, and comparing it fairly. Each hospital is compared
+  with its own usual level, not with the others. The urgent care centre and the adults-only ED are
+  marked wherever they appear. Only complete weeks are used, and areas with too few seniors are left
+  out of the ranking.
+- **What would change:** looking beyond the ED from the start. Data on the other factors above would
+  let the checks and tests do more.
+
+### Lessons for business analysis
+
+- **Define the measure before showing the number.** "Bed wait" is easily read as the time to see a
+  doctor. Testers who saw only the first screen couldn't tell what the headline number measured.
+- **Make definitions agree across views.** A chart and its finding use the same "usual level", so
+  their numbers match. Figures typed into documents went stale, and stopped matching the site.
+- **Label every assumption.** Proto-personas from published role descriptions, and a stakeholder map
+  from public roles, are useful starting points when they say what they rest on.
+- **Tie each requirement to a check.** Every Must requirement names the test that fails if it breaks.
+- **Say what the data can't tell you, and set the scope.** This product analyses; planners decide.
+- **Test understanding with different readers, early.** A phone user, a recruiter, a hiring manager
+  and an engineer read the same page differently.

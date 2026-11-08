@@ -30,16 +30,13 @@ test.describe("Methodology", () => {
 });
 
 test.describe("Case Study", () => {
-  test("has the eight sections, a draft banner and every TODO(me) highlighted", async ({ page }) => {
+  test("has the eight sections, and no draft banner now every section is written", async ({ page }) => {
     await page.goto("/case-study");
     await expect(page.getByRole("heading", { level: 2 })).toHaveText([
       "Problem statement", "Stakeholder map", "Personas", "Patient flow: as-is and to-be", "Prioritised requirements (MoSCoW)",
       "Success metrics", "Decision log", "Limitations and next steps"]);
-    const banner = page.getByTestId("draft-banner");
-    await expect(banner).toContainText(/Draft: \d+ items need the author's own input/);
-    const n = Number((await banner.innerText()).match(/Draft: (\d+)/)![1]);
-    await expect(page.locator(".todo-me")).toHaveCount(n);
-    await expect(page.locator(".todo-me").first()).toBeVisible();
+    await expect(page.getByTestId("draft-banner")).toHaveCount(0);
+    await expect(page.locator(".todo-me")).toHaveCount(0);
     await expectNoHorizontalScroll(page);
   });
 

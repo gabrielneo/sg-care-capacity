@@ -27,10 +27,13 @@ describe("case study", () => {
     expect(caseStudy.split("\n").filter((l) => l.startsWith(">"))).toEqual([]);
   });
 
-  // Sections the author hasn't written yet keep their TODO(me) markers; remove a heading as it is done.
-  it.each([
-           "Limitations and next steps"])("%s leaves the author's judgement as TODO(me)", (heading) => {
-    expect(section(caseStudy, heading)).toContain("TODO(me)");
+  it("is complete: no TODO(me) left, and it says its assumptions are labelled", () => {
+    expect(caseStudy).not.toContain("TODO(me)");
+    expect(caseStudy).toContain("Assumptions are labelled as such");
+    const last = section(caseStudy, "Limitations and next steps");
+    for (const part of ["### What surprised, what was hard, what would change", "### Lessons for business analysis"]) {
+      expect(last).toContain(part);
+    }
   });
 
   it("the problem statement cites its policy context and labels its assumption", () => {

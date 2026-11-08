@@ -65,8 +65,8 @@ describe("the real docs render", () => {
     expect(screen.getAllByRole("link").length).toBeGreaterThanOrEqual(5);
   });
 
-  it("the case study's TODO(me)s are counted, the methodology has none", async () => {
-    expect((await renderDoc("case_study.md")).todos).toBeGreaterThan(20);
+  it("the case study and the methodology have no TODO(me) left", async () => {
+    expect((await renderDoc("case_study.md")).todos).toBe(0);                // the author has written every section
     expect((await renderDoc("methodology.md")).todos).toBe(0);
   });
 });
