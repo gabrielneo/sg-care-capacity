@@ -1,0 +1,71 @@
+name: Restart API
+
+# Restart the API on Render (deploy hook) and check which data release it serves. Use it after a
+# rollback (DATA_SNAPSHOT changed in Render), when the weekly restart check failed, or with
+# "restart" unticked just to check. See docs/runbook.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      expect:
+        description: "Data release the API should serve, e.g. data-2026-11-01. Empty = the newest that isn't withdrawn"
+        required: false
+        default: ""
+      restart:
+        description: "Restart the API first (untick to only check)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-restart
+  cancel-in-progress: false
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Work out which data release to expect
+        id: expect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WANT: ${{ inputs.expect }}
+        run: |
+          set -euo pipefail
+          if [ -n "$WANT" ]; then
+            tag="$WANT"
+          else
+            # The same rule as the API's DATA_SNAPSHOT=latest: newest data-YYYY-MM-DD, not pre-release.
+            tag="$(gh release list --limit 200 --exclude-pre-releases --json tagName --jq '.[].tagName' \
+                   | grep -E '^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$' | sort -r | head -n 1)"
+          fi
+          if ! [[ "$tag" =~ ^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "::error::'$tag' is not a data release tag (data-YYYY-MM-DD)."
+            exit 1
+          fi
+          echo "Expecting $tag."
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Restart the API
+        if: ${{ inputs.restart }}
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_URL is not set (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          curl -fsS -X POST --max-time 30 -o /dev/null "$DEPLOY_HOOK"
+
+      - name: Check the API serves it
+        env:
+          API_URL: ${{ vars.API_PUBLIC_URL }}
+          TAG: ${{ steps.expect.outputs.tag }}
+        run: .github/scripts/wait-for-api.sh "$API_URL" "$TAG"

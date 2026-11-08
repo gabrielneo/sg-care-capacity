@@ -70,6 +70,40 @@ def test_weekly_fails_the_job_after_archiving_if_any_stage_failed():
     assert "exit 1" in fail
 
 
+def test_weekly_restarts_the_api_after_uploading_and_checks_it_serves_the_new_release():
+    s = steps("weekly.yml")
+    order = list(s)
+    for a, b in [("Upload snapshot release", "Restart the API on the new snapshot"),
+                 ("Restart the API on the new snapshot", "Check the API serves the new snapshot"),
+                 ("Check the API serves the new snapshot", "Fail the job if any stage failed")]:
+        assert order.index(a) < order.index(b), (a, b)
+    restart, check = s["Restart the API on the new snapshot"], s["Check the API serves the new snapshot"]
+    assert "id: upload" in s["Upload snapshot release"]
+    # Runs even if pruning failed, but only once the release is uploaded.
+    assert "!cancelled()" in condition(restart) and "steps.upload.outcome == 'success'" in condition(restart)
+    # The hook URL is a secret: passed through env, never written into the script or echoed.
+    assert "DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}" in restart
+    run = restart.split("run: |", 1)[1]
+    assert "secrets." not in run and not re.search(r"(echo|printf)[^\n]*\$\{?DEPLOY_HOOK", run)
+    assert "restarted=false" in run and "exit 0" in run                      # no secret: skipped, not failed
+    assert "steps.restart.outputs.restarted == 'true'" in condition(check)
+    assert "API_URL: ${{ vars.API_PUBLIC_URL }}" in check and "TAG: ${{ steps.publish.outputs.tag }}" in check
+    assert ".github/scripts/wait-for-api.sh" in check
+
+
+def test_the_restart_workflow_is_manual_read_only_and_validates_its_input():
+    text = (WF / "restart-api.yml").read_text()
+    assert re.search(r"^on:\n  workflow_dispatch:", text, re.M) and "schedule:" not in text and "push:" not in text
+    assert re.search(r"permissions:\n  contents: read\n", text)
+    s = steps("restart-api.yml")
+    expect = s["Work out which data release to expect"]
+    assert "WANT: ${{ inputs.expect }}" in expect and "${{ inputs.expect }}" not in expect.split("run: |", 1)[1]
+    assert "--exclude-pre-releases" in expect and "^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$" in expect
+    assert "DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}" in s["Restart the API"]
+    assert "inputs.restart" in condition(s["Restart the API"])
+    assert ".github/scripts/wait-for-api.sh" in s["Check the API serves it"]
+
+
 # --------------------------------------------------------------------- live #
 
 def test_live_runs_every_3_hours_into_its_own_store_and_never_publishes():

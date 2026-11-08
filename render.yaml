@@ -1,0 +1,25 @@
+# Render Blueprint for the API (docs/runbook.md, "Deploying"). Render > New > Blueprint > this repo.
+# The API pulls its data release from GitHub at startup, verifies it and refuses to start otherwise,
+# so a failed deploy leaves the previous instance serving. Secrets are set in Render's dashboard,
+# never here: entries with `sync: false` are prompted for once and not stored in this file.
+services:
+  - type: web
+    name: sg-health-api
+    runtime: docker
+    plan: free                      # sleeps after ~15 min idle; the site's hourly cache covers most of it
+    region: singapore
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    healthCheckPath: /api/v1/health
+    # Rebuild on pushes that change the API only. New data releases restart it via the deploy hook
+    # (weekly.yml), not via a push.
+    buildFilter:
+      paths:
+        - api/**
+    envVars:
+      - key: DATA_SNAPSHOT          # "latest", or a data-YYYY-MM-DD tag to roll back
+        value: latest
+      - key: SNAPSHOT_REPO
+        value: gabrielneo/sg-care-capacity
+      - key: GITHUB_TOKEN           # fine-grained, public repositories read-only; raises GitHub's rate limit
+        sync: false

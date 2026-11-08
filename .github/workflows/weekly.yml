@@ -161,6 +161,7 @@ jobs:
           echo "tag=$(python -c "import json; print(json.load(open('$PUBLISH_DIR/manifest.json'))['snapshot_id'])")" >> "$GITHUB_OUTPUT"
 
       - name: Upload snapshot release
+        id: upload
         if: ${{ steps.publish.outcome == 'success' }}
         run: |
           set -euo pipefail
@@ -192,6 +193,32 @@ jobs:
           gh release list --limit 200 --json tagName --jq '.[].tagName' \
             | sg-health snapshots-to-prune --keep "$KEEP_SNAPSHOTS" \
             | while read -r tag; do echo "deleting old snapshot $tag"; gh release delete "$tag" --yes --cleanup-tag; done
+
+      # ------------------------------------------------------------- restart the API
+      # The API loads its data release at startup, so a new release reaches the site only after a
+      # restart. Render's deploy hook (a secret URL) redeploys it; then check it serves the new one.
+      # Without the secret, this is skipped with a notice. docs/runbook.md, "Deploying".
+      - name: Restart the API on the new snapshot
+        id: restart
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set, so the API was not restarted. It serves the new release after its next restart."
+            echo "restarted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl -fsS -X POST --max-time 30 -o /dev/null "$DEPLOY_HOOK"
+          echo "restarted=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check the API serves the new snapshot
+        if: ${{ !cancelled() && steps.restart.outputs.restarted == 'true' }}
+        env:
+          API_URL: ${{ vars.API_PUBLIC_URL }}
+          TAG: ${{ steps.publish.outputs.tag }}
+        run: .github/scripts/wait-for-api.sh "$API_URL" "$TAG"
 
       - name: Upload report and data-quality summary as a build artifact
         if: always()
