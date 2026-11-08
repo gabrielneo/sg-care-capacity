@@ -1,4 +1,4 @@
-"""/clinics and /areas/access: CHAS clinics and access for residents aged 65+, by planning area."""
+"""/clinics, /polyclinics and /areas/access: clinics and access for residents aged 65+, by planning area."""
 from __future__ import annotations
 
 import json
@@ -17,6 +17,8 @@ from ..models import (
     ClinicsResponse,
     ErrorResponse,
     Meta,
+    Polyclinic,
+    PolyclinicsResponse,
     Svy21AreasResponse,
     Svy21Collection,
 )
@@ -42,6 +44,13 @@ CLINICS_SQL = """
 CLINICS_COUNT_SQL = "SELECT count(*) AS n" + _CLINIC_FILTER
 CLINIC_TOTALS_SQL = "SELECT count(*) FILTER (WHERE is_active) AS active, count(*) FILTER (WHERE NOT is_active) AS inactive FROM marts.dim_clinic"
 AREA_AS_OF_SQL = "SELECT min(as_of) AS as_of FROM marts.fct_area_access"
+POLYCLINICS_SQL = """
+    SELECT polyclinic_name, address, postal_code, latitude, longitude, source_sha256, as_of, as_of_basis
+    FROM marts.dim_polyclinic ORDER BY polyclinic_name
+"""
+HAS_POLYCLINICS_SQL = """
+    SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' AND table_name = 'dim_polyclinic'
+"""
 
 
 def parse_bbox(value: str | None) -> tuple[float, float, float, float] | None:
@@ -90,6 +99,26 @@ def clinics(
                                "opened or closed since are not reflected.",
                                "Only active clinics (those in the latest CHAS file) are listed."],
                       tables=("chas_clinics",)))
+
+
+@router.get("/polyclinics", response_model=PolyclinicsResponse,
+            responses={404: {"model": ErrorResponse, "description": "This data release has no polyclinic list"}},
+            summary="Polyclinics (all of them; the list is short)")
+def polyclinics(ctx: Context = Depends(get_ctx)) -> PolyclinicsResponse:
+    if "polyclinics" not in ctx.cache:
+        found = ctx.snap.query(HAS_POLYCLINICS_SQL)[0]["n"] > 0
+        ctx.cache["polyclinics"] = ctx.snap.query(POLYCLINICS_SQL) if found else None
+    rows = ctx.cache["polyclinics"]
+    if rows is None:
+        raise ApiError(404, "not_in_release", "This data release has no polyclinic list: it was published before the list existed.")
+    src = ctx.sources.get("datagov_polyclinics")
+    return PolyclinicsResponse(
+        data=[Polyclinic(**r) for r in rows],
+        meta=ctx.meta(as_of=src.as_of if src else max((r["as_of"] for r in rows), default=None),
+                      sources=("datagov_polyclinics",), coverage={"polyclinics": len(rows)},
+                      caveats=["The list is HPB's cervical screening centres named '... Polyclinic': every polyclinic "
+                               "offers the screening, but a new polyclinic appears only once HPB lists it."],
+                      tables=("polyclinics",)))
 
 
 def _area_meta(ctx: Context, feats: list[dict[str, Any]], extra: tuple[str, ...] = ()) -> Meta:

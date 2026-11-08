@@ -37,10 +37,18 @@ LATEST_RUN_SQL = """
     ORDER BY severity, check_id, "table"
 """
 METRICS_SQL = "SELECT metric_id, label, caveat FROM marts.dim_metric ORDER BY metric_id"
-HOSPITALS_SQL = """
+_HOSPITALS_SELECT = """
     SELECT hospital_code, hospital_name, cluster, facility_type, reported_from, coverage_note, exclusions_note,
-           source_url, source_sha256, as_of, as_of_basis
+           {pins}, source_url, source_sha256, as_of, as_of_basis
     FROM marts.dim_hospital ORDER BY hospital_code
+"""
+HOSPITALS_SQL = _HOSPITALS_SELECT.replace("{pins}", "postal_code, latitude, longitude")
+# Releases before 2026-11-09 have no map pins: serve them with NULL pins rather than refuse to start.
+HOSPITALS_SQL_BEFORE_PINS = _HOSPITALS_SELECT.replace(
+    "{pins}", "NULL AS postal_code, NULL AS latitude, NULL AS longitude")
+HAS_PINS_SQL = """
+    SELECT count(*) AS n FROM information_schema.columns
+    WHERE table_schema = 'marts' AND table_name = 'dim_hospital' AND column_name = 'latitude'
 """
 
 
@@ -77,7 +85,9 @@ class Context:
                         for key, v in sorted(m["sources"].items())}
         self.latest_run = snap.query(LATEST_RUN_SQL)
         self.metrics = {r["metric_id"]: r for r in snap.query(METRICS_SQL)}
-        self.hospitals = {r["hospital_code"]: r for r in snap.query(HOSPITALS_SQL)}
+        has_pins = snap.query(HAS_PINS_SQL)[0]["n"] > 0
+        rows = snap.query(HOSPITALS_SQL) if has_pins else snap.query(HOSPITALS_SQL_BEFORE_PINS)
+        self.hospitals = {r["hospital_code"]: r for r in rows}
         self.coverage_per_hospital: dict[str, Any] = m["coverage_per_hospital"]
         self.cache: dict[str, Any] = {}                        # static responses, built on first use
 

@@ -83,11 +83,12 @@ Definitions of every field are in [`docs/data_dictionary.md`](../docs/data_dicti
 |---|---|---|
 | `GET /meta` | | Snapshot id, release, pipeline commit, row counts, check summary |
 | `GET /health` | | `{"status": "ok", "snapshot_id"}` (never cached) |
-| `GET /hospitals` | | The 9 MOH-reported sites, with coverage notes (AH is a UCC) |
+| `GET /hospitals` | | The 9 MOH-reported sites, with coverage notes (AH is a UCC) and a map pin (postcode, latitude, longitude; null in releases before 2026-11-09) |
 | `GET /ed/daily` | `hospital`, `from`, `to` | Daily median bed wait and attendances. Default: the 90 days up to the latest published day. At most 2 years |
 | `GET /ed/weekly` | `hospital`, `weeks` (1–104, default 12) | ISO-week aggregates with day counts and a completeness flag |
 | `GET /ed/summary` | | Latest **complete** week per hospital vs the mean of the 4 complete weeks before it (see below) |
 | `GET /clinics` | `cdmp`, `bbox`, `limit` (≤ 500), `offset` | Active CHAS clinics, paged, with `total` |
+| `GET /polyclinics` | | All polyclinics (26), from HPB's screening-centre list. 404 `not_in_release` for releases from before the list |
 | `GET /areas/access` | | GeoJSON FeatureCollection of the 55 planning areas (access for residents aged 65+) |
 | `GET /areas/access/svy21` | | The same areas in SVY21 metres around Singapore's centre, for the 3D map (no projection in the browser). 404 `not_in_release` for releases from before the layer |
 | `GET /quality` | | Results of the validation run behind this snapshot |

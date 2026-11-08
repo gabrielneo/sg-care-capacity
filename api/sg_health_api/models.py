@@ -94,6 +94,9 @@ class Hospital(BaseModel):
     reported_from: date | None = Field(description="First day MOH reports the site; null = from the series start")
     coverage_note: str | None
     exclusions_note: str | None
+    postal_code: str | None = Field(None, description="6 digits; null in releases before 2026-11-09")
+    latitude: float | None = Field(None, description="Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09")
+    longitude: float | None = Field(None, description="Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09")
     source_url: str
     as_of: date
     as_of_basis: str
@@ -200,6 +203,22 @@ class Clinic(BaseModel):
     source_sha256: str
     as_of: datetime
     as_of_basis: str
+
+
+class Polyclinic(BaseModel):
+    polyclinic_name: str
+    address: str | None
+    postal_code: str | None = Field(description="6 digits, kept as text (leading zeros)")
+    latitude: float | None
+    longitude: float | None
+    source_sha256: str
+    as_of: datetime
+    as_of_basis: str
+
+
+class PolyclinicsResponse(BaseModel):
+    data: list[Polyclinic]
+    meta: Meta
 
 
 class ClinicPage(BaseModel):

@@ -1177,6 +1177,42 @@
             "title": "Hospital Name",
             "type": "string"
           },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09",
+            "title": "Longitude"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "6 digits; null in releases before 2026-11-09",
+            "title": "Postal Code"
+          },
           "reported_from": {
             "anyOf": [
               {
@@ -1992,6 +2028,104 @@
           "meta"
         ],
         "title": "MetaResponse",
+        "type": "object"
+      },
+      "Polyclinic": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "polyclinic_name": {
+            "title": "Polyclinic Name",
+            "type": "string"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "6 digits, kept as text (leading zeros)",
+            "title": "Postal Code"
+          },
+          "source_sha256": {
+            "title": "Source Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "polyclinic_name",
+          "address",
+          "postal_code",
+          "latitude",
+          "longitude",
+          "source_sha256",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "Polyclinic",
+        "type": "object"
+      },
+      "PolyclinicsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Polyclinic"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "PolyclinicsResponse",
         "type": "object"
       },
       "PopulationResponse": {
@@ -3319,6 +3453,47 @@
         "summary": "The snapshot being served",
         "tags": [
           "snapshot"
+        ]
+      }
+    },
+    "/api/v1/polyclinics": {
+      "get": {
+        "operationId": "polyclinics_api_v1_polyclinics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolyclinicsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This data release has no polyclinic list"
+          }
+        },
+        "summary": "Polyclinics (all of them; the list is short)",
+        "tags": [
+          "clinics and planning areas"
         ]
       }
     },

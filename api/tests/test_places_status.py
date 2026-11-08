@@ -172,3 +172,33 @@ def test_a_release_from_before_the_qualifiers_still_serves_live_readings(tmp_pat
         r = c.get(f"{API}/live/nuhs/latest")
     assert r.status_code == 200 and len(r.json()["data"]) == 4
     assert {(x["est_wait_to_see_doctor_qualifier"], x["est_bed_wait_qualifier"]) for x in r.json()["data"]} == {(None, None)}
+
+
+# -------------------------------------------------------------- polyclinics #
+
+def test_polyclinics_lists_every_polyclinic_with_the_list_date(client):
+    status, body = get(client, "/polyclinics")
+    assert status == 200
+    assert [p["polyclinic_name"] for p in body["data"]] == ["Bedok Polyclinic", "Woodlands Polyclinic"]
+    assert body["data"][0]["postal_code"] == "469662" and body["data"][0]["latitude"] == 1.326
+    assert body["meta"]["as_of"] == "2026-01-04T10:06:46" and body["meta"]["coverage"] == {"polyclinics": 2}
+    assert [s["id"] for s in body["meta"]["sources"]] == ["datagov_polyclinics"]
+    assert any("HPB" in c for c in body["meta"]["caveats"])
+
+
+def test_hospitals_carry_their_map_pins(client):
+    _, body = get(client, "/hospitals")
+    sgh = next(h for h in body["data"] if h["hospital_code"] == "SGH")
+    assert (sgh["postal_code"], sgh["latitude"], sgh["longitude"]) == ("169608", 1.278429, 103.834043)
+
+
+def test_a_release_from_before_the_places_still_starts(tmp_path):
+    from fixture_snapshot import build
+
+    snap = build(tmp_path / "old", places=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        poly = c.get(f"{API}/polyclinics")
+        hospitals = c.get(f"{API}/hospitals")
+    assert poly.status_code == 404 and poly.json()["error"]["code"] == "not_in_release"
+    assert hospitals.status_code == 200
+    assert {(h["latitude"], h["longitude"]) for h in hospitals.json()["data"]} == {(None, None)}
