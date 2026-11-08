@@ -15,13 +15,13 @@
 trend:
   worse:
     headline: "Bed waits at {hospital} have risen about {slope} a week over the last {weeks} weeks."
-    detail: "Its trend line moved from {start} to {end}: a steady rise, not one bad week. This is unlikely to be chance (adjusted p {p})."
+    detail: "Its trend line moved from {start} to {end}: a steady rise, not one bad week. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
     metric_label: "Average change in bed wait each week"
     change_word: "rising"
     callout: "About {slope} a week over {weeks} weeks"
   better:
     headline: "Bed waits at {hospital} have fallen about {slope} a week over the last {weeks} weeks."
-    detail: "Its trend line moved from {start} to {end}: a steady fall, not one good week. This is unlikely to be chance (adjusted p {p})."
+    detail: "Its trend line moved from {start} to {end}: a steady fall, not one good week. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
     metric_label: "Average change in bed wait each week"
     change_word: "falling"
     callout: "About {slope} a week over {weeks} weeks"
@@ -45,14 +45,14 @@ anomaly:
 weekday:
   hospital:
     headline: "At {hospital}, bed waits are longest on {weekday}s, {pct} above its weekly average."
-    detail: "Waits differ by day of the week over {weeks} complete weeks. This is unlikely to be chance (adjusted p {p})."
+    detail: "Waits differ by day of the week over {weeks} complete weeks. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
     metric_label: "Average bed wait on {weekday}s"
     comparison_label: "{mean}, its weekly average"
     change_word: "higher than average"
     callout: "{weekday}s: {pct} above average"
   pooled:
     headline: "Across all hospitals, bed waits are longest on {weekday}s, {pct} above each hospital's weekly average."
-    detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks. This is unlikely to be chance (adjusted p {p})."
+    detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
     metric_label: "Bed wait on {weekday}s, compared with each hospital's average"
     comparison_label: "{mean}, each hospital's own average"
     change_word: "higher than average"

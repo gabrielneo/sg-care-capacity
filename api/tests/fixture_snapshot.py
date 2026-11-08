@@ -99,7 +99,7 @@ ANOMALY_WEEKS = [date(2026, 8, 24) + timedelta(weeks=k) for k in range(9)]
 # Five published insights. The headline findings are one per detector type (ranks 1-3); one more weekday, one access gap.
 INSIGHTS = [
     ("weekday-aaaaaaaaaa", "weekday", "SGH", "At Singapore General Hospital, bed waits are longest on Mondays, 25% above its weekly average.",
-     "Waits differ by day of the week over 6 complete weeks. This is unlikely to be chance (adjusted p = 0.004).",
+     "Waits differ by day of the week over 6 complete weeks. This is unlikely to be chance: the odds are about 4 in 1,000, allowing for every test run.",
      5.0, "hours", 4.0, "neutral", 0.21, 0.001, 0.004, 42, "Kruskal-Wallis test across weekdays; epsilon-squared",
      ["The test shows that weekdays differ; the peak day is the one with the highest average."], None, None,
      {"endpoint": "/api/v1/ed/daily?hospital=SGH", "query": "SELECT 1"}, date(2026, 10, 25), "latest_data", 0.95, 1,
@@ -131,7 +131,7 @@ INSIGHTS = [
              ("q5", "Busiest", 0.5)], ["q5"], "After the busiest days: 1.1 hours longer than after the quietest",
             (0.0, "Usual for that weekday"), x_label="Days in five equal groups by ED visits vs usual")),
     ("weekday-cccccccccc", "weekday", "AH", "At Alexandra Hospital, bed waits are longest on Tuesdays, 10% above its weekly average.",
-     "Waits differ by day of the week over 5 complete weeks. This is unlikely to be chance (adjusted p = 0.03).",
+     "Waits differ by day of the week over 5 complete weeks. This is unlikely to be chance: the odds are about 3 in 100, allowing for every test run.",
      2.2, "hours", 2.0, "neutral", 0.05, 0.01, 0.03, 35, "Kruskal-Wallis test across weekdays; epsilon-squared",
      ["Alexandra Hospital runs an urgent care centre, not a full emergency department."], None, None,
      {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None,

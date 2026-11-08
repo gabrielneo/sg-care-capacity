@@ -200,7 +200,8 @@ def source_dates(inputs: dict[str, pd.DataFrame]) -> dict[str, date]:
 
 
 def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, date] | None = None) -> dict[str, Any]:
-    values = {**c.values, "p": wording.p_text(c.p_adjusted) if c.p_adjusted is not None else ""}
+    values = {**c.values, "p": wording.p_text(c.p_adjusted) if c.p_adjusted is not None else "",
+              "chance": wording.chance_text(c.p_adjusted) if c.p_adjusted is not None else ""}
     headline, detail = wording.render(c.type, c.variant, values, forbidden)
     who, act, note = actions.action_for(c.type, c.action_key, c.action_values)
     caveats = [*c.caveats, *([note] if note else [])]

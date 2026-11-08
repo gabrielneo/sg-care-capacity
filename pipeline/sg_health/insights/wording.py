@@ -44,6 +44,16 @@ def p_text(p: float) -> str:
     return "< 0.001" if p < 0.001 else f"= {p:.3f}"
 
 
+def chance_text(p: float) -> str:
+    """The adjusted p-value as plain odds, for the sentences: "less than 1 in 1,000", "about 4 in 1,000",
+    "about 3 in 100". Readers didn't know what "adjusted p < 0.001" meant (comprehension report)."""
+    if p < 0.001:
+        return "less than 1 in 1,000"
+    if p < 0.01:
+        return f"about {max(1, round(p * 1000))} in 1,000"
+    return f"about {max(1, round(p * 100))} in 100"
+
+
 _PLURAL = re.compile(r"\{(\w+)\|([^|{}]+)\|([^|{}]+)\}")
 
 

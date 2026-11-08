@@ -37,6 +37,8 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
    - Hours are rounded to one decimal, percentages to whole numbers, and counts get thousands
      separators.
    - Singular and plural forms are chosen for you.
+   - The adjusted p-value is written as plain odds ("less than 1 in 1,000"), because readers didn't
+     know what "adjusted p" meant. The exact value is in `fct_insight` and `insights.json`.
    - The hospital's or area's full name is used, not its code.
    - Each sentence is checked: a headline is one sentence of at most 20 words, a detail is at most
      two sentences, and neither may contain a causal word or a database column name.

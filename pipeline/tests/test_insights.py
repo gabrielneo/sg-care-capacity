@@ -469,3 +469,13 @@ def test_display_and_chart_round_trip_through_fct_insight(tmp_path):
     for insight_id, disp, ch in rows:
         assert disp == by_id[insight_id]["display"] and ch == by_id[insight_id]["chart"]
     assert json.loads(json.dumps(engine.to_json(result)))["headline_findings"][0]["chart"]["points"]
+
+
+def test_the_p_value_is_written_as_plain_odds():
+    assert [wording.chance_text(p) for p in (0.0002, 0.004, 0.03, 0.0495)] == [
+        "less than 1 in 1,000", "about 4 in 1,000", "about 3 in 100", "about 5 in 100"]
+    d = daily(lambda rng, c, i, wd: (4 + (2.0 if wd == 0 else 0) + rng.normal(0, 0.4), 400), codes=("SGH", "CGH"), seed=2)
+    result = engine.run(inputs(weekly_from(d), d, hospitals("SGH", "CGH")), NO_FAILS, TODAY)
+    detail = next(r for r in published(result, "weekday") if r["entity"] == "SGH")["detail"]
+    assert detail.endswith("This is unlikely to be chance: the odds are less than 1 in 1,000, allowing for every test run.")
+    assert "adjusted p" not in detail

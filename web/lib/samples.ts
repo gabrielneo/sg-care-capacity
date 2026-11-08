@@ -95,7 +95,7 @@ export const storySample: StoryInsight[] = [
   {
     ...base, insight_id: "weekday-d23b1bdd86", type: "weekday", entity: "SKH", headline_rank: 1, rank_score: 1,
     headline: "At Sengkang General Hospital, bed waits are longest on Tuesdays, 43% above its weekly average.",
-    detail: "Waits differ by day of the week over 26 complete weeks. This is unlikely to be chance (adjusted p < 0.001).",
+    detail: "Waits differ by day of the week over 26 complete weeks. This is unlikely to be chance: the odds are less than 1 in 1,000, allowing for every test run.",
     metric_value: 12.6977, unit: "hours", comparison_value: 8.8864, direction: "neutral", effect_size: 0.4945, n: 182,
     method: "Kruskal-Wallis test across weekdays; epsilon-squared",
     caveats: ["The test shows that weekdays differ; the peak day is the one with the highest average.",
