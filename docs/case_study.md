@@ -305,17 +305,31 @@ not yet validated with users.
 
 ### Product and data health (measurable now)
 
-| Metric | Definition | Current value | Target |
-|---|---|---|---|
-| Publication lag | Days between MOH's latest report date and the weekly data release | 6 days (31 Oct → 6 Nov 2026) | TODO(me) |
-| Blocking checks | Failed checks that block publishing, in the published data release | 0 of 69 checks | TODO(me) |
-| ED coverage | Days with both MOH figures, out of the days each site is reported | 100% for all 9 sites | TODO(me) |
-| Provenance | Figures on the site showing their "Data as of" date and source | All (enforced by tests) | TODO(me) |
+Values from weekly data release `data-2026-11-08`.
+
+| Metric | Definition | Current value | Target | Met? |
+|---|---|---|---|---|
+| Publication lag | Days between MOH's latest report date and the weekly data release | 8 days (31 Oct → 8 Nov 2026) | 7 days or less: each release carries MOH's latest week | **Not met** in this release |
+| Blocking checks | Failed checks that block publishing, in the published data release | 0 of 77 checks | 0 in every published release | Met (enforced: a failure stops publishing) |
+| ED coverage | Days with both MOH figures, out of the days each site is reported | 100% for all 9 sites | 100% of the days MOH reports; any gap shown, never filled | Met |
+| Provenance | Figures on the site showing their "Data as of" date and source | All | 100% | Met (enforced by tests) |
 
 ### Outcomes
 
-TODO(me): What would show this product is useful (who uses it, for which decisions), and how you
-would measure that. No outcomes have been measured; none are claimed here.
+**No outcomes have been measured, and none are claimed.** No planner uses the site yet. If MOH or
+AIC planners adopted it, usefulness would be measured by:
+
+- **Adoption:** how many planners open it each month.
+- **Decisions informed:** which hospitals or areas were looked into because of a finding.
+- **Time saved:** how long a question takes to answer, compared with how planners do it today.
+  For example: "which areas have the most seniors per chronic-care clinic?"
+- **Trust:** whether planners would cite its figures in their own work.
+
+**First evidence: comprehension testing.** Four AI agents each browsed the site as a different
+reader. They played a member of the public on a phone, an HR recruiter, a BA hiring manager and a
+data engineer. All four correctly named the top finding. The tests also surfaced confusing labels and figures that
+don't reconcile across pages. This is simulated testing, not user research: see
+[the comprehension report](comprehension_report.md).
 
 ## Decision log
 

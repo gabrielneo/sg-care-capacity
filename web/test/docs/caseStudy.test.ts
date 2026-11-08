@@ -28,7 +28,7 @@ describe("case study", () => {
   });
 
   // Sections the author hasn't written yet keep their TODO(me) markers; remove a heading as it is done.
-  it.each(["Success metrics",
+  it.each([
            "Limitations and next steps"])("%s leaves the author's judgement as TODO(me)", (heading) => {
     expect(section(caseStudy, heading)).toContain("TODO(me)");
   });
@@ -71,6 +71,14 @@ describe("case study", () => {
     const rows = [...moscow.matchAll(/^\| ([MSCW]\d) \| [^|]+ \| (Must|Should|Could|Won't) \|/gm)];
     expect(rows.map((r) => r[1])).toEqual(["M1", "M2", "M3", "M4", "M5", "M6", "M7", "S1", "S2", "S3", "S4", "C1", "C2", "W1", "W2", "W3"]);
     for (const [, id, priority] of rows) expect(priority?.[0]).toBe(id?.[0] === "C" ? "C" : id?.[0] === "W" ? "W" : id?.[0]);
+  });
+
+  it("success metrics have targets, say whether each is met, and claim no outcome", () => {
+    const metrics = section(caseStudy, "Success metrics");
+    expect(metrics).not.toContain("TODO(me)");
+    expect(metrics).toContain("No outcomes have been measured, and none are claimed.");
+    expect(metrics).toContain("not user research");
+    expect(metrics.match(/\| (?:Met(?: \(| \|)|\*\*Not met\*\*)/g)).toHaveLength(4);     // one verdict per metric
   });
 
   it("names all six stakeholders", () => {
