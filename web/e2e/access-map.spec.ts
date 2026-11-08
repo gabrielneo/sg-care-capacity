@@ -1,8 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 import { blockTiles, expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 test.beforeEach(async ({ page }) => blockTiles(page));
+
+/**
+ * The map's areas are drawn in the browser, so once they are there the page is hydrated and its
+ * controls respond. A control changed before that would be lost (the test was flaky in CI).
+ */
+const mapReady = (page: Page) => expect(page.locator("[data-area]")).toHaveCount(2);
 
 test.describe("Access Map", () => {
   test("draws the areas with a quantile legend, attribution and an as-of date", async ({ page }) => {
@@ -22,6 +28,7 @@ test.describe("Access Map", () => {
 
   test("the metric switcher changes the legend", async ({ page }) => {
     await page.goto("/access-map?view=map");
+    await mapReady(page);
     await page.getByLabel("Measure").selectOption("pct_area_within_1km_of_cdmp");
     await expect.poll(() => seen(page.getByTestId("map-legend"))).toContain("Share of land within 1 km of a CDMP clinic");
     await page.getByLabel("Measure").selectOption("approx_km_centroid_to_nearest_polyclinic");
@@ -30,6 +37,7 @@ test.describe("Access Map", () => {
 
   test("clinic points can be limited to CDMP clinics", async ({ page }) => {
     await page.goto("/access-map?view=map");
+    await mapReady(page);
     const count = page.locator("fieldset p[aria-live]");
     await expect.poll(() => seen(count)).toBe("4 CHAS GP clinics shown as white dots.");   // the inactive clinic is not shown
     await page.getByRole("checkbox", { name: "CDMP only" }).check();
