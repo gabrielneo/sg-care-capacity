@@ -1,252 +1,124 @@
-# Singapore Healthcare Capacity Pipeline
+# Right-siting care in a super-aged Singapore
 
-A weekly ETL pipeline that tracks hospital strain in a super-aged Singapore. It collects MOH ED bed-wait and attendance figures, NUHS live ED wait estimates, CHAS/CDMP clinic locations and the 65+ population by planning area. Every downloaded file is kept unchanged in a raw landing zone, then parsed into a DuckDB warehouse, with a formatted Excel summary on top.
+**Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
+the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from
+public MOH, data.gov.sg and SingStat data.**
 
-Only aggregate data about institutions, places and populations is collected. There is no personal or patient-level data.
+**Live site: [sg-care-capacity-web.vercel.app](https://sg-care-capacity-web.vercel.app/)** ·
+[Case study](https://sg-care-capacity-web.vercel.app/case-study) ·
+[One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
+[Independent audit](docs/audit_report.md)
 
-The read-only **API** over the published snapshot is in [`api/`](api/README.md); the **website** that reads it is in [`web/`](web/README.md).
+[![The Overview page: the top finding, 12.7 hours, with its date and source, then why it matters now](docs/images/overview.png)](https://sg-care-capacity-web.vercel.app/)
 
+## What the data shows
+
+From the [case study](docs/case_study.md), weekly data release `data-2026-11-08`:
+
+1. **ED demand is high and steady.** The 8 sites MOH reported throughout (7 emergency departments
+   and Alexandra Hospital's urgent care centre) recorded 868,644 visits in 2023, 863,988 in 2024
+   and 869,131 in 2025.
+2. **Waits for a ward bed vary widely by hospital.** In 2025, the typical wait after the decision
+   to admit ranged from **2.5 hours** (KTPH, NTFGH) to **6.2 hours** (CGH).
+3. **Community care is uneven.** Across the 32 planning areas with at least 1,000 residents aged
+   65+, CDMP GP clinics per 1,000 seniors range from **0** (River Valley, Tengah) to **5.02**
+   (Rochor), with a median of 1.16.
+
+Context: 19.5% of residents were aged 65 or over in June 2026. The site also says what the data
+can't show: how many ED visits are by older residents, or whether clinic access affects ED use.
+
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph Sources["Public sources"]
+    MOH["MOH<br/>ED bed waits, visits"]
+    DG["data.gov.sg<br/>clinics, boundaries"]
+    SS["SingStat<br/>population"]
+    NUHS["NUHS<br/>ED wait estimates"]
+  end
+  subgraph Pipeline["Weekly pipeline (GitHub Actions)"]
+    RAW[("Raw zone<br/>every file unchanged,<br/>SHA-256 hashed")]
+    DQ{"79 data checks<br/>error = don't publish"}
+    MART["DuckDB marts<br/>+ insight engine"]
+  end
+  REL[("Data release<br/>GitHub Release,<br/>hash manifest")]
+  API["API<br/>FastAPI on Render<br/>verifies every hash"]
+  WEB["Website<br/>Next.js on Vercel"]
+  MOH & DG & SS & NUHS --> RAW --> DQ --> MART --> REL --> API --> WEB
+  DQ -. "blocked: no new release;<br/>the API keeps the last good one" .-> API
 ```
-sources ──► PoliteHttp ──► data/raw (immutable) ──► parsers ──► DuckDB warehouse ──► Excel report
-              retries,       <source>/<date>/         pure        data/build/
-              rate limit,    <sha256>.<ext>           functions   warehouse.duckdb
-              robots.txt     + manifest.jsonl
-                                    │
-                                    └──── sg-health reparse: rebuild every table from data/raw, offline
-```
 
-Sources: MOH weekly .xlsx · NUHS live ED waits · data.gov.sg CHAS clinics · SingStat · Wayback Machine (backfill only) · data.gov.sg annual A&E attendances (reconciliation only) · URA Master Plan 2025 planning-area boundaries (data.gov.sg). Retired on 2026-11-06: SingHealth X-ray QWatch (page removed) and data.gov.sg HAS clinics (dataset unpublished); their tables are gone, but any raw files already landed are kept.
+Each Sunday the pipeline downloads the sources, checks them and publishes a new data release.
+Publishing restarts the API, which serves only that release, read-only. The website shows every
+number with its "Data as of" date and source.
 
-## 1. Install
+## How accuracy is ensured
 
-Run everything from the repo root.
+- **Raw zone.** Every downloaded file is kept unchanged, with its SHA-256 hash. Every table can be
+  rebuilt offline from these files, and every row records the file it came from.
+- **Data checks that can stop a release.** 79 checks ran on the latest release: units, ranges,
+  completeness, freshness and reconciliation between sources. A failing error-level check blocks
+  publishing, and the site keeps serving the last good release. Bad rows are set aside, never
+  corrected.
+- **Nothing filled in.** Missing values stay missing: a gap in a chart, an empty cell in a CSV.
+- **Findings are computed, not written.** Each finding is produced by fixed code from the data and
+  published only if it passes a statistical test, corrected for the number of tests run. Findings
+  never use causal words.
+- **Independent audit.** An agent that never saw the code traced 20 random numbers on the site back
+  to the exact raw cells: 19 matched; the 20th is an external citation. It rebuilt two tables from
+  scratch, which matched. It found 1 critical, 1 high and 5 medium issues. All are fixed, each with
+  a test ([audit report](docs/audit_report.md)).
+- **Tests on every push.** Over 1,000 automated tests run in CI. They cover the pipeline, the API's
+  contract, the website, and end-to-end checks of every page at 1280 and 375 px wide, including
+  WCAG 2.1 AA accessibility and Lighthouse performance budgets.
+
+## Tech stack
+
+| Part | Built with |
+|---|---|
+| Pipeline | Python 3.12, DuckDB, pandas, geopandas/shapely |
+| API | FastAPI, served from a verified, read-only data release |
+| Website | Next.js (App Router), TypeScript, Tailwind; server-rendered SVG charts; Leaflet (2D) and three.js (3D) maps |
+| Hosting and automation | GitHub Actions (weekly pipeline, CI), GitHub Releases (data), Render (API), Vercel (website) |
+| Testing | pytest, Vitest, Playwright with axe, Lighthouse CI |
+
+Only aggregate public data is used. There is no personal or patient-level data.
+
+## Run it locally
+
+You need Python 3.12 and Node.js 24. The API downloads and verifies the latest published data
+release itself, so you don't need to run the pipeline first.
 
 ```bash
-python3.12 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e "pipeline[dev,browser]"
-python -m playwright install chromium                   # optional: only for JS-rendered pages
-pytest -q pipeline/tests                                # offline tests, no network needed
+# 1. The API (terminal 1)
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -e "api[dev]"
+uvicorn --factory sg_health_api.main:create_app --port 8000      # http://127.0.0.1:8000/docs
+
+# 2. The website (terminal 2)
+cd web && npm ci && cp .env.example .env.local
+npm run dev                                                       # http://localhost:3000
 ```
 
-Or, for a minimal install without the Playwright fallback:
+To build the data yourself, then run every test:
 
 ```bash
 pip install -e "pipeline[dev]"
+sg-health run && sg-health publish --out data/build/publish      # download, check, build, publish
+LOCAL_SNAPSHOT_PATH=data/build/publish uvicorn --factory sg_health_api.main:create_app --port 8000
+make test                                                         # pipeline, API, web and acceptance tests
 ```
 
-`pip install -e` puts the `sg-health` command on your path. `python -m sg_health` does the same thing.
+## Documentation
 
-## 2. Run
-
-```bash
-sg-health run                          # fetch all sources, land raw files, load, write the report
-sg-health run --sources moh,opendata   # a subset (moh, live, opendata, singstat)
-sg-health backfill --start 2024-01-01 --max-snapshots 80   # MOH history from the Wayback Machine
-sg-health reparse                      # rebuild every table from data/raw alone (no network)
-sg-health validate                     # every data-quality check; exit 1 if publishing is blocked
-sg-health transform                    # build staging views and mart tables (also runs after run/reparse)
-sg-health report                       # rebuild the Excel report from the warehouse
-sg-health -v run --sources live        # debug-level logging
-```
-
-Default paths, all under the repo root (override with `--raw-dir`, `--db`, `--report`, or move the whole `data/` folder with `SG_HEALTH_DATA_DIR`):
-
-| Path | What | In git? |
-|---|---|---|
-| `data/raw/` | Raw landing zone: every downloaded file, unchanged | No |
-| `data/build/warehouse.duckdb` | The pipeline's working warehouse. It is **not** what the API reads: the API serves a published snapshot (`data/build/publish/` or a `data-YYYY-MM-DD` release). | No |
-| `data/build/SG_Healthcare_Scrape_Report.xlsx` | Excel summary | No |
-
-Optional environment variables. Put them in a **`.env`** file at the repo root (copy `.env.example`); the pipeline loads it automatically, it is git-ignored, and a real environment variable of the same name always wins (CI uses a GitHub Actions secret instead). Never commit `.env` or paste its values anywhere:
-
-| Variable | Purpose |
+| Read this | For |
 |---|---|
-| `CRAWLER_USER_AGENT` | Your bot's identity. Point it at your public repo URL, not a personal email. |
-| `DATAGOV_API_KEY` | data.gov.sg API key, for higher rate limits (free; register on data.gov.sg). |
-| `SG_HEALTH_DATA_DIR` | Use a different `data/` directory. |
-
-**SingStat population:** the planning-area resident counts come from SingStat's yearly file *Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling* (June 2026), committed at `data/reference/singstat/` and read only from there (SingStat refuses GitHub's runners). It is refreshed by hand once a year: see [docs/runbook.md](docs/runbook.md). The *Floor Area of Residence* edition is not used: it leaves out about 20,000 residents aged 65+.
-
-## 3. Raw landing zone and `reparse`
-
-Every file the pipeline downloads (MOH workbooks and pages, live HTML snapshots, data.gov.sg and SingStat payloads, Wayback copies) is saved **before** it is parsed:
-
-```
-data/raw/<source>/<YYYY-MM-DD>/<sha256>.<ext>      e.g. data/raw/moh_bed_waits/2026-11-01/3f9a…c2.xlsx
-data/raw/manifest.jsonl                            one line per fetch: source, url, sha256, bytes,
-                                                   http_status, content_type, fetched_at, path
-```
-
-- **Immutable.** Files are written once, made read-only and never overwritten. The same bytes fetched again are not stored twice, but the fetch still gets a manifest line, so you can see that the source was checked and hadn't changed.
-- **Self-describing.** `manifest.jsonl` is the source of truth and is copied into the `raw_manifest` table. You can delete the warehouse and rebuild it from `data/raw` alone.
-- **Replayable.** `sg-health reparse` drops every parsed table and replays all raw files in fetch order through the same loaders `run` uses, with no network calls. Fix a parser, run `reparse`, and the whole history is re-parsed with the fix. Running it twice gives identical tables, because every time value (`ingested_at`, snapshot times) comes from when the file was fetched, never from the clock.
-
-## 4. Warehouse schema (`data/build/warehouse.duckdb`)
-
-| Table | Key | Contents |
-|---|---|---|
-| `moh_bed_waits` | hospital_name, report_date | Daily median wait from the decision to admit until the patient leaves the ED (hours) |
-| `moh_ed_attendances` | hospital_name, report_date | Daily ED attendances |
-| `chas_clinics` | clinic_key (HCI code) | Name, address, postal code, lat/long, `has_cdmp`, programmes, `is_active` |
-| `nuhs_live_waits` | site_name, department, snapshot_timestamp | Patients waiting, estimated consult and bed waits (hours). `department` is the page section, e.g. "Adult Emergency" or "Children's Emergency": NUH appears in both. |
-| `pop_65plus_by_area` | planning_area, year | Residents and residents aged 65+ per planning area (SingStat) |
-| `annual_ae_attendances` | year | MOH annual public-sector A&E attendances, for reconciliation only |
-| `raw_manifest` | seq | Every fetch, mirrored from `data/raw/manifest.jsonl` |
-| `quarantine_<table>` | (none) | Rows that failed an ERROR data-quality check, values as parsed. Never in the clean table. |
-| `dq_findings` | (none) | Every current failure from the load gate (ERROR and WARN) |
-| `dq_results` | run_id, check_id, table | Append-only log of every `validate` run |
-
-**Lineage.** Every row of every table above except `raw_manifest` carries `source_url`, `source_sha256` and `ingested_at`, pointing at the raw file it came from. `ingested_at` is when that file was **fetched**. See [docs/data_dictionary.md](docs/data_dictionary.md) for definitions and caveats.
-
-If the code's schema changes, commands refuse to open an older warehouse (exit code 2) and ask you to run `sg-health reparse`, which rebuilds it from `data/raw`.
-
-All tables use `INSERT OR REPLACE` on their key, so re-running the pipeline never duplicates rows. An MOH file that is downloaded again unchanged (same sha256) is not parsed again. Clinic tables are full snapshots: rows missing from the latest download are kept, with `is_active = FALSE`. All timestamps are SGT.
-
-Example query:
-
-```sql
--- Which EDs had the worst week, and which file did each figure come from?
-SELECT hospital_name, ROUND(AVG(median_wait_hours), 1) AS avg_wait_h,
-       SUM(total_attendances) AS attendances, ANY_VALUE(b.source_url) AS bed_wait_file
-FROM moh_bed_waits b JOIN moh_ed_attendances a USING (hospital_name, report_date)
-WHERE report_date >= current_date - INTERVAL 7 DAY
-GROUP BY 1 ORDER BY 2 DESC;
-```
-
-## 5. Marts
-
-`sg-health transform` runs plain SQL files in DuckDB: `pipeline/sql/staging/` (views over the clean
-tables, typed and renamed) then `pipeline/sql/marts/` (tables). These are what the API and site
-read:
-
-| Mart | Grain | Contents |
-|---|---|---|
-| `marts.dim_hospital` | site (9) | Cluster (SingHealth, NHG Health, NUHS), ED or UCC, first reporting date, coverage notes |
-| `marts.fct_ed_daily` | hospital × day | MOH median bed wait and attendances, ISO week, `is_complete_week`, WARN `dq_flags`, per-metric lineage |
-| `marts.fct_ed_weekly` | hospital × ISO week | **Mean of daily medians** (not a weekly median), total attendances, days reported per metric |
-| `marts.dim_clinic` | CHAS clinic | `has_cdmp`, `is_active`, location; `as_of` is data.gov.sg's own update date |
-| `marts.fct_live_ed_snapshot` | NUHS site × department × snapshot | Live readings, labelled `estimate`; filter `is_adult_ed` for one per hospital |
-| `marts.fct_planning_area_population` | planning area × year | Residents, residents aged 65+, share; SingStat, June 2026 |
-| `marts.fct_area_access` | planning area | Seniors, CHAS and CDMP clinics, **CDMP clinics per 1,000 aged 65+** (lead), % of area within 1 km of a CDMP clinic, approximate distance to the nearest polyclinic, per-area `dq_note`; computed in SVY21 |
-| `marts.dim_metric` | metric | Label, unit, whether the unit is stated or inferred, and the caveat to show |
-
-`sg-health transform` also writes **`data/build/web/planning_area_access.geojson`** (342 KB): the 55 planning areas, simplified, in WGS84, with the access metrics and a per-area data note as properties, for the site's choropleth. How the access measures are computed, why a choropleth and why SVY21, and their limitations: [docs/methodology.md](docs/methodology.md).
-
-Every mart has `as_of` and `as_of_basis` (`source_updated`, `fetched` or `reference_checked`) and
-source hashes. Row counts are reconciled at every step into `transform_log`; a row lost without a
-logged reason stops the build. Column definitions: [docs/data_dictionary.md](docs/data_dictionary.md).
-
-## 6. Data quality
-
-Parsed rows pass through a **load gate** before reaching a clean table. Rows that fail an ERROR
-check go to `quarantine_<table>` and never into the clean table; WARN rows are published and
-flagged. The gate never changes a value. `sg-health validate` adds the dataset-level checks
-(completeness, freshness, outliers, reconciliation), logs every check to `dq_results`, prints a
-summary table, and **exits 1 if publishing must be blocked**:
-
-```
-STATUS              SEVERITY  CHECK                            TABLE               ROWS  DETAILS
-FAIL (quarantined)  ERROR     clinic.coordinates_in_singapore  chas_clinics        1     19M0103: lat 1.0162... is outside Singapore
-WARN                WARN      range.bed_wait_over_24h          moh_bed_waits       63    Ng Teng Fong General Hospital, 2023-02-01: ...
-PASS                ERROR     unit.file_vs_stored              moh_bed_waits       0
-...
-run 20261106T131133-92b674: 52 checks, 4 failing, 0 blocking publish -> OK to publish
-```
-
-Only file- or dataset-level ERRORs block publishing (e.g. a minutes/hours unit error, data more
-than 28 days old). A quarantined row doesn't: it is already excluded. Every check, its threshold
-and why is in [docs/data_quality.md](docs/data_quality.md).
-
-## 7. Logging
-
-Logs are JSON lines on stderr. At the end of every `run`, `backfill` and `reparse`, each source logs exactly one summary line:
-
-```json
-{"ts": "2026-11-06T12:02:38+08:00", "level": "INFO", "logger": "sg_health.load",
- "msg": "run moh_bed_waits: read 6, parsed 5, dropped 1", "event": "source_summary",
- "command": "run", "source": "moh_bed_waits", "files": 1, "files_skipped": {},
- "rows_read": 6, "parsed": 5, "dropped": 1, "drop_reasons": {"unparseable_value": 1}}
-```
-
-`rows_read` always equals `parsed + dropped`. Drop reasons: `blank` (the source cell is empty, e.g. a hospital before its ED opened), `unparseable_value` (a value that could not be read; also logged as a warning), `duplicate_key`, `missing_name`, `no_values`. Whole files that weren't parsed are counted in `files_skipped` (`unchanged`, `not_a_workbook`, `unreadable_workbook`, `no_tables_found`, `not_json`, `load_error`). A source that returned nothing still gets a line with `files: 0`. To pull the summaries out of a log:
-
-```bash
-sg-health run 2> run.log && grep '"source_summary"' run.log
-```
-
-## 8. Automation and releases
-
-Three GitHub Actions workflows. Nothing is ever committed back to the repo, and no database is stored in git.
-
-| Workflow | When | What it does |
-|---|---|---|
-| `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or run by hand | test → ingest → validate → transform → publish |
-| `live.yml` | Every 3 hours | NUHS live waits only, into a separate store (`live-latest` release); never publishes a snapshot |
-| `ci.yml` | Pull requests and pushes to `main` | ruff, mypy, unit tests; fails if a binary database or `.env` is tracked |
-
-**Weekly run:**
-- Raw history (`data/raw/`) is restored from, and re-uploaded to, `raw.tar.gz` on the rolling `data-latest` release.
-- The archive is uploaded **before** validation, so a failed check can never lose raw history.
-- If validation finds a check that blocks publishing, nothing is published and an issue labelled `data-quality` lists the failures. The site keeps the last good snapshot.
-- Otherwise `sg-health publish` writes a snapshot and the job uploads it as a release tagged `data-YYYY-MM-DD`. Only the newest 12 are kept.
-
-**What a snapshot contains:**
-- `analytics.duckdb`: the marts plus `dq_results`, read-only.
-- One Parquet file per mart.
-- `planning_area_access.geojson`.
-- `manifest.json`: `as_of` per source, row counts, coverage per hospital, check summary, SHA-256 of every file, and the git commit.
-
-```bash
-sg-health publish --out data/build/publish     # validates first; exit 1 = blocked
-gh release download data-latest --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data   # raw history locally
-```
-
-**Setup:**
-1. **Settings → Actions → General → Workflow permissions:** choose **Read and write**. The workflows need it to create releases and issues.
-2. Optional: add a repository secret named exactly `DATAGOV_API_KEY`. Locally, put it in `.env` (see `.env.example`); that file is never required.
-
-**Runbook:** [docs/runbook.md](docs/runbook.md) covers:
-- the release process and checking a snapshot's hashes;
-- what to do when publishing is blocked;
-- **rolling back to an earlier snapshot**;
-- the yearly SingStat refresh (runners get HTTP 403, so the file is committed under `data/reference/singstat/`);
-- secrets and the live store.
-
-## 9. Historical backfill (Wayback Machine)
-
-MOH's weekly pages only show the latest week, so history has to come from archived copies:
-
-```bash
-sg-health backfill --start 2024-01-01 --max-snapshots 80
-```
-
-How it works:
-1. It queries the **CDX API** for archived captures of each MOH page (the current URL and the older site's URL), deduplicated by content digest:
-   `https://web.archive.org/cdx/search/cdx?url=<page>&output=json&filter=statuscode:200&collapse=digest&from=20240101`
-2. It fetches each capture in raw mode (`https://web.archive.org/web/<timestamp>id_/<page>`). The `id_` suffix returns the original HTML without Wayback's link rewriting.
-3. It finds the `.xlsx` links and downloads the **archived** copy first, falling back to the live file. MOH may reuse file names for newer data, so the archived copy is the safer bet.
-4. Files are deduplicated by SHA-256, and dates come from inside each file, so overlapping weeks merge cleanly.
-
-Tips:
-- **Find the files directly.** Archived pages may not have captured every Excel link. You can query the CDX API for the files themselves with a prefix search on the host that serves them (check one live link to see the host): `...cdx?url=<file-host>/<path-prefix>&matchType=prefix&filter=mimetype:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&output=json`
-- **Old URL structure.** MOH's older site used paths like `moh.gov.sg/resources-statistics/healthcare-institution-statistics/...`. Its best-known pattern is in `legacy_urls`; confirm it in the Wayback UI and add any variants you find.
-- **Be gentle.** The backfill waits 4–7 s between Internet Archive requests. Run it once, not on a schedule.
-- **Other historical sources.** MOH parliamentary replies and annual statistics, plus the data.gov.sg annual series (A&E attendances back to 2007), are useful for long-run trend lines.
-- **Fill gaps going forward.** Gaps in coverage are normal. Keep the weekly job running and every week becomes permanent history.
-
-## 10. Ethics and robustness
-
-- Requests are 1.5–3 s apart, with a 15 s timeout, retries with exponential backoff on 429/5xx, and `Retry-After` honoured.
-- robots.txt is checked before scraping HTML pages. A disallowed page is skipped and logged, not bypassed. Official APIs (data.gov.sg, SingStat, Wayback CDX) skip the check.
-- The User-Agent identifies the crawler and links to the repo.
-- If one source breaks, it logs the error and the other sources still run. The CLI exits with an error only if every step fails.
-- Cells that can't be parsed become `None` and are dropped before upsert, so they never overwrite good data. Every drop is counted, with its reason, in the source's summary log line.
-- Every downloaded file is kept unchanged in `data/raw/`, so a parser bug can be fixed and the history replayed with `sg-health reparse`.
-
-## 11. Assumptions to check on your first live run
-
-The parsers were written against the published structure of each source and tested on synthetic fixtures (`pipeline/tests/`). They have not been run against the live sites from this environment. On your first run, use `-v` and check (after a fix, `sg-health reparse` re-parses everything already downloaded):
-
-- **MOH Excel layout.** The parser handles hospitals-as-columns, dates-as-columns and long layouts, plus time cells, `HH:MM` text and plain numbers. A plain number is read as minutes if the sheet says "min", or if the median is above 24; otherwise as hours. Look for the log line `numeric wait values treated as ...`.
-- **NUHS page.** If the static HTML has no tables, the scraper tries a regex text fallback, then Playwright. Site names come from the table header, or from the nearest heading if there isn't one.
-- **CHAS GeoJSON.** Attributes are read from the `Description` HTML table. If the field names change, add them to the candidate lists in `normalize_clinics()`.
+| [Case study](docs/case_study.md) | The problem, stakeholders, personas, patient flow, priorities and success metrics |
+| [Methodology](docs/methodology.md) | Sources, measures, the map method and what the data can't tell you |
+| [Data dictionary](docs/data_dictionary.md) | Every column: definition, unit, source and caveats |
+| [Data quality](docs/data_quality.md) | Every check, its threshold and why |
+| [Audit report](docs/audit_report.md) | The independent audit and how each finding was resolved |
+| [Decisions](docs/adr/) | Architecture decision records |
+| [Pipeline guide](docs/pipeline.md) | Installing and running the pipeline, the raw zone and the history backfill |
+| [Runbook](docs/runbook.md) | Deploying, rolling back a data release, rotating keys, failed runs |
