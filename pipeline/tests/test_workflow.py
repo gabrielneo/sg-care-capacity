@@ -54,6 +54,16 @@ def test_weekly_publishes_only_when_every_gate_passed():
     assert "snapshots-to-prune" in s["Keep only the newest snapshots"]
 
 
+def test_weekly_uploads_every_file_the_manifest_lists():
+    # data-2026-11-08 shipped without insights.json and the SVY21 GeoJSON: the upload used a
+    # hand-written list, so the API refused the release. The list now comes from the manifest.
+    upload = steps("weekly.yml")["Upload snapshot release"]
+    assert '["artefacts"]' in upload and 'print(f"{d}/manifest.json")' in upload
+    assert "parquet/*.parquet" not in upload and "analytics.duckdb" not in upload
+    assert "is in the manifest but missing" in upload
+    assert '"${#files[@]}" -ge 2' in upload                                   # the listing itself failed
+
+
 def test_weekly_opens_an_issue_when_validation_fails():
     s = steps("weekly.yml")
     issue = s["Open or update the data-quality issue"]

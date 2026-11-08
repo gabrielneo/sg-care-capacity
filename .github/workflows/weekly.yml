@@ -177,8 +177,24 @@ jobs:
               print(f"| `{k}` | {v:,} |")
           print("\nFull details, hashes and as_of per source: `manifest.json`. Parquet files are named after their mart.")
           PY
-          files=("$PUBLISH_DIR/analytics.duckdb" "$PUBLISH_DIR/manifest.json" "$PUBLISH_DIR"/parquet/*.parquet)
-          [ -f "$PUBLISH_DIR/planning_area_access.geojson" ] && files+=("$PUBLISH_DIR/planning_area_access.geojson")
+          # Upload exactly what the manifest lists (plus the manifest), so the release can't drift from
+          # it: the API refuses a release that lacks a listed file. Assets are named by file name.
+          files=()
+          while IFS= read -r f; do files+=("$f"); done < <(python - <<'PY'
+          import json, os, sys
+          d = os.environ["PUBLISH_DIR"]
+          rels = sorted(json.load(open(f"{d}/manifest.json"))["artefacts"])
+          names = [r.rsplit("/", 1)[-1] for r in rels]
+          if len(set(names)) != len(names) or "manifest.json" in names:
+              sys.exit(f"artefact file names must be unique: {names}")
+          print(f"{d}/manifest.json")
+          for r in rels:
+              print(f"{d}/{r}")
+          PY
+          )
+          # (A failure inside <( ) doesn't stop the script, so check the list isn't empty.)
+          [ "${#files[@]}" -ge 2 ] || { echo "::error::could not list the snapshot's files from manifest.json"; exit 1; }
+          for f in "${files[@]}"; do [ -f "$f" ] || { echo "::error::$f is in the manifest but missing"; exit 1; }; done
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${files[@]}" --clobber          # same-day rerun replaces the files
             gh release edit "$tag" --notes-file "$RUNNER_TEMP/notes.md"
