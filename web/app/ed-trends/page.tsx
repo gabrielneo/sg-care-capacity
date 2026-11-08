@@ -133,13 +133,19 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     sources: [...liveRes.value.meta.sources, ...meta.sources.filter((s) => s.id === "moh_bed_waits")] } : null;
 
   const range = `${dayText(from)} to ${dayText(to)}`;
+  const csv = (path: string, extra: Record<string, string> = {}) => {
+    const q = new URLSearchParams();
+    for (const h of filters.hospitals) q.append("hospital", h);
+    for (const [k, v] of Object.entries(extra)) q.set(k, v);
+    return `${path}${q.size ? `?${q}` : ""}`;
+  };
   const usualDef = `The usual level is the median of the 8 complete weeks before ${latestText}.`;
 
   return (
     <>
       {header(from, to)}
       <div className="space-y-6">
-        <ChartCard title={BED_WAIT_LABEL} meta={meta} caveat={CAVEAT.bedWaitUnit}
+        <ChartCard title={BED_WAIT_LABEL} meta={meta} caveat={CAVEAT.bedWaitUnit} download={csv("/export/ed-daily.csv", { from, to })}
                    description={<>
                      <Glossed text={mode === "usual"
                        ? `Each hospital's daily median, in hours above or below its own usual level, ${range}. ${usualDef}`
@@ -155,6 +161,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
 
         {weeklyRes.ok ? (
           <ChartCard title="The latest week against the usual level" slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
+                     download="/export/ed-weekly.csv?weeks=10"
                      description={<Glossed text={`${latestText} for each hospital, against its usual level. ${usualDef} Largest difference first.`} />}>
             <Dumbbell usuals={usuals} hospitals={chosen} mode={mode} finding={findingFor(findings, "anomaly")} />
           </ChartCard>
@@ -162,6 +169,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
 
         {profileRes?.ok && window ? (
           <ChartCard title="Bed wait by day of the week" slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
+                     download={csv("/export/ed-daily.csv", { from: window.from, to: window.to })}
                      description={<Glossed text={`${mode === "usual" ? "Each weekday against the hospital's own average" : "The average bed wait on each weekday"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)} (up to 26).`} />}>
             <WeekdayHeatmap profiles={profiles} hospitals={hospitals} mode={mode} finding={findingFor(findings, "weekday")} />
           </ChartCard>

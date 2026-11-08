@@ -91,14 +91,14 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
       ) : table ? (
         <>
           <ViewTabs active="table" />
-          <ChartCard title="Clinic access by area (table)" meta={areas.meta} caveat={CAVEAT.clinics}
+          <ChartCard title="Clinic access by area (table)" meta={areas.meta} caveat={CAVEAT.clinics} download="/export/areas.csv"
                      description="The same figures as the maps. Select a column heading to sort.">
             <AreaTable areas={props} sort={first(params.sort)} dir={first(params.dir)} />
           </ChartCard>
         </>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <ChartCard title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics}
+          <ChartCard title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics} download="/export/areas.csv"
                      description="Counts where clinics are, not where their patients live: residents use clinics in neighbouring areas too.">
             <AccessViews requested={view === "3d" ? "3d" : view === "2d" ? "2d" : "auto"} areas={areas.data}
                          clinics={(clinics?.items ?? []).map((c) => ({ clinic_key: c.clinic_key, clinic_name: c.clinic_name,

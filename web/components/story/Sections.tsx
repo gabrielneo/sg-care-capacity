@@ -151,6 +151,7 @@ export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: M
       <p className="mt-2 max-w-prose text-ink">
         The {NUMBER_WORDS[n] ?? n} strongest {n === 1 ? "finding" : "findings"} in this week&apos;s data release. Each was published only
         because it passed a fixed statistical check. <Link href="/docs/insights-method">How findings are tested</Link>
+        {" · "}<a href="/export/findings.csv" download data-testid="csv-download">Download every finding (CSV)</a>
       </p>
       <p className="mb-6 mt-2 max-w-prose text-sm text-muted" data-testid="bed-wait-explainer"><Glossed text={BED_WAIT_EXPLAINER} /></p>
       {/* Without JavaScript the step can't drive the panel, so each chart sits under its step. */}

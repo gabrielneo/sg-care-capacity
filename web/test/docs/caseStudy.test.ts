@@ -76,6 +76,12 @@ describe("case study", () => {
     for (const [, id, priority] of rows) expect(priority?.[0]).toBe(id?.[0] === "C" ? "C" : id?.[0] === "W" ? "W" : id?.[0]);
   });
 
+  it("built requirements name the tests that cover them", () => {
+    const moscow = section(caseStudy, "Prioritised requirements (MoSCoW)");
+    const s3 = moscow.split("\n").find((l) => l.startsWith("| S3 |"))!;
+    expect(s3).toMatch(/\| Built: .*csv\.test\.ts.*exports\.spec\.ts/);
+  });
+
   it("success metrics have targets, say whether each is met, and claim no outcome", () => {
     const metrics = section(caseStudy, "Success metrics");
     expect(metrics).not.toContain("TODO(me)");

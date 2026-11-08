@@ -24,13 +24,16 @@ export interface ChartCardProps {
   now?: Date;
   /** 3 inside a section that already has an h2 (e.g. the Overview's findings). */
   headingLevel?: 2 | 3;
+  /** A CSV of the figures behind the chart (requirement S3), from app/export/. */
+  download?: string;
 }
 
 /**
  * A titled chart with its provenance footer. If meta has no usable as_of or no source, the chart
  * is NOT rendered: a figure without a date and source is never shown.
  */
-export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, cadence, now, headingLevel = 2 }: ChartCardProps) {
+export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, cadence, now, headingLevel = 2,
+                           download }: ChartCardProps) {
   const id = `chart-${(slug ?? (typeof title === "string" ? title : "card")).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
   const Heading = headingLevel === 3 ? "h3" : "h2";
@@ -48,6 +51,11 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
         <>
           <div className="mt-4">{children}</div>
           <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} cadence={cadence} now={now} />
+          {download ? (
+            <p className="mt-2 text-xs">
+              <a href={download} download data-testid="csv-download">Download the figures (CSV)</a>
+            </p>
+          ) : null}
         </>
       )}
     </section>

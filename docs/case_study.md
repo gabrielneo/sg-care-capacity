@@ -292,7 +292,7 @@ not yet validated with users.
 | M7 | WCAG 2.1 AA; usable from 375 px wide | Must | Web brief | Built: axe checks and no sideways scrolling on every page (`web/e2e`) |
 | S1 | Access measured as travel time, not straight-line distance | Should | [Methodology limitations](methodology.md#limitations); persona 2 places services "to improve accessibility for Seniors" | Not built: needs a routing service |
 | S2 | Access by subzone, not just by area | Should | [Methodology choices](methodology.md#choices-made-deliberately); persona 2 plans by sub-region, closer to subzones than to the 55 areas | Blocked: no Master Plan 2025 subzone boundaries are published |
-| S3 | Export any chart's figures as CSV | Should | Both personas cross-check against their own data; persona 2's role builds dashboards | Not built |
+| S3 | Export any chart's figures as CSV | Should | Both personas cross-check against their own data; persona 2's role builds dashboards | Built: a CSV link under each chart on ED Trends and the Access Map, and one for every finding; each row carries its "Data as of" date and source (`csv.test.ts`, `web/e2e/exports.spec.ts`) |
 | S4 | A printable one-page summary of the latest findings | Should | The author's requirement: a page a planner can bring to a meeting | Not built |
 | C1 | NUHS estimates refreshed more often than weekly | Could | Live page caveat; planners decide monthly or yearly, so near-live data matters more to operations staff | Partly: collected every 3 hours into a separate store, not published |
 | C2 | Compare chosen areas or hospitals side by side | Could | Useful for prioritising; the sortable table already covers most of it | Not built |
@@ -357,8 +357,8 @@ Each record has the full technical reasoning; follow the number.
 
 **Next steps,** in the order recommended:
 
-1. **A printable one-page summary (S4) and CSV export (S3).** Both can be built now from data the
-   site already has, and both serve the two personas directly.
+1. **A printable one-page summary (S4).** It can be built now from data the site already has, and
+   it serves the two personas directly.
 2. **Travel-time access (S1).** The biggest gain in accuracy; it needs a routing service, such as
    OneMap's.
 3. **Access by subzone (S2),** once URA publishes the Master Plan 2025 subzone boundaries.

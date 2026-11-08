@@ -11,7 +11,7 @@ import { Glossed } from "../terms/Glossed";
 export function ShortfallBars({ bars, meta, top }: { bars: ShortfallBar[]; meta: Meta; top: string | null }) {
   const max = Math.max(1, ...bars.map((b) => b.shortfall));
   return (
-    <ChartCard title="Clinics short of the national rate" slug="shortfall" meta={meta} headingLevel={3}
+    <ChartCard title="Clinics short of the national rate" slug="shortfall" meta={meta} headingLevel={3} download="/export/areas.csv"
                description={<Glossed text={`The ${bars.length} priority areas from this week's findings: CDMP GP clinics the national rate would give their residents aged 65+, minus the clinics they have. Largest first.`} />}>
       <ol className="space-y-1.5 text-sm" data-testid="shortfall-bars">
         {bars.map((b) => (

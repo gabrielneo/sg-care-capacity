@@ -19,6 +19,20 @@ describe("ChartCard", () => {
     expect(screen.getByText(/Up to date · weekly data, 6 days old/)).toBeInTheDocument();
   });
 
+  it("offers the figures as a CSV only when the card has one (S3)", () => {
+    const { rerender } = render(<ChartCard title="Bed waits" meta={edMeta} now={NOW}><p>chart</p></ChartCard>);
+    expect(screen.queryByTestId("csv-download")).toBeNull();
+    rerender(<ChartCard title="Bed waits" meta={edMeta} now={NOW} download="/export/ed-weekly.csv"><p>chart</p></ChartCard>);
+    const link = screen.getByRole("link", { name: "Download the figures (CSV)" });
+    expect(link).toHaveAttribute("href", "/export/ed-weekly.csv");
+    expect(link).toHaveAttribute("download");
+  });
+
+  it("offers no CSV when the chart can't be shown", () => {
+    render(<ChartCard title="Bed waits" meta={{ ...edMeta, sources: [] }} now={NOW} download="/export/x.csv"><p>chart</p></ChartCard>);
+    expect(screen.queryByTestId("csv-download")).toBeNull();
+  });
+
   it("names the right publisher for each dataset, and flags an old one", () => {
     render(<ChartCard title="Clinics" meta={clinicMeta} now={NOW}><p>map</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");
