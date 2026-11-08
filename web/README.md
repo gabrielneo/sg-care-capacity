@@ -11,7 +11,12 @@ calls the API, so the site needs no CORS settings.
 | Page | What it shows |
 |---|---|
 | **Overview** `/` | A scroll story driven by `/api/v1/insights`. The top finding's key number counts up, with its headline as the page title. Then the share of residents aged 65+ (`/api/v1/population`) and the top findings as steps beside a sticky chart panel; on phones each chart sits under its step. Then the case study's limits, read from `docs/case_study.md`, and links by reading time. No finding text or number is written in the site's code (`lib/story.ts`, `components/story/`) |
-| **ED Trends** `/ed-trends` | Daily median wait by hospital, the day-of-week pattern, and wait against attendances (Recharts). Hospitals and dates are chosen in a plain GET form, so URLs can be shared. A **missing day is a gap in the line, never joined**, and each chart counts the gaps. Tooltips give the exact date and units. AH = urgent care centre, NUH = adults only |
+| **ED Trends** `/ed-trends` | Difference-first charts, drawn on the server as SVG and HTML (no chart library):
+<br>• small multiples of daily bed waits per hospital over the middle half of the full EDs;
+<br>• the latest week against each hospital's usual level (a dumbbell, largest difference first);
+<br>• a weekday heatmap centred on 0;
+<br>• NUHS's estimate beside MOH's figure.
+<br>By default each hospital is compared with its own usual level; a switch shows raw values across hospitals, with the AH (UCC) and NUH (adults only) caveats pinned on the chart. Each chart points out the matching finding. Hospitals, dates and the comparison are in the URL. A **missing day is a gap, never joined** |
 | **Access Map** `/access-map` | Three views: **3D map**, the default where WebGL works; **2D map**; **Table**. In 3D (three.js via @react-three/fiber and drei, loaded only for that view):
 <br>• each area's height is its residents aged 65+, and its colour its CDMP clinics per 1,000 (darker = fewer);
 <br>• hover for figures, click for the side panel;

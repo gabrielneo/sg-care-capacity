@@ -27,7 +27,7 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 |----------|--------|
 | Pipeline | Python 3.12, DuckDB, pandas, geopandas/shapely (pipeline only) |
 | API      | FastAPI, Python 3.12 |
-| Web      | Next.js App Router, TypeScript, Tailwind, Recharts, MapLibre GL or Leaflet |
+| Web      | Next.js App Router, TypeScript, Tailwind, charts as server-rendered SVG, Leaflet (2D map), three.js via @react-three/fiber (3D map) |
 | Storage  | DuckDB file built in `data/build/`; the last good snapshot is published as a GitHub Release asset (not committed to git) |
 
 ## Data principles (non-negotiable)

@@ -86,6 +86,23 @@ compares only complete weeks.
 daily median of admitted patients and are only ever shown side by side with it, labelled as estimates.
 On this site they come from the weekly snapshot, so they can be up to 7 days old.
 
+**Comparisons on ED Trends.** Each hospital is compared with itself first, because hospitals differ in
+size, case mix and how they work. Raw values across hospitals are a second view. The definitions
+match the insight engine's, so a chart and its finding agree ([insights_method.md](insights_method.md)):
+
+- **Usual level:** the median of the 8 complete weeks before the latest complete week. Each week is
+  the average of its daily medians. All 8 weeks must be complete; otherwise the hospital has no usual
+  level, and the charts say so rather than guess.
+- **Latest week against usual:** the latest complete week as hours, or as a % of the usual level.
+- **Weekday pattern:** each weekday's average of daily medians, as a % above or below the hospital's
+  own average. It uses the complete weeks among the 26 up to the latest complete week. A hospital
+  with fewer than 4 complete weeks there is not shown.
+- **All-hospital band:** each day, the middle half (25th to 75th percentile, linear interpolation)
+  of the full EDs' values, with their median. Alexandra Hospital's urgent care centre is left out.
+  A day with fewer than 3 hospitals reporting has no band.
+- **Raw values across hospitals** carry two caveats, pinned on the chart: Alexandra Hospital's urgent
+  care centre (shorter waits by design), and NUH (adults only).
+
 ## Clinic access: what is measured
 
 For each of Singapore's 55 planning areas (URA Master Plan 2025):
