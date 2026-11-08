@@ -3,7 +3,9 @@
  * match and that every text/background pair used meets WCAG AA.
  *
  * Neutral slate greys, ONE accent (deep teal), status colours used only with a text label, and a
- * colour-blind-safe sequential scale for the map (Viridis, 5 classes, light = low, dark = high).
+ * colour-blind-safe sequential scale for the map (Viridis, 5 classes, light = low, dark = high),
+ * and a colour-blind-safe diverging scale for differences from a centre of 0 (ColorBrewer PuOr,
+ * 7 classes: purple below, near-white at 0, orange above).
  */
 export const colors = {
   page: "#F8FAFC",
@@ -26,12 +28,23 @@ export const colors = {
   "map-4": "#3B528B",
   "map-5": "#440154",
   "map-none": "#E2E8F0",
+  "div-1": "#542788",
+  "div-2": "#998EC3",
+  "div-3": "#D8DAEB",
+  "div-4": "#F7F7F7",
+  "div-5": "#FEE0B6",
+  "div-6": "#F1A340",
+  "div-7": "#B35806",
 } as const;
 
 export type ColorToken = keyof typeof colors;
 
 /** Map classes from low to high. "No data" is never one of these: it is map-none, hatched. */
 export const mapScale = [colors["map-1"], colors["map-2"], colors["map-3"], colors["map-4"], colors["map-5"]] as const;
+
+/** Differences from 0, most below first: the middle class (div-4) is centred on 0. */
+export const divergingScale = [colors["div-1"], colors["div-2"], colors["div-3"], colors["div-4"], colors["div-5"],
+                               colors["div-6"], colors["div-7"]] as const;
 
 /** Text on background pairs the components use, with the WCAG AA minimum for each. */
 export const TEXT_PAIRS: ReadonlyArray<readonly [fg: ColorToken, bg: ColorToken, min: number]> = [
@@ -47,6 +60,20 @@ export const TEXT_PAIRS: ReadonlyArray<readonly [fg: ColorToken, bg: ColorToken,
   ["warn", "warn-soft", 4.5],
   ["bad", "bad-soft", 4.5],
   ["muted", "accent-soft", 4.5],
+  // the weekday heatmap's cell labels: light text on the two darkest classes, dark text on the rest
+  ["surface", "div-1", 4.5],
+  ["ink", "div-2", 4.5],
+  ["ink", "div-3", 4.5],
+  ["ink", "div-4", 4.5],
+  ["ink", "div-5", 4.5],
+  ["ink", "div-6", 4.5],
+  ["surface", "div-7", 4.5],
+  // the raw-hours heatmap (Viridis): dark text on the light classes, light text on the dark ones
+  ["ink", "map-1", 4.5],
+  ["ink", "map-2", 4.5],
+  ["ink", "map-3", 4.5],
+  ["surface", "map-4", 4.5],
+  ["surface", "map-5", 4.5],
 ];
 
 /** Non-text UI that must be distinguishable (WCAG 1.4.11): 3:1 against what is next to it. */

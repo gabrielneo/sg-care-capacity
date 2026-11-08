@@ -27,6 +27,13 @@
   --color-map-4: #3B528B;
   --color-map-5: #440154;
   --color-map-none: #E2E8F0;
+  --color-div-1: #542788;
+  --color-div-2: #998EC3;
+  --color-div-3: #D8DAEB;
+  --color-div-4: #F7F7F7;
+  --color-div-5: #FEE0B6;
+  --color-div-6: #F1A340;
+  --color-div-7: #B35806;
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
