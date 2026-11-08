@@ -25,6 +25,20 @@ evidence available. `as_of_basis` says which evidence:
 Show `as_of` next to every number. For CHAS it is **2024-06-06** even though the file was
 downloaded in November 2026: the clinic list itself is that old.
 
+**What the site shows as "Data as of".** The site and its CSV downloads show each **source's** as_of
+from the snapshot's `manifest.json` (`sources.<id>.as_of`, with its basis), not a mart row's
+`as_of` column. The two differ for MOH:
+
+| | MOH (`moh_bed_waits`, `moh_ed_attendances`) | Other sources |
+|---|---|---|
+| Mart column `as_of` (lineage) | When the file was downloaded (`fetched`), e.g. 2026-11-06 14:51 | As in the table above |
+| Shown as "Data as of" | The latest `report_date` (basis "latest report_date"), e.g. 2026-10-31 | The same value as the mart column |
+
+The latest report date is what a reader needs: the last day the figures describe. The download
+time stays in the mart for lineage. A figure that combines sources shows each source's own date;
+a finding also states the end of the window it tests ("This finding uses data to …"), which is
+the insight's own `as_of`. Found by the independent audit (`audit_report.md`, M-5).
+
 ### `marts.dim_hospital`
 
 **Grain:** one row per MOH-reported site (9). **Source:** the reference in `sg_health/config.py`

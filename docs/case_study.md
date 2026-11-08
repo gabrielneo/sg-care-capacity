@@ -311,7 +311,7 @@ Values from weekly data release `data-2026-11-08`.
 | Publication lag | Days between MOH's latest report date and the weekly data release | 8 days (31 Oct → 8 Nov 2026) | 7 days or less: each release carries MOH's latest week | **Not met** in this release |
 | Blocking checks | Failed checks that block publishing, in the published data release | 0 of 77 checks | 0 in every published release | Met (enforced: a failure stops publishing) |
 | ED coverage | Days with both MOH figures, out of the days each site is reported | 100% for all 9 sites | 100% of the days MOH reports; any gap shown, never filled | Met |
-| Provenance | Figures on the site showing their "Data as of" date and source | All | 100% | Met (enforced by tests) |
+| Provenance | Figures on the site showing their "Data as of" date and source | All | 100% | Met (enforced by tests). An [independent audit](audit_report.md) of `data-2026-11-08` found one chart giving MOH's date for NUHS's figures; it was fixed, and each source now shows its own date |
 
 ### Outcomes
 

@@ -22,7 +22,9 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
    tables behind it.
    - Row-level errors don't block the detector. Those rows were set aside, never corrected, so the
      detector runs and each insight carries a caveat saying how many records were set aside.
-   - Today, one misplaced CHAS clinic is set aside, so access insights carry that caveat.
+   - Today, one misplaced CHAS clinic is set aside, so access insights carry that caveat. When a
+     set-aside clinic is in CDMP, the caveat also names it, with its postcode and the reason: it
+     counts in no area. Its likely area isn't guessed.
 3. **Completeness gate:** a hospital or area with less than **80%** of its expected data is
    skipped. Weeks or days before a site was first reported (Woodlands, before 23 June 2024) don't
    count as missing.
