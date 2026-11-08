@@ -103,4 +103,12 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 # wording:      cd web && npm run lint:terms && npm run readability   # both part of npm run lint
 # docs pages:   docs/*.md (methodology, case_study, adr/, ...) are rendered by the site at build time;
 #               TODO(me) marks text only the author can write (never fill it with invented content)
+
+# Deploy (docs/runbook.md, "Deploying"; every setting: .env.example)
+# API:          Render, from render.yaml (free plan; rebuilds on api/** changes). Health: /api/v1/health
+# web:          Vercel, root directory web/; env API_BASE_URL, API_REVALIDATE_SECONDS, SHOW_DEV_PAGES
+# new release:  weekly.yml POSTs secrets.RENDER_DEPLOY_HOOK_URL, then .github/scripts/wait-for-api.sh
+#               waits until vars.API_PUBLIC_URL /api/v1/health serves the new snapshot_id
+# restart:      Actions -> Restart API (restart-api.yml), or: gh workflow run restart-api.yml -f expect=data-YYYY-MM-DD
+# roll back:    Render env DATA_SNAPSHOT=data-YYYY-MM-DD (saving redeploys) + purge Vercel's Data Cache
 ```

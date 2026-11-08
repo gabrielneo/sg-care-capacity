@@ -8,9 +8,14 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
 
 | Workflow | When | What it does | Where its output lives |
 |---|---|---|---|
-| `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or **Actions → Weekly pipeline → Run workflow** | test → ingest → validate → transform → publish | Raw history: release **`data-latest`** (`raw.tar.gz`). Snapshots: releases **`data-YYYY-MM-DD`** (newest 12 kept) |
+| `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or **Actions → Weekly pipeline → Run workflow** | test → ingest → validate → transform → publish → restart the API and check it serves the new release | Raw history: release **`data-latest`** (`raw.tar.gz`). Snapshots: releases **`data-YYYY-MM-DD`** (newest 12 kept) |
 | `live.yml` | Every 3 hours (at :15) | NUHS live waits only, into a separate store | Release **`live-latest`** (`live.tar.gz`, `nuhs_live_waits.parquet`). Never a snapshot |
 | `ci.yml` | Every pull request and push to `main` | ruff, mypy, unit tests; guards against committed binaries or `.env` | Nothing (checks only) |
+| `restart-api.yml` | By hand: **Actions → Restart API → Run workflow** | Restarts the API (Render deploy hook) and checks which data release it serves; or only checks | Nothing |
+
+**Where the site runs:** the API on [Render](https://render.com) (`render.yaml`, free plan, Singapore
+region), the website on [Vercel](https://vercel.com) (`web/`). The website calls the API from its
+server only, so the API allows no browser origins. See [Deploying](#deploying).
 
 - **`data-latest` is history, not a snapshot.** It holds every raw file ever downloaded. Never delete it:
   without it the next weekly run starts from nothing, and MOH only shows its latest week.
@@ -49,6 +54,10 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
    `insight.*`; they never block publishing.
 8. **Prune**: snapshot releases beyond the newest 12 are deleted (`sg-health snapshots-to-prune`).
    `data-latest`, `live-latest` and any other tag are never touched.
+   **Restart the API**: the workflow calls Render's deploy hook, then waits (up to 20 minutes) until
+   `/api/v1/health` reports the new `snapshot_id`. If it never does, the job fails; the API keeps
+   serving the previous release. Without the `RENDER_DEPLOY_HOOK_URL` secret this is skipped with a
+   notice. The website picks up the new figures within an hour (its cache, `API_REVALIDATE_SECONDS`).
 9. **Fail the job** if any stage failed, after the archive is safe, so GitHub emails you.
 
 ### Run it by hand
@@ -94,18 +103,25 @@ never editing data.
 
 1. **Pick the snapshot.** `gh release list` shows the `data-YYYY-MM-DD` releases; each release's notes
    and `manifest.json` show its checks and row counts. Choose the newest one you trust.
-2. **Point the API at it.** Set `DATA_SNAPSHOT=data-2026-11-01` and restart the API. It downloads
-   and verifies that release and refuses to start if any file doesn't match its manifest. Check
-   with `curl …/api/v1/meta`, which shows `snapshot_id` and `release_tag`.
-3. **Mark the bad snapshot, don't delete it.** Keep it for the record and flag it:
+2. **Point the API at it.** In Render: **sg-health-api → Environment**, set `DATA_SNAPSHOT` to
+   `data-2026-11-01` and save; saving redeploys the API. It downloads and verifies that release and
+   refuses to start if any file doesn't match its manifest (Render then keeps the old instance
+   running). Then run **Actions → Restart API** with *expect* = `data-2026-11-01` and *restart*
+   unticked, to check it. Or by hand: `curl https://<api>/api/v1/meta` shows `snapshot_id` and
+   `release_tag`.
+3. **Clear the website's cached figures,** or it shows the withdrawn release for up to an hour: in
+   Vercel, **Project → Settings → Data Cache → Purge** (the menu may move; it is the "Data Cache"
+   setting). The footer's status line then names the release you rolled back to.
+4. **Mark the bad snapshot, don't delete it.** Keep it for the record and flag it:
    ```bash
    gh release edit data-2026-11-08 --prerelease \
      --notes "WITHDRAWN: <reason>. Use data-2026-11-01. See issue #<n>."
    ```
    Deleting it would also remove the evidence of what was published. Marking it pre-release is
    also what makes the API's `DATA_SNAPSHOT=latest` skip it.
-4. **Fix forward.** Fix the cause, run the weekly workflow by hand, check the new snapshot, then set
-   `DATA_SNAPSHOT=latest` again (or unset it) and restart the API.
+5. **Fix forward.** Fix the cause, run the weekly workflow by hand, check the new snapshot, then set
+   `DATA_SNAPSHOT=latest` again in Render (saving redeploys) and check with **Restart API**
+   (*expect* empty, *restart* unticked).
 
 **Retention:** only 12 snapshots are kept (about 3 months). To keep one longer, e.g. for the case
 study, copy its assets elsewhere or re-tag it outside the `data-YYYY-MM-DD` pattern (pruning only
@@ -115,6 +131,58 @@ matches that pattern):
 **Reproducing a snapshot:** the release files *are* the snapshot. Rebuilding from raw history at the
 commit in `manifest.json` gives that code version's output on **today's** raw files, which include
 everything fetched since: close, but not byte-identical.
+
+## Deploying
+
+Two services, both on free plans: the **API** on Render (a Docker container built from
+`api/Dockerfile`) and the **website** on Vercel. Every setting is listed, with where it is set, in
+[`.env.example`](../.env.example). Nothing secret is in the repository.
+
+### First-time setup (by hand, once)
+
+1. **Render**: sign in with GitHub, then **New → Blueprint** and pick this repository. Render reads
+   `render.yaml` and creates `sg-health-api` (free plan, Singapore). When it asks for
+   `GITHUB_TOKEN`, paste the token from step 2 (or leave it empty and add it later under
+   **Environment**).
+2. **GitHub token for the API** (raises GitHub's API rate limit; Render's outgoing IPs are shared):
+   GitHub → **Settings → Developer settings → Fine-grained tokens → Generate**, *Repository access:
+   Public repositories (read-only)*, no extra permissions, expiry 1 year. Put a reminder in your
+   calendar for the expiry date.
+3. **Deploy hook**: Render → **sg-health-api → Settings → Deploy Hook**, copy the URL. GitHub →
+   **Settings → Secrets and variables → Actions → New repository secret**, name exactly
+   `RENDER_DEPLOY_HOOK_URL`. Anyone with this URL can redeploy the API, so treat it as a secret.
+4. **API address**: on the same GitHub page, **Variables → New repository variable**,
+   `API_PUBLIC_URL` = the Render URL, e.g. `https://sg-health-api.onrender.com` (no trailing path).
+5. **Vercel**: sign in with GitHub, **Add New → Project**, import this repository, set **Root
+   Directory** to `web`. Under **Environment Variables** (Production and Preview):
+   `API_BASE_URL` = the Render URL, `API_REVALIDATE_SECONDS` = `3600`, `SHOW_DEV_PAGES` = `false`.
+   If the Node.js version setting is offered, match `web/.nvmrc`. Deploy.
+6. **Check**: `https://<api>/api/v1/meta` shows the newest `data-YYYY-MM-DD`; the website's footer
+   names the same release with a link to it. Then run **Actions → Weekly pipeline → Run workflow**
+   and confirm the step *Check the API serves the new snapshot* passes.
+
+### Routine deploys
+
+- **Website**: every push to `main` deploys to production; every pull request gets a preview URL
+  (previews call the production API, which is read-only). Vercel deploys even if CI fails, so
+  check CI before pushing to `main`. To undo a bad deploy: Vercel → **Deployments**, pick the last
+  good one → **Promote to Production**.
+- **API code**: a push to `main` that changes `api/**` rebuilds and redeploys it on Render; other
+  pushes don't. To undo: Render → **sg-health-api → Events**, roll back to the previous deploy.
+- **Data**: a new data release restarts the API through the deploy hook (weekly workflow). Nothing
+  to do by hand. To restart it any time: **Actions → Restart API**.
+
+### What the free plans mean
+
+- **The API sleeps after about 15 minutes without requests**, and waking takes up to about a
+  minute (it re-downloads and verifies the release, about 4 MB). The website reuses each API
+  response for an hour and serves the old copy while it fetches a new one, so visitors rarely wait.
+  If they do (the page says the data service isn't responding, then works on reload), add a free
+  uptime monitor (e.g. UptimeRobot) on `https://<api>/api/v1/health` every 5 minutes: it keeps the
+  API awake and emails you when it's down. One always-on service fits Render's free monthly hours.
+- **Vercel's Hobby plan is for non-commercial use**, which fits a personal portfolio.
+- **Static pages** (e.g. Methodology) show the footer's release from their last build or hourly
+  refresh, like every cached figure.
 
 ## SingStat population, yearly refresh
 
@@ -145,15 +213,52 @@ If URA changes planning-area boundaries, `completeness.population_present` or th
 stop the build and list the names: add the new boundary file and update `ref_area_name_map` logic
 deliberately; nothing is guessed.
 
-## Secrets
+## Keys and secrets
 
-- **`DATAGOV_API_KEY`** (optional; higher data.gov.sg rate limits).
-  - **CI:** repository secret: *Settings → Secrets and variables → Actions → New repository secret*,
-    Name exactly `DATAGOV_API_KEY`, the key as the value.
-  - **Locally:** put `DATAGOV_API_KEY=...` in `.env` at the repo root (copy `.env.example`). It's loaded
-    automatically with python-dotenv, never required, and a real environment variable wins.
-  - **Never commit it**: the repo is public. If it leaks, revoke it on data.gov.sg and create a new one.
-- `GITHUB_TOKEN` is provided by Actions; the workflows declare only the permissions they need.
+Nothing secret is ever committed: the repo is public. `.env` is git-ignored, and a test fails if
+`.env.example` holds a value for a key or token. If a secret leaks (pasted in an issue, a log, a
+commit), **rotate it first**, then clean up.
+
+| Secret | Where it is set | What it does |
+|---|---|---|
+| `DATAGOV_API_KEY` | GitHub secret; your local `.env` | Higher data.gov.sg rate limits for the pipeline. Optional |
+| `RENDER_DEPLOY_HOOK_URL` | GitHub secret | Lets the weekly workflow restart the API. The URL is the secret |
+| `GITHUB_TOKEN` (fine-grained) | Render → Environment | Raises GitHub's API rate limit for the API's release lookup. Public read-only |
+| `GITHUB_TOKEN` (Actions) | Provided by GitHub per run | The workflows declare only the permissions they need. Nothing to rotate |
+
+GitHub secrets: **Settings → Secrets and variables → Actions**. Names must match exactly.
+Locally, put `DATAGOV_API_KEY=...` in `.env` at the repo root (copy `.env.example`). It's loaded
+automatically with python-dotenv, never required, and a real environment variable wins.
+
+### Rotating keys
+
+- **`DATAGOV_API_KEY`**: create a new key on data.gov.sg, update the GitHub secret (and your `.env`),
+  then revoke the old key. Check: the next weekly run's *Ingest* step fetches data.gov.sg without
+  rate-limit errors (or run it by hand with `--sources opendata`).
+- **`RENDER_DEPLOY_HOOK_URL`**: Render → **sg-health-api → Settings → Deploy Hook → Regenerate**
+  (the old URL stops working), then update the GitHub secret. Check: **Actions → Restart API**.
+- **Render's `GITHUB_TOKEN`**: generate a new fine-grained token (same settings as in
+  [first-time setup](#first-time-setup-by-hand-once)), paste it in Render → **Environment** (saving
+  redeploys), then delete the old token on GitHub. Do this before it expires: without it the API
+  still starts, but may hit GitHub's 60-requests-an-hour limit on Render's shared IPs and fail to
+  find the release.
+
+## When a scheduled run fails
+
+GitHub emails you when a workflow fails (check **Settings → Notifications → Actions**). Open the
+run, find the first red step, then:
+
+| Failed step | What it means | What to do |
+|---|---|---|
+| **weekly: Test** | The code is broken; no data was touched | Fix the test failure, push, run the workflow by hand |
+| **weekly: Restore data/raw** | `data-latest` exists but didn't download (usually a GitHub hiccup) | Re-run the job. Never delete `data-latest` to "fix" it |
+| **weekly: Ingest** | A source failed in a way that stopped the run (one source being down doesn't). Raw history was still archived | Read the `source_summary` log lines; see [When publishing is blocked](#when-publishing-is-blocked) for parser problems |
+| **weekly: Validate**, with a `data-quality` issue | Publishing is blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked). The site keeps the last release |
+| **weekly: Transform / Publish** | A SQL or packaging error | Reproduce locally (`sg-health reparse && sg-health transform && sg-health publish`), fix, push, re-run |
+| **weekly: Check the API serves the new snapshot** | The release is published, but the API didn't switch to it within 20 minutes. It keeps serving the previous one | Render → **sg-health-api → Events / Logs**: the API logs why it refused to start (e.g. a file failed verification). Fix, then **Actions → Restart API**. If the new release itself is bad, [roll back](#rolling-back-to-an-earlier-snapshot) |
+| **weekly: Restart the API** | Render didn't accept the deploy hook (wrong or regenerated URL, or Render down) | Check the `RENDER_DEPLOY_HOOK_URL` secret; then **Actions → Restart API** |
+| **live** | One NUHS reading was missed | Usually nothing: the next run is 3 hours later. If it keeps failing, NUHS changed its page: see the NUHS parser and its tests |
+| *No run at all* | GitHub disabled the schedule after 60 days without repository activity | **Actions → *workflow* → Enable workflow**, then run it by hand |
 
 ## Live waits store
 
