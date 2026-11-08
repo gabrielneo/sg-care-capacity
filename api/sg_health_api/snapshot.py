@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,8 @@ MANIFEST_KEYS = ("snapshot_id", "created_at", "artefacts", "row_counts", "source
 REQUIRED_MARTS = ("dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
                   "fct_area_access", "dim_metric")
 TIMEOUT = httpx.Timeout(60.0, connect=15.0)
+DOWNLOAD_ROUNDS = 2          # each round tries the download link, then the API asset endpoint
+RETRY_DELAY = 3.0            # seconds between rounds
 
 
 class SnapshotError(RuntimeError):
@@ -197,18 +200,39 @@ def resolve_release(settings: Settings, client: httpx.Client) -> dict[str, Any]:
     return max(candidates, key=lambda rel: rel["tag_name"])
 
 
-def _download(client: httpx.Client, url: str, dest: Path) -> None:
+def _sources(settings: Settings, asset: dict[str, Any]) -> list[tuple[str, dict[str, str]]]:
+    """Where an asset can be downloaded from, in order. The plain download link comes first: it
+    doesn't count against GitHub's API rate limit. The API's asset endpoint is the fallback: it is
+    served separately, and it kept working when github.com's download links returned 504 for every
+    repository. A token, if set, goes to api.github.com only; httpx drops it on the redirect to
+    GitHub's file host."""
+    sources: list[tuple[str, dict[str, str]]] = [(asset["browser_download_url"], {})]
+    if asset.get("url"):
+        sources.append((asset["url"], {**_api_headers(settings), "Accept": "application/octet-stream"}))
+    return sources
+
+
+def _download(client: httpx.Client, sources: list[tuple[str, dict[str, str]]], dest: Path) -> None:
     tmp = dest.with_name(dest.name + ".part")
-    try:
-        with client.stream("GET", url, follow_redirects=True) as r:
-            r.raise_for_status()
-            with tmp.open("wb") as f:
-                for chunk in r.iter_bytes():
-                    f.write(chunk)
-    except httpx.HTTPError as exc:
-        tmp.unlink(missing_ok=True)
-        raise SnapshotError(f"download failed for {url}: {exc}") from exc
-    tmp.replace(dest)
+    errors: list[str] = []
+    for round_ in range(DOWNLOAD_ROUNDS):
+        if round_:
+            time.sleep(RETRY_DELAY)
+        for url, headers in sources:
+            try:
+                with client.stream("GET", url, headers=headers, follow_redirects=True) as r:
+                    r.raise_for_status()
+                    with tmp.open("wb") as f:
+                        for chunk in r.iter_bytes():
+                            f.write(chunk)
+            except httpx.HTTPError as exc:
+                tmp.unlink(missing_ok=True)
+                errors.append(f"{url}: {exc}".splitlines()[0])
+                LOG.warning("download failed, trying the next source: %s", errors[-1])
+                continue
+            tmp.replace(dest)
+            return
+    raise SnapshotError(f"download failed for {dest.name} from every source: " + "; ".join(errors))
 
 
 def fetch_release(settings: Settings, client: httpx.Client) -> tuple[Path, str]:
@@ -217,7 +241,7 @@ def fetch_release(settings: Settings, client: httpx.Client) -> tuple[Path, str]:
     tag = str(release["tag_name"])
     if not TAG_RE.match(tag):                                 # it becomes a folder name
         raise SnapshotError(f"unexpected release tag {tag!r}")
-    assets = {a["name"]: a["browser_download_url"] for a in release.get("assets", [])}
+    assets = {a["name"]: _sources(settings, a) for a in release.get("assets", [])}
     if MANIFEST not in assets:
         raise SnapshotError(f"release {tag} has no {MANIFEST}")
     dest = settings.cache_dir / tag

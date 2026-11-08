@@ -8,6 +8,7 @@ import httpx
 import pytest
 from fixture_snapshot import SNAPSHOT_ID
 
+from sg_health_api import snapshot as snapshot_mod
 from sg_health_api.config import Settings
 from sg_health_api.snapshot import SnapshotError, load_snapshot
 
@@ -85,20 +86,38 @@ def test_missing_local_folder_refuses_to_start(tmp_path):
 
 # ------------------------------------------------------------------ GitHub #
 
+ASSETS = "https://api.github.com/repos/gabrielneo/sg-care-capacity/releases/assets"
+
+
 class FakeGitHub:
     """Serves a release listing and asset downloads from a snapshot folder; records every request."""
 
-    def __init__(self, snapshot: Path, releases: list[tuple[str, bool]], corrupt: str | None = None):
+    def __init__(self, snapshot: Path, releases: list[tuple[str, bool]], corrupt: str | None = None,
+                 links_down: bool = False, api_down: bool = False):
         self.snapshot, self.corrupt, self.calls = snapshot, corrupt, []
+        self.links_down, self.api_down = links_down, api_down       # github.com links / API asset endpoint return 504
         files = {p.name: p for p in snapshot.rglob("*") if p.is_file()}
         self.files = files
         self.releases = [{"tag_name": tag, "prerelease": pre, "draft": False,
-                          "assets": [{"name": n, "browser_download_url": f"https://dl.example/{tag}/{n}"} for n in files]}
+                          "assets": [{"name": n, "browser_download_url": f"https://dl.example/{tag}/{n}",
+                                      "url": f"{ASSETS}/{n}"} for n in files]}
                          for tag, pre in releases]
+
+    def body(self, name: str) -> bytes:
+        body = self.files[name].read_bytes()
+        return body[:-1] + bytes([body[-1] ^ 1]) if name == self.corrupt else body
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.calls.append(request)
         url = str(request.url)
+        if url.startswith(ASSETS + "/"):            # the API's asset endpoint redirects to the file host
+            if self.api_down:
+                return httpx.Response(504)
+            if request.headers.get("Accept") != "application/octet-stream":
+                return httpx.Response(200, json={"name": url.rsplit("/", 1)[1]})   # metadata, not the file
+            return httpx.Response(302, headers={"Location": f"https://assets.example/{url.rsplit('/', 1)[1]}"})
+        if url.startswith("https://assets.example/"):
+            return httpx.Response(200, content=self.body(url.rsplit("/", 1)[1]))
         if url.startswith("https://api.github.com/repos/gabrielneo/sg-care-capacity/releases/tags/"):
             tag = url.rsplit("/", 1)[1]
             rel = next((r for r in self.releases if r["tag_name"] == tag), None)
@@ -106,11 +125,9 @@ class FakeGitHub:
         if url.startswith("https://api.github.com/repos/gabrielneo/sg-care-capacity/releases"):
             return httpx.Response(200, json=self.releases)
         if url.startswith("https://dl.example/"):
-            name = url.rsplit("/", 1)[1]
-            body = self.files[name].read_bytes()
-            if name == self.corrupt:
-                body = body[:-1] + bytes([body[-1] ^ 1])
-            return httpx.Response(200, content=body)
+            if self.links_down:
+                return httpx.Response(504)
+            return httpx.Response(200, content=self.body(url.rsplit("/", 1)[1]))
         return httpx.Response(500)
 
     def downloads(self) -> list[str]:
@@ -151,6 +168,39 @@ def test_a_pinned_tag_is_served_even_if_newer_ones_exist(snapshot_dir, tmp_path)
     assert snap.release_tag == "data-2026-10-25"
     assert snap.release_url == "https://github.com/gabrielneo/sg-care-capacity/releases/tag/data-2026-10-25"
     snap.close()
+
+
+@pytest.fixture
+def no_retry_wait(monkeypatch):
+    monkeypatch.setattr(snapshot_mod, "RETRY_DELAY", 0)
+
+
+def test_when_download_links_fail_the_api_asset_endpoint_is_used(snapshot_dir, tmp_path, no_retry_wait):
+    # As on 2026-11-08: github.com/.../releases/download/... returned 504 for every repository.
+    fake = FakeGitHub(snapshot_dir, RELEASES, links_down=True)
+    snap = load_from(fake, tmp_path, github_token="t0ken")
+    assert snap.release_tag == "data-2026-11-01"
+    api_calls = [c for c in fake.calls if str(c.url).startswith(ASSETS)]
+    assert api_calls and all(c.headers["Accept"] == "application/octet-stream" for c in api_calls)
+    assert all(c.headers["Authorization"] == "Bearer t0ken" for c in api_calls)
+    # The token never reaches the file host the API redirects to.
+    file_host = [c for c in fake.calls if c.url.host == "assets.example"]
+    assert file_host and all("Authorization" not in c.headers for c in file_host)
+    snap.close()
+
+
+def test_download_links_are_tried_first_and_the_api_isnt_used_when_they_work(snapshot_dir, tmp_path):
+    fake = FakeGitHub(snapshot_dir, RELEASES)
+    load_from(fake, tmp_path).close()
+    assert fake.downloads() and not [c for c in fake.calls if str(c.url).startswith(ASSETS)]
+
+
+def test_when_every_source_fails_it_refuses_to_start_naming_them(snapshot_dir, tmp_path, no_retry_wait):
+    fake = FakeGitHub(snapshot_dir, RELEASES, links_down=True, api_down=True)
+    with pytest.raises(SnapshotError, match=r"download failed for manifest.json from every source: .*dl\.example.*504.*api\.github\.com.*504"):
+        load_from(fake, tmp_path)
+    manifest_tries = [c for c in fake.calls if str(c.url).endswith("/manifest.json")]
+    assert len(manifest_tries) == 2 * snapshot_mod.DOWNLOAD_ROUNDS                  # both sources, every round
 
 
 def test_a_pinned_tag_that_doesnt_exist_refuses_to_start(snapshot_dir, tmp_path):
