@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { Meta, PopulationYear } from "@/lib/api/types";
-import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
+import { BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
+import { term } from "@/lib/glossary";
 import { formatAsOf } from "@/lib/dates";
 import { cadenceFor } from "@/lib/freshness";
 import {
@@ -27,6 +28,7 @@ import { HighlightPhrase } from "./HighlightPhrase";
 import { Scrolly } from "./Scrolly";
 
 const NUMBER_WORDS = ["no", "one", "two", "three"];
+const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
 /** Data as of {date} · Source: {publishers}, for figures outside a chart card. */
 export function AsOfLine({ asOf, meta }: { asOf: string; meta: Meta }) {
@@ -50,7 +52,11 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
   const spoken = d.unit_text ? `${d.value_text} ${d.unit_text}` : d.value_text;
   return (
     <header className="pb-10 pt-2 sm:pt-6" data-testid="hero">
-      <p className="text-sm font-medium text-accent">The top finding in this week&apos;s data release</p>
+      <p className="max-w-3xl text-sm text-muted" data-testid="site-purpose">
+        <strong className="font-semibold text-ink">Right-siting care</strong> means{" "}
+        <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
+      </p>
+      <p className="mt-4 text-sm font-medium text-accent">The top finding in the latest weekly data release</p>
       <p className="mt-3 flex flex-wrap items-baseline gap-x-3 text-ink" data-testid="hero-number">
         <CountUp value={d.value_text} label={spoken} className="text-6xl font-semibold tracking-tight sm:text-7xl" />
         {d.unit_text ? <span className="text-2xl text-muted" aria-hidden="true">{d.unit_text}</span> : null}
@@ -62,6 +68,7 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
       <h1 className="mt-5 max-w-3xl text-2xl font-semibold leading-snug tracking-tight text-ink sm:text-3xl">
         <Glossed text={insight.headline} />
       </h1>
+      <p className="mt-2 max-w-3xl text-sm text-muted" data-testid="hero-bed-wait"><Glossed text={BED_WAIT_SHORT} /></p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
         <FreshnessBadge asOf={insight.as_of} cadence={cadenceFor(meta)} />
         <AsOfLine asOf={insight.as_of} meta={meta} />
@@ -86,7 +93,9 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
           </p>
           <p className="mt-3 max-w-prose text-ink">
             That is {share.latest.residents_65plus.toLocaleString("en-SG")} of {share.latest.residents_total.toLocaleString("en-SG")}{" "}
-            residents. This share is what defines a <Term id="super_aged">super-aged society</Term>.
+            residents (citizens and permanent residents). A <Term id="super_aged">super-aged society</Term> is{" "}
+            {lowerFirst(term("super_aged").plain_definition).replace(/^a society /, "one ").replace(/\.$/, "")}.{" "}
+            {CITIZENS_SUPER_AGED} (<a href={term("super_aged").source_url ?? undefined}>population.gov.sg</a>).
             {share.earliest ? ` It was ${percentText(share.earliest.share_65plus)} in ${share.earliest.year}.` : null}
           </p>
           <div className="max-w-3xl">

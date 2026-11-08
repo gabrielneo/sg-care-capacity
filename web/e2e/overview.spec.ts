@@ -26,6 +26,15 @@ const scrollToStep = (page: Page, i: number) =>
   page.getByTestId("story-step").nth(i).evaluate((el) => el.scrollIntoView({ block: "center" }));
 
 test.describe("Overview: the scroll story", () => {
+  test("the first screen says what right-siting and the bed wait mean", async ({ page }) => {
+    await page.goto("/");
+    expect(await plain(page.getByTestId("site-purpose"))).toBe("Right-siting care means treating people in the most suitable place, "
+      + "such as a general practitioner (GP) clinic rather than a hospital, when it is safe to do so. "
+      + "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.");
+    await expect(page.getByTestId("hero-bed-wait")).toBeInViewport();
+    expect(await plain(page.getByTestId("hero-bed-wait"))).toMatch(/It is not the time to see a doctor\.$/);
+  });
+
   test("the hero number is the top insight's key number, from the API", async ({ page }) => {
     const [top] = await headline(page);
     await page.goto("/");
@@ -123,7 +132,9 @@ test.describe("Overview: the scroll story", () => {
     await page.goto("/");
     const why = page.getByTestId("why-now");
     await expect(why.getByTestId("share-65")).toHaveText("22.1%");                         // 61,000 of 276,000 in the fixture
-    expect(await plain(why.locator("p").nth(1))).toBe("That is 61,000 of 276,000 residents. This share is what defines a super-aged society.");
+    expect(await plain(why.locator("p").nth(1))).toBe("That is 61,000 of 276,000 residents (citizens and permanent residents). "
+      + "A super-aged society is one where 21% or more of people are aged 65 or over. "
+      + "Among citizens alone, Singapore passed that mark in 2026 (population.gov.sg).");
     await expect(why.locator('[data-term="super_aged"]')).toBeVisible();
   });
 
