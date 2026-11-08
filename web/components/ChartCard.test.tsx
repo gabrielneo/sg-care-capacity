@@ -33,6 +33,24 @@ describe("ChartCard", () => {
     expect(screen.queryByTestId("csv-download")).toBeNull();
   });
 
+  it("bySource gives each publisher its own date and badge (audit H-1)", () => {
+    const nuhs = { id: "nuhs_live", name: "NUHS, ED waiting times", url: "https://www.nuhs.edu.sg/", as_of: "2026-11-06T12:01:49",
+                   as_of_basis: "NUHS 'Last updated at'", last_fetched_at: null, licence: null };
+    const meta = { ...edMeta, sources: [nuhs, ...edMeta.sources] } as typeof edMeta;
+    render(<ChartCard title="NUHS and MOH" meta={meta} now={NOW} cadence="weekly" bySource><p>chart</p></ChartCard>);
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(
+      /^Data as of 6 Nov 2026, 12:01 pm SGT \(NUHS\) and 31 Oct 2026 \(MOH\) · Source: /);
+    expect(screen.getByText(/^NUHS: Up to date · a live reading/)).toBeInTheDocument();
+    expect(screen.getByText(/^MOH: Up to date · weekly data, 6 days old/)).toBeInTheDocument();
+  });
+
+  it("findingTo states a finding's data window, while the date and badge stay the source's (audit M-1)", () => {
+    render(<ChartCard title="Bed waits" meta={edMeta} now={NOW} findingTo="2026-10-25"><p>chart</p></ChartCard>);
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(
+      "Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · This finding uses data to 25 Oct 2026");
+    expect(screen.getByText(/Up to date · weekly data, 6 days old/)).toBeInTheDocument();
+  });
+
   it("names the right publisher for each dataset, and flags an old one", () => {
     render(<ChartCard title="Clinics" meta={clinicMeta} now={NOW}><p>map</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Meta, Source } from "@/lib/api/types";
 import { formatAsOf, parseAsOf } from "@/lib/dates";
 import { type Cadence, cadenceFor } from "@/lib/freshness";
+import { sourceDates } from "@/lib/provenance";
 
 import { FreshnessBadge } from "./FreshnessBadge";
 import { Glossed } from "./terms/Glossed";
@@ -35,6 +36,10 @@ export function provenanceProblems(meta: Meta | null | undefined): string[] {
  *   warnings are summarised with a link to the Data Quality page.
  * - detail: also lists the API's own caveats and each warning's check and details (technical
  *   wording; only on the Data Quality page).
+ * - bySource: for a figure combining sources current at different times (e.g. NUHS's estimate beside
+ *   MOH's daily figure), each publisher's own date and freshness badge instead of one date for all.
+ * - findingTo: for a finding, the end of the data window it tests ("uses data to"). The date and badge
+ *   stay the source's own, so a finding's window never makes current data look stale.
  */
 export function Provenance({
   meta,
@@ -44,6 +49,8 @@ export function Provenance({
   cadence,
   now,
   compact = false,
+  bySource = false,
+  findingTo,
 }: {
   meta: Meta;
   caveat?: string | null;
@@ -52,8 +59,12 @@ export function Provenance({
   cadence?: Cadence;
   now?: Date;
   compact?: boolean;
+  bySource?: boolean;
+  findingTo?: string | null;
 }) {
   const c = cadence ?? cadenceFor(meta);
+  const perSource = bySource ? sourceDates(meta.sources) : [];
+  const dates = perSource.length > 1 ? perSource : [{ name: "", asOf: meta.as_of, cadence: perSource[0]?.cadence ?? c }];
   const warnings = meta.dq_warnings;
   const extra = detail ? meta.caveats : notes;
   const count = extra.length + (detail ? warnings.length : warnings.length ? 1 : 0);
@@ -61,7 +72,14 @@ export function Provenance({
     <footer className="mt-4 border-t border-line pt-3 text-xs text-muted">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <p data-testid="provenance-line">
-          Data as of <time dateTime={meta.as_of}>{formatAsOf(meta.as_of, { withTime: c === "live" })}</time>
+          Data as of{" "}
+          {dates.map((d, i) => (
+            <span key={d.name || "all"}>
+              {i > 0 ? " and " : null}
+              <time dateTime={d.asOf}>{formatAsOf(d.asOf, { withTime: d.cadence === "live" })}</time>
+              {d.name ? ` (${d.name})` : null}
+            </span>
+          ))}
           {" · Source: "}
           {publishers(meta.sources).map((p, i) => (
             <span key={p.name}>
@@ -75,9 +93,16 @@ export function Provenance({
               )}
             </span>
           ))}
+          {findingTo ? (
+            <span data-testid="finding-window">
+              {" · This finding uses data to "}<time dateTime={findingTo}>{formatAsOf(findingTo)}</time>
+            </span>
+          ) : null}
           {caveat && !compact ? <>{" · "}<Glossed text={caveat} /></> : null}
         </p>
-        <FreshnessBadge asOf={meta.as_of} cadence={c} now={now} />
+        {dates.map((d) => (
+          <FreshnessBadge key={d.name || "all"} asOf={d.asOf} cadence={d.cadence} now={now} source={d.name || undefined} />
+        ))}
       </div>
       {!compact && count > 0 ? (
         <details className="mt-2">

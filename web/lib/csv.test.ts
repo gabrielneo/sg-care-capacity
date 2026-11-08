@@ -55,6 +55,16 @@ describe("toCsv", () => {
   });
 });
 
+describe("toCsv with rows from different sources", () => {
+  it("gives each row its own date and sources (audit M-2)", () => {
+    const chas = { as_of: "2024-06-06T14:36:42", sources: [{ name: "data.gov.sg, CHAS Clinics" }] } as Parameters<typeof toCsv>[2];
+    const csv = toCsv(["finding"], [["ED"], ["access"]], meta, (i) => (i === 1 ? chas : meta));
+    expect(csv.split("\r\n").slice(1, 3)).toEqual([
+      "ED,2026-11-01,MOH; SingStat",
+      'access,2024-06-06T14:36:42,"data.gov.sg, CHAS Clinics"']);
+  });
+});
+
 describe("csvResponse", () => {
   it("is a CSV attachment named after its data and release", async () => {
     const res = csvResponse("a\r\n", "areas", "data-2026-11-08");

@@ -11,6 +11,7 @@ import { formatAsOf } from "@/lib/dates";
 import { renderDocList } from "@/lib/docs";
 import { term } from "@/lib/glossary";
 import { priorityAreas } from "@/lib/accessCharts";
+import { findingMeta } from "@/lib/provenance";
 import { monthYear, percentText, populationShare, storySteps } from "@/lib/story";
 import { SUMMARY_AREAS, summaryAreas } from "@/lib/summary";
 
@@ -35,6 +36,11 @@ export default async function SummaryPage() {
     renderDocList("case_study.md", LIMITS_MARKER),
   ]);
   const findings = insights.ok ? storySteps(insights.value.data) : [];
+  // Dated by the sources these findings use, each with its own date: not by the end of their windows (audit M-1).
+  const findingsMeta = insights.ok
+    ? findingMeta({ source_ids: [...new Set(findings.flatMap((f) => f.source_ids ?? []))], as_of: insights.value.meta.as_of },
+                  insights.value.meta)
+    : null;
   const share = population.ok ? populationShare(population.value.data) : null;
   const rows = gaps.ok && areas.ok
     ? summaryAreas(priorityAreas(gaps.value.data), areas.value.data.features.map((f) => f.properties)) : [];
@@ -107,14 +113,14 @@ export default async function SummaryPage() {
                     <Glossed text={f.headline} />
                     <span className="block text-xs text-muted">
                       <span data-testid="summary-metric">The number: <Glossed text={lowerFirst(f.display.metric_label)} plain /></span>.{" "}
-                      Data as of <time dateTime={f.as_of}>{formatAsOf(f.as_of)}</time>.
+                      Uses data to <time dateTime={f.as_of}>{formatAsOf(f.as_of)}</time>.
                     </span>
                   </span>
                 </li>
               ))}
             </ol>
             <p className="mt-1 text-xs text-muted"><Glossed text={BED_WAIT_SHORT} /></p>
-            <div className="text-xs text-muted"><AsOfLine asOf={insights.value.meta.as_of} meta={insights.value.meta} /></div>
+            <div className="text-xs text-muted"><AsOfLine asOf={findingsMeta!.as_of} meta={findingsMeta!} bySource /></div>
           </>
         )}
       </section>

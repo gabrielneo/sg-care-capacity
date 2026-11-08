@@ -30,7 +30,8 @@ HAS_TABLE_SQL = "SELECT count(*) AS n FROM information_schema.tables WHERE table
 COLUMNS_SQL = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
 SOURCES_BY_TYPE = {
     "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
-    "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"), "access_gap": ("datagov_chas", "singstat_residents"),
+    "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
+    "access_gap": ("datagov_chas", "singstat_residents", "datagov_planning_areas"),
     "regional": ("moh_bed_waits", "datagov_chas", "singstat_residents"), "source_gap": ("nuhs_live", "moh_bed_waits"),
 }
 CAVEATS = [
@@ -83,7 +84,7 @@ def insights(
     sources = sorted({s for t in types for s in SOURCES_BY_TYPE[t]})
     as_of = max((r["as_of"] for r in rows), default=None) or ctx.created_at
     return InsightsResponse(
-        data=[Insight(**r) for r in rows],
+        data=[Insight(**r, source_ids=list(SOURCES_BY_TYPE[r["type"]])) for r in rows],
         meta=ctx.meta(as_of=as_of, sources=sources, caveats=notes, tables=None,
                       coverage={"insights": len(rows), "in_release": len(_all(ctx) or [])}),
     )

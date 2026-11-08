@@ -127,7 +127,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     ? chosen.map((h) => weekdayProfile(profileRes.value.data, h.hospital_code, window.from, window.to, mode)).filter((p): p is Profile => p != null)
     : [];
 
-  // 4. NUHS vs MOH.
+  // 4. NUHS vs MOH. Two sources current at different times: the card shows each one's own date (audit H-1).
   const pairs = liveRes.ok ? slopePairs(daily, liveRes.value.data).filter((p) => selected.includes(p.code)) : [];
   const slopeMeta: Meta | null = liveRes.ok ? { ...liveRes.value.meta, as_of: meta.as_of,
     sources: [...liveRes.value.meta.sources, ...meta.sources.filter((s) => s.id === "moh_bed_waits")] } : null;
@@ -176,7 +176,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         ) : null}
 
         {slopeMeta ? (
-          <ChartCard title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} cadence="weekly"
+          <ChartCard title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} cadence="weekly" bySource
                      description={<Glossed text="For each NUHS site: MOH's latest daily median beside NUHS's latest estimate of the bed wait. This chart shows values only; the comparison toggle doesn't apply." />}>
             <SlopeChart pairs={pairs} finding={findingFor(findings, "source_gap")} />
           </ChartCard>

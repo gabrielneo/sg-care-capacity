@@ -8,10 +8,13 @@ const STYLE: Record<Level, string> = {
   unknown: "bg-page text-muted border-line",
 };
 
-/** Green / amber / red from the age of as_of, always with a text label (never colour alone). */
-export function FreshnessBadge({ asOf, cadence, now }: { asOf: string; cadence: Cadence; now?: Date }) {
+/**
+ * Green / amber / red from the age of as_of, always with a text label (never colour alone). `source`
+ * names the publisher when a figure shows one badge per source.
+ */
+export function FreshnessBadge({ asOf, cadence, now, source }: { asOf: string; cadence: Cadence; now?: Date; source?: string }) {
   const f = freshness(asOf, cadence, now);
-  const text = f.age ? `${f.label} · ${CADENCE_TEXT[cadence]}, ${f.age} old` : f.label;
+  const text = `${source ? `${source}: ` : ""}${f.age ? `${f.label} · ${CADENCE_TEXT[cadence]}, ${f.age} old` : f.label}`;
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${STYLE[f.level]}`}

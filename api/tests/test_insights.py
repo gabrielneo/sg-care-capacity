@@ -23,7 +23,8 @@ def test_lists_published_insights_by_rank(client):
     meta = body["meta"]
     assert meta["as_of"] == "2026-10-25" and meta["coverage"] == {"insights": 5, "in_release": 5}
     assert "A suggested action appears only after the author has reviewed it." in meta["caveats"]
-    assert [s["id"] for s in meta["sources"]] == ["datagov_chas", "moh_bed_waits", "moh_ed_attendances", "singstat_residents"]
+    assert [s["id"] for s in meta["sources"]] == ["datagov_chas", "datagov_planning_areas", "moh_bed_waits", "moh_ed_attendances",
+                                                "singstat_residents"]
 
 
 @pytest.mark.parametrize("params, expected", [
@@ -74,3 +75,16 @@ def test_a_release_from_before_charts_serves_its_insights_with_nulls(tmp_path):
         body = c.get(API).json()
     assert len(body["data"]) == 5 and all(r["display"] is None and r["chart"] is None for r in body["data"])
     assert "Some insights have no chart data: this data release predates it." in body["meta"]["caveats"]
+
+
+def test_each_insight_names_the_sources_it_uses(client):
+    # An access finding's data is from the clinic list (2024) and SingStat, not MOH (audit M-2).
+    body = client.get("/api/v1/insights").json()
+    by_type = {i["type"]: i["source_ids"] for i in body["data"]}
+    assert by_type["access_gap"] == ["datagov_chas", "singstat_residents", "datagov_planning_areas"]
+    for t in ("trend", "anomaly", "weekday"):
+        if t in by_type:
+            assert by_type[t] == ["moh_bed_waits"]
+    listed = {s["id"]: s["as_of"] for s in body["meta"]["sources"]}
+    for i in body["data"]:
+        assert set(i["source_ids"]) <= set(listed)                 # each one's own as_of is in meta.sources

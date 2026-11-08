@@ -393,6 +393,9 @@ class InsightChart(BaseModel):
 class Insight(BaseModel):
     insight_id: str
     type: Literal["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
+    source_ids: list[str] = Field(default_factory=list, description=(
+        "The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED "
+        "finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries"))
     entity: str = Field(description="Hospital code, planning area, or 'All hospitals'")
     headline: str = Field(description="One sentence, at most 20 words, plain language")
     detail: str = Field(description="At most two sentences")

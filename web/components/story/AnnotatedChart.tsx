@@ -43,6 +43,9 @@ export interface AnnotatedChartProps {
   xLabel?: string | null;
   caveat?: string | null;
   headingLevel?: 2 | 3;
+  /** For a finding's chart: each source's own date, and the finding's data window (see Provenance). */
+  bySource?: boolean;
+  findingTo?: string | null;
   height?: number;
 }
 
@@ -85,9 +88,10 @@ export function visibleLabels(n: number, highlighted: number[]): { always: Set<n
 const HALO = { stroke: colors.surface, strokeWidth: 3, paintOrder: "stroke" as const, strokeLinejoin: "round" as const };
 
 export function AnnotatedChart(props: AnnotatedChartProps) {
-  const { id, title, description, meta, caveat, headingLevel = 2 } = props;
+  const { id, title, description, meta, caveat, headingLevel = 2, bySource, findingTo } = props;
   return (
-    <ChartCard title={title} slug={id} meta={meta} description={description} caveat={caveat} headingLevel={headingLevel}>
+    <ChartCard title={title} slug={id} meta={meta} description={description} caveat={caveat} headingLevel={headingLevel}
+               bySource={bySource} findingTo={findingTo}>
       <Plot {...props} />
     </ChartCard>
   );

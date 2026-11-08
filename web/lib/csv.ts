@@ -15,13 +15,18 @@ export function cell(v: Cell): string {
 }
 
 /**
- * A CSV file: the columns, then one line per row, each with the provenance columns appended. A
+ * A CSV file: the columns, then one line per row, each with the provenance columns appended
+ * (rowMeta gives a row its own date and sources, e.g. one finding's). A
  * spreadsheet formula injection guard is not needed: values come from the published release.
  */
-export function toCsv(columns: string[], rows: Cell[][], meta: Pick<Meta, "as_of" | "sources">): string {
-  const source = meta.sources.map((s) => s.name).join("; ");
+export function toCsv(columns: string[], rows: Cell[][], meta: Pick<Meta, "as_of" | "sources">,
+                      rowMeta?: (index: number) => Pick<Meta, "as_of" | "sources">): string {
+  const sourceText = (m: Pick<Meta, "sources">) => m.sources.map((s) => s.name).join("; ");
   const lines = [[...columns, "data_as_of", "source"].map(cell).join(",")];
-  for (const r of rows) lines.push([...r, meta.as_of, source].map(cell).join(","));
+  rows.forEach((r, i) => {
+    const m = rowMeta ? rowMeta(i) : meta;            // rows from different sources carry their own (audit M-2)
+    lines.push([...r, m.as_of, sourceText(m)].map(cell).join(","));
+  });
   return `${lines.join("\r\n")}\r\n`;
 }
 

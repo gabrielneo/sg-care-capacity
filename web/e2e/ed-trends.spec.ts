@@ -88,6 +88,12 @@ test.describe("ED Trends: difference-first charts", () => {
     await page.goto("/ed-trends");
     await expect(page.getByTestId("slope")).not.toHaveCount(0);
     expect(await plain(page.getByTestId("slope-caveat"))).toMatch(/^Different days and different measures/);
+    // Each source's own date and badge, not MOH's date for NUHS's figures (audit H-1).
+    const card = page.getByTestId("chart-card").filter({ has: page.getByTestId("slope-chart") });
+    expect(await plain(card.getByTestId("provenance-line"))).toMatch(
+      /^Data as of 1 Nov 2026, 12:01 pm SGT \(NUHS\) and 31 Oct 2026 \(MOH\) · Source:/);
+    await expect(card.getByText(/^NUHS: /)).toBeVisible();
+    await expect(card.getByText(/^MOH: /)).toBeVisible();
     // Only bounded readings ("< 1 hour") are named under the chart; this fixture's bed waits are values.
     await expect(page.getByTestId("slope-bounded")).toHaveCount(0);
   });

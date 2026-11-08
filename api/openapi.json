@@ -1394,6 +1394,14 @@
             "title": "Rank Score",
             "type": "number"
           },
+          "source_ids": {
+            "description": "The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Ids",
+            "type": "array"
+          },
           "type": {
             "enum": [
               "trend",

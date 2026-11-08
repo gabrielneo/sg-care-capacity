@@ -44,6 +44,11 @@ test.describe("Overview: the scroll story", () => {
     await expect(number.locator(".sr-only")).toHaveText(`${top!.display.value_text} ${top!.display.unit_text}`);
     expect(await plain(page.getByRole("heading", { level: 1 }))).toBe(top!.headline);
     await expect(page.getByTestId("hero").getByTestId("provenance-line")).toHaveText(AS_OF);
+    // The source's own date and badge; the finding's window is stated separately (audit M-1).
+    const hero = page.getByTestId("hero");
+    await expect(hero.getByTestId("finding-window")).toHaveText(/^ · This finding uses data to \d{1,2} [A-Z][a-z]{2} \d{4}$/);
+    // (Checked by date, not by colour: the colour depends on the day the test runs.)
+    await expect(hero.locator("[data-level]")).toHaveAttribute("title", /^Data as of 31 Oct 2026;/);   // MOH's day, not the window's end
     await expect(page.getByTestId("hero").locator("[data-level]")).toBeVisible();          // the freshness badge
   });
 

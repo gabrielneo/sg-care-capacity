@@ -59,6 +59,23 @@ test.describe("CSV downloads", () => {
     for (const r of data) expect(r[2]! >= "2026-10-01" && r[2]! <= "2026-10-31").toBe(true);
   });
 
+  test("each finding is dated by and credited to its own sources (audit M-2)", async ({ request }) => {
+    const [cols, ...data] = rows(await (await request.get("/export/findings.csv")).text());
+    const col = (name: string) => cols!.indexOf(name);
+    const access = data.filter((r) => r[col("type")] === "access_gap");
+    const ed = data.filter((r) => ["trend", "anomaly", "weekday"].includes(r[col("type")]!));
+    expect(access.length).toBeGreaterThan(0);
+    for (const r of access) {
+      expect(r[col("data_as_of")]).toMatch(/^2024-06-06/);                       // the CHAS clinic list's date
+      expect(r[col("source")]).toContain("CHAS");
+      expect(r[col("source")]).not.toContain("MOH");
+    }
+    for (const r of ed) {
+      expect(r[col("data_as_of")]).toBe("2026-10-31");                          // MOH's latest day, not the window's end
+      expect(r[col("source")]).not.toContain("CHAS");
+    }
+  });
+
   test("a missing figure is an empty cell, never 0", async ({ request }) => {
     // The same areas from the API itself (the e2e API runs on port 8791).
     const api = await (await request.get("http://127.0.0.1:8791/api/v1/areas/access")).json() as

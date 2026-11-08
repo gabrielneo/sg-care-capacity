@@ -739,6 +739,11 @@ export interface components {
              */
             rank_score: number;
             /**
+             * Source Ids
+             * @description The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries
+             */
+            source_ids?: string[];
+            /**
              * Type
              * @enum {string}
              */

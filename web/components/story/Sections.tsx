@@ -6,6 +6,7 @@ import { BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_S
 import { term } from "@/lib/glossary";
 import { formatAsOf } from "@/lib/dates";
 import { cadenceFor } from "@/lib/freshness";
+import { findingMeta, sourceDates } from "@/lib/provenance";
 import {
   chartFormat,
   chartTitle,
@@ -30,11 +31,24 @@ import { Scrolly } from "./Scrolly";
 const NUMBER_WORDS = ["no", "one", "two", "three"];
 const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
-/** Data as of {date} · Source: {publishers}, for figures outside a chart card. */
-export function AsOfLine({ asOf, meta }: { asOf: string; meta: Meta }) {
+/**
+ * Data as of {date} · Source: {publishers}, for figures outside a chart card. bySource gives each
+ * publisher's own date; findingTo adds the finding's data window (see Provenance).
+ */
+export function AsOfLine({ asOf, meta, bySource = false, findingTo }: { asOf: string; meta: Meta; bySource?: boolean;
+                                                                       findingTo?: string | null }) {
+  const perSource = bySource ? sourceDates(meta.sources) : [];
+  const dates = perSource.length > 1 ? perSource : [{ name: "", asOf }];
   return (
     <p data-testid="provenance-line">
-      Data as of <time dateTime={asOf}>{formatAsOf(asOf)}</time>
+      Data as of{" "}
+      {dates.map((d, i) => (
+        <span key={d.name || "all"}>
+          {i > 0 ? " and " : null}
+          <time dateTime={d.asOf}>{formatAsOf(d.asOf)}</time>
+          {d.name ? ` (${d.name})` : null}
+        </span>
+      ))}
       {" · Source: "}
       {publishers(meta.sources).map((p, i) => (
         <span key={p.name}>
@@ -42,6 +56,11 @@ export function AsOfLine({ asOf, meta }: { asOf: string; meta: Meta }) {
           <span title={p.full}><Glossed text={p.name} /></span>
         </span>
       ))}
+      {findingTo ? (
+        <span data-testid="finding-window">
+          {" · This finding uses data to "}<time dateTime={findingTo}>{formatAsOf(findingTo)}</time>
+        </span>
+      ) : null}
     </p>
   );
 }
@@ -49,6 +68,7 @@ export function AsOfLine({ asOf, meta }: { asOf: string; meta: Meta }) {
 /** 1. The top finding's key number, counting up once, and its headline. */
 export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
   const d = insight.display;
+  const own = findingMeta(insight, meta);       // dated by its sources, not by the end of its window
   const spoken = d.unit_text ? `${d.value_text} ${d.unit_text}` : d.value_text;
   return (
     <header className="pb-10 pt-2 sm:pt-6" data-testid="hero">
@@ -70,8 +90,8 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
       </h1>
       <p className="mt-2 max-w-3xl text-sm text-muted" data-testid="hero-bed-wait"><Glossed text={BED_WAIT_SHORT} /></p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
-        <FreshnessBadge asOf={insight.as_of} cadence={cadenceFor(meta)} />
-        <AsOfLine asOf={insight.as_of} meta={meta} />
+        <FreshnessBadge asOf={own.as_of} cadence={cadenceFor(own)} />
+        <AsOfLine asOf={own.as_of} meta={own} bySource findingTo={insight.as_of} />
       </div>
     </header>
   );
@@ -134,7 +154,9 @@ function StoryChart({ insight, meta, where }: { insight: StoryInsight; meta: Met
       id={`${insight.insight_id}-${where}`}
       title={chartTitle(insight)}
       description={insight.chart.y_label}
-      meta={{ ...meta, as_of: insight.as_of }}
+      meta={findingMeta(insight, meta)}
+      bySource
+      findingTo={insight.as_of}
       format={chartFormat(insight)}
       headingLevel={3}
       {...fromInsightChart(insight.chart)}

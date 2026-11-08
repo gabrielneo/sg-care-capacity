@@ -23,7 +23,7 @@ test.describe("One-page summary", () => {
     const unspelled = (t: string) => t.replace(/(?:[A-Z][a-z]+ )+\(([A-Z]{2,})\)/g, "$1");
     for (const [i, f] of expected.entries()) expect(unspelled(await seen(findings.nth(i)))).toContain(f.headline);
     for (const f of await findings.all()) await expect(f.getByTestId("summary-metric")).not.toBeEmpty();   // what the number measures
-    for (const f of await findings.all()) await expect(f).toContainText(/Data as of \d{1,2} [A-Z][a-z]{2} \d{4}\./);
+    for (const f of await findings.all()) await expect(f).toContainText(/Uses data to \d{1,2} [A-Z][a-z]{2} \d{4}\./);
 
     await expect(page.getByTestId("summary-area").locator("th")).toHaveText(gaps.data.map((g) => g.entity).slice(0, 5));
     await expect(page.getByTestId("summary-limits").locator("li")).toHaveCount(3);
