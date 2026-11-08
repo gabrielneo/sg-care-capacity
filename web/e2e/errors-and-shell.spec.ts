@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { DOWN, expectNoHorizontalScroll } from "./helpers";
 
-const DATA_PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality"];
+const DATA_PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality", "/summary"];
 
 test.describe("when the API is down", () => {
   for (const path of DATA_PAGES) {

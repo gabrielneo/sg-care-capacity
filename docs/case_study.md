@@ -293,7 +293,7 @@ not yet validated with users.
 | S1 | Access measured as travel time, not straight-line distance | Should | [Methodology limitations](methodology.md#limitations); persona 2 places services "to improve accessibility for Seniors" | Not built: needs a routing service |
 | S2 | Access by subzone, not just by area | Should | [Methodology choices](methodology.md#choices-made-deliberately); persona 2 plans by sub-region, closer to subzones than to the 55 areas | Blocked: no Master Plan 2025 subzone boundaries are published |
 | S3 | Export any chart's figures as CSV | Should | Both personas cross-check against their own data; persona 2's role builds dashboards | Built: a CSV link under each chart on ED Trends and the Access Map, and one for every finding; each row carries its "Data as of" date and source (`csv.test.ts`, `web/e2e/exports.spec.ts`) |
-| S4 | A printable one-page summary of the latest findings | Should | The author's requirement: a page a planner can bring to a meeting | Not built |
+| S4 | A printable one-page summary of the latest findings | Should | The author's requirement: a page a planner can bring to a meeting | Built: `/summary`, linked from the Overview: the top findings, the priority areas and what the data can't show, each with its date and source. A test prints it and checks it fills one A4 page (`summary.test.ts`, `web/e2e/summary.spec.ts`) |
 | C1 | NUHS estimates refreshed more often than weekly | Could | Live page caveat; planners decide monthly or yearly, so near-live data matters more to operations staff | Partly: collected every 3 hours into a separate store, not published |
 | C2 | Compare chosen areas or hospitals side by side | Could | Useful for prioritising; the sortable table already covers most of it | Not built |
 | W1 | ED visits by age or triage category | Won't | Not published by MOH | Not possible with public data |
@@ -357,14 +357,12 @@ Each record has the full technical reasoning; follow the number.
 
 **Next steps,** in the order recommended:
 
-1. **A printable one-page summary (S4).** It can be built now from data the site already has, and
-   it serves the two personas directly.
-2. **Travel-time access (S1).** The biggest gain in accuracy; it needs a routing service, such as
+1. **Travel-time access (S1).** The biggest gain in accuracy; it needs a routing service, such as
    OneMap's.
-3. **Access by subzone (S2),** once URA publishes the Master Plan 2025 subzone boundaries.
-4. **Validate the personas.** Not a build, but the most valuable step: talk to one MOH and one AIC
+2. **Access by subzone (S2),** once URA publishes the Master Plan 2025 subzone boundaries.
+3. **Validate the personas.** Not a build, but the most valuable step: talk to one MOH and one AIC
    planner, with the three questions in the Personas section.
-5. **Look beyond the ED.** Data on other factors would strengthen the checks and the tests behind
+4. **Look beyond the ED.** Data on other factors would strengthen the checks and the tests behind
    the findings: bed occupancy, discharges, and admissions by age or urgency.
 
 ### What surprised, what was hard, what would change

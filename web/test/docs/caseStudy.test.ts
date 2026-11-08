@@ -80,6 +80,8 @@ describe("case study", () => {
     const moscow = section(caseStudy, "Prioritised requirements (MoSCoW)");
     const s3 = moscow.split("\n").find((l) => l.startsWith("| S3 |"))!;
     expect(s3).toMatch(/\| Built: .*csv\.test\.ts.*exports\.spec\.ts/);
+    const s4 = moscow.split("\n").find((l) => l.startsWith("| S4 |"))!;
+    expect(s4).toMatch(/\| Built: `\/summary`.*summary\.test\.ts.*summary\.spec\.ts/);
   });
 
   it("success metrics have targets, say whether each is met, and claim no outcome", () => {

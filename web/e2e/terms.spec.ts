@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 
 import { blockTiles, expectNoA11yViolations } from "./helpers";
 
-const PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality", "/methodology", "/case-study"];
+const PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality", "/methodology", "/case-study", "/summary"];
 
 const openapi = JSON.parse(readFileSync(path.resolve(__dirname, "../../api/openapi.json"), "utf8"));
 const COLUMNS: string[] = [...new Set(Object.values(openapi.components.schemas as Record<string, { properties?: object }>)

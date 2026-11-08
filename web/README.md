@@ -26,6 +26,8 @@ calls the API, so the site needs no CORS settings.
 | **Data Quality** `/data-quality` | The checks behind this snapshot, grouped by what a failure does: block publishing, quarantine rows, or warn. Failures come first; each check links to its explanation. Also a coverage grid (hospital × day, 13/26/52 weeks) with five states told apart by pattern, plus missing dates as text, and freshness for each source |
 | **Methodology** `/methodology` | `docs/methodology.md` plus the data dictionary's metric definitions: sources, how data gets from download to the site, ED and access measures, the geospatial method, limitations, and what this data can't tell you |
 | **Case Study** `/case-study` | `docs/case_study.md`: problem, stakeholders, personas, as-is and to-be patient flow (Mermaid), MoSCoW, success metrics, decision log, limitations. Shows a draft banner while `TODO(me)` items remain |
+| **Summary** `/summary` | The latest findings on one printable A4 page: the top findings, the five priority areas and what the data can't show, each with its date and source. Linked from the Overview; print styles drop the site's header, nav and footer |
+| **CSV downloads** `/export/ed-daily.csv`, `/export/ed-weekly.csv`, `/export/areas.csv`, `/export/findings.csv` | The figures behind each chart, linked under it. Every row carries `data_as_of` and `source`; a missing value is an empty cell. The ED files follow the page's hospital and date filters |
 | **Decisions** `/decisions` | The architecture decision records in `docs/adr/` |
 | **Docs** `/docs/data-dictionary`, `/docs/data-quality`, `/docs/runbook`, `/docs/insights-method` | The rest of `docs/`, rendered |
 
