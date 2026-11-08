@@ -15,19 +15,25 @@ export interface AreaMetric {
   unit: string;
   decimals: number;
   higherIsBetter: boolean;
+  /** The legend's reading of the shading. Darker is always worse access. */
+  darker: string;
   /** dim_metric id, for its caveat. */
   metricId: string;
 }
 
 export const AREA_METRICS: readonly AreaMetric[] = [
   { key: "clinics_per_1k_seniors", label: "CHAS GP clinics per 1,000 residents aged 65+", unit: "per 1,000 aged 65+",
-    decimals: 2, higherIsBetter: true, metricId: "fct_area_access.clinics_per_1k_seniors" },
+    decimals: 2, higherIsBetter: true, darker: "Darker means fewer clinics per senior: worse access.",
+    metricId: "fct_area_access.clinics_per_1k_seniors" },
   { key: "cdmp_clinics_per_1k_seniors", label: "CDMP GP clinics per 1,000 residents aged 65+", unit: "per 1,000 aged 65+",
-    decimals: 2, higherIsBetter: true, metricId: "fct_area_access.cdmp_clinics_per_1k_seniors" },
+    decimals: 2, higherIsBetter: true, darker: "Darker means fewer chronic-care clinics per senior: worse access.",
+    metricId: "fct_area_access.cdmp_clinics_per_1k_seniors" },
   { key: "pct_area_within_1km_of_cdmp", label: "Share of land within 1 km of a CDMP clinic", unit: "% of land",
-    decimals: 0, higherIsBetter: true, metricId: "fct_area_access.pct_area_within_1km_of_cdmp" },
+    decimals: 0, higherIsBetter: true, darker: "Darker means less land near a CDMP clinic: worse access.",
+    metricId: "fct_area_access.pct_area_within_1km_of_cdmp" },
   { key: "approx_km_centroid_to_nearest_polyclinic", label: "Approximate distance from the centre of the area to the nearest polyclinic",
-    unit: "km", decimals: 1, higherIsBetter: false, metricId: "fct_area_access.approx_km_centroid_to_nearest_polyclinic" },
+    unit: "km", decimals: 1, higherIsBetter: false, darker: "Darker means farther: worse access.",
+    metricId: "fct_area_access.approx_km_centroid_to_nearest_polyclinic" },
 ];
 
 export const DEFAULT_METRIC: MetricKey = "clinics_per_1k_seniors";

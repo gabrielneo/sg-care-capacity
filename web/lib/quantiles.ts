@@ -32,18 +32,24 @@ export interface LegendClass {
   color: string;
 }
 
-/** Colours for n classes, spread across the 5-step scale so the ends stay light and dark. */
-export function classColors(n: number): string[] {
+/**
+ * Colours for n classes, lowest value first, spread across the 5-step scale so the ends stay light
+ * and dark. The site's rule: darker = worse access. So when a higher value is better (more clinics),
+ * the lowest class is the darkest (lowIsDark); when a higher value is worse (distance), it is the lightest.
+ */
+export function classColors(n: number, lowIsDark = false): string[] {
   if (n <= 0) return [];
   if (n === 1) return [mapScale[2]];
-  return Array.from({ length: n }, (_, i) => mapScale[Math.round((i * (mapScale.length - 1)) / (n - 1))] as string);
+  const out = Array.from({ length: n }, (_, i) => mapScale[Math.round((i * (mapScale.length - 1)) / (n - 1))] as string);
+  return lowIsDark ? out.reverse() : out;
 }
 
-export function legendClasses(values: ReadonlyArray<number | null | undefined>, breaks: readonly number[]): LegendClass[] {
+export function legendClasses(values: ReadonlyArray<number | null | undefined>, breaks: readonly number[],
+                              lowIsDark = false): LegendClass[] {
   const v = values.filter((x): x is number => typeof x === "number" && Number.isFinite(x));
   if (v.length === 0) return [];
   const n = breaks.length + 1;
-  const colors = classColors(n);
+  const colors = classColors(n, lowIsDark);
   return Array.from({ length: n }, (_, i) => {
     const members = v.filter((x) => classify(x, breaks) === i);
     return { index: i, min: Math.min(...members), max: Math.max(...members), count: members.length, color: colors[i] as string };

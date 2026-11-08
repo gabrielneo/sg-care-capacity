@@ -34,11 +34,13 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
   const { breaks, classes, colors, noData, smallAreas } = useMemo(() => {
     const values = areas.features.map((f) => f.properties[metric.key]);
     const b = quantileBreaks(values);
-    return { breaks: b, classes: legendClasses(values, b), colors: classColors(b.length + 1),
+    // Darker = worse access, on every measure (and in the 3D view).
+    return { breaks: b, classes: legendClasses(values, b, metric.higherIsBetter),
+             colors: classColors(b.length + 1, metric.higherIsBetter),
              noData: values.filter((v) => v == null).length,
              smallAreas: areas.features.filter((f) => f.properties[metric.key] != null
                && (f.properties.residents_65plus ?? 0) < 1000).length };
-  }, [areas, metric.key]);
+  }, [areas, metric.key, metric.higherIsBetter]);
 
   const area = areas.features.find((f) => f.properties.planning_area_code === selected)?.properties ?? null;
   const shownClinics = clinics.filter((c) => !cdmpOnly || c.has_cdmp === true).length;

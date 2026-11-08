@@ -13,7 +13,7 @@ describe("MapLegend", () => {
   it("states the method, each class's range and count, and the no-data count", () => {
     render(<MapLegend metric={metricByKey("clinics_per_1k_seniors")} classes={legendClasses(values, breaks)} noData={2} smallAreas={1} />);
     const legend = screen.getByTestId("map-legend");
-    expect(legend).toHaveTextContent("Darker means more clinics: better access.");
+    expect(legend).toHaveTextContent("Darker means fewer clinics per senior: worse access.");
     expect(legend).toHaveTextContent("The map is shaded in five groups with equal numbers of areas");
     expect(legend).not.toHaveTextContent(/quantile/i);
     expect(legend).toHaveTextContent("0.50 – 1.10 per 1,000 aged 65+ (2 areas)");

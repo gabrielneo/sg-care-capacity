@@ -40,4 +40,12 @@ describe("quantile breaks", () => {
     expect(classColors(3)).toEqual([mapScale[0], mapScale[2], mapScale[4]]);
     expect(classColors(2)).toEqual([mapScale[0], mapScale[4]]);
   });
+
+  it("darker = worse access: when higher is better, the lowest class is the darkest", () => {
+    expect(classColors(5, true)).toEqual([...mapScale].reverse());
+    expect(classColors(3, true)).toEqual([mapScale[4], mapScale[2], mapScale[0]]);
+    const classes = legendClasses([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], quantileBreaks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), true);
+    expect(classes[0]!.color).toBe(mapScale[4]);                 // fewest clinics: darkest
+    expect(classes.at(-1)!.color).toBe(mapScale[0]);
+  });
 });
