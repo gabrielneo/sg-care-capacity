@@ -17,7 +17,8 @@ test.describe("Access Map", () => {
     const legend = await seen(page.getByTestId("map-legend"));
     expect(legend).toContain("CHAS GP clinics per 1,000 residents aged 65+");
     expect(legend).toContain("five groups with equal numbers of areas");
-    expect(legend).toContain("No data (1 area");                           // Tuas: no residents
+    expect(legend).toContain("Not applicable: no residents aged 65+ (1 area)");   // Tuas: no residents, not missing
+    expect(legend).toContain("No data (0 areas)");
     const attribution = page.locator(".leaflet-control-attribution");
     await expect(attribution).toContainText("OneMap");
     await expect(attribution).toContainText("Singapore Land Authority");

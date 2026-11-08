@@ -21,6 +21,13 @@ describe("MapLegend", () => {
     expect(legend).toHaveTextContent("1 of the areas shown have fewer than 1,000 residents aged 65+");
   });
 
+  it("keeps areas with no residents aged 65+ apart from missing data (audit L-5)", () => {
+    render(<MapLegend metric={metricByKey("cdmp_clinics_per_1k_seniors")} classes={[]} noData={0} noResidents={13} />);
+    const legend = screen.getByTestId("map-legend");
+    expect(screen.getByTestId("legend-no-residents")).toHaveTextContent("Not applicable: no residents aged 65+ (13 areas)");
+    expect(legend).toHaveTextContent("No data (0 areas)");
+  });
+
   it("says darker is worse for distance", () => {
     render(<MapLegend metric={metricByKey("approx_km_centroid_to_nearest_polyclinic")} classes={[]} noData={0} />);
     expect(screen.getByTestId("map-legend")).toHaveTextContent("Darker means farther: worse access.");

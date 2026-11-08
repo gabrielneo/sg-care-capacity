@@ -4,9 +4,12 @@ import type { LegendClass } from "@/lib/quantiles";
 
 import { Glossed } from "../terms/Glossed";
 
-/** Class breaks, the method used, and how many areas have no data. Plain HTML, outside the map. */
-export function MapLegend({ metric, classes, noData, smallAreas = 0 }: {
-  metric: AreaMetric; classes: LegendClass[]; noData: number; smallAreas?: number }) {
+/**
+ * Class breaks, the method used, and how many areas have no value: missing data, or a per-senior
+ * ratio that is not applicable because no residents aged 65+ live there. Plain HTML, outside the map.
+ */
+export function MapLegend({ metric, classes, noData, noResidents = 0, smallAreas = 0 }: {
+  metric: AreaMetric; classes: LegendClass[]; noData: number; noResidents?: number; smallAreas?: number }) {
   return (
     <div className="text-xs text-ink" data-testid="map-legend">
       <p className="font-semibold"><Glossed text={metric.label} /></p>
@@ -26,10 +29,17 @@ export function MapLegend({ metric, classes, noData, smallAreas = 0 }: {
             <span className="text-muted">({c.count} {c.count === 1 ? "area" : "areas"})</span>
           </li>
         ))}
+        {noResidents > 0 ? (
+          <li className="flex items-center gap-2" data-testid="legend-no-residents">
+            <span aria-hidden="true" className="bg-nodata h-4 w-6 rounded-sm border border-line" />
+            <span>Not applicable: no residents aged 65+</span>{" "}
+            <span className="text-muted">({noResidents} {noResidents === 1 ? "area" : "areas"})</span>
+          </li>
+        ) : null}
         <li className="flex items-center gap-2">
           <span aria-hidden="true" className="bg-nodata h-4 w-6 rounded-sm border border-line" />
           <span>No data</span>{" "}
-          <span className="text-muted">({noData} {noData === 1 ? "area" : "areas"}, e.g. no residents aged 65+)</span>
+          <span className="text-muted">({noData} {noData === 1 ? "area" : "areas"})</span>
         </li>
       </ul>
       {smallAreas > 0 && metric.key.endsWith("per_1k_seniors") ? (

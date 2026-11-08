@@ -376,11 +376,11 @@ data release is published.
 | M-5 | Fixed | Data dictionary defines the mart `as_of` (download time) and the displayed "Data as of" (source's latest date) | `be946a3` |
 | L-1, L-2, L-8 | Fixed | "Average of daily median bed waits"; "Median bed wait" on the volume chart; Alexandra's UCC called a UCC | `2416f62` |
 | L-7 | Fixed | Each finding's warnings are only those on its own tables (`dq_tables`) | `2416f62`, `8e82014` |
-| L-3, L-4, L-5, L-6, L-9 | Fixed | Weekday table lists only chosen hospitals; loading skeleton matches; "n/a (no residents)"; release-date label without badge; equal-as-shown reads "about the same" | `8e82014` |
+| L-3, L-4, L-5, L-6, L-9 | Fixed | Weekday table lists only chosen hospitals; loading skeleton matches; "n/a (no residents)" (and its own map legend row); release-date label without badge; equal-as-shown reads "about the same" | `8e82014`, and the legend in the commit after |
 | I-2 | Fixed | WARN check `range.bed_wait_zero` flags daily medians of 0, kept as published | `2416f62` |
 | I-4 | Fixed | The yearly A&E source's basis says it is not the latest year covered | `8e82014` |
 | I-1, I-3, I-5 | No change needed | Consistent with the documented rounding and gap handling | |
 | I-6 | No change needed | The case study presents these as simulated testing and internal status, not outcomes | |
 
-Not changed: the map legend still groups areas with no residents aged 65+ under "No data" (the
-table, area panel and map labels say "n/a (no residents)").
+L-5 also covers the 2D map legend: areas with no residents aged 65+ are listed as "Not applicable:
+no residents aged 65+", apart from "No data".

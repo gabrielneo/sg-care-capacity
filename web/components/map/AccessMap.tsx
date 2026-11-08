@@ -31,12 +31,15 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
   const ids = { metric: useId(), clinics: useId() };
   const metric = metricByKey(metricKey);
 
-  const { breaks, classes, colors, noData, smallAreas } = useMemo(() => {
+  const { breaks, classes, colors, noData, noResidents, smallAreas } = useMemo(() => {
     const values = areas.features.map((f) => f.properties[metric.key]);
     const b = quantileBreaks(values);
     // Darker = worse access, on every measure (and in the 3D view).
     return { breaks: b, classes: legendClasses(values, b, metric.higherIsBetter),
              colors: classColors(b.length + 1, metric.higherIsBetter),
+             // A per-senior ratio where no seniors live is not applicable, not missing (audit L-5).
+             noResidents: metric.key.includes("per_1k") ? areas.features.filter((f) => f.properties[metric.key] == null
+               && f.properties.residents_65plus === 0).length : 0,
              noData: values.filter((v) => v == null).length,
              smallAreas: areas.features.filter((f) => f.properties[metric.key] != null
                && (f.properties.residents_65plus ?? 0) < 1000).length };
@@ -82,7 +85,7 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
         <div className="space-y-2">
-          <MapLegend metric={metric} classes={classes} noData={noData} smallAreas={smallAreas} />
+          <MapLegend metric={metric} classes={classes} noData={noData - noResidents} noResidents={noResidents} smallAreas={smallAreas} />
           {caveats[metric.metricId] ? <p className="text-xs text-muted"><Glossed text={caveats[metric.metricId]!} /></p> : null}
         </div>
       </div>
