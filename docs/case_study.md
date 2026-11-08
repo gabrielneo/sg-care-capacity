@@ -125,33 +125,42 @@ proven use.
 
 ## Personas
 
-Two personas, to be written from research. The template below has no invented details.
+Two **proto-personas**: hypotheses about the two users named in the problem statement, built from
+each organisation's published description of the role. No one has been interviewed. They are
+labelled by role, not given invented names, so they can't be mistaken for research findings. Each
+row is a hypothesis to test with real planners.
 
-### Persona 1
+### Persona 1: MOH healthcare services planner
 
-TODO(me): Choose who this is (e.g. from the stakeholder list) and why.
-
-| | |
-|---|---|
-| Role and context | TODO(me) |
-| Goals | TODO(me) |
-| Frustrations | TODO(me) |
-| Decisions they make that this data could inform | TODO(me) |
-| What on this site serves them | TODO(me) |
-| Evidence behind this persona | TODO(me) |
-
-### Persona 2
-
-TODO(me): Choose who this is and why.
+**Why this persona:** MOH publishes the bed-wait data and plans services across care sectors. Its
+planners are the first users named in the problem statement.
 
 | | |
 |---|---|
-| Role and context | TODO(me) |
-| Goals | TODO(me) |
-| Frustrations | TODO(me) |
-| Decisions they make that this data could inform | TODO(me) |
-| What on this site serves them | TODO(me) |
-| Evidence behind this persona | TODO(me) |
+| Role and context | Plans Singapore's healthcare services, infrastructure and facilities across primary, acute, intermediate, long-term and ageing care (MOH's description of Healthcare Services Planning). |
+| Goals | Keep care accessible as the population ages. See where ED pressure is building across the 9 public ED sites, and whether care is shifting to family doctors where seniors live. |
+| Likely frustrations (hypothesis) | MOH's bed waits are daily medians per hospital, with no usual level to compare against. Hospital figures and area figures sit in separate releases with different dates. A single bad week is hard to tell apart from a lasting change. |
+| Decisions this data could inform | Which hospitals' bed waits to look into first. Whether a rise is a one-off week or a steady trend. Which areas to check when weighing primary care capacity against the number of seniors. |
+| What on this site serves them | The Overview's ranked findings; ED Trends, comparing each hospital with its own usual level; the Access Map's priority areas; Data Quality, showing what each figure has passed. |
+| Evidence behind this persona | MOH's [Careers](https://www.moh.gov.sg/about-us/join-us/careers/) description of Healthcare Services Planning. Not interviewed. |
+
+### Persona 2: AIC community care planner
+
+**Why this persona:** AIC coordinates aged care services and plans community care capacity, the
+"community" side of right-siting that the Access Map describes.
+
+| | |
+|---|---|
+| Role and context | Plans and projects the capacity and location of community care services for seniors in each sub-region, such as Active Ageing Centres and Senior Care Centres (AIC's Sub-Regional Planning role). |
+| Goals | Understand seniors' needs and profiles in each sub-region; identify gaps; place services where seniors can reach them. The role also builds dashboards for monitoring. |
+| Likely frustrations (hypothesis) | Resident counts and clinic lists come from different agencies and dates (SingStat June 2026; the CHAS clinic list June 2024). Straight-line distance hides real travel. Small areas give unstable ratios. |
+| Decisions this data could inform | Which areas to look at first for outreach to seniors and caregivers. Where chronic-care (CDMP) clinic access looks thin against the number of seniors, to cross-check with AIC's own service data. |
+| What on this site serves them | The Access Map: 2D, 3D and table views, the "many seniors, few clinics" quadrant and the shortfall bars; the area table to export or sort; the methodology's limits on what access measures mean. |
+| Evidence behind this persona | AIC's job description for [Assistant Director/Senior Manager, Sub-Regional Planning](https://careers.mohh.com.sg/AIC/job/Assistant-DirectorSenior-Manager,-Sub-Regional-Planning/50831844/), and AIC's [About us](https://www.aic.sg/about-us). Not interviewed. |
+
+**To validate both personas,** ask a planner in each role three things. How do they monitor these
+measures today? Which decisions do they make monthly or yearly? What would make them trust a
+figure? Then record here what each persona rests on.
 
 ## Patient flow: as-is and to-be
 
