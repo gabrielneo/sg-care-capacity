@@ -156,6 +156,15 @@ Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_
   it flagged rather than mistake it for an error. **On real data:** 63 days, mostly KTPH in
   March 2023.
 
+### `range.bed_wait_zero`: WARN, row
+
+- **Guards against:** an implausible value passing silently. A daily median wait of exactly 0
+  means half the admitted patients that day waited no time at all for a ward bed.
+- **Threshold:** `median_wait_hours = 0`.
+- **Why:** MOH does publish it, so it is kept as published (never changed or dropped) and flagged
+  for review. **On real data:** Woodlands on 22 and 29 Dec 2025. Raised by the independent audit
+  (`audit_report.md`, I-2).
+
 ### `range.attendances_negative`: ERROR, row
 
 - **Guards against:** a negative attendance count.

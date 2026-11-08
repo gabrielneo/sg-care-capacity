@@ -396,6 +396,8 @@ class Insight(BaseModel):
     source_ids: list[str] = Field(default_factory=list, description=(
         "The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED "
         "finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries"))
+    dq_tables: list[str] = Field(default_factory=list, description=(
+        "The tables this finding is computed from: the warnings in meta.dq_warnings with these tables apply to it"))
     entity: str = Field(description="Hospital code, planning area, or 'All hospitals'")
     headline: str = Field(description="One sentence, at most 20 words, plain language")
     detail: str = Field(description="At most two sentences")

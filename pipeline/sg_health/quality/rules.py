@@ -62,6 +62,10 @@ BED_WAIT_BOUNDS = register(
 BED_WAIT_OVER_24H = register(
     "range.bed_wait_over_24h", Severity.WARN, Scope.ROW,
     f"median_wait_hours above {BED_WAIT_WARN_HOURS} is flagged for review", tables=("moh_bed_waits",))
+BED_WAIT_ZERO = register(
+    "range.bed_wait_zero", Severity.WARN, Scope.ROW,
+    "median_wait_hours of exactly 0 is flagged for review: possible, but implausible for a whole ED day",
+    tables=("moh_bed_waits",))
 ATTENDANCES_NEGATIVE = register(
     "range.attendances_negative", Severity.ERROR, Scope.ROW,
     "total_attendances is not negative", tables=("moh_ed_attendances",))
@@ -74,7 +78,8 @@ def bed_wait_ranges(df: pd.DataFrame, ctx: GateContext):
     out_of_bounds = (v < 0) | (v > BED_WAIT_MAX_HOURS)
     over_24 = (v > BED_WAIT_WARN_HOURS) & ~out_of_bounds
     return [(BED_WAIT_BOUNDS.check_id, out_of_bounds, text + f" is outside 0-{BED_WAIT_MAX_HOURS} h"),
-            (BED_WAIT_OVER_24H.check_id, over_24, text + f" is above {BED_WAIT_WARN_HOURS} h")]
+            (BED_WAIT_OVER_24H.check_id, over_24, text + f" is above {BED_WAIT_WARN_HOURS} h"),
+            (BED_WAIT_ZERO.check_id, v == 0, text + ": a median of 0 for a whole day")]
 
 
 @rule("moh_ed_attendances")

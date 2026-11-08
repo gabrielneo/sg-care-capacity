@@ -99,7 +99,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
                           "query": SQL.format(code=code, start=first, end=last)},
                 action_key="negligible_or_weak" if label in ("negligible", "weak") else "moderate_or_strong",
                 action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
-                chart=chart("bar", f"Bed wait {after}, hours" + (" vs usual for that weekday" if adjusted else ""), points,
+                chart=chart("bar", f"Median bed wait {after}, hours" + (" vs weekday usual" if adjusted else ""), points,
                             ["q5"], x_label="Days in five equal groups by ED visits" + (" vs usual" if adjusted else ""),
                             reference=(0.0, "Usual for that weekday") if adjusted else None),
                 display={"value_text": f"{rho:.2f}", "unit_text": None, "change": None},

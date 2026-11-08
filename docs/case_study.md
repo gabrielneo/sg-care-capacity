@@ -13,7 +13,7 @@ are from weekly data release `data-2026-11-08` unless stated otherwise.
   ([population.gov.sg](https://www.population.gov.sg/our-population/population-trends/longevity/)).
   Counting all residents, including permanent residents, the share is **19.5%**: 828,010 of 4,240,430
   (SingStat). This site uses the residents' figure: it is the one published by area.
-- **ED demand at a high, steady level.** The 8 public EDs MOH reported throughout recorded 868,644
+- **ED demand at a high, steady level.** The 8 sites MOH reported throughout (7 EDs and Alexandra's UCC) recorded 868,644
   ED visits in 2023, 863,988 in 2024 and 869,131 in 2025 (MOH). The all-site total of 949,568 in
   2025 includes Woodlands Hospital, which MOH added to the figures in June 2024.
 - **Long waits for a ward bed, which vary by hospital.** In 2025, the typical time waiting for a ward

@@ -30,14 +30,14 @@ anomaly:
   worse:
     headline: "Bed waits at {hospital} were unusually long in the week of {week}: {value}."
     detail: "The usual level over the {trailing} weeks before was {usual}. A week this far out happens rarely by chance."
-    metric_label: "Average bed wait, week of {week}"
+    metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "higher than usual"
     callout: "{week}: {value}"
   better:
     headline: "Bed waits at {hospital} were unusually short in the week of {week}: {value}."
     detail: "The usual level over the {trailing} weeks before was {usual}. One good week is not yet a trend."
-    metric_label: "Average bed wait, week of {week}"
+    metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "lower than usual"
     callout: "{week}: {value}"
@@ -46,14 +46,14 @@ weekday:
   hospital:
     headline: "At {hospital}, bed waits are longest on {weekday}s, {pct} above its weekly average."
     detail: "Waits differ by day of the week over {weeks} complete weeks. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
-    metric_label: "Average bed wait on {weekday}s"
+    metric_label: "Average of daily median bed waits on {weekday}s"
     comparison_label: "{mean}, its weekly average"
     change_word: "higher than average"
     callout: "{weekday}s: {pct} above average"
   pooled:
     headline: "Across all hospitals, bed waits are longest on {weekday}s, {pct} above each hospital's weekly average."
     detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
-    metric_label: "Bed wait on {weekday}s, compared with each hospital's average"
+    metric_label: "Daily median bed waits on {weekday}s, compared with each hospital's average"
     comparison_label: "{mean}, each hospital's own average"
     change_word: "higher than average"
     callout: "{weekday}s: {pct} above average"

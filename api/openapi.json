@@ -1306,6 +1306,14 @@
             ],
             "description": "Null in data releases from before the engine wrote it"
           },
+          "dq_tables": {
+            "description": "The tables this finding is computed from: the warnings in meta.dq_warnings with these tables apply to it",
+            "items": {
+              "type": "string"
+            },
+            "title": "Dq Tables",
+            "type": "array"
+          },
           "effect_size": {
             "anyOf": [
               {

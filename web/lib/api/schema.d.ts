@@ -697,6 +697,11 @@ export interface components {
             direction: "better" | "worse" | "neutral";
             /** @description Null in data releases from before the engine wrote it */
             display: components["schemas"]["InsightDisplay"] | null;
+            /**
+             * Dq Tables
+             * @description The tables this finding is computed from: the warnings in meta.dq_warnings with these tables apply to it
+             */
+            dq_tables?: string[];
             /** Effect Size */
             effect_size: number | null;
             /**

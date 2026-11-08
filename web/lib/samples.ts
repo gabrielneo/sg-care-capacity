@@ -101,7 +101,7 @@ export const storySample: StoryInsight[] = [
     caveats: ["The test shows that weekdays differ; the peak day is the one with the highest average.",
               "MOH doesn't state the unit; the values are read as hours.", PENDING],
     evidence: { endpoint: "/api/v1/ed/daily?hospital=SKH&from=2026-04-27&to=2026-10-25", query: "SELECT ..." },
-    display: { value_text: "12.7", unit_text: "hours", metric_label: "Average bed wait on Tuesdays",
+    display: { value_text: "12.7", unit_text: "hours", metric_label: "Average of daily median bed waits on Tuesdays",
                comparison_label: "8.9 hours, its weekly average", change: "up", change_word: "higher than average" },
     chart: {
       kind: "bar", y_label: "Hours, average of the daily medians on that weekday", x_label: null,
@@ -121,7 +121,7 @@ export const storySample: StoryInsight[] = [
     caveats: ["One unusual week is not a trend.", "A week's figure is the average of each day's median.",
               "Alexandra Hospital runs an urgent care centre, not a full emergency department.", PENDING],
     evidence: { endpoint: "/api/v1/ed/weekly?hospital=AH&weeks=9", query: "SELECT ..." },
-    display: { value_text: "2.1", unit_text: "hours", metric_label: "Average bed wait, week of 19–25 Oct 2026",
+    display: { value_text: "2.1", unit_text: "hours", metric_label: "Average of daily median bed waits, week of 19–25 Oct 2026",
                comparison_label: "1.4 hours, usual for this hospital", change: "up", change_word: "higher than usual" },
     chart: {
       kind: "line", y_label: "Hours, average of each day's median", x_label: null,

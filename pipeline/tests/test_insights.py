@@ -502,3 +502,13 @@ def test_the_p_value_is_written_as_plain_odds():
     detail = next(r for r in published(result, "weekday") if r["entity"] == "SGH")["detail"]
     assert detail.endswith("This is unlikely to be chance: the odds are less than 1 in 1,000, allowing for every test run.")
     assert "adjusted p" not in detail
+
+
+def test_the_api_reads_the_same_tables_per_detector_as_the_engine():
+    # The API attaches each finding's data-quality warnings by these tables (audit L-7).
+    import ast
+
+    from sg_health import config
+    tree = ast.parse((config.REPO_ROOT / "api" / "sg_health_api" / "routes" / "insights.py").read_text())
+    node = next(n for n in tree.body if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "TABLES_BY_TYPE")
+    assert ast.literal_eval(node.value) == engine.INPUT_TABLES

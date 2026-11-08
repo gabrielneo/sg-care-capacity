@@ -56,7 +56,7 @@ def test_a_release_from_before_the_engine_serves_an_empty_list(tmp_path):
 def test_each_insight_carries_its_display_labels_and_chart(client):
     data = {r["insight_id"]: r for r in client.get(API, params={"headline": "true"}).json()["data"]}
     weekday = data["weekday-aaaaaaaaaa"]
-    assert weekday["display"] == {"value_text": "5.0", "unit_text": "hours", "metric_label": "Average bed wait on Mondays",
+    assert weekday["display"] == {"value_text": "5.0", "unit_text": "hours", "metric_label": "Average of daily median bed waits on Mondays",
                                   "comparison_label": "4.0 hours, its weekly average", "change": "up",
                                   "change_word": "higher than average"}
     chart = weekday["chart"]
@@ -88,3 +88,12 @@ def test_each_insight_names_the_sources_it_uses(client):
     listed = {s["id"]: s["as_of"] for s in body["meta"]["sources"]}
     for i in body["data"]:
         assert set(i["source_ids"]) <= set(listed)                 # each one's own as_of is in meta.sources
+
+
+def test_a_findings_warnings_are_only_those_on_the_tables_it_uses(client):
+    # An ED finding isn't affected by the clinic-coordinates check (audit L-7).
+    body = client.get("/api/v1/insights", params={"type": "weekday"}).json()
+    assert {w["table"] for w in body["meta"]["dq_warnings"]} <= {"moh_bed_waits"}
+    assert all(i["dq_tables"] == ["moh_bed_waits"] for i in body["data"])
+    access = client.get("/api/v1/insights", params={"type": "access_gap"}).json()
+    assert {w["table"] for w in access["meta"]["dq_warnings"]} <= {"chas_clinics", "pop_65plus_by_area", "planning_area_boundaries"}

@@ -89,6 +89,17 @@ def test_impossible_bed_wait_is_quarantined_and_over_24h_is_published_with_a_war
     assert len(warn) == 1 and warn["severity"][0] == "WARN"
 
 
+def test_a_median_wait_of_zero_is_published_as_is_with_a_warning(env):
+    # Woodlands published 0 on 22 and 29 Dec 2025: kept, never changed, but flagged (audit I-2).
+    content = bed_waits_xlsx([[datetime(2026, 10, 25), 0.0, 3.0], [datetime(2026, 10, 26), 5.0, 3.0]],
+                             title="Waiting Times (50th Percentile) for Admission from ED (hours)")
+    load(env, "moh_bed_waits", content)
+    clean = table(env, "SELECT median_wait_hours FROM moh_bed_waits WHERE hospital_code = 'CGH' ORDER BY report_date")
+    assert list(clean["median_wait_hours"]) == [0.0, 5.0]
+    warn = findings(env, "range.bed_wait_zero")
+    assert len(warn) == 1 and warn["severity"][0] == "WARN" and "a median of 0" in warn["detail"][0]
+
+
 def test_negative_attendance_is_quarantined(env):
     content = make_xlsx([["Daily ED Attendances by Hospital"], [None], ["Date", "CGH", "SGH"],
                          [datetime(2026, 10, 25), 400, -5], [datetime(2026, 10, 26), 380, 300]])
