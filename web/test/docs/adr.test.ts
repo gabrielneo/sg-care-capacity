@@ -8,8 +8,8 @@ const files = readdirSync(ADR_DIR).filter((f) => /^\d{4}-.+\.md$/.test(f)).sort(
 const SECTIONS = ["## Context", "## Decision", "## Alternatives considered", "## Consequences", "## How it is enforced"];
 
 describe("architecture decision records", () => {
-  it("has the five decisions so far, numbered in order", () => {
-    expect(files.map((f) => f.slice(0, 4))).toEqual(["0001", "0002", "0003", "0004", "0005"]);
+  it("has the six decisions so far, numbered in order", () => {
+    expect(files.map((f) => f.slice(0, 4))).toEqual(["0001", "0002", "0003", "0004", "0005", "0006"]);
   });
 
   it.each(files)("%s has a title, a status and every section", (file) => {

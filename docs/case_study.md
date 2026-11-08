@@ -193,6 +193,7 @@ Each record has the full technical reasoning; follow the number.
 | [0003](adr/0003-svy21-for-distances-and-areas.md) | Measure distances in metres on Singapore's own map grid | Accepted |
 | [0004](adr/0004-choropleth-not-heatmap.md) | Shade each area on the map by its value, rather than blurring values across the map | Accepted |
 | [0005](adr/0005-typed-api-contract.md) | The website and the data service agree on every field, checked automatically | Accepted |
+| [0006](adr/0006-3d-access-map.md) | Add a 3D map that shows seniors and clinic access together, with the 2D map and table always one click away | Accepted |
 
 ## Limitations and next steps
 

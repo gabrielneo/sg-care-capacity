@@ -124,6 +124,18 @@ Two more rules for the choropleth:
   (water catchments, Tuas, some islands), so their ratio is NULL and must look different from a low
   ratio.
 
+**The 3D view** ([decision record 0006](adr/0006-3d-access-map.md)) adds one thing to the shading:
+
+- **Height:** each area is raised by its residents aged 65+, one step per 10,000. Colour stays a rate.
+- **Colour:** CDMP clinics per 1,000 seniors, in five groups with equal numbers of areas; darker means
+  fewer.
+- **Flat and grey:** areas with fewer than 1,000 seniors, which the findings don't rank either.
+- **Same areas, no projection:** the shapes are the same simplified areas in SVY21 metres, so the
+  browser projects nothing. They are still whole areas, not points or a density surface: nothing is
+  placed where the data doesn't say.
+- **On every map, darker means worse access:** fewer clinics per senior, less land near a CDMP clinic,
+  or a longer distance to a polyclinic.
+
 ## Why SVY21 (EPSG:3414)
 
 Distances and areas are only meaningful in a **projected** coordinate system measured in metres.

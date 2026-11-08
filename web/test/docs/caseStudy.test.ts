@@ -45,7 +45,7 @@ describe("case study", () => {
 
   it("links every ADR in its decision log", () => {
     const log = section(caseStudy, "Decision log");
-    for (const n of ["0001", "0002", "0003", "0004", "0005"]) expect(log).toMatch(new RegExp(`\\(adr/${n}-[a-z0-9-]+\\.md\\)`));
+    for (const n of ["0001", "0002", "0003", "0004", "0005", "0006"]) expect(log).toMatch(new RegExp(`\\(adr/${n}-[a-z0-9-]+\\.md\\)`));
   });
 });
 
