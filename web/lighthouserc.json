@@ -5,6 +5,7 @@
       "numberOfRuns": 3,
       "settings": {
         "onlyCategories": ["performance"],
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage",
         "skipAudits": ["uses-http2", "redirects-http"]
       }
     },
