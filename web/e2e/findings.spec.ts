@@ -25,9 +25,9 @@ const animations = (page: Page) => page.evaluate(() => document.getAnimations().
 const scrollToStep = (page: Page, i: number) =>
   page.getByTestId("story-step").nth(i).evaluate((el) => el.scrollIntoView({ block: "center" }));
 
-test.describe("Overview: the scroll story", () => {
+test.describe("Findings: the scroll story", () => {
   test("the first screen says what right-siting and the bed wait mean", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/findings");
     expect(await plain(page.getByTestId("site-purpose"))).toBe("Right-siting care means treating people in the most suitable place, "
       + "such as a general practitioner (GP) clinic rather than a hospital, when it is safe to do so. "
       + "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.");
@@ -37,7 +37,7 @@ test.describe("Overview: the scroll story", () => {
 
   test("the hero number is the top insight's key number, from the API", async ({ page }) => {
     const [top] = await headline(page);
-    await page.goto("/");
+    await page.goto("/findings");
     const number = page.getByTestId("countup");
     await expect(number).toHaveAttribute("data-value", top!.display.value_text);
     expect(await number.locator(".countup-digits").textContent()).toBe(top!.display.value_text);
@@ -54,7 +54,7 @@ test.describe("Overview: the scroll story", () => {
 
   test("a finding's warnings are only those on the data it uses (audit L-7)", async ({ page }) => {
     // The fixture has one MOH bed-wait warning and one clinic-list error; ED findings show only the first.
-    await page.goto("/");
+    await page.goto("/findings");
     const ed = page.getByTestId("hero");
     await expect(page.getByText(/data-quality warnings? appl/).first()).toBeAttached();
     for (const t of await page.getByText(/data-quality warnings? appl/).allTextContents()) {
@@ -67,7 +67,7 @@ test.describe("Overview: the scroll story", () => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     const [top] = await headline(page);
-    await page.goto("/");
+    await page.goto("/findings");
     await expect(page.getByTestId("countup")).toHaveAttribute("data-value", top!.display.value_text);
     expect(await page.getByTestId("countup").locator(".countup-digits").textContent()).toBe(top!.display.value_text);
     await expect(page.getByTestId("story-step")).toHaveCount(3);
@@ -77,7 +77,7 @@ test.describe("Overview: the scroll story", () => {
   test("the three steps switch the chart panel's state", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop", "the sticky panel is desktop only; phones show each chart under its step");
     const steps = await headline(page);
-    await page.goto("/");
+    await page.goto("/findings");
     const charts = page.getByTestId("story-chart");
     await expect(charts).toHaveCount(3);
     for (let i = 0; i < 3; i++) {
@@ -93,7 +93,7 @@ test.describe("Overview: the scroll story", () => {
   test("with reduced motion, nothing animates", async ({ browser }, info) => {
     const context = await browser.newContext({ reducedMotion: "reduce", viewport: info.project.use.viewport ?? undefined });
     const page = await context.newPage();
-    await page.goto("/");
+    await page.goto("/findings");
     await expect(page.getByTestId("story-step").first()).toBeVisible();
     expect(await animations(page)).toEqual([]);
     for (let i = 0; i < 3; i++) {
@@ -111,13 +111,13 @@ test.describe("Overview: the scroll story", () => {
   });
 
   test("with motion allowed, the hero counts up (so the reduced-motion test means something)", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/findings");
     await expect(page.getByTestId("countup")).toBeVisible();
     expect(await animations(page)).toContain("countup-roll");
   });
 
   test("every chart shows Data as of and its source", async ({ page }, info) => {
-    await page.goto("/");
+    await page.goto("/findings");
     const cards = page.getByTestId("findings").getByTestId("chart-card");
     await expect(cards).toHaveCount(6);                                   // each chart twice: under its step and in the panel
     for (let i = 0; i < 6; i++) await expect(cards.nth(i).getByTestId("provenance-line")).toHaveText(AS_OF);
@@ -133,7 +133,7 @@ test.describe("Overview: the scroll story", () => {
 
   test("each step has its headline, key number, detail and caveat, and suggests no action", async ({ page }) => {
     const steps = await headline(page);
-    await page.goto("/");
+    await page.goto("/findings");
     const step = page.getByTestId("story-step").nth(1);
     await expect(step.getByTestId("delta-number")).toContainText(steps[1]!.display.value_text);
     await expect(step.getByTestId("delta-change")).toContainText("▲ higher than usual");
@@ -145,7 +145,7 @@ test.describe("Overview: the scroll story", () => {
   });
 
   test("why now: one year of population data is one figure, no trend", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/findings");
     const why = page.getByTestId("why-now");
     await expect(why.getByTestId("share-65")).toHaveText("22.1%");                         // 61,000 of 276,000 in the fixture
     expect(await plain(why.locator("p").nth(1))).toBe("That is 61,000 of 276,000 residents (citizens and permanent residents). "
@@ -158,7 +158,7 @@ test.describe("Overview: the scroll story", () => {
     const md = readFileSync(path.resolve(__dirname, "../../docs/case_study.md"), "utf8");
     const after = md.slice(md.indexOf("**What the data can't show**"));
     const items = [...after.matchAll(/^- (.+)$/gm)].slice(0, 3).map((m) => m[1]!);
-    await page.goto("/");
+    await page.goto("/findings");
     const rendered = page.getByTestId("limits").getByRole("listitem");
     await expect(rendered).toHaveCount(3);
     for (let i = 0; i < 3; i++) {
@@ -167,7 +167,7 @@ test.describe("Overview: the scroll story", () => {
   });
 
   test("the depth cards each have a time estimate and lead somewhere", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/findings");
     const cards = page.getByTestId("depth-card");
     await expect(cards).toHaveCount(3);
     await expect(cards.getByTestId("depth-estimate")).toHaveText(["30 seconds", /^About \d+ min read$/, /^About \d+ min read$/]);
@@ -177,7 +177,7 @@ test.describe("Overview: the scroll story", () => {
   });
 
   test("works at this width: no sideways scrolling, and the right chart layout", async ({ page }, info) => {
-    await page.goto("/");
+    await page.goto("/findings");
     await expectNoHorizontalScroll(page);
     if (info.project.name === "mobile-375") {
       await expect(page.getByTestId("story-panel")).toBeHidden();
@@ -199,13 +199,13 @@ test.describe("Overview: the scroll story", () => {
       style.textContent = "html, body, * { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }";
       document.head.append(style);
     }));
-    await page.goto("/");
+    await page.goto("/findings");
     await expect(page.getByTestId("why-now")).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 
   test("no layout shift from the count-up", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/findings");
     await expect(page.getByTestId("countup")).toBeVisible();
     const box = async () => page.getByTestId("hero-number").boundingBox();
     const first = await box();
@@ -224,7 +224,7 @@ test.describe("Overview: the scroll story", () => {
   });
 
   test("passes axe WCAG 2.1 AA checks", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/findings");
     await expectNoA11yViolations(page);
   });
 });

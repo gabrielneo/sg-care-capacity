@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { DOWN, expectNoHorizontalScroll } from "./helpers";
 
-const DATA_PAGES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality", "/summary"];
+const DATA_PAGES = ["/", "/findings", "/ed-trends", "/access-map", "/live", "/data-quality", "/summary"];
 
 test.describe("when the API is down", () => {
   for (const path of DATA_PAGES) {
@@ -46,7 +46,7 @@ test.describe("shell", () => {
   test("the nav reaches every section and marks the current one", async ({ page }) => {
     await page.goto("/methodology");
     const nav = page.getByRole("navigation", { name: "Main" });
-    await expect(nav.getByRole("link")).toHaveText(["Overview", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
+    await expect(nav.getByRole("link")).toHaveText(["Home", "Findings", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
     await expect(nav.getByRole("link", { name: "Methodology" })).toHaveAttribute("aria-current", "page");
   });
 

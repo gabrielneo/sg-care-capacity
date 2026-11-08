@@ -35,8 +35,8 @@ test.describe("One-page summary", () => {
     await expectNoA11yViolations(page);
   });
 
-  test("the Overview links to it", async ({ page }) => {
-    await page.goto("/");
+  test("the Findings page links to it", async ({ page }) => {
+    await page.goto("/findings");
     await page.getByTestId("summary-link").click();
     await expect(page).toHaveURL(/\/summary$/);
   });

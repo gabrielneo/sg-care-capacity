@@ -4,7 +4,8 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/", label: "Overview" },
+  { href: "/", label: "Home" },
+  { href: "/findings", label: "Findings" },
   { href: "/ed-trends", label: "ED Trends" },
   { href: "/access-map", label: "Access Map" },
   { href: "/live", label: "Live" },

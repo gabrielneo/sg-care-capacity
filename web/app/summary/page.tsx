@@ -72,7 +72,7 @@ export default async function SummaryPage() {
   return (
     <article className="summary mx-auto max-w-3xl text-sm" data-testid="summary">
       <div className="print-hide mb-6 flex flex-wrap items-center justify-between gap-3">
-        <Link href="/">Back to the Overview</Link>
+        <Link href="/findings">Back to the findings</Link>
         <PrintButton />
       </div>
 

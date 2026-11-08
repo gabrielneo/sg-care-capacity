@@ -191,6 +191,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/polyclinics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Polyclinics (all of them; the list is short) */
+        get: operations["polyclinics_api_v1_polyclinics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/population": {
         parameters: {
             query?: never;
@@ -655,6 +672,21 @@ export interface components {
             /** Hospital Name */
             hospital_name: string;
             /**
+             * Latitude
+             * @description Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09
+             */
+            latitude?: number | null;
+            /**
+             * Longitude
+             * @description Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09
+             */
+            longitude?: number | null;
+            /**
+             * Postal Code
+             * @description 6 digits; null in releases before 2026-11-09
+             */
+            postal_code?: string | null;
+            /**
              * Reported From
              * @description First day MOH reports the site; null = from the series start
              */
@@ -985,6 +1017,37 @@ export interface components {
         /** MetaResponse */
         MetaResponse: {
             data: components["schemas"]["SnapshotInfo"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Polyclinic */
+        Polyclinic: {
+            /** Address */
+            address: string | null;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** As Of Basis */
+            as_of_basis: string;
+            /** Latitude */
+            latitude: number | null;
+            /** Longitude */
+            longitude: number | null;
+            /** Polyclinic Name */
+            polyclinic_name: string;
+            /**
+             * Postal Code
+             * @description 6 digits, kept as text (leading zeros)
+             */
+            postal_code: string | null;
+            /** Source Sha256 */
+            source_sha256: string;
+        };
+        /** PolyclinicsResponse */
+        PolyclinicsResponse: {
+            /** Data */
+            data: components["schemas"]["Polyclinic"][];
             meta: components["schemas"]["Meta"];
         };
         /** PopulationResponse */
@@ -1640,6 +1703,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetaResponse"];
+                };
+            };
+        };
+    };
+    polyclinics_api_v1_polyclinics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolyclinicsResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This data release has no polyclinic list */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

@@ -99,7 +99,7 @@ test.describe("CSV downloads", () => {
         expect((await request.get(href)).headers()["content-type"]).toContain("text/csv");
       }
     }
-    await page.goto("/");
+    await page.goto("/findings");
     await expect(page.getByRole("link", { name: "Download every finding (CSV)" })).toHaveAttribute("href", "/export/findings.csv");
   });
 

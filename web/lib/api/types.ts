@@ -16,6 +16,7 @@ export type EdDay = Schemas["EdDay"];
 export type EdWeek = Schemas["EdWeek"];
 export type EdSummary = Schemas["EdSummary"];
 export type Clinic = Schemas["Clinic"];
+export type Polyclinic = Schemas["Polyclinic"];
 export type ClinicPage = Schemas["ClinicPage"];
 export type AreaCollection = Schemas["AreaCollection"];
 export type Svy21Collection = Schemas["Svy21Collection"];

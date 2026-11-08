@@ -12,7 +12,7 @@ describe("Nav", () => {
   it("lists the sections in order", () => {
     render(<Nav />);
     expect(screen.getAllByRole("link").map((a) => a.textContent)).toEqual([
-      "Overview", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
+      "Home", "Findings", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
     expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
   });
 
@@ -20,10 +20,10 @@ describe("Nav", () => {
     pathname.value = "/access-map";
     render(<Nav />);
     expect(screen.getByRole("link", { name: "Access Map" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
   });
 
-  it("only marks Overview on the home page", () => {
+  it("only marks Home on the home page", () => {
     expect(isCurrent("/", "/")).toBe(true);
     expect(isCurrent("/ed-trends", "/")).toBe(false);
     expect(isCurrent("/ed-trends/sgh", "/ed-trends")).toBe(true);

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { type DepthCard, DepthCards, Findings, Hero, Limits, WhyNow } from "@/components/story/Sections";
@@ -6,17 +8,19 @@ import { plainError } from "@/lib/copy";
 import { docWords, renderDocList } from "@/lib/docs";
 import { EMPTY_STORY, emptyReason, readingMinutes, storySteps } from "@/lib/story";
 
+export const metadata: Metadata = { title: "Findings" };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
 const SITE_TITLE = "Right-siting care in a super-aged Singapore";
 const LIMITS_MARKER = "**What the data can't show**";
 
 /**
- * The Overview, as a scroll story. Every finding's text and number comes from /api/v1/insights
+ * Findings, as a scroll story (the site's home page until 2026-11-09; the home page now leads
+ * with status and clinics, and links here for the full findings). Every finding's text and number comes from /api/v1/insights
  * (the insight engine); the population figure from /api/v1/population; the limits from
  * docs/case_study.md. This file writes none of them.
  */
-export default async function OverviewPage() {
+export default async function FindingsPage() {
   const [insights, population, limits, problemWords, methodWords] = await Promise.all([
     settle(api.insights({ headline: true })),
     settle(api.population()),

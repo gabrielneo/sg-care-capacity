@@ -100,6 +100,7 @@ export const api = {
   edSummary: () => call(() => client().GET("/api/v1/ed/summary")),
   clinics: (query: Query<"/api/v1/clinics"> = {}) =>
     call(() => client().GET("/api/v1/clinics", { params: { query } })),
+  polyclinics: () => call(() => client().GET("/api/v1/polyclinics")),
   areasAccess: () => call(() => client().GET("/api/v1/areas/access")),
   areasAccessSvy21: () => call(() => client().GET("/api/v1/areas/access/svy21")),
   quality: () => call(() => client().GET("/api/v1/quality")),
