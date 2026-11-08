@@ -28,7 +28,7 @@ describe("case study", () => {
   });
 
   // Sections the author hasn't written yet keep their TODO(me) markers; remove a heading as it is done.
-  it.each(["Patient flow: as-is and to-be", "Success metrics",
+  it.each(["Success metrics",
            "Limitations and next steps"])("%s leaves the author's judgement as TODO(me)", (heading) => {
     expect(section(caseStudy, heading)).toContain("TODO(me)");
   });
@@ -54,6 +54,15 @@ describe("case study", () => {
     expect(personas.match(/Not interviewed\./g)).toHaveLength(2);
     expect(personas).toMatch(/### Persona 1: MOH healthcare services planner/);
     expect(personas).toMatch(/### Persona 2: AIC community care planner/);
+  });
+
+  it("the to-be flow is MOH's intended flow, sourced, with what the site can and can't see", () => {
+    const flow = section(caseStudy, "Patient flow: as-is and to-be");
+    expect(flow).not.toContain("TODO(me)");
+    expect(flow).toContain("not a redesign by the author");
+    expect(flow).toContain("**Can't see:**");
+    expect(flow).toContain("Still not validated");
+    for (const source of ["moh.gov.sg/seeking-healthcare", "1777", "nuhs.edu.sg"]) expect(flow).toContain(source);
   });
 
   it("names all six stakeholders", () => {

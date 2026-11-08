@@ -200,25 +200,80 @@ The same flow in text:
    decision to admit to leaving the ED.**
 5. The patient goes to an inpatient ward, or is discharged.
 
-TODO(me): Validate the steps before the ED (how seniors and caregivers actually decide where to go,
-and how referrals work) and record what the validation was based on.
+**What official guidance says about the steps before the ED** (checked against MOH and SCDF pages):
+
+- **The ED is for emergencies.** "Go to the hospital's Emergency Department only if there are signs
+  of a medical emergency. For other health problems, visit a GP clinic or polyclinic" (MOH,
+  [Getting medical help](https://www.moh.gov.sg/seeking-healthcare/getting-medical-help/)).
+- **995 is for life-threatening emergencies only.** For advice on where to go, the NurseFirst
+  helpline (6262 6262) is staffed by trained nurses. SCDF's 1777 non-emergency ambulance hotline
+  closes from 1 January 2027 (MOH,
+  [1 July 2026](https://www.moh.gov.sg/newsroom/1777-non-emergency-ambulance-hotline-to-cease--from-1-january-2027/)).
+
+**Still not validated:** how seniors and caregivers actually decide where to go, and how often GP
+referrals lead to ED visits. That needs interviews or referral data, which this project doesn't have.
+The dotted "referral" arrows above stay marked "to validate".
 
 ### To-be
 
-TODO(me): The to-be flow is a design proposal and needs your own judgement. The skeleton below
-marks the decision points to fill in; it proposes nothing yet.
+**What this is:** the flow MOH's published policy intends, not a redesign by the author. The product
+only analyses; it doesn't propose changes to care. The diagram marks where this site's measures
+would show whether the intended flow is happening.
 
 ```mermaid
 flowchart TD
-  A["Older resident with a health concern"] --> B{"TODO(me): what helps them choose?"}
-  B --> C["TODO(me): community option"]
-  B --> E["Public emergency department"]
-  C --> X["TODO(me): what changes, and for whom"]
-  E --> F["Registration and triage"]
-  F --> G["Seen by an ED doctor"]
+  A["Older resident with a health concern"] --> B{"Life-threatening?"}
+  B -- "Yes" --> C["Call 995: SCDF ambulance"]
+  B -- "Not sure" --> N["NurseFirst helpline: advice on where to go"]
+  B -- "No" --> F["Family doctor (Healthier SG GP clinic) or polyclinic"]
+  N --> F
+  N --> C
+  F -. "needs hospital care" .-> E["Public emergency department"]
+  C --> E
+  C -. "eligible non-life-threatening cases, from Oct 2025" .-> U["Alexandra Hospital Urgent Care Centre"]
+  E --> T["Triage, then seen by an ED doctor"]
+  T --> H{"Admit?"}
+  H -- "No" --> D["Discharged"]
+  H -- "Yes: decision to admit" --> W["Waits in the ED for a ward bed"]
+  W --> K["Inpatient ward"]
+  K -. "medically stable, awaiting long-term care" .-> S["Transitional care facility"]
+  F -. "this site: CDMP clinics per senior, by area" .-> M1(["Access Map"])
+  W -. "this site: bed wait against each hospital's usual level" .-> M2(["ED Trends, findings"])
+  E -. "MOH: counted as an ED visit" .-> M3(["ED visits"])
 ```
 
-TODO(me): The same flow in text, once designed.
+The same flow in text:
+
+1. **Is it life-threatening?** If yes, call 995. If unsure, call the NurseFirst helpline for advice.
+   If not, see a family doctor or a polyclinic.
+2. **The family doctor is the first point of contact** under Healthier SG, and refers to hospital
+   when needed.
+3. **SCDF takes emergencies to a public ED.** Since October 2025, some eligible non-life-threatening
+   cases go to Alexandra Hospital's Urgent Care Centre instead.
+4. **At the ED,** triage and a doctor's decision whether to admit. An admitted patient waits in the
+   ED for a ward bed.
+5. **After admission,** medically stable patients awaiting long-term care can move to a transitional
+   care facility, freeing acute beds.
+
+**What this site can and can't see in this flow:**
+
+- **Can see:** bed waits at each ED against its usual level (step 4), and chronic-care clinic access
+  per senior by area (step 2's capacity).
+- **Can't see:** NurseFirst calls, SCDF diversions, Healthier SG enrolment, referrals, or transfers
+  to transitional care. None of these is published at a level this project could use.
+
+**Sources:**
+
+- MOH, [Getting medical help](https://www.moh.gov.sg/seeking-healthcare/getting-medical-help/): the
+  ED for emergencies; a GP clinic or polyclinic for other problems.
+- MOH, [1777 non-emergency ambulance hotline to cease](https://www.moh.gov.sg/newsroom/1777-non-emergency-ambulance-hotline-to-cease--from-1-january-2027/)
+  (1 Jul 2026): 995 for life-threatening emergencies only; NurseFirst for advice.
+- MOH, [White Paper on Healthier SG](https://www.moh.gov.sg/newsroom/white-paper-on-healthier-sg/)
+  (21 Sep 2022): the family doctor as the first point of contact.
+- NUHS, [Alexandra Hospital to receive eligible non-life-threatening cases](https://www.nuhs.edu.sg/about-nuhs/news-and-stories/news-and-stories-details/alexandra-hospital-(ah)-to-receive-eligible-non-life-threatening-cases-from-1-october-2025--streamlining-emergency-care)
+  (29 Sep 2025): SCDF conveys eligible cases to its UCC; full ED operations from 2028.
+- MOH, [Bed capacity and emergency departments](https://www.moh.gov.sg/news-highlights/details/bed-capacity-and-emergency-departments)
+  (8 Nov 2022): transitional care facilities and diverting less serious cases.
 
 ## Prioritised requirements (MoSCoW)
 
