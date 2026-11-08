@@ -64,13 +64,6 @@ export function chartFormat(i: StoryInsight): (v: number) => string {
   };
 }
 
-/** The suggested action, only once the author has reviewed it (docs/insight_actions.yml). */
-export function whoActs(i: Insight): { who: string; action: string | null } | null {
-  return i.who_acts ? { who: i.who_acts, action: i.action } : null;
-}
-
-export const ACTION_PENDING = "Not shown yet: the suggested action is waiting for the author's review.";
-
 /** The finding's own caveat: the engine puts it first. */
 export function primaryCaveat(i: Insight): string | null {
   return i.caveats[0] ?? null;

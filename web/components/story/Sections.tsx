@@ -6,7 +6,6 @@ import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
 import { formatAsOf } from "@/lib/dates";
 import { cadenceFor } from "@/lib/freshness";
 import {
-  ACTION_PENDING,
   chartFormat,
   chartTitle,
   monthYear,
@@ -14,7 +13,6 @@ import {
   populationShare,
   primaryCaveat,
   type StoryInsight,
-  whoActs,
 } from "@/lib/story";
 
 import { CaveatChip } from "../CaveatChip";
@@ -103,7 +101,6 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
 }
 
 function StepText({ insight, index, total }: { insight: StoryInsight; index: number; total: number }) {
-  const who = whoActs(insight);
   const caveat = primaryCaveat(insight);
   return (
     <article className="story-card rounded-lg border border-line bg-surface p-5 shadow-sm" data-insight={insight.insight_id}>
@@ -118,17 +115,6 @@ function StepText({ insight, index, total }: { insight: StoryInsight; index: num
           <CaveatChip><Glossed text={caveat} /></CaveatChip>
         </div>
       ) : null}
-      <p className="mt-3 text-sm text-ink" data-testid="who-acts">
-        <span className="font-medium">Who acts: </span>
-        {who ? (
-          <>
-            <Glossed text={who.who} />
-            {who.action ? <>{". "}<Glossed text={who.action} /></> : null}
-          </>
-        ) : (
-          <span className="text-muted">{ACTION_PENDING}</span>
-        )}
-      </p>
     </article>
   );
 }

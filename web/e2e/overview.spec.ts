@@ -106,7 +106,7 @@ test.describe("Overview: the scroll story", () => {
     await expect(page.getByTestId("why-now").getByTestId("provenance-line")).toHaveText(/^Data as of 30 Jun 2026 · Source: SingStat/);
   });
 
-  test("each step has its headline, key number, detail, caveat and who acts", async ({ page }) => {
+  test("each step has its headline, key number, detail and caveat, and suggests no action", async ({ page }) => {
     const steps = await headline(page);
     await page.goto("/");
     const step = page.getByTestId("story-step").nth(1);
@@ -115,7 +115,7 @@ test.describe("Overview: the scroll story", () => {
     await expect(step.getByTestId("delta-change")).toHaveClass(/text-bad/);                // a longer wait is worse
     await expect(step.locator("[data-testid=step-detail]")).not.toBeEmpty();
     await expect(step.getByText("One unusual week is not a trend.")).toBeVisible();
-    await expect(step.getByTestId("who-acts")).toHaveText(/^Who acts: Not shown yet: the suggested action is waiting/);
+    await expect(step.getByTestId("who-acts")).toHaveCount(0);                              // the site analyses; planners decide (W3)
     await expect(page.getByTestId("story-step").first().getByTestId("delta-change")).toHaveClass(/text-ink/);  // neutral: no colour
   });
 

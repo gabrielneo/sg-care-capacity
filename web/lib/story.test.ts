@@ -4,7 +4,6 @@ import type { Insight } from "./api/types";
 import { BED_WAIT_LABEL } from "./copy";
 import { populationSample, storySample } from "./samples";
 import {
-  ACTION_PENDING,
   chartFormat,
   chartTitle,
   monthYear,
@@ -14,7 +13,6 @@ import {
   readingMinutes,
   emptyReason,
   storySteps,
-  whoActs,
 } from "./story";
 
 const [weekday, anomaly, volume] = storySample as [(typeof storySample)[0], (typeof storySample)[0], (typeof storySample)[0]];
@@ -59,14 +57,7 @@ describe("chart wording", () => {
   });
 });
 
-describe("actions and caveats", () => {
-  it("shows a suggested action only when the author has reviewed it", () => {
-    expect(whoActs(weekday)).toBeNull();
-    expect(whoActs({ ...weekday, who_acts: "Hospital operations", action: "Plan ahead of Tuesdays." }))
-      .toEqual({ who: "Hospital operations", action: "Plan ahead of Tuesdays." });
-    expect(ACTION_PENDING).toMatch(/waiting for the author's review/);
-  });
-
+describe("caveats", () => {
   it("the finding's own caveat comes first", () => {
     expect(primaryCaveat(anomaly)).toBe("One unusual week is not a trend.");
     expect(primaryCaveat({ ...anomaly, caveats: [] })).toBeNull();

@@ -10,7 +10,6 @@ import { describe, expect, it } from "vitest";
 
 import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
 import { storySample } from "@/lib/samples";
-import { ACTION_PENDING } from "@/lib/story";
 
 import { fleschKincaid, proseFromMarkdown, sentences, syllables } from "../scripts/text-tools.mjs";
 
@@ -48,7 +47,7 @@ describe("readability report", () => {
     const sentence = (t: string) => (/[.!?]$/.test(t) ? t : `${t}.`);
     const text = [
       ...storySample.flatMap((i) => [i.headline, i.detail, sentence(i.display.metric_label), sentence(i.caveats[0] ?? "")]),
-      BED_WAIT_EXPLAINER, ACTION_PENDING, CAVEAT.population,
+      BED_WAIT_EXPLAINER, CAVEAT.population,
     ].join(" ");
     expect(report("Overview", text).sentences).toBeGreaterThan(3);
   });
