@@ -41,7 +41,7 @@ DEFAULT_REPORT = BUILD_DIR / "SG_Healthcare_Scrape_Report.xlsx"
 USER_AGENT = os.getenv(
     "CRAWLER_USER_AGENT",
     "SGHealthcareResearchCrawler/1.0 (non-commercial portfolio research; "
-    "+https://github.com/gabrielneo/sg-healthcare-pipeline)",
+    "+https://github.com/gabrielneo/sg-care-capacity)",
 )
 REQUEST_TIMEOUT = 15            # seconds, per request
 POLITE_DELAY = (1.5, 3.0)       # random seconds between requests to the same crawler
