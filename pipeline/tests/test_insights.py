@@ -218,6 +218,29 @@ def test_quarantined_rows_become_a_caveat_not_a_skip():
     assert "1 record in the CHAS clinic list was set aside by data checks." in gap["caveats"]
 
 
+def test_a_set_aside_cdmp_clinic_is_named_in_access_caveats_without_guessing_its_area():
+    # As on 2026-11-08: one CDMP clinic had coordinates (0, 0), so it counts in no area (audit M-4).
+    failed = pd.DataFrame([{"check_id": "clinic.coordinates_in_singapore", "table": "chas_clinics", "severity": "ERROR",
+                            "scope": "row", "failing_rows": 1, "blocks_publish": False}])
+    ins = inputs(weekly({"SGH": [4.0] * 26}), areas=areas_frame())
+    ins["set_aside_cdmp"] = pd.DataFrame([{"clinic_name": "DA clinic @ Taman Jurong", "postal_code": "610410",
+                                           "check_ids": "clinic.coordinates_in_singapore"}])
+    result = engine.run(ins, failed, TODAY)
+    [gap] = published(result, "access_gap")
+    assert ("1 CDMP clinic is not counted in any area: DA clinic @ Taman Jurong (postcode 610410; listed location "
+            "outside Singapore).") in gap["caveats"]
+    assert not any("Jurong West" in c for c in gap["caveats"])                  # its area is not guessed
+    assert all("CDMP clinic" not in c for i in published(result, "trend") for c in i["caveats"])   # ED findings untouched
+
+
+def test_the_set_aside_note_lists_three_clinics_then_a_count():
+    clinics = pd.DataFrame([{"clinic_name": f"Clinic {i}", "postal_code": None, "check_ids": "x.other"} for i in range(5)])
+    assert engine.set_aside_cdmp_note(clinics) == ("5 CDMP clinics are not counted in any area: Clinic 0 (failed a data "
+                                                   "check); Clinic 1 (failed a data check); Clinic 2 (failed a data check); "
+                                                   "and 2 more.")
+    assert engine.set_aside_cdmp_note(clinics.head(0)) is None and engine.set_aside_cdmp_note(None) is None
+
+
 def test_skips_are_logged_to_dq_results(tmp_path):
     from sg_health.warehouse import Warehouse
     wh = Warehouse(tmp_path / "w.duckdb")

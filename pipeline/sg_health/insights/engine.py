@@ -87,7 +87,33 @@ def load_inputs(wh: Warehouse) -> dict[str, pd.DataFrame]:
                         "FROM marts.fct_area_access"),
         "live": _q(wh, "SELECT hospital_code, is_adult_ed, est_bed_wait_hours, est_bed_wait_qualifier, snapshot_at "
                        "FROM marts.fct_live_ed_snapshot"),
+        # CDMP clinics set aside by an ERROR check: not counted in any area, so named in access caveats.
+        "set_aside_cdmp": _q(wh, "SELECT clinic_name, postal_code, check_ids FROM main.quarantine_chas_clinics "
+                                 "WHERE lower(has_cdmp) IN ('true', '1') ORDER BY clinic_name"),
     }
+
+
+# Why a clinic was set aside, in plain words (the check's id never reaches a caveat).
+SET_ASIDE_REASON = {"clinic.coordinates_in_singapore": "listed location outside Singapore"}
+SET_ASIDE_SHOWN = 3
+
+
+def set_aside_cdmp_note(clinics: pd.DataFrame | None) -> str | None:
+    """'1 CDMP clinic is not counted in any area: DA clinic @ Taman Jurong (postcode 610410; listed location
+    outside Singapore).' None if no CDMP clinic was set aside (audit M-4).
+    Its likely area isn't guessed: placing it would need geocoding the postcode."""
+    if clinics is None or not len(clinics):
+        return None
+    def one(r) -> str:
+        checks = str(r.check_ids).split(",")
+        reason = next((SET_ASIDE_REASON[c] for c in checks if c in SET_ASIDE_REASON), "failed a data check")
+        postcode = f"postcode {r.postal_code}; " if isinstance(r.postal_code, str) and r.postal_code else ""
+        return f"{r.clinic_name} ({postcode}{reason})"
+    named = [one(r) for r in clinics.head(SET_ASIDE_SHOWN).itertuples()]
+    more = len(clinics) - len(named)
+    n = len(clinics)
+    return (f"{n} CDMP {'clinic is' if n == 1 else 'clinics are'} not counted in any area: " + "; ".join(named)
+            + (f"; and {more} more" if more else "") + ".")
 
 
 def failed_checks(wh: Warehouse, run_id: str | None) -> pd.DataFrame:
@@ -140,6 +166,10 @@ def run(inputs: dict[str, pd.DataFrame], failed: pd.DataFrame, today: date,
         notes = [f"{int(r.failing_rows):,d} {'record' if int(r.failing_rows) == 1 else 'records'} in "
                  f"{SOURCE_LABEL.get(r.table, 'the source')} {'was' if int(r.failing_rows) == 1 else 'were'} set aside by "
                  "data checks." for r in q.itertuples()]
+        if "chas_clinics" in INPUT_TABLES[name]:
+            cdmp = set_aside_cdmp_note(inputs.get("set_aside_cdmp"))
+            if cdmp:
+                notes.append(cdmp)
         for c in result.candidates:
             c.caveats.extend(notes)
         candidates += result.candidates
