@@ -22,6 +22,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
   const classes: ColourClass[] = mode === "raw" ? sequentialClasses(values) : divergingClasses(values);
   const peak = findingWeekday(finding);
   const fmt = (v: number) => (mode === "raw" ? hours(v) : `${signed(v, 0)}%`);
+  // Only hospitals that were asked for: the page passes the selected ones (audit L-3).
   const missing = hospitals.filter((h) => !profiles.some((p) => p.code === h.hospital_code));
 
   return (
@@ -34,7 +35,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
       <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Weekday pattern by hospital (scrolls sideways)">
         <table className="w-full min-w-[30rem] border-separate border-spacing-0.5 text-xs" data-testid="heatmap">
           <caption className="sr-only">
-            {mode === "raw" ? "Average bed wait for each weekday, hours" : "Each weekday's bed wait, % above or below the hospital's own average"}
+            {mode === "raw" ? "Average of daily median bed waits for each weekday, hours" : "Each weekday's bed wait, % above or below the hospital's own average"}
           </caption>
           <thead>
             <tr>

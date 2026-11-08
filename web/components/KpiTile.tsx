@@ -27,6 +27,8 @@ export interface KpiTileProps {
   caveat?: string;
   cadence?: Cadence;
   now?: Date;
+  /** The date is the data release's (labelled so, no badge). See Provenance. */
+  release?: boolean;
 }
 
 const defaultFormat = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 1 });
@@ -48,7 +50,7 @@ function ChangeLine({ change }: { change: KpiChange }) {
 }
 
 /** One headline number with its unit, change and provenance. Missing is shown as missing, never 0. */
-export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, cadence, now }: KpiTileProps) {
+export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, cadence, now, release }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
     <div data-testid="kpi-tile" className="rounded-lg border border-line bg-surface p-4 shadow-sm">
@@ -76,7 +78,7 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
               <CaveatChip><Glossed text={caveat} /></CaveatChip>
             </div>
           ) : null}
-          <Provenance meta={meta} cadence={cadence} now={now} compact />
+          <Provenance meta={meta} cadence={cadence} now={now} compact release={release} />
         </>
       )}
     </div>

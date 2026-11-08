@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { type AreaProps, formatValue, sortAreas, TABLE_COLUMNS } from "@/lib/areaMetrics";
+import { type AreaProps, areaValueText, NOT_APPLICABLE, sortAreas, TABLE_COLUMNS } from "@/lib/areaMetrics";
 
 import { Glossed } from "../terms/Glossed";
 
@@ -37,11 +37,11 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
             <tr key={a.planning_area_code} className="border-b border-line align-top">
               {TABLE_COLUMNS.map((c, i) => {
                 const v = a[c.key as keyof AreaProps];
-                const text = c.numeric ? formatValue(v as number | null, c.decimals) : String(v ?? "No data");
+                const text = c.numeric ? areaValueText(a, c.key, c.decimals) : String(v ?? "No data");
                 return i === 0 ? (
                   <th key={c.key} scope="row" className="px-2 py-1.5 text-left font-medium">{text}</th>
                 ) : (
-                  <td key={c.key} className={`px-2 py-1.5 ${c.numeric ? "text-right tabular-nums" : ""} ${text === "No data" ? "text-muted" : ""}`}>
+                  <td key={c.key} className={`px-2 py-1.5 ${c.numeric ? "text-right tabular-nums" : ""} ${text === "No data" || text === NOT_APPLICABLE ? "text-muted" : ""}`}>
                     {text}
                   </td>
                 );

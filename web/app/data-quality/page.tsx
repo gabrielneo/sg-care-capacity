@@ -65,16 +65,16 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
       <PageHeader title="Data quality" intro={INTRO} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiTile label="Checks run on this data release" value={results.length} meta={quality.meta} format={String} />
-        <KpiTile label="Failures that stop publishing" value={quality.data.blocking} meta={quality.meta} format={String}
+        <KpiTile label="Checks run on this data release" value={results.length} meta={quality.meta} format={String} release />
+        <KpiTile label="Failures that stop publishing" value={quality.data.blocking} meta={quality.meta} format={String} release
                  caveat="Always 0 in a published release" />
-        <KpiTile label="Warnings raised" value={failed("WARN").length} meta={quality.meta} format={String} />
-        <KpiTile label="Records set aside" value={quarantined} meta={quality.meta} format={(v) => v.toLocaleString("en-SG")}
+        <KpiTile label="Warnings raised" value={failed("WARN").length} meta={quality.meta} format={String} release />
+        <KpiTile label="Records set aside" value={quarantined} meta={quality.meta} release format={(v) => v.toLocaleString("en-SG")}
                  caveat="Never corrected, never filled in" />
       </div>
 
       <div className="mt-6 space-y-6">
-        <ChartCard title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail
+        <ChartCard title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail release
                    description={`The checks that published data release ${snapshot.data.snapshot_id}, grouped by what a failure does.`}>
           <CheckResults report={quality.data} />
         </ChartCard>
@@ -129,7 +129,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
           ) : null}
         </ChartCard>
 
-        <ChartCard title="Freshness by source" meta={snapshot.meta} caveat={null}
+        <ChartCard title="Freshness by source" meta={snapshot.meta} caveat={null} release
                    description="How current each source is, judged against how often it is published. An old source is flagged, not hidden.">
           <FreshnessTable sources={snapshot.meta.sources} />
         </ChartCard>

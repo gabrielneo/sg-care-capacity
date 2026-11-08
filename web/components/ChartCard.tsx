@@ -30,6 +30,8 @@ export interface ChartCardProps {
   bySource?: boolean;
   /** A finding's data window end ("This finding uses data to"). See Provenance. */
   findingTo?: string | null;
+  /** The date is the data release's, not a source's: labelled so, with no badge. See Provenance. */
+  release?: boolean;
 }
 
 /**
@@ -37,7 +39,7 @@ export interface ChartCardProps {
  * is NOT rendered: a figure without a date and source is never shown.
  */
 export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, cadence, now, headingLevel = 2,
-                           download, bySource, findingTo }: ChartCardProps) {
+                           download, bySource, findingTo, release }: ChartCardProps) {
   const id = `chart-${(slug ?? (typeof title === "string" ? title : "card")).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
   const Heading = headingLevel === 3 ? "h3" : "h2";
@@ -55,7 +57,7 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
         <>
           <div className="mt-4">{children}</div>
           <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} cadence={cadence} now={now}
-                      bySource={bySource} findingTo={findingTo} />
+                      bySource={bySource} findingTo={findingTo} release={release} />
           {download ? (
             <p className="mt-2 text-xs">
               <a href={download} download data-testid="csv-download">Download the figures (CSV)</a>

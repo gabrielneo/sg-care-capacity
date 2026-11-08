@@ -47,6 +47,15 @@ export function formatValue(value: number | null | undefined, decimals: number):
   return value.toLocaleString("en-SG", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+/** Shown for a per-senior ratio in an area with no residents aged 65+: undefined, not missing (audit L-5). */
+export const NOT_APPLICABLE = "n/a (no residents)";
+
+/** A metric's text for one area: "n/a (no residents)" where a per-senior ratio is undefined, else formatValue. */
+export function areaValueText(area: Partial<AreaProps>, key: string, decimals: number): string {
+  if (key.includes("per_1k") && area.residents_65plus === 0) return NOT_APPLICABLE;
+  return formatValue(area[key as keyof AreaProps] as number | null | undefined, decimals);
+}
+
 /** Table columns, in order. */
 export const TABLE_COLUMNS = [
   { key: "planning_area", label: "Area", numeric: false, decimals: 0 },

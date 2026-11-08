@@ -33,7 +33,10 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
             const a = mode === "raw" ? pos(u.usual) : 50;
             const b = mode === "raw" ? pos(u.latest) : pos(u.pct);
             const note = pinnedCaveat(h);
-            const direction = u.diff > 0 ? "worse" : u.diff < 0 ? "better" : "neutral";
+            // Equal as shown (one decimal, or a whole %) reads as the same, with no arrow (audit L-9).
+            const same = mode === "raw" ? hours(u.latest) === hours(u.usual) : Math.round(u.pct) === 0;
+            const sign = same ? 0 : Math.sign(u.diff);
+            const direction = sign > 0 ? "worse" : sign < 0 ? "better" : "neutral";
             return (
               <li key={code} data-testid="dumbbell-row" data-hospital={code} data-annotated={annotated ? "" : undefined}
                   className={`grid gap-x-3 gap-y-1 sm:grid-cols-[8rem_minmax(0,1fr)_14rem] sm:items-center ${annotated ? "rounded-md bg-accent-soft p-2" : ""}`}>
@@ -49,10 +52,10 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
                   <span className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent"
                         style={{ left: `${b}%` }} data-testid="dumbbell-latest" />
                 </span>
-                <DeltaNumber compact direction={direction} change={u.diff > 0 ? "up" : u.diff < 0 ? "down" : null}
+                <DeltaNumber compact direction={direction} change={sign > 0 ? "up" : sign < 0 ? "down" : null}
                              value={mode === "raw" ? `${hours(u.latest)} hours` : `${signed(u.pct, 0)}%`}
                              unit={mode === "raw" ? `vs ${hours(u.usual)} usual` : null}
-                             word={u.diff > 0 ? "higher than usual" : u.diff < 0 ? "lower than usual" : "the same as usual"} />
+                             word={sign > 0 ? "higher than usual" : sign < 0 ? "lower than usual" : "about the same as usual"} />
                 {annotated && finding?.chart ? (
                   <p className="text-xs font-medium text-ink sm:col-start-2" data-testid="chart-callout">
                     <span aria-hidden="true">↑ </span>{finding.chart.callout} (the unusual-week finding)

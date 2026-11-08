@@ -17,7 +17,7 @@ describe("DeltaNumber", () => {
   it("shows the value, unit, comparison, and the change as an arrow and a word", () => {
     render(<DeltaNumber {...deltaFromDisplay(anomaly.display, anomaly.direction)} />);
     const box = screen.getByTestId("delta-number");
-    expect(box).toHaveTextContent(/^Average bed wait.*, week of 19–25 Oct 2026/);   // "bed wait" is a glossary term
+    expect(box).toHaveTextContent(/^Average of daily median.*bed wait.*, week of 19–25 Oct 2026/);   // "bed wait" is a glossary term
     expect(box).toHaveTextContent("2.1 hours");
     expect(box).toHaveTextContent("vs 1.4 hours, usual for this hospital");
     const change = screen.getByTestId("delta-change");

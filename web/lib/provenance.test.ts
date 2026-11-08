@@ -40,6 +40,13 @@ describe("findingMeta", () => {
     expect(m.sources.map((s) => s.id)).toEqual(["datagov_chas", "singstat_residents"]);
   });
 
+  it("keeps only the warnings on the finding's own tables (audit L-7)", () => {
+    const w = (table: string) => ({ check_id: `x.${table}`, table, severity: "WARN", scope: "row", failing_rows: 1, details: null });
+    const withWarnings = { ...meta, dq_warnings: [w("moh_bed_waits"), w("chas_clinics")] } as Meta;
+    const m = findingMeta({ source_ids: ["moh_bed_waits"], dq_tables: ["moh_bed_waits"], as_of: "2026-10-25" }, withWarnings);
+    expect(m.dq_warnings.map((x) => x.table)).toEqual(["moh_bed_waits"]);
+  });
+
   it("keeps every source for a release from before source_ids", () => {
     expect(findingMeta({ as_of: "2026-10-25" }, meta).sources).toHaveLength(5);
   });

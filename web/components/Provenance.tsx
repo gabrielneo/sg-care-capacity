@@ -40,6 +40,8 @@ export function provenanceProblems(meta: Meta | null | undefined): string[] {
  *   MOH's daily figure), each publisher's own date and freshness badge instead of one date for all.
  * - findingTo: for a finding, the end of the data window it tests ("uses data to"). The date and badge
  *   stay the source's own, so a finding's window never makes current data look stale.
+ * - release: the date is when the whole data release was checked, not one source's: it is labelled so,
+ *   with no freshness badge (no single source's cadence applies to it).
  */
 export function Provenance({
   meta,
@@ -51,6 +53,7 @@ export function Provenance({
   compact = false,
   bySource = false,
   findingTo,
+  release = false,
 }: {
   meta: Meta;
   caveat?: string | null;
@@ -61,6 +64,7 @@ export function Provenance({
   compact?: boolean;
   bySource?: boolean;
   findingTo?: string | null;
+  release?: boolean;
 }) {
   const c = cadence ?? cadenceFor(meta);
   const perSource = bySource ? sourceDates(meta.sources) : [];
@@ -93,6 +97,7 @@ export function Provenance({
               )}
             </span>
           ))}
+          {release ? " (when this data release was checked)" : null}
           {findingTo ? (
             <span data-testid="finding-window">
               {" · This finding uses data to "}<time dateTime={findingTo}>{formatAsOf(findingTo)}</time>
@@ -100,7 +105,7 @@ export function Provenance({
           ) : null}
           {caveat && !compact ? <>{" · "}<Glossed text={caveat} /></> : null}
         </p>
-        {dates.map((d) => (
+        {release ? null : dates.map((d) => (
           <FreshnessBadge key={d.name || "all"} asOf={d.asOf} cadence={d.cadence} now={now} source={d.name || undefined} />
         ))}
       </div>

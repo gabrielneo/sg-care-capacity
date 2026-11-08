@@ -43,6 +43,19 @@ describe("Dumbbell", () => {
   });
 });
 
+describe("Dumbbell: equal as shown", () => {
+  it("calls values that look equal 'about the same as usual', with no arrow (audit L-9)", () => {
+    // As the audit saw (WH, CGH): unequal values that both read 4.4 / 3.4 at one decimal.
+    const near = { WH: usual("WH", 4.42, 4.38), CGH: usual("CGH", 3.41, 3.43) };
+    const hospitals = [{ ...HOSPITALS[0]!, hospital_code: "WH" }, { ...HOSPITALS[0]!, hospital_code: "CGH" }];
+    render(<Dumbbell usuals={near} hospitals={hospitals} mode="raw" finding={null} />);
+    for (const row of screen.getAllByTestId("dumbbell-row")) {
+      expect(within(row).getByTestId("delta-number")).toHaveTextContent("about the same as usual");
+      expect(within(row).getByTestId("delta-number")).not.toHaveTextContent(/[▲▼]/);
+    }
+  });
+});
+
 describe("WeekdayHeatmap", () => {
   const profiles = [{ code: "SKH", values: [5.8, 42.9, 41.7, 12.1, -9.7, -43.2, -49.5], weeks: 26 },
                     { code: "SGH", values: [0, 0, 0, 0, 0, 0, 0], weeks: 26 }];

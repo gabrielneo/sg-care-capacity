@@ -28,3 +28,13 @@ describe("area metrics", () => {
     expect(sortAreas(rows, "evil;drop", "sideways")).toMatchObject({ key: "planning_area", dir: "asc" });
   });
 });
+
+describe("areaValueText", () => {
+  it("says a per-senior ratio is not applicable where no seniors live, not that data is missing (audit L-5)", async () => {
+    const { areaValueText, NOT_APPLICABLE } = await import("./areaMetrics");
+    expect(areaValueText({ residents_65plus: 0, cdmp_clinics_per_1k_seniors: null }, "cdmp_clinics_per_1k_seniors", 2)).toBe(NOT_APPLICABLE);
+    expect(areaValueText({ residents_65plus: null, cdmp_clinics_per_1k_seniors: null }, "cdmp_clinics_per_1k_seniors", 2)).toBe("No data");
+    expect(areaValueText({ residents_65plus: 0, chas_clinics: 3 }, "chas_clinics", 0)).toBe("3");
+    expect(areaValueText({ residents_65plus: 900, clinics_per_1k_seniors: 1.234 }, "clinics_per_1k_seniors", 2)).toBe("1.23");
+  });
+});

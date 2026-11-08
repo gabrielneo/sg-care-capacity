@@ -39,7 +39,8 @@ export const BASIS: Record<string, string> = {
   datagov_chas: "When data.gov.sg last updated it",
   datagov_planning_areas: "When data.gov.sg last updated it",
   datagov_polyclinics: "When data.gov.sg last updated it",
-  datagov_annual_ae: "When data.gov.sg last updated it",
+  // The dataset is touched more often than its figures change: its latest year can be much older (audit I-4).
+  datagov_annual_ae: "When data.gov.sg last updated it, not the latest year the figures cover",
 };
 
 // API errors, in plain words. The code stays visible as a reference.

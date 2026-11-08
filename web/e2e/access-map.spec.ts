@@ -63,7 +63,10 @@ test.describe("Access Map", () => {
     await expect(table.locator("tbody tr").first()).toContainText("Bedok");
     await table.getByRole("link", { name: /CHAS GP clinics per 1,000/ }).click();
     await expect(page).toHaveURL(/sort=clinics_per_1k_seniors&dir=asc/);
-    await expect(table.locator("tbody tr").last()).toContainText("No data");          // missing values last
+    // Missing or undefined values last. Tuas has no residents aged 65+: its ratios are not applicable,
+    // not missing (audit L-5).
+    await expect(table.locator("tbody tr").last()).toContainText("n/a (no residents)");
+    await expect(table.locator("tbody tr").last()).not.toContainText("No data");
     await expectAsOfOnEveryCard(page, 1);
   });
 

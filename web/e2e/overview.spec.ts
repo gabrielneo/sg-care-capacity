@@ -52,6 +52,17 @@ test.describe("Overview: the scroll story", () => {
     await expect(page.getByTestId("hero").locator("[data-level]")).toBeVisible();          // the freshness badge
   });
 
+  test("a finding's warnings are only those on the data it uses (audit L-7)", async ({ page }) => {
+    // The fixture has one MOH bed-wait warning and one clinic-list error; ED findings show only the first.
+    await page.goto("/");
+    const ed = page.getByTestId("hero");
+    await expect(page.getByText(/data-quality warnings? appl/).first()).toBeAttached();
+    for (const t of await page.getByText(/data-quality warnings? appl/).allTextContents()) {
+      expect(t).toMatch(/^1 data-quality warning applies/);
+    }
+    await expect(ed).toBeVisible();
+  });
+
   test("without JavaScript the final number is already in the HTML", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();

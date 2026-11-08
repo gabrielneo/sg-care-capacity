@@ -36,12 +36,15 @@ export function sourceDates(sources: Source[]): SourceDate[] {
 }
 
 /**
- * The meta for one finding: only the sources it is computed from, dated by those sources (not by
+ * The meta for one finding: only the sources it is computed from and the warnings on its tables, dated by those sources (not by
  * the end of the finding's window, which the finding's own as_of gives). A release from before
  * source_ids keeps every source.
  */
-export function findingMeta(insight: Pick<Insight, "source_ids" | "as_of">, meta: Meta): Meta {
+export function findingMeta(insight: Pick<Insight, "source_ids" | "as_of" | "dq_tables">, meta: Meta): Meta {
   const ids = insight.source_ids ?? [];
   const sources = ids.length ? meta.sources.filter((s) => ids.includes(s.id)) : meta.sources;
-  return { ...meta, sources, as_of: oldestAsOf(sources) ?? insight.as_of };
+  // Only the warnings on the tables this finding uses (audit L-7).
+  const tables = insight.dq_tables ?? [];
+  const dq_warnings = tables.length ? meta.dq_warnings.filter((w) => tables.includes(w.table)) : meta.dq_warnings;
+  return { ...meta, sources, dq_warnings, as_of: oldestAsOf(sources) ?? insight.as_of };
 }

@@ -51,6 +51,12 @@ describe("ChartCard", () => {
     expect(screen.getByText(/Up to date · weekly data, 6 days old/)).toBeInTheDocument();
   });
 
+  it("release labels the date as the data release's, with no cadence badge (audit L-6)", () => {
+    render(<ChartCard title="Check results" meta={edMeta} now={NOW} release><p>table</p></ChartCard>);
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/^Data as of 31 Oct 2026 · Source: .* \(when this data release was checked\)$/);
+    expect(document.querySelector("[data-level]")).toBeNull();
+  });
+
   it("names the right publisher for each dataset, and flags an old one", () => {
     render(<ChartCard title="Clinics" meta={clinicMeta} now={NOW}><p>map</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");

@@ -171,7 +171,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
           <ChartCard title="Bed wait by day of the week" slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      download={csv("/export/ed-daily.csv", { from: window.from, to: window.to })}
                      description={<Glossed text={`${mode === "usual" ? "Each weekday against the hospital's own average" : "The average bed wait on each weekday"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)} (up to 26).`} />}>
-            <WeekdayHeatmap profiles={profiles} hospitals={hospitals} mode={mode} finding={findingFor(findings, "weekday")} />
+            <WeekdayHeatmap profiles={profiles} hospitals={chosen} mode={mode} finding={findingFor(findings, "weekday")} />
           </ChartCard>
         ) : null}
 

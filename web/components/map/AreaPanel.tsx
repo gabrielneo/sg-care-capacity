@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { AREA_METRICS, type AreaProps, formatValue } from "@/lib/areaMetrics";
+import { AREA_METRICS, type AreaProps, areaValueText } from "@/lib/areaMetrics";
 import { formatAsOf } from "@/lib/dates";
 
 import { Glossed } from "../terms/Glossed";
@@ -34,7 +34,7 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
           <div key={m.key} className="contents">
             <dt className="text-muted"><Glossed text={m.label} /></dt>
             <dd className="text-right tabular-nums">
-              {formatValue(area[m.key], m.decimals)}
+              {areaValueText(area, m.key, m.decimals)}
               {area[m.key] != null ? (m.unit === "% of land" ? "%" : m.unit === "km" ? " km" : "") : ""}
             </dd>
           </div>

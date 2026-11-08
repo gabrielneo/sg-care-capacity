@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { CircleMarker, GeoJSON, MapContainer, Pane, TileLayer, useMap } from "react-leaflet";
 
 import type { AreaCollection, Clinic } from "@/lib/api/types";
-import { type AreaMetric, type AreaProps, formatValue } from "@/lib/areaMetrics";
+import { type AreaMetric, type AreaProps, areaValueText } from "@/lib/areaMetrics";
 import { classify } from "@/lib/quantiles";
 
 // OneMap (Singapore Land Authority) basemap. Its terms require the OneMap logo and this
@@ -63,7 +63,7 @@ export default function LeafletMap({ areas, clinics, metric, breaks, colors, sho
   // Make each area reachable by keyboard and named for screen readers.
   const onEachFeature = (feature: Feature<Geometry, AreaProps>, layer: L.Layer) => {
     const p = feature.properties;
-    const label = `${p.planning_area}: ${metric.label} ${formatValue(p[metric.key], metric.decimals)}. Press Enter for details.`;
+    const label = `${p.planning_area}: ${metric.label} ${areaValueText(p, metric.key, metric.decimals)}. Press Enter for details.`;
     layer.on("click", () => onSelectRef.current(p.planning_area_code));
     layer.on("add", () => {
       const el = (layer as L.Path).getElement();

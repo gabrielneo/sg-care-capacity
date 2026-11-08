@@ -98,6 +98,13 @@ test.describe("ED Trends: difference-first charts", () => {
     await expect(page.getByTestId("slope-bounded")).toHaveCount(0);
   });
 
+  test("the weekday table names only chosen hospitals it can't show (audit L-3)", async ({ page }) => {
+    await page.goto("/ed-trends?hospital=SGH");
+    const heat = page.getByTestId("chart-card").filter({ has: page.getByTestId("heatmap") });
+    await expect(heat).toBeVisible();
+    await expect(heat.getByText(/^Not shown, with fewer than 4 complete weeks/)).toHaveCount(0);   // NUH etc. weren't chosen
+  });
+
   test("filters by hospital through the form, keeping the URL shareable", async ({ page }) => {
     await page.goto("/ed-trends");
     await page.getByRole("checkbox", { name: /Alexandra Hospital/ }).uncheck();
