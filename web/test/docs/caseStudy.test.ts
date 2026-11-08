@@ -27,9 +27,24 @@ describe("case study", () => {
     expect(caseStudy.split("\n").filter((l) => l.startsWith(">"))).toEqual([]);
   });
 
-  it.each(["Problem statement", "Stakeholder map", "Personas", "Patient flow: as-is and to-be", "Success metrics",
+  // Sections the author hasn't written yet keep their TODO(me) markers; remove a heading as it is done.
+  it.each(["Personas", "Patient flow: as-is and to-be", "Success metrics",
            "Limitations and next steps"])("%s leaves the author's judgement as TODO(me)", (heading) => {
     expect(section(caseStudy, heading)).toContain("TODO(me)");
+  });
+
+  it("the problem statement cites its policy context and labels its assumption", () => {
+    const problem = section(caseStudy, "Problem statement");
+    expect(problem).not.toContain("TODO(me)");
+    expect(problem).toContain("*Assumption, to validate:*");
+    for (const source of ["population.gov.sg", "ntu.edu.sg", "moh.gov.sg"]) expect(problem).toContain(source);
+  });
+
+  it("the stakeholder map says what its placements rest on, and cites official sources", () => {
+    const map = section(caseStudy, "Stakeholder map");
+    expect(map).not.toContain("TODO(me)");
+    expect(map).toContain("not validated with the");
+    for (const source of ["moh.gov.sg", "aic.sg", "healthinfo.gov.sg"]) expect(map).toContain(source);
   });
 
   it("names all six stakeholders", () => {
@@ -39,8 +54,9 @@ describe("case study", () => {
     }
   });
 
-  it("has an as-is and a to-be Mermaid diagram", () => {
-    expect(caseStudy.match(/```mermaid/g)).toHaveLength(2);
+  it("has a stakeholder grid and the as-is and to-be Mermaid diagrams", () => {
+    expect(caseStudy.match(/```mermaid/g)).toHaveLength(3);
+    expect(section(caseStudy, "Stakeholder map")).toContain("quadrantChart");
   });
 
   it("links every ADR in its decision log", () => {

@@ -43,10 +43,11 @@ test.describe("Case Study", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("draws the as-is and to-be diagrams", async ({ page }) => {
+  test("draws the stakeholder grid and the as-is and to-be diagrams", async ({ page }) => {
     await page.goto("/case-study");
-    await expect(page.locator('[data-testid="mermaid"][data-rendered="true"]')).toHaveCount(2, { timeout: 20_000 });
-    await expect(page.locator('[data-testid="mermaid"] svg').first()).toContainText("decision to admit");
+    await expect(page.locator('[data-testid="mermaid"][data-rendered="true"]')).toHaveCount(3, { timeout: 20_000 });
+    await expect(page.locator('[data-testid="mermaid"] svg').first()).toContainText("Manage closely");
+    await expect(page.locator('[data-testid="mermaid"] svg').nth(1)).toContainText("decision to admit");
   });
 
   test("the decision log opens each ADR", async ({ page }) => {
@@ -59,7 +60,7 @@ test.describe("Case Study", () => {
 
   test("passes axe WCAG 2.1 AA checks", async ({ page }) => {
     await page.goto("/case-study");
-    await expect(page.locator('[data-testid="mermaid"][data-rendered="true"]')).toHaveCount(2, { timeout: 20_000 });
+    await expect(page.locator('[data-testid="mermaid"][data-rendered="true"]')).toHaveCount(3, { timeout: 20_000 });
     await expectNoA11yViolations(page);
   });
 });
