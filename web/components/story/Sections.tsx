@@ -82,10 +82,9 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
         <>
           <p className="mt-3 max-w-3xl text-2xl leading-snug text-ink">
             <HighlightPhrase>
-              <span className="font-semibold tabular-nums" data-testid="share-65">{percentText(share.latest.share_65plus)}</span> of
-              Singapore residents
+              <span className="font-semibold tabular-nums" data-testid="share-65">{percentText(share.latest.share_65plus)}</span>
             </HighlightPhrase>{" "}
-            were aged 65 or over in {monthYear(share.latest.reference_date)}.
+            of Singapore residents were aged 65 or over in {monthYear(share.latest.reference_date)}.
           </p>
           <p className="mt-3 max-w-prose text-ink">
             That is {share.latest.residents_65plus.toLocaleString("en-SG")} of {share.latest.residents_total.toLocaleString("en-SG")}{" "}

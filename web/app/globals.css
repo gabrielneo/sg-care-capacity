@@ -155,8 +155,9 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 .countup-roll[data-digit="9"] { --n: 9; } .countup-roll[data-digit="9"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8"; }
 @keyframes countup-roll { from { transform: translateY(0); } }
 
-/* HighlightPhrase: a marker stroke under a short phrase, drawn left to right once. */
-.highlight { position: relative; white-space: nowrap; isolation: isolate; }
+/* HighlightPhrase: a marker stroke under a phrase, drawn left to right once. An inline block that
+   may wrap (never nowrap: a wider font, e.g. Linux's fallback, would push it past a 375 px screen). */
+.highlight { position: relative; display: inline-block; max-width: 100%; isolation: isolate; }
 .highlight::after {
   content: ""; position: absolute; left: -0.1em; right: -0.1em; bottom: 0.08em; height: 0.42em; z-index: -1;
   background: var(--color-map-1); opacity: 0.55; border-radius: 2px;

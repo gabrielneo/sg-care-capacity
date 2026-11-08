@@ -8,7 +8,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
  * - With JavaScript, a phrase that starts off screen is reset and drawn when it scrolls in (a
  *   phrase already on screen stays drawn: no flash). IntersectionObserver, then it disconnects.
  * - Only transform is animated (scaleX), 500 ms, ease-out. prefers-reduced-motion: never reset.
- * For short phrases: the mark sits on one line.
+ * A phrase that wraps keeps one mark, under its last line (the box may wrap; it never overflows).
  */
 export function HighlightPhrase({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLSpanElement>(null);

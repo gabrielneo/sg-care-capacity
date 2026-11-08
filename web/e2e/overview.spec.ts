@@ -165,6 +165,18 @@ test.describe("Overview: the scroll story", () => {
     }
   });
 
+  test("no sideways scrolling with a wider font, as Linux's fallback font is", async ({ page }) => {
+    // CI's Chromium falls back to a wider font than macOS; a phrase that couldn't wrap overflowed there.
+    await page.addInitScript(() => document.addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = "html, body, * { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }";
+      document.head.append(style);
+    }));
+    await page.goto("/");
+    await expect(page.getByTestId("why-now")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
   test("no layout shift from the count-up", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByTestId("countup")).toBeVisible();
