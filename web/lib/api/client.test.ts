@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { edMeta } from "@/test/fixtures/meta";
 
-import { api, ApiError, REVALIDATE_SECONDS, settle } from "./client";
+import { api, ApiError, REVALIDATE_SECONDS, revalidateSeconds, settle } from "./client";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -37,6 +37,21 @@ describe("api client", () => {
     const [, init] = fetchMock.mock.calls[0] as [Request, RequestInit & { next?: { revalidate?: number } }];
     expect(init.next?.revalidate).toBe(REVALIDATE_SECONDS);
     expect(REVALIDATE_SECONDS).toBe(3600);
+  });
+
+  it("revalidates after API_REVALIDATE_SECONDS when it is set", async () => {
+    vi.stubEnv("API_REVALIDATE_SECONDS", "900");
+    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    await api.edSummary();
+    const [, init] = fetchMock.mock.calls[0] as [Request, RequestInit & { next?: { revalidate?: number } }];
+    expect(init.next?.revalidate).toBe(900);
+  });
+
+  it.each([
+    [undefined, 3600], ["", 3600], ["  ", 3600], ["1800", 1800], [" 60 ", 60], ["86400", 86400],
+    ["59", 3600], ["86401", 3600], ["0", 3600], ["-5", 3600], ["1.5", 3600], ["1h", 3600], ["abc", 3600],
+  ])("API_REVALIDATE_SECONDS=%j gives %i (bad values fall back to an hour)", (value, expected) => {
+    expect(revalidateSeconds(value)).toBe(expected);
   });
 
   it("turns the API's error envelope into an ApiError with its code and field", async () => {

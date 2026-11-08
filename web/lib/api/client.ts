@@ -5,8 +5,8 @@
  * Every call is typed from api/openapi.json via lib/api/schema.d.ts: paths, query parameters and
  * response bodies are checked at compile time. A call resolves to {data, meta} or throws ApiError.
  *
- * Caching matches the API: it sends `Cache-Control: max-age=3600`, so Next revalidates each
- * response after REVALIDATE_SECONDS.
+ * Caching matches the API: it sends `Cache-Control: max-age=3600`, so by default Next revalidates
+ * each response after an hour. API_REVALIDATE_SECONDS changes that (see revalidateSeconds).
  */
 import "server-only";
 
@@ -16,6 +16,20 @@ import type { paths } from "./schema";
 import type { Query } from "./types";
 
 export const REVALIDATE_SECONDS = 3600;
+const REVALIDATE_MIN = 60;
+const REVALIDATE_MAX = 86_400;
+
+/**
+ * How long a cached API response is reused: API_REVALIDATE_SECONDS, a whole number from 60 to
+ * 86400. Anything else (unset, empty, a typo) falls back to the default of an hour: a bad setting
+ * must not turn caching off or keep a withdrawn data release for days.
+ */
+export function revalidateSeconds(value = process.env.API_REVALIDATE_SECONDS): number {
+  const v = value?.trim();
+  if (!v || !/^\d+$/.test(v)) return REVALIDATE_SECONDS;
+  const n = Number(v);
+  return n >= REVALIDATE_MIN && n <= REVALIDATE_MAX ? n : REVALIDATE_SECONDS;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -42,7 +56,7 @@ function client() {
   return createClient<paths>({
     baseUrl,
     // Next reads caching options from fetch's second argument; openapi-fetch passes a Request.
-    fetch: (request: Request) => fetch(request, { next: { revalidate: REVALIDATE_SECONDS } }),
+    fetch: (request: Request) => fetch(request, { next: { revalidate: revalidateSeconds() } }),
   });
 }
 

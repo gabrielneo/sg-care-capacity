@@ -2,8 +2,9 @@ import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 
+import { DataStatus } from "@/components/DataStatus";
 import { Nav } from "@/components/Nav";
 import { Glossed } from "@/components/terms/Glossed";
 import { TermScope } from "@/components/terms/TermScope";
@@ -45,6 +46,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="mx-auto max-w-6xl px-4 py-4 text-sm text-muted">
             <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." />{" "}
             <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
+            {/* Streams in after the page, so a slow API never holds up the page itself. */}
+            <Suspense fallback={null}><DataStatus /></Suspense>
           </div>
         </footer>
       </body>
