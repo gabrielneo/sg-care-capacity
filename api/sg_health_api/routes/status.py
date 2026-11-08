@@ -12,13 +12,21 @@ from . import get_ctx
 
 router = APIRouter(tags=["quality and live"])
 
-LIVE_SQL = """
+_LIVE_SELECT = """
     SELECT hospital_code, site_name, department, is_adult_ed, measure_type, patients_waiting,
-           est_wait_to_see_doctor_hours, est_bed_wait_hours, snapshot_at, source_updated_at, source_url,
+           est_wait_to_see_doctor_hours, est_bed_wait_hours, {q}, snapshot_at, source_updated_at, source_url,
            source_sha256, as_of, as_of_basis
     FROM marts.fct_live_ed_snapshot
     QUALIFY row_number() OVER (PARTITION BY site_name, department ORDER BY snapshot_at DESC) = 1
     ORDER BY hospital_code NULLS LAST, site_name, department
+"""
+LIVE_SQL = _LIVE_SELECT.replace("{q}", "est_wait_to_see_doctor_qualifier, est_bed_wait_qualifier")
+# Releases before 2026-11-08 have no qualifier columns (NUHS bounds were read as values then).
+LIVE_SQL_BEFORE_QUALIFIERS = _LIVE_SELECT.replace(
+    "{q}", "NULL AS est_wait_to_see_doctor_qualifier, NULL AS est_bed_wait_qualifier")
+HAS_QUALIFIERS_SQL = """
+    SELECT count(*) AS n FROM information_schema.columns
+    WHERE table_schema = 'marts' AND table_name = 'fct_live_ed_snapshot' AND column_name = 'est_bed_wait_qualifier'
 """
 
 
@@ -43,7 +51,10 @@ def quality(ctx: Context = Depends(get_ctx)) -> QualityResponse:
             summary="Latest NUHS ED wait estimates in the snapshot (not a live feed)")
 def live_nuhs_latest(ctx: Context = Depends(get_ctx)) -> LiveResponse:
     if "live" not in ctx.cache:
-        ctx.cache["live"] = [LiveReading(**r) for r in ctx.snap.query(LIVE_SQL)]
+        # An older release (a rollback) has no qualifier columns: serve it with NULL qualifiers.
+        has_qualifiers = ctx.snap.query(HAS_QUALIFIERS_SQL)[0]["n"] > 0
+        found = ctx.snap.query(LIVE_SQL) if has_qualifiers else ctx.snap.query(LIVE_SQL_BEFORE_QUALIFIERS)
+        ctx.cache["live"] = [LiveReading(**r) for r in found]
     rows: list[LiveReading] = ctx.cache["live"]
     newest = max((r.as_of for r in rows), default=None)
     oldest = min((r.snapshot_at for r in rows), default=None)

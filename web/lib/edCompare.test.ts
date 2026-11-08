@@ -137,7 +137,13 @@ describe("NUHS against MOH", () => {
     ] as LiveReading[];
     const daily = [day("NUH", "2026-10-30", 4.2), day("NUH", "2026-10-31", null)];
     expect(slopePairs(daily, live)).toEqual([
-      { code: "NUH", nuhs: { value: 6.5, at: "2026-11-01T12:00:00" }, moh: { value: 4.2, date: "2026-10-30" } }]);
+      { code: "NUH", nuhs: { value: 6.5, at: "2026-11-01T12:00:00", bound: null }, moh: { value: 4.2, date: "2026-10-30" } }]);
+  });
+
+  it("keeps NUHS's bound with the reading (\"< 1 hour\" is not 1 hour)", () => {
+    const live = [{ hospital_code: "AH", is_adult_ed: true, est_bed_wait_hours: 1, est_bed_wait_qualifier: "<",
+                    snapshot_at: "2026-11-08T22:00:44" }] as LiveReading[];
+    expect(slopePairs([day("AH", "2026-10-31", 1.5)], live)[0]!.nuhs).toEqual({ value: 1, at: "2026-11-08T22:00:44", bound: "<" });
   });
 });
 

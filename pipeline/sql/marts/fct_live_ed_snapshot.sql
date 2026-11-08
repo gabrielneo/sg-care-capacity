@@ -1,6 +1,8 @@
 -- One row per NUHS site, department and snapshot. Every figure here is NUHS's live ESTIMATE
 -- at one moment, labelled measure_type = 'estimate'. It is not comparable one-for-one with MOH's
 -- daily median of admitted patients (fct_ed_daily); see reconcile.nuhs_vs_moh_nuh.
+-- A qualifier of '<' or '>' means NUHS published a bound, e.g. "< 1 hour(s)": the hours column then
+-- holds the bound (1), not a measured value. Comparisons and tests leave bounded readings out.
 -- as_of is NUHS's own "Last updated at" time where the page states one ('source_updated'),
 -- otherwise when we fetched the page ('fetched').
 -- is_adult_ed: NUHS lists Adult and Children's Emergency separately and NUH appears in both, while
@@ -24,6 +26,8 @@ SELECT
     s.patients_waiting,
     s.est_wait_to_see_doctor_hours,
     s.est_bed_wait_hours,
+    s.est_wait_to_see_doctor_qualifier,                        -- '<' / '>': the hours are a bound
+    s.est_bed_wait_qualifier,
     s.snapshot_at,
     s.source_updated_at,
     s.source_url,

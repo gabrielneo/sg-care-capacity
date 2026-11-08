@@ -85,7 +85,8 @@ def load_inputs(wh: Warehouse) -> dict[str, pd.DataFrame]:
         "daily": _q(wh, "SELECT hospital_code, report_date, median_wait_hours, attendances, is_complete_week FROM marts.fct_ed_daily"),
         "areas": _q(wh, "SELECT planning_area, residents_65plus, cdmp_clinics, cdmp_clinics_per_1k_seniors, clinics_as_of AS as_of "
                         "FROM marts.fct_area_access"),
-        "live": _q(wh, "SELECT hospital_code, is_adult_ed, est_bed_wait_hours, snapshot_at FROM marts.fct_live_ed_snapshot"),
+        "live": _q(wh, "SELECT hospital_code, is_adult_ed, est_bed_wait_hours, est_bed_wait_qualifier, snapshot_at "
+                       "FROM marts.fct_live_ed_snapshot"),
     }
 
 

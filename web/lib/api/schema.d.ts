@@ -891,8 +891,18 @@ export interface components {
              * @description NUHS estimate now; NOT MOH's daily median
              */
             est_bed_wait_hours: number | null;
+            /**
+             * Est Bed Wait Qualifier
+             * @description As est_wait_to_see_doctor_qualifier, for the bed wait
+             */
+            est_bed_wait_qualifier?: ("<" | ">") | null;
             /** Est Wait To See Doctor Hours */
             est_wait_to_see_doctor_hours: number | null;
+            /**
+             * Est Wait To See Doctor Qualifier
+             * @description '<' or '>' when NUHS published a bound ('< 1 hour(s)'): the hours are then the bound, not a value. Null for a plain value, and for releases before the column
+             */
+            est_wait_to_see_doctor_qualifier?: ("<" | ">") | null;
             /**
              * Hospital Code
              * @description Null if NUHS lists a site we don't recognise

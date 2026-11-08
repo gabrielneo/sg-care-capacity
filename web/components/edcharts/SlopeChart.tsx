@@ -1,6 +1,7 @@
 import type { Insight } from "@/lib/api/types";
 import type { SlopePair } from "@/lib/edCompare";
 import { formatAsOf } from "@/lib/dates";
+import { estimateText } from "@/lib/estimates";
 import { colors } from "@/lib/palette";
 
 import { Glossed } from "../terms/Glossed";
@@ -31,8 +32,25 @@ export function spread(ys: number[], gap = GAP): number[] {
  * admitted patients). There are no same-day pairs to compare yet.
  */
 export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: Insight | null }) {
-  const both = pairs.filter((p) => p.moh && p.nuhs) as (SlopePair & { moh: NonNullable<SlopePair["moh"]>; nuhs: NonNullable<SlopePair["nuhs"]> })[];
-  if (!both.length) return <p className="text-sm text-muted"><Glossed text="No NUHS site has both an estimate and an MOH figure in this data release." /></p>;
+  type Both = SlopePair & { moh: NonNullable<SlopePair["moh"]>; nuhs: NonNullable<SlopePair["nuhs"]> };
+  const paired = pairs.filter((p) => p.moh && p.nuhs) as Both[];
+  // A bound ("< 1 hour") has no point to plot: it is named under the chart instead (audit C-1).
+  const both = paired.filter((p) => !p.nuhs.bound);
+  const bounded = paired.filter((p) => p.nuhs.bound);
+  const boundNote = bounded.length ? (
+    <p className="mt-1 text-xs text-ink" data-testid="slope-bounded">
+      <Glossed text={`Not drawn, because NUHS gave a range rather than a figure: ${bounded.map((p) =>
+        `${p.code}, NUHS estimate ${estimateText(p.nuhs.value, p.nuhs.bound)} (MOH ${hours(p.moh.value)} h on ${shortDay(p.moh.date)})`).join("; ")}.`} />
+    </p>
+  ) : null;
+  if (!both.length) {
+    return (
+      <div>
+        <p className="text-sm text-muted"><Glossed text="No NUHS site has both an estimate and an MOH figure in this data release." /></p>
+        {boundNote}
+      </div>
+    );
+  }
   const top = Math.max(...both.flatMap((p) => [p.moh.value, p.nuhs.value])) * 1.1;
   const y = (v: number) => TOP + (1 - v / top) * (H - TOP - BOTTOM);
   const pct = (v: number) => `${v}%`;
@@ -62,6 +80,7 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
           </g>
         ))}
       </svg>
+      {boundNote}
       <p className="mt-1 text-xs text-muted" data-testid="slope-caveat">
         <Glossed text="Different days and different measures: NUHS estimates the wait at one moment; MOH reports the day's median for admitted patients, a few days later." />
       </p>

@@ -102,11 +102,23 @@ describe("ModeToggle", () => {
 describe("SlopeChart", () => {
   it("labels both ends, nudges crowded labels apart and says the days and measures differ", () => {
     render(<SlopeChart finding={null} pairs={[
-      { code: "NUH", moh: { value: 4.4, date: "2026-10-31" }, nuhs: { value: 20, at: "2026-11-06T12:01:49" } },
+      { code: "NUH", moh: { value: 4.4, date: "2026-10-31" }, nuhs: { value: 20, at: "2026-11-06T12:01:49", bound: null } },
       { code: "AH", moh: { value: 1.5, date: "2026-10-31" }, nuhs: null }]} />);
     expect(screen.getAllByTestId("slope")).toHaveLength(1);                                // a site without both is left out
     expect(screen.getByRole("img")).toHaveAccessibleName("NUH: MOH 4.4 hours, NUHS 20.0 hours. Different days and different measures.");
     expect(screen.getByTestId("slope-caveat")).toHaveTextContent(/Different days and different measures/);
     expect(spread([100, 105, 160])).toEqual([100, 113, 160]);
+  });
+
+  it("names a bounded NUHS reading instead of drawing it as a point (audit C-1)", () => {
+    render(<SlopeChart finding={null} pairs={[
+      { code: "NUH", moh: { value: 4.4, date: "2026-10-31" }, nuhs: { value: 20, at: "2026-11-08T22:00:44", bound: null } },
+      { code: "AH", moh: { value: 1.5, date: "2026-10-31" }, nuhs: { value: 1, at: "2026-11-08T22:00:44", bound: "<" } }]} />);
+    expect(screen.getAllByTestId("slope").map((s) => s.getAttribute("data-hospital"))).toEqual(["NUH"]);
+    expect(screen.getByRole("img")).toHaveAccessibleName("NUH: MOH 4.4 hours, NUHS 20.0 hours. Different days and different measures.");
+    // (The glossary spells out NUHS, AH and MOH on first use.)
+    expect(screen.getByTestId("slope-bounded")).toHaveTextContent(
+      /^Not drawn, because .*NUHS\) gave a range rather than a figure: .*\(AH\), .* estimate under 1 hour \(.*MOH\) 1\.5 h on 31 Oct\)\.$/);
+    expect(screen.getByTestId("slope-bounded")).not.toHaveTextContent("1.0 h");
   });
 });

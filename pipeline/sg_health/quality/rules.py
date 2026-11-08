@@ -160,6 +160,25 @@ SG_LAT = (1.15, 1.48)            # Singapore's bounding box, including the south
 SG_LON = (103.6, 104.1)
 CLINIC_COUNT_TOLERANCE = 0.10    # snapshot-to-snapshot change in clinic count that is unremarkable
 
+BOUNDED_ESTIMATE = register(
+    "live.bounded_estimate", Severity.WARN, Scope.ROW,
+    "An NUHS estimate published as a bound (e.g. '< 1 hour(s)') is kept as the bound with its qualifier, "
+    "flagged and left out of comparisons", tables=("nuhs_live_waits",))
+
+
+@rule("nuhs_live_waits")
+def bounded_estimates(df: pd.DataFrame, ctx: GateContext):
+    def describe(row) -> str:
+        parts = [f"{label} {row[col]} {row[hours]:g} h" for col, hours, label in (
+            ("est_consult_wait_qualifier", "est_consult_wait_hours", "wait to see a doctor"),
+            ("est_bed_wait_qualifier", "est_bed_wait_hours", "bed wait"))
+            if col in row and isinstance(row[col], str) and row[col]]
+        return f"{row['site_name']} ({row['department']}): " + "; ".join(parts) if parts else ""
+
+    text = df.apply(describe, axis=1) if len(df) else pd.Series(dtype="string")
+    return [(BOUNDED_ESTIMATE.check_id, text.astype("string").fillna("") != "", text + ", a bound, not a value")]
+
+
 COORDS_IN_SG = register(
     "clinic.coordinates_in_singapore", Severity.ERROR, Scope.ROW,
     f"latitude {SG_LAT[0]}-{SG_LAT[1]}, longitude {SG_LON[0]}-{SG_LON[1]}", tables=("chas_clinics",))

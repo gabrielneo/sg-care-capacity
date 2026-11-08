@@ -88,6 +88,8 @@ test.describe("ED Trends: difference-first charts", () => {
     await page.goto("/ed-trends");
     await expect(page.getByTestId("slope")).not.toHaveCount(0);
     expect(await plain(page.getByTestId("slope-caveat"))).toMatch(/^Different days and different measures/);
+    // Only bounded readings ("< 1 hour") are named under the chart; this fixture's bed waits are values.
+    await expect(page.getByTestId("slope-bounded")).toHaveCount(0);
   });
 
   test("filters by hospital through the form, keeping the URL shareable", async ({ page }) => {

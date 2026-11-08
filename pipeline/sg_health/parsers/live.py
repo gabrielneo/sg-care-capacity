@@ -8,7 +8,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 from ..logs import ParseStats, count_drop, count_read
-from .common import parse_duration_hours, to_int
+from .common import duration_bound, parse_duration_hours, to_int
 
 NOT_STATED = "(not stated)"   # department label when the page gives none (text fallback)
 
@@ -17,6 +17,14 @@ _NUHS_LABELS = {
     "est_consult_wait_hours": re.compile(r"(see|to)\s+(a\s+)?doctor|consult(ation)?\s+wait", re.I),
     "est_bed_wait_hours": re.compile(r"bed\s+wait", re.I),
 }
+# Each estimate's qualifier column: '<' or '>' when NUHS gives a bound ("< 1 hour(s)"), else NULL.
+QUALIFIER = {"est_consult_wait_hours": "est_consult_wait_qualifier", "est_bed_wait_hours": "est_bed_wait_qualifier"}
+
+
+def _empty_record(site: str, department: str) -> dict[str, Any]:
+    return {"site_name": site, "department": department, "patients_waiting": None,
+            "est_consult_wait_hours": None, "est_bed_wait_hours": None,
+            "est_consult_wait_qualifier": None, "est_bed_wait_qualifier": None}
 
 
 def _cell_texts(tr) -> list[str]:
@@ -76,11 +84,14 @@ def parse_nuhs_live(html: str, stats: ParseStats | None = None) -> list[dict[str
                 site = heading
             else:
                 site = f"{heading} - site {j + 1}"
-            rec: dict[str, Any] = {"site_name": site, "department": heading, "patients_waiting": None,
-                   "est_consult_wait_hours": None, "est_bed_wait_hours": None}
+            rec = _empty_record(site, heading)
             for key, vals in metrics.items():
                 cell = vals[j] if j < len(vals) else ""
-                rec[key] = to_int(cell) if key == "patients_waiting" else parse_duration_hours(cell)
+                if key == "patients_waiting":
+                    rec[key] = to_int(cell)
+                else:
+                    rec[key] = parse_duration_hours(cell)
+                    rec[QUALIFIER[key]] = duration_bound(cell) if rec[key] is not None else None
             count_read(stats)
             if any(rec[k] is not None for k in _NUHS_LABELS):
                 results.append(rec)
@@ -107,17 +118,18 @@ def _parse_nuhs_text(text: str) -> list[dict[str, Any]]:
     for idx, (_, end, key) in enumerate(spans):
         stop = spans[idx + 1][0] if idx + 1 < len(spans) else min(len(flat), end + 200)
         segment = flat[end:stop]
-        values: list[Any]
+        values: list[tuple[Any, str | None]]
         if key == "patients_waiting":
-            values = [int(x) for x in re.findall(r"(\d+)\s*patient", segment, re.I)]
+            values = [(int(x), None) for x in re.findall(r"(\d+)\s*patient", segment, re.I)]
         else:
-            values = [parse_duration_hours(x) for x in
-                      re.findall(r"\d+(?:\.\d+)?\s*(?:hour|hr|min)[a-z()]*(?:\s*\d+\s*min[a-z()]*)?",
+            values = [(parse_duration_hours(x), duration_bound(x)) for x in
+                      re.findall(r"(?:(?:<|>|less\s+than|more\s+than)\s*)?"
+                                 r"\d+(?:\.\d+)?\s*(?:hour|hr|min)[a-z()]*(?:\s*\d+\s*min[a-z()]*)?",
                                  segment, re.I)]
-        for j, v in enumerate(values):
-            rec = sites.setdefault(j, {"site_name": f"NUHS site {j + 1}", "department": NOT_STATED,
-                                       "patients_waiting": None,
-                                       "est_consult_wait_hours": None, "est_bed_wait_hours": None})
+        for j, (v, bound) in enumerate(values):
+            rec = sites.setdefault(j, _empty_record(f"NUHS site {j + 1}", NOT_STATED))
             if rec[key] is None:
                 rec[key] = v
+                if key in QUALIFIER:
+                    rec[QUALIFIER[key]] = bound
     return list(sites.values())

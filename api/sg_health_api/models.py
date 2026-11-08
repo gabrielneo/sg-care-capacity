@@ -324,6 +324,11 @@ class LiveReading(BaseModel):
     patients_waiting: int | None
     est_wait_to_see_doctor_hours: float | None
     est_bed_wait_hours: float | None = Field(description="NUHS estimate now; NOT MOH's daily median")
+    est_wait_to_see_doctor_qualifier: Literal["<", ">"] | None = Field(
+        default=None, description="'<' or '>' when NUHS published a bound ('< 1 hour(s)'): the hours are then the "
+                                  "bound, not a value. Null for a plain value, and for releases before the column")
+    est_bed_wait_qualifier: Literal["<", ">"] | None = Field(
+        default=None, description="As est_wait_to_see_doctor_qualifier, for the bed wait")
     snapshot_at: datetime
     source_updated_at: datetime | None
     source_url: str

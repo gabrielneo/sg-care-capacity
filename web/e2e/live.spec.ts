@@ -18,6 +18,10 @@ test.describe("Live", () => {
     // NUH is first named on this page in the children's card, so it is spelled out there.
     expect(await seen(card(/Children's Emergency$/))).toContain("Children's emergency is not part of MOH's National University Hospital (NUH) figures");
     expect(await seen(card(/^National University Hospital: Adult Emergency$/))).not.toContain("not part of MOH's NUH figures");
+    // NUHS published "< 1 hour(s)" for Alexandra: shown as a bound, never as "1 hour" (audit C-1).
+    const ah = card(/^Alexandra Hospital/);
+    expect(await seen(ah)).toContain("Estimated wait to see a doctor Under 1 hour Estimated wait for a ward bed (NUHS estimate) 1 hour Data");
+    expect(await seen(card(/Children's Emergency$/))).toContain("ward bed (NUHS estimate) Under 1 hour Data");
     await expectAsOfOnEveryCard(page, 4);
     await expectNoHorizontalScroll(page);
   });

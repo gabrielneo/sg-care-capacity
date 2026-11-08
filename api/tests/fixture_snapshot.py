@@ -52,7 +52,7 @@ DDL = {
         source_sha256 VARCHAR, fetched_at TIMESTAMP, as_of TIMESTAMP, as_of_basis VARCHAR""",
     "fct_live_ed_snapshot": """hospital_code VARCHAR, site_name VARCHAR, department VARCHAR, is_adult_ed BOOLEAN,
         measure_type VARCHAR, patients_waiting INTEGER, est_wait_to_see_doctor_hours DOUBLE, est_bed_wait_hours DOUBLE,
-        snapshot_at TIMESTAMP, source_updated_at TIMESTAMP, source_url VARCHAR, source_sha256 VARCHAR,
+        est_wait_to_see_doctor_qualifier VARCHAR, est_bed_wait_qualifier VARCHAR, snapshot_at TIMESTAMP, source_updated_at TIMESTAMP, source_url VARCHAR, source_sha256 VARCHAR,
         fetched_at TIMESTAMP, as_of TIMESTAMP, as_of_basis VARCHAR""",
     "fct_planning_area_population": """planning_area VARCHAR, year INTEGER, residents_total BIGINT,
         residents_65plus BIGINT, share_65plus DOUBLE, reference_date DATE, source_table VARCHAR, source_url VARCHAR,
@@ -204,12 +204,14 @@ CLINICS = [
     ("C5", "HCI5", "Echo Clinic", "5 Bedok Closed", "460005", 1.3260, 103.9360, "CDMP,CHAS", True, False, "BD", "Bedok"),
 ]
 
-LIVE = [   # (code, site, department, adult, waiting, doctor_h, bed_h, snapshot_at)
-    ("NTFGH", "Ng Teng Fong General Hospital", "Adult Emergency", True, 12, 1.0, 5.0, datetime(2026, 10, 31, 20, 0)),
-    ("NUH", "National University Hospital", "Adult Emergency", True, 20, 2.0, 18.0, datetime(2026, 10, 31, 20, 0)),
-    ("NUH", "National University Hospital", "Adult Emergency", True, 18, 2.0, 20.0, datetime(2026, 11, 1, 12, 1, 49)),
-    ("NUH", "National University Hospital", "Children's Emergency", False, 2, 1.0, 1.0, datetime(2026, 11, 1, 12, 1, 49)),
-    ("AH", "Alexandra Hospital", "Adult Emergency", True, 4, 1.0, 1.0, datetime(2026, 11, 1, 12, 1, 49)),
+LIVE = [   # (code, site, department, adult, waiting, doctor_h, bed_h, doctor_q, bed_q, snapshot_at)
+    ("NTFGH", "Ng Teng Fong General Hospital", "Adult Emergency", True, 12, 1.0, 5.0, None, None, datetime(2026, 10, 31, 20, 0)),
+    ("NUH", "National University Hospital", "Adult Emergency", True, 20, 2.0, 18.0, None, None, datetime(2026, 10, 31, 20, 0)),
+    ("NUH", "National University Hospital", "Adult Emergency", True, 18, 2.0, 20.0, None, None, datetime(2026, 11, 1, 12, 1, 49)),
+    ("NUH", "National University Hospital", "Children's Emergency", False, 2, 1.0, 1.0, None, "<", datetime(2026, 11, 1, 12, 1, 49)),
+    # As NUHS published on 2026-11-08, "< 1 hour(s)": a bound, here for Alexandra's wait to see a doctor and
+    # NUH Children's bed wait. (Alexandra's bed wait stays a value, so the NUHS-vs-MOH chart has a line.)
+    ("AH", "Alexandra Hospital", "Adult Emergency", True, 4, 1.0, 1.0, "<", None, datetime(2026, 11, 1, 12, 1, 49)),
 ]
 
 AREAS = [   # code, name, region, total, 65+, chas, cdmp, per1k, cdmp per1k, km2, pct1km, km_poly, poly, centroid_in, note
@@ -298,10 +300,12 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy21: bool = True) -> Path:
+def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy21: bool = True,
+          live_qualifiers: bool = True) -> Path:
     """Write the fixture snapshot into `out` (created). Returns `out`.
     insights=False builds a release from before the insight engine (no fct_insight);
-    insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer."""
+    insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer;
+    live_qualifiers=False one from before NUHS bounds were kept (no *_qualifier columns)."""
     marts = {m: cols for m, cols in DDL.items() if insights or m != "fct_insight"}
     if not insight_charts:
         marts["fct_insight"] = marts["fct_insight"].replace(INSIGHT_EXTRA_DDL, "")
@@ -331,10 +335,13 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
         con.executemany("INSERT INTO marts.dim_clinic VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'inside',?,?,?,?,?)",
                         [(*c, "https://data.gov.sg/chas.geojson", H, datetime(2026, 11, 1, 16, 34), CHAS_AS_OF,
                           "source_updated") for c in CLINICS])
-        con.executemany("INSERT INTO marts.fct_live_ed_snapshot VALUES (?,?,?,?,'estimate',?,?,?,?,?,?,?,?,?,?)",
-                        [(code, site, dept, adult, n, doc, bed, at, at, "https://www.nuhs.edu.sg/wait", H,
+        con.executemany("INSERT INTO marts.fct_live_ed_snapshot VALUES (?,?,?,?,'estimate',?,?,?,?,?,?,?,?,?,?,?,?)",
+                        [(code, site, dept, adult, n, doc, bed, doc_q, bed_q, at, at, "https://www.nuhs.edu.sg/wait", H,
                           at + timedelta(minutes=5), at, "source_updated")
-                         for code, site, dept, adult, n, doc, bed, at in LIVE])
+                         for code, site, dept, adult, n, doc, bed, doc_q, bed_q, at in LIVE])
+        if not live_qualifiers:
+            for col in ("est_wait_to_see_doctor_qualifier", "est_bed_wait_qualifier"):
+                con.execute(f"ALTER TABLE marts.fct_live_ed_snapshot DROP COLUMN {col}")
         con.executemany("INSERT INTO marts.fct_planning_area_population VALUES (?,2026,?,?,?,DATE '2026-06-30',"
                         "'respopagesextod2026',?,?,?,?,'reference_period')",
                         [(name, total, aged, (aged / total) if total else None, "https://www.singstat.gov.sg/x.zip", H,

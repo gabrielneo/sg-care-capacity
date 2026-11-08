@@ -8,6 +8,7 @@ import { api, settle } from "@/lib/api/client";
 import type { LiveReading } from "@/lib/api/types";
 import { CAVEAT, plainError } from "@/lib/copy";
 import { formatAsOf } from "@/lib/dates";
+import { estimateCell } from "@/lib/estimates";
 import { Glossed } from "@/components/terms/Glossed";
 
 export const metadata: Metadata = { title: "Live" };
@@ -16,11 +17,6 @@ export const dynamic = "force-dynamic";
 const INTRO = <Glossed text="Waiting estimates that NUHS publishes for its emergency departments at Alexandra, National University and Ng Teng Fong hospitals." />;
 const TITLE = <Glossed text="Live: NUHS estimates" />;
 
-function hoursText(v: number | null): string {
-  if (v == null) return "Not stated";
-  const n = Number.isInteger(v) ? String(v) : v.toLocaleString("en-SG", { maximumFractionDigits: 1 });
-  return `${n} ${v === 1 ? "hour" : "hours"}`;
-}
 
 function Reading({ r }: { r: LiveReading }) {
   return (
@@ -28,9 +24,9 @@ function Reading({ r }: { r: LiveReading }) {
       <dt className="text-muted">Patients waiting to see a doctor</dt>
       <dd className="text-right text-lg font-semibold tabular-nums">{r.patients_waiting ?? "Not stated"}</dd>
       <dt className="text-muted">Estimated wait to see a doctor</dt>
-      <dd className="text-right text-lg font-semibold tabular-nums">{hoursText(r.est_wait_to_see_doctor_hours)}</dd>
+      <dd className="text-right text-lg font-semibold tabular-nums">{estimateCell(r.est_wait_to_see_doctor_hours, r.est_wait_to_see_doctor_qualifier)}</dd>
       <dt className="text-muted"><Glossed text="Estimated wait for a ward bed (NUHS estimate)" /></dt>
-      <dd className="text-right text-lg font-semibold tabular-nums">{hoursText(r.est_bed_wait_hours)}</dd>
+      <dd className="text-right text-lg font-semibold tabular-nums">{estimateCell(r.est_bed_wait_hours, r.est_bed_wait_qualifier)}</dd>
     </dl>
   );
 }

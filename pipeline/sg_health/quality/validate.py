@@ -283,7 +283,9 @@ def reconcile_nuhs(wh: Warehouse, today: date) -> list[Result]:
         FROM nuhs_live_waits n
         JOIN moh_bed_waits b ON b.hospital_code = 'NUH' AND b.report_date = CAST(n.snapshot_timestamp AS DATE)
         WHERE n.site_name ILIKE '%National University Hospital%' AND n.department ILIKE '%adult%'
-          AND n.est_bed_wait_hours IS NOT NULL ORDER BY n.snapshot_timestamp""")
+          AND n.est_bed_wait_hours IS NOT NULL
+          AND n.est_bed_wait_qualifier IS NULL                -- a bound ("< 1 hour") is not a value to compare
+        ORDER BY n.snapshot_timestamp""")
     if pairs.empty:
         n_live = wh.con.execute("SELECT count(*) FROM nuhs_live_waits").fetchall()[0][0]
         return [Result(RECONCILE_NUHS, "nuhs_live_waits", "skipped",

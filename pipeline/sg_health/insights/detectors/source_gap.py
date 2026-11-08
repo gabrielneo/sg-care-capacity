@@ -13,13 +13,16 @@ from .common import hours_parts
 SQL = ("-- daily median of NUHS adult estimates for NUH, joined to MOH's NUH daily median on the same date\n"
        "SELECT CAST(l.snapshot_at AS DATE) AS day, median(l.est_bed_wait_hours) AS nuhs, any_value(d.median_wait_hours) AS moh "
        "FROM marts.fct_live_ed_snapshot l JOIN marts.fct_ed_daily d ON d.hospital_code = 'NUH' "
-       "AND d.report_date = CAST(l.snapshot_at AS DATE) WHERE l.hospital_code = 'NUH' AND l.is_adult_ed GROUP BY 1")
+       "AND d.report_date = CAST(l.snapshot_at AS DATE) WHERE l.hospital_code = 'NUH' AND l.is_adult_ed "
+       "AND l.est_bed_wait_qualifier IS NULL GROUP BY 1")
 
 
 def detect(live: pd.DataFrame, daily: pd.DataFrame, cfg: dict[str, Any], full_effect: float) -> DetectorResult:
     out = DetectorResult()
     nuh = live[(live["hospital_code"] == "NUH") & live["is_adult_ed"].fillna(False).astype(bool)
-               & live["est_bed_wait_hours"].notna()]
+               & live["est_bed_wait_hours"].notna()
+               # A bound ("< 1 hour") is not a measured value: left out, never used as the bound.
+               & (live["est_bed_wait_qualifier"].isna() if "est_bed_wait_qualifier" in live else True)]
     est = nuh.assign(day=pd.to_datetime(nuh["snapshot_at"]).dt.date).groupby("day")["est_bed_wait_hours"].median()
     moh = daily[daily["hospital_code"] == "NUH"].assign(day=lambda x: pd.to_datetime(x["report_date"]).dt.date)
     moh = moh.dropna(subset=["median_wait_hours"]).set_index("day")["median_wait_hours"]

@@ -1750,6 +1750,22 @@
             "description": "NUHS estimate now; NOT MOH's daily median",
             "title": "Est Bed Wait Hours"
           },
+          "est_bed_wait_qualifier": {
+            "anyOf": [
+              {
+                "enum": [
+                  "<",
+                  ">"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "As est_wait_to_see_doctor_qualifier, for the bed wait",
+            "title": "Est Bed Wait Qualifier"
+          },
           "est_wait_to_see_doctor_hours": {
             "anyOf": [
               {
@@ -1760,6 +1776,22 @@
               }
             ],
             "title": "Est Wait To See Doctor Hours"
+          },
+          "est_wait_to_see_doctor_qualifier": {
+            "anyOf": [
+              {
+                "enum": [
+                  "<",
+                  ">"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "'<' or '>' when NUHS published a bound ('< 1 hour(s)'): the hours are then the bound, not a value. Null for a plain value, and for releases before the column",
+            "title": "Est Wait To See Doctor Qualifier"
           },
           "hospital_code": {
             "anyOf": [

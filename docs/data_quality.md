@@ -259,6 +259,20 @@ movement.
   so it warns rather than blocks. The threshold is a judgement, not fitted to data: the CHAS
   file hasn't changed since June 2024, so there is no churn history to measure yet.
 
+## NUHS estimate checks (`nuhs_live_waits`)
+
+### `live.bounded_estimate`: WARN, row
+
+- **Guards against:** a bound being read as a value. NUHS writes "< 1 hour(s)" when a wait is under
+  an hour; reading it as "1 hour" states a precise figure NUHS never gave.
+- **Threshold:** any estimate whose cell starts with `<` or `>` (or "less than", "more than",
+  "under", "over"). The hours column keeps the bound; `est_bed_wait_qualifier` /
+  `est_consult_wait_qualifier` hold `<` or `>`.
+- **Why:** the reading is real, so it is kept and shown as "under 1 hour", never as 1 hour. It is
+  left out of anything that needs a value: the NUHS-vs-MOH chart, `reconcile.nuhs_vs_moh_nuh` and
+  the `source_gap` finding. **On real data:** 3 cells on the 8 Nov 2026, 10:00 pm page (Alexandra's
+  two estimates and NUH Children's bed wait). Found by the independent audit (`audit_report.md`, C-1).
+
 ## Population checks (`pop_65plus_by_area`, `pop_65plus_by_subzone`)
 
 ### `population.counts_consistent`: ERROR, row

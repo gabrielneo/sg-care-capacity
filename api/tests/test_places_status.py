@@ -153,3 +153,22 @@ def test_live_gives_each_sites_latest_reading_and_says_it_is_not_live(client):
     assert meta["as_of"] == "2026-11-01T12:01:49" and meta["coverage"]["oldest_snapshot_at"] == "2026-10-31T20:00:00"
     assert any("not a live feed" in c for c in meta["caveats"]) and any("is_adult_ed" in c for c in meta["caveats"])
     assert [s["id"] for s in meta["sources"]] == ["nuhs_live"]
+
+
+def test_live_says_when_nuhs_gave_a_bound_not_a_value(client):
+    # NUHS writes "< 1 hour(s)": the hours are the bound, and the qualifier says so (audit C-1).
+    _, body = get(client, "/live/nuhs/latest")
+    q = {(r["hospital_code"], r["department"]): (r["est_wait_to_see_doctor_qualifier"], r["est_bed_wait_qualifier"])
+         for r in body["data"]}
+    assert q == {("AH", "Adult Emergency"): ("<", None), ("NTFGH", "Adult Emergency"): (None, None),
+                 ("NUH", "Adult Emergency"): (None, None), ("NUH", "Children's Emergency"): (None, "<")}
+
+
+def test_a_release_from_before_the_qualifiers_still_serves_live_readings(tmp_path):
+    from fixture_snapshot import build
+
+    snap = build(tmp_path / "old", live_qualifiers=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        r = c.get(f"{API}/live/nuhs/latest")
+    assert r.status_code == 200 and len(r.json()["data"]) == 4
+    assert {(x["est_wait_to_see_doctor_qualifier"], x["est_bed_wait_qualifier"]) for x in r.json()["data"]} == {(None, None)}

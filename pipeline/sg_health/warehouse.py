@@ -27,7 +27,8 @@ DDL = [
         source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS nuhs_live_waits (
         site_name VARCHAR NOT NULL, department VARCHAR NOT NULL, patients_waiting INTEGER, est_bed_wait_hours DOUBLE,
-        est_consult_wait_hours DOUBLE, source_updated_at TIMESTAMP,
+        est_consult_wait_hours DOUBLE, est_bed_wait_qualifier VARCHAR, est_consult_wait_qualifier VARCHAR,
+        source_updated_at TIMESTAMP,
         snapshot_timestamp TIMESTAMP NOT NULL, source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (site_name, department, snapshot_timestamp))""",
     # SingStat residents per planning area and year (all residents, and those aged 65+).

@@ -7,6 +7,9 @@ SELECT
     CAST(patients_waiting AS INTEGER)        AS patients_waiting,
     CAST(est_consult_wait_hours AS DOUBLE)   AS est_wait_to_see_doctor_hours,
     CAST(est_bed_wait_hours AS DOUBLE)       AS est_bed_wait_hours,
+    -- '<' or '>' when NUHS published a bound ("< 1 hour(s)"): the hours column is then the bound.
+    CAST(est_consult_wait_qualifier AS VARCHAR) AS est_wait_to_see_doctor_qualifier,
+    CAST(est_bed_wait_qualifier AS VARCHAR)  AS est_bed_wait_qualifier,
     CAST(source_updated_at AS TIMESTAMP)     AS source_updated_at,
     CAST(snapshot_timestamp AS TIMESTAMP)    AS snapshot_at,
     CAST(source_url AS VARCHAR)              AS source_url,

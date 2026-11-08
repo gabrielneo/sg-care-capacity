@@ -116,6 +116,23 @@ def parse_duration_hours(text: str) -> float | None:
     return sum(float(x) for x in hrs) + sum(float(x) for x in mins) / 60
 
 
+_BELOW = re.compile(r"^\s*(?:<|&lt;|less\s+than|under|below)", re.I)
+_ABOVE = re.compile(r"^\s*(?:>|&gt;|more\s+than|over|above)", re.I)
+
+
+def duration_bound(text: str | None) -> str | None:
+    """'<' for '< 1 hour(s)' or 'less than 1 hour', '>' for '> 12 hours' or 'more than 12 hours',
+    None for a plain value. A bounded duration is kept as its bound plus this qualifier: never as a
+    point value on its own (NUHS publishes '< 1 hour(s)' when the wait is under an hour)."""
+    if not text:
+        return None
+    if _BELOW.match(text):
+        return "<"
+    if _ABOVE.match(text):
+        return ">"
+    return None
+
+
 def to_int(value: Any) -> int | None:
     if is_blank(value) or isinstance(value, bool):
         return None

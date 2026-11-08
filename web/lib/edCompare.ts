@@ -182,7 +182,8 @@ export function textOn(color: string): "light" | "dark" {
 export interface SlopePair {
   code: string;
   moh: { value: number; date: string } | null;
-  nuhs: { value: number; at: string } | null;
+  /** bound: "<" or ">" when NUHS gave a bound ("< 1 hour"), not a value. Such a reading is never drawn as a point. */
+  nuhs: { value: number; at: string; bound: "<" | ">" | null } | null;
 }
 
 /** Each NUHS site's latest adult ED estimate, beside MOH's latest daily figure for that hospital. */
@@ -193,7 +194,7 @@ export function slopePairs(daily: EdDay[], live: LiveReading[]): SlopePair[] {
       .sort((a, b) => b.snapshot_at.localeCompare(a.snapshot_at))[0];
     const moh = daily.filter((r) => r.hospital_code === code && r.median_wait_hours != null)
       .sort((a, b) => b.report_date.localeCompare(a.report_date))[0];
-    return { code, nuhs: est ? { value: est.est_bed_wait_hours as number, at: est.snapshot_at } : null,
+    return { code, nuhs: est ? { value: est.est_bed_wait_hours as number, at: est.snapshot_at, bound: est.est_bed_wait_qualifier ?? null } : null,
              moh: moh ? { value: moh.median_wait_hours as number, date: moh.report_date } : null };
   });
 }
