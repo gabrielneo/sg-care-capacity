@@ -96,7 +96,7 @@ def _weekday_chart(values: list[float], peak: str, mean: float, callout: str) ->
 
 ANOMALY_WEEKS = [date(2026, 8, 24) + timedelta(weeks=k) for k in range(9)]
 
-# Four published insights. The headline findings are one per detector type (ranks 1-3); one more weekday.
+# Five published insights. The headline findings are one per detector type (ranks 1-3); one more weekday, one access gap.
 INSIGHTS = [
     ("weekday-aaaaaaaaaa", "weekday", "SGH", "At Singapore General Hospital, bed waits are longest on Mondays, 25% above its weekly average.",
      "Waits differ by day of the week over 6 complete weeks. This is unlikely to be chance (adjusted p = 0.004).",
@@ -137,6 +137,18 @@ INSIGHTS = [
      {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None,
      _display("2.2", "hours", "Average bed wait on Tuesdays", "2.0 hours, its weekly average", "up", "higher than average"),
      _weekday_chart([2.0, 2.2, 2.0, 1.9, 2.0, 1.9, 2.0], "tue", 2.0, "Tuesdays: 10% above average")),
+    # Bedok: 1 CDMP clinic for 61,000 seniors; the national rate (2 clinics / 61,000) would give it 2.
+    ("access_gap-eeeeeeeeee", "access_gap", "Bedok",
+     "Bedok has about 1 fewer CDMP GP clinic than the national rate would give its seniors.",
+     "It has 1 clinic for 61,000 residents aged 65+, where the national rate suggests 2. Clinics are counted where they are, not where patients go.",
+     0.0164, "CDMP GP clinics per 1,000 residents aged 65+", 0.0328, "worse", 0.25, None, None, 61000,
+     "Expected CDMP clinics at the national rate per senior; priority = seniors percentile x (1 - access percentile)",
+     ["The clinic list dates from June 2024 and residents from June 2026."], None, None,
+     {"endpoint": "/api/v1/areas/access", "query": "SELECT 5"}, date(2024, 6, 6), "source_updated", 0.1, None,
+     _display("0.02", "per 1,000 residents aged 65+", "CDMP GP clinics per 1,000 residents aged 65+ in Bedok",
+              "0.03, the national rate", "down", "lower than the national rate"),
+     _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Singapore overall", 0.0328)],
+            ["area"], "About 1 clinic short of the national rate", None)),
 ]
 DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
     details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""

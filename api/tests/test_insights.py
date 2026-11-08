@@ -15,14 +15,15 @@ def ids(body) -> list[str]:
 
 def test_lists_published_insights_by_rank(client):
     body = client.get(API).json()
-    assert ids(body) == ["weekday-aaaaaaaaaa", "anomaly-bbbbbbbbbb", "volume_vs_wait-dddddddddd", "weekday-cccccccccc"]
+    assert ids(body) == ["weekday-aaaaaaaaaa", "anomaly-bbbbbbbbbb", "volume_vs_wait-dddddddddd", "weekday-cccccccccc",
+                         "access_gap-eeeeeeeeee"]
     first = body["data"][0]
     assert first["evidence"] == {"endpoint": "/api/v1/ed/daily?hospital=SGH", "query": "SELECT 1"}
     assert first["caveats"] and first["who_acts"] is None and first["action"] is None
     meta = body["meta"]
-    assert meta["as_of"] == "2026-10-25" and meta["coverage"] == {"insights": 4, "in_release": 4}
+    assert meta["as_of"] == "2026-10-25" and meta["coverage"] == {"insights": 5, "in_release": 5}
     assert "A suggested action appears only after the author has reviewed it." in meta["caveats"]
-    assert [s["id"] for s in meta["sources"]] == ["moh_bed_waits", "moh_ed_attendances"]
+    assert [s["id"] for s in meta["sources"]] == ["datagov_chas", "moh_bed_waits", "moh_ed_attendances", "singstat_residents"]
 
 
 @pytest.mark.parametrize("params, expected", [
@@ -31,6 +32,7 @@ def test_lists_published_insights_by_rank(client):
     ({"top": 1}, ["weekday-aaaaaaaaaa"]),
     ({"headline": "true"}, ["weekday-aaaaaaaaaa", "anomaly-bbbbbbbbbb", "volume_vs_wait-dddddddddd"]),   # in headline order
     ({"type": "trend"}, []),
+    ({"type": "access_gap"}, ["access_gap-eeeeeeeeee"]),
 ])
 def test_filters(client, params, expected):
     assert ids(client.get(API, params=params).json()) == expected
@@ -70,5 +72,5 @@ def test_a_release_from_before_charts_serves_its_insights_with_nulls(tmp_path):
     snap = build(tmp_path / "old", insight_charts=False)
     with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
         body = c.get(API).json()
-    assert len(body["data"]) == 4 and all(r["display"] is None and r["chart"] is None for r in body["data"])
+    assert len(body["data"]) == 5 and all(r["display"] is None and r["chart"] is None for r in body["data"])
     assert "Some insights have no chart data: this data release predates it." in body["meta"]["caveats"]
