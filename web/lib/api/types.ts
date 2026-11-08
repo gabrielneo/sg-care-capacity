@@ -18,6 +18,7 @@ export type EdSummary = Schemas["EdSummary"];
 export type Clinic = Schemas["Clinic"];
 export type ClinicPage = Schemas["ClinicPage"];
 export type AreaCollection = Schemas["AreaCollection"];
+export type Svy21Collection = Schemas["Svy21Collection"];
 export type QualityReport = Schemas["QualityReport"];
 export type LiveReading = Schemas["LiveReading"];
 export type SnapshotInfo = Schemas["SnapshotInfo"];

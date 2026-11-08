@@ -171,3 +171,10 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 @media (prefers-reduced-motion: reduce) {
   .countup-roll, .highlight::after, .story-chart, .story-card { animation: none !important; transition: none !important; }
 }
+
+/* The 3D map's floating labels (drei <Html>): real text, so it stays crisp and readable. */
+.map3d-label {
+  display: inline-block; white-space: nowrap; padding: 0.1rem 0.4rem; border-radius: 4px;
+  background: var(--color-ink); color: var(--color-surface); font-size: 0.75rem; font-weight: 600;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.25);
+}

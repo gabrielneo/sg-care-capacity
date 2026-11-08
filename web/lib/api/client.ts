@@ -87,6 +87,7 @@ export const api = {
   clinics: (query: Query<"/api/v1/clinics"> = {}) =>
     call(() => client().GET("/api/v1/clinics", { params: { query } })),
   areasAccess: () => call(() => client().GET("/api/v1/areas/access")),
+  areasAccessSvy21: () => call(() => client().GET("/api/v1/areas/access/svy21")),
   quality: () => call(() => client().GET("/api/v1/quality")),
   liveNuhsLatest: () => call(() => client().GET("/api/v1/live/nuhs/latest")),
   insights: (query: Query<"/api/v1/insights"> = {}) =>

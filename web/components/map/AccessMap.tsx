@@ -76,14 +76,12 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
         </fieldset>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div>
-          <LeafletMap areas={areas} clinics={clinics} metric={metric} breaks={breaks} colors={colors} showClinics={showClinics}
-                      cdmpOnly={cdmpOnly} selected={selected} onSelect={setSelected} />
-          <p className="mt-2 text-xs text-muted">Select an area (click, tap, or Tab then Enter) to see its details.</p>
-        </div>
-        <div className="space-y-4">
-          {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
+      <LeafletMap areas={areas} clinics={clinics} metric={metric} breaks={breaks} colors={colors} showClinics={showClinics}
+                  cdmpOnly={cdmpOnly} selected={selected} onSelect={setSelected} />
+      <p className="mt-2 text-xs text-muted">Select an area (click, tap, or Tab then Enter) to see its details.</p>
+      <div className="mt-3 grid gap-4 md:grid-cols-2">
+        {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
+        <div className="space-y-2">
           <MapLegend metric={metric} classes={classes} noData={noData} smallAreas={smallAreas} />
           {caveats[metric.metricId] ? <p className="text-xs text-muted"><Glossed text={caveats[metric.metricId]!} /></p> : null}
         </div>

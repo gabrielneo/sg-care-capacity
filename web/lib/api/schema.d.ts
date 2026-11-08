@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/areas/access/svy21": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The same areas in SVY21 metres, for the 3D map (GeoJSON in data) */
+        get: operations["areas_access_svy21_api_v1_areas_access_svy21_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/clinics": {
         parameters: {
             query?: never;
@@ -251,12 +268,22 @@ export interface components {
             cdmp_clinics: number | null;
             /** Cdmp Clinics Per 1K Seniors */
             cdmp_clinics_per_1k_seniors: number | null;
+            /**
+             * Cdmp Shortfall
+             * @description CDMP clinics the national rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
+             */
+            cdmp_shortfall?: number | null;
             /** Chas Clinics */
             chas_clinics: number | null;
             /** Clinics Per 1K Seniors */
             clinics_per_1k_seniors: number | null;
             /** Dq Note */
             dq_note: string | null;
+            /**
+             * Excluded Reason
+             * @description Why the area is left out of the access-gap ranking (too few residents aged 65+); null if it is ranked
+             */
+            excluded_reason?: string | null;
             /** Nearest Polyclinic */
             nearest_polyclinic: string | null;
             /** Pct Area Within 1Km Of Cdmp */
@@ -1090,6 +1117,103 @@ export interface components {
              */
             url: string | null;
         };
+        /** Svy21AreasResponse */
+        Svy21AreasResponse: {
+            data: components["schemas"]["Svy21Collection"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Svy21Collection */
+        Svy21Collection: {
+            /** Features */
+            features: components["schemas"]["Svy21Feature"][];
+            /**
+             * Metadata
+             * @description origin: the SVY21 offset subtracted from every coordinate
+             */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /**
+             * Type
+             * @constant
+             */
+            type: "FeatureCollection";
+        };
+        /** Svy21Feature */
+        Svy21Feature: {
+            geometry: components["schemas"]["Svy21Geometry"];
+            properties: components["schemas"]["Svy21Properties"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "Feature";
+        };
+        /** Svy21Geometry */
+        Svy21Geometry: {
+            /**
+             * Coordinates
+             * @description SVY21 (EPSG:3414) metres, minus metadata.origin: x east, y north
+             */
+            coordinates: unknown[];
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "Polygon" | "MultiPolygon";
+        };
+        /** Svy21Properties */
+        Svy21Properties: {
+            /** Approx Km Centroid To Nearest Polyclinic */
+            approx_km_centroid_to_nearest_polyclinic: number | null;
+            /** As Of */
+            as_of: string | null;
+            /** As Of Basis */
+            as_of_basis: string | null;
+            /** Cdmp Clinics */
+            cdmp_clinics: number | null;
+            /** Cdmp Clinics Per 1K Seniors */
+            cdmp_clinics_per_1k_seniors: number | null;
+            /**
+             * Cdmp Shortfall
+             * @description CDMP clinics the national rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
+             */
+            cdmp_shortfall?: number | null;
+            /** Chas Clinics */
+            chas_clinics: number | null;
+            /** Clinics Per 1K Seniors */
+            clinics_per_1k_seniors: number | null;
+            /** Dq Note */
+            dq_note: string | null;
+            /**
+             * Excluded Reason
+             * @description Why the area is left out of the access-gap ranking (too few residents aged 65+); null if it is ranked
+             */
+            excluded_reason?: string | null;
+            /**
+             * Label X
+             * @description A point inside the area for its label, in the layer's metres
+             */
+            label_x: number;
+            /** Label Y */
+            label_y: number;
+            /** Nearest Polyclinic */
+            nearest_polyclinic: string | null;
+            /** Pct Area Within 1Km Of Cdmp */
+            pct_area_within_1km_of_cdmp: number | null;
+            /** Planning Area */
+            planning_area: string;
+            /** Planning Area Code */
+            planning_area_code: string;
+            /** Population Year */
+            population_year: number | null;
+            /** Region Name */
+            region_name: string | null;
+            /** Residents 65Plus */
+            residents_65plus: number | null;
+            /** Residents Total */
+            residents_total: number | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1149,6 +1273,44 @@ export interface operations {
             };
             /** @description Invalid parameter */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    areas_access_svy21_api_v1_areas_access_svy21_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Svy21AreasResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This data release has no 3D map layer */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
