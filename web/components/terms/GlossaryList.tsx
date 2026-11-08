@@ -57,7 +57,8 @@ export function GlossaryList({ terms }: { terms: readonly GlossaryEntry[] }) {
                       t.plain_definition
                     )}
                     {t.public_wording ? <span className="mt-1 block text-muted">Public pages say: {t.public_wording}</span> : null}
-                    {t.source_url ? <a href={t.source_url} className="mt-1 block text-xs">Source</a> : null}
+                    {/* Inline, after the definition: on its own line it read as a term with no definition. */}
+                    {t.source_url ? <>{" "}<a href={t.source_url} className="text-xs">Source</a></> : null}
                   </dd>
                 </div>
               ))}

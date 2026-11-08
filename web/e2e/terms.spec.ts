@@ -84,6 +84,12 @@ test.describe("glossary page", () => {
     await expect(page.getByText("Chronic Disease Management Programme (CDMP)")).toBeVisible();
   });
 
+  test("shows no unfinished definition", async ({ page }) => {
+    await page.goto("/glossary");
+    await expect(page.locator("main")).not.toContainText("TODO(me)");
+    await expect(page.locator(".todo-me")).toHaveCount(0);
+  });
+
   test("passes axe WCAG 2.1 AA checks", async ({ page }) => {
     await page.goto("/glossary");
     await expectNoA11yViolations(page);

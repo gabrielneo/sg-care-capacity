@@ -11,7 +11,7 @@ Every source can change without notice:
 - SingStat publishes two similar population files, and one of them leaves out about 20,000
   residents aged 65+.
 
-The project's data principles (CLAUDE.md) say:
+The project's data principles say:
 - **never fabricate, impute or interpolate values silently;**
 - **failed error-level checks block publishing,** and the site keeps the last good snapshot.
 

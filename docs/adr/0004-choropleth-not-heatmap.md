@@ -29,7 +29,7 @@ A heatmap (kernel density) is a common default for "where are the people?"
 
 | Option | Why not |
 |---|---|
-| Heatmap of residents | It would have to invent where inside each area people live, and draw hot spots the data never contained: fabrication, which CLAUDE.md rules out |
+| Heatmap of residents | It would have to invent where inside each area people live, and draw hot spots the data never contained: fabrication, which the project's data principles rule out |
 | Heatmap of clinics | Blurs exact locations into a surface; the points are more honest and just as readable |
 | Shading by counts | Mostly shows area size: big areas have more of everything |
 | Subzones instead of planning areas | 56 inhabited subzones have under 500 residents aged 65+, and URA publishes no Master Plan 2025 subzone boundaries |

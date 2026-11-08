@@ -22,7 +22,9 @@ export default function GlossaryPage() {
           </>
         }
       />
-      <GlossaryList terms={GLOSSARY} />
+      {/* A term whose definition is still TODO(me) in docs/glossary.yml (HAS) isn't used on any page, and an
+          unfinished entry read as a draft to testers: it stays off the public list until it is written. */}
+      <GlossaryList terms={GLOSSARY.filter((t) => !t.pending)} />
     </>
   );
 }

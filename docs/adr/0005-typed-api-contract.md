@@ -45,6 +45,6 @@ carry `as_of` and its source. That rule is only as strong as the site's ability 
   and matches its declared model, and the committed `openapi.json` is up to date.
 - **CI `web` job:** `npm run check:api-types` regenerates the types and fails on any difference.
 - **`web/components/ChartCard.test.tsx` and `KpiTile.test.tsx`:** `@ts-expect-error` checks that
-  omitting `meta` doesn't compile. I confirmed these fail when `meta` is made optional.
+  omitting `meta` doesn't compile; they were checked to fail when `meta` is made optional.
 - **`web/e2e`:** every chart card and KPI tile on every page shows a visible "Data as of" date
   and a source.

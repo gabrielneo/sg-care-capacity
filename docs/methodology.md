@@ -128,7 +128,7 @@ inside it people live.
   per area, with the boundary it applies to.
 - A **heatmap** (kernel density) spreads values smoothly across space. Applied to areal counts, it would
   have to invent where within each area residents live, and draw hot spots that the data never
-  contained. That is fabrication, which CLAUDE.md rules out.
+  contained. That is fabrication, which the project's data principles rule out.
 
 Clinics *are* point data, so on the map they belong as **points** (or circles) over the choropleth, not
 blurred into a density surface either.

@@ -233,7 +233,7 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   each planning area mapped to a cluster region, and **no official mapping is published**. MOH's
   2017 reorganisation names Central (NHG), Eastern (SingHealth) and Western (NUHS), without listing
   which planning areas belong to each.
-- **Proposed method (agreed; the table itself awaits the author's approval):**
+- **Proposed method (agreed; the mapping table is not yet approved):**
   - Assign each planning area to the cluster that runs the polyclinic in it, from each cluster's
     published polyclinic list.
   - Areas without a polyclinic go to the cluster of the nearest polyclinic (SVY21 distance).
@@ -241,11 +241,10 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
 - **The proposed table:** [regional_mapping.csv](regional_mapping.csv), 55 rows. For each area it
   gives the cluster, the basis (a polyclinic in the area, or the nearest one and its distance), and
   a source for the polyclinic's operator.
-  - **Not yet approved.** Six areas rest on polyclinics whose operator I couldn't confirm from a
-    source: Geylang, Hougang, Novena, Paya Lebar, Serangoon and Toa Payoh. They're marked
+  - **Not yet approved.** Six areas rest on polyclinics whose operator could not be confirmed from
+    a public source: Geylang, Hougang, Novena, Paya Lebar, Serangoon and Toa Payoh. They're marked
     `to verify`.
-  - The detector stays off (`thresholds.yml`: `regional.enabled: false`) until the author approves
-    the table.
+  - The detector stays off (`thresholds.yml`: `regional.enabled: false`) until the table is approved.
 - **Gate when on:** descriptive only (three regions, too few to test). A finding is published only
   if a region is both below the national access rate and above the national median bed wait.
 - **Why this method:** regions are how clusters plan care, so a side-by-side comparison is the
