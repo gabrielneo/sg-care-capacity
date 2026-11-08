@@ -17,7 +17,7 @@ evidence available. `as_of_basis` says which evidence:
 
 | `as_of_basis` | Meaning | Used by |
 |---|---|---|
-| `source_updated` | The publisher's own "last updated" time | `dim_clinic` (data.gov.sg `lastUpdatedAt`), `fct_live_ed_snapshot` (NUHS "Last updated at") |
+| `source_updated` | The publisher's own "last updated" time | `dim_clinic`, `dim_polyclinic` (data.gov.sg `lastUpdatedAt`), `fct_live_ed_snapshot` (NUHS "Last updated at") |
 | `fetched` | When we downloaded the file; the publisher gives no per-figure date | `fct_ed_daily`, `fct_ed_weekly` (MOH); fallback for the two above |
 | `reference_checked` | When the reference list in code was last verified | `dim_hospital` |
 | `reference_period` | The date the statistic describes, set by the publisher | `fct_planning_area_population` (end of June) |
@@ -56,6 +56,10 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | `coverage_note` | What MOH's figures for this site cover, where it isn't obvious | text | config | Set for AH (UCC), NUH (adults only), WH (not yet on MOH's page text). |
 | `exclusions_note` | What MOH leaves out of these statistics altogether | text | config | KK Women's and Children's Hospital and NUH Children's Emergency. |
 | `source_url` | MOH page the reference was checked against | text | config | |
+| `postal_code` | The site's postcode | text | config (`HOSPITAL_LOCATION`) | Kept as text. Each was searched on SLA OneMap, which returned a building with the site's own name. |
+| `latitude`, `longitude` | Map pin for the site | degrees (WGS84) | config, from that OneMap result | A pin for the map, not a routing address. SGH has no single building, so its pin is Block 1, where the Emergency Department is. |
+| `location_source_url` | Where the pins came from | text | `config.HOSPITAL_LOCATION_SOURCE_URL` | SLA OneMap search API. |
+| `location_checked` | When the pins were last checked | date | `config.HOSPITAL_LOCATION_CHECKED` | 2026-11-09. |
 | `source_sha256` | SHA-256 of the reference rows | text | computed from config | Changes whenever the reference changes, so a build can be traced to its reference. |
 | `as_of` | When the reference was last verified | date | `config.REFERENCE_CHECKED` | |
 | `as_of_basis` | Always `reference_checked` | text | constant | |
@@ -125,6 +129,25 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 
 **Not included: `on_has`.** The Health Appointment System clinic list was unpublished on
 data.gov.sg (checked 2026-11-06) and was never downloaded, so there is nothing to match against.
+
+### `marts.dim_polyclinic`
+
+**Grain:** one row per polyclinic (26 on the real data). **Source:** data.gov.sg HPB *Cervical
+Screening Centre* (GeoJSON, `d_3ca2a28059588f297908b32da4ac3cbe`) → `polyclinics` →
+`staging.stg_polyclinics`, keeping only entries named "... Polyclinic". The list is a proxy: every
+polyclinic offers cervical screening, so all 26 are in it, but a new polyclinic appears only once
+HPB lists it.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `polyclinic_name` | Name as published, e.g. `Woodlands Polyclinic` | text | staging `facility_name` | |
+| `address` | Address as published, tidied for display | text | staging; trimmed and runs of whitespace collapsed | |
+| `postal_code` | 6-digit postcode | text | staging | Kept as text: leading zeros matter. |
+| `latitude`, `longitude` | Location | degrees (WGS84) | staging, from the GeoJSON point | |
+| `source_url`, `source_sha256` | The raw file the row came from | text | staging lineage | |
+| `fetched_at` | When that file was downloaded | timestamp (SGT) | staging | |
+| `as_of` | When data.gov.sg last updated the dataset | timestamp (SGT) | metadata `lastUpdatedAt` | Falls back to `fetched_at` if metadata is unavailable. |
+| `as_of_basis` | `source_updated`, or `fetched` for the fallback | text | | |
 
 ### `marts.fct_live_ed_snapshot`
 
@@ -305,6 +328,17 @@ caveat appears wherever a metric does.
 | `source_sha256` | SHA-256 of the metric definitions | text | computed | Changes whenever a definition changes. |
 | `as_of` | When the definitions were last checked | date | `metrics.METRICS_CHECKED` | |
 | `as_of_basis` | Always `reference_checked` | text | constant | |
+
+## Computed by the site (home page)
+
+Plain comparisons the web app makes from the API's figures. They are not insights: no statistical
+test, so they never become a sentence about a pattern (that is the insight engine's job).
+
+| Indicator | Definition | Unit | Computed in | Caveats |
+|---|---|---|---|---|
+| Hospital status badge | Latest complete week's average of daily median bed waits against the hospital's usual level (median of the 8 complete weeks before it; the same usual level as ED Trends and the unusual-week finding). +30% or more: much higher; +15% to under +30%: higher; over −15% to under +15%: about usual; −15% or less: lower. | category | `web/lib/status.ts` | Thresholds chosen for readability, not tested. Fewer than 8 complete weeks before the latest: "no comparison", never "about usual". |
+| 12-week line | The last 12 weekly averages of daily median bed waits | hours | `web/lib/status.ts` | An incomplete week is a gap. |
+| Nearest places | Straight-line (great-circle) distance from the searched point to each polyclinic, active CHAS clinic and hospital pin | km | `web/lib/nearby.ts` | The point is a listed place with that postcode, else the mean of listed places in the postcode's 2-digit sector, else the mean of the area's CHAS clinics. Approximate; not travel distance. The search text is not stored or sent anywhere. |
 
 ## Source tables
 

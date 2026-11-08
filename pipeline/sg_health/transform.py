@@ -45,6 +45,7 @@ MODELS: list[tuple[str, str]] = [
     ("marts", "fct_ed_daily"),
     ("marts", "fct_ed_weekly"),
     ("marts", "dim_clinic"),
+    ("marts", "dim_polyclinic"),
     ("marts", "fct_live_ed_snapshot"),
     ("marts", "fct_planning_area_population"),
     ("python", "area_geo_metrics"),
@@ -111,6 +112,10 @@ RECONCILIATIONS: list[Reconciliation] = [
                    "SELECT coalesce(sum(chas_clinics), 0) FROM marts.fct_area_access"),
     Reconciliation("marts.dim_metric", "main.ref_metric",
                    "SELECT count(*) FROM main.ref_metric", "SELECT count(*) FROM marts.dim_metric"),
+    # Every polyclinic in the list is in the mart; entries not named "... Polyclinic" are left out.
+    Reconciliation("marts.dim_polyclinic", "staging.stg_polyclinics (is_polyclinic)",
+                   "SELECT count(*) FROM staging.stg_polyclinics WHERE is_polyclinic",
+                   "SELECT count(*) FROM marts.dim_polyclinic"),
     Reconciliation("marts.dim_hospital", "main.ref_hospital",
                    "SELECT count(*) FROM main.ref_hospital", "SELECT count(*) FROM marts.dim_hospital"),
     # Every staged value lands in exactly one daily row.
@@ -162,6 +167,9 @@ def reference_hospitals() -> pd.DataFrame:
             "facility_type": facility_type,
             "reported_from": valid_from,
             "coverage_note": config.HOSPITAL_COVERAGE_NOTE.get(code),
+            "postal_code": config.HOSPITAL_LOCATION[code][0],
+            "latitude": config.HOSPITAL_LOCATION[code][1],
+            "longitude": config.HOSPITAL_LOCATION[code][2],
         })
     df = pd.DataFrame(rows)
     df["reported_from"] = pd.to_datetime(df["reported_from"]).dt.date
@@ -170,6 +178,8 @@ def reference_hospitals() -> pd.DataFrame:
     df["source_sha256"] = digest
     df["as_of"] = pd.Timestamp(config.REFERENCE_CHECKED)
     df["exclusions_note"] = config.MOH_EXCLUSIONS_NOTE
+    df["location_source_url"] = config.HOSPITAL_LOCATION_SOURCE_URL
+    df["location_checked"] = pd.Timestamp(config.HOSPITAL_LOCATION_CHECKED)
     return df
 
 

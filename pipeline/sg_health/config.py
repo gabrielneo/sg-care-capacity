@@ -158,6 +158,24 @@ HOSPITAL_COVERAGE_NOTE: dict[str, str] = {
     "NUH": "Adult emergency department only; NUH Children's Emergency is excluded by MOH.",
     "WH": "MOH reports Woodlands Hospital from 2024-06-23; its page text does not list it yet.",
 }
+# Where each site is, for the map: postal code, latitude, longitude (WGS84, 6 dp, about 0.1 m).
+# From SLA OneMap's search API (onemap.gov.sg/api/common/elastic/search?searchVal=<postal code>),
+# checked 2026-11-09: each postal code returned a building with the site's own name. The point is
+# that building's; SGH has no single building, so it is "SINGAPORE GENERAL HOSPITAL (BLK 1)", the
+# block with the Emergency Department. A map pin, not a routing address.
+HOSPITAL_LOCATION: dict[str, tuple[str, float, float]] = {
+    "AH":    ("159964", 1.285481, 103.800181),
+    "CGH":   ("529889", 1.340826, 103.949467),
+    "KTPH":  ("768828", 1.424081, 103.838579),
+    "NUH":   ("119074", 1.294420, 103.783687),
+    "NTFGH": ("609606", 1.333606, 103.745448),
+    "SKH":   ("544886", 1.394393, 103.893164),
+    "SGH":   ("169608", 1.278429, 103.834043),
+    "TTSH":  ("308433", 1.321369, 103.845694),
+    "WH":    ("737628", 1.424681, 103.794744),
+}
+HOSPITAL_LOCATION_CHECKED = date(2026, 11, 9)
+HOSPITAL_LOCATION_SOURCE_URL = "https://www.onemap.gov.sg/api/common/elastic/search"
 MOH_EXCLUSIONS_NOTE = ("MOH excludes KK Women's and Children's Hospital and NUH Children's Emergency "
                        "from these statistics.")
 REFERENCE_CHECKED = date(2026, 11, 6)       # when the hospital reference above was last verified

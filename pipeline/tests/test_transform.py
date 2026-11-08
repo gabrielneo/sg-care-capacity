@@ -154,6 +154,19 @@ def test_dim_hospital_matches_the_reference_in_code(wh):
     assert dim.loc["WH", "reported_from"].date() == date(2024, 6, 23) and dim["source_sha256"].nunique() == 1
 
 
+def test_dim_hospital_has_a_map_pin_for_every_site_inside_singapore(wh):
+    from sg_health.config import HOSPITAL_LOCATION
+    run_transform(wh)
+    dim = q(wh, "SELECT * FROM marts.dim_hospital").set_index("hospital_code")
+    assert set(HOSPITAL_LOCATION) == set(HOSPITAL_REFERENCE)
+    for code, (postal, lat, lon) in HOSPITAL_LOCATION.items():
+        assert dim.loc[code, "postal_code"] == postal and len(postal) == 6
+        assert (dim.loc[code, "latitude"], dim.loc[code, "longitude"]) == (lat, lon)
+        assert 1.15 < lat < 1.48 and 103.6 < lon < 104.1                       # mainland Singapore
+    assert set(dim["location_source_url"]) == {"https://www.onemap.gov.sg/api/common/elastic/search"}
+    assert dim["location_checked"].notna().all()
+
+
 def test_marts_are_identical_when_rebuilt(built):
     tables = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly"]
     first = {t: q(built, f"SELECT * FROM marts.{t}") for t in tables}
@@ -163,6 +176,25 @@ def test_marts_are_identical_when_rebuilt(built):
 
 
 # ------------------------------------------------------------------ clinics #
+
+def test_dim_polyclinic_keeps_only_polyclinics_dated_by_the_upstream_update(monkeypatch, paths):
+    from conftest import POLYCLINICS_DOWNLOAD, polyclinics_geojson, source_routes
+    routes = source_routes()
+    routes[POLYCLINICS_DOWNLOAD] = (polyclinics_geojson([("Bedok Polyclinic", 103.69, 1.34),
+                                                         ("Some Screening  Centre", 103.62, 1.29)]),
+                                    routes[POLYCLINICS_DOWNLOAD][1])
+    full_run(monkeypatch, paths, routes)
+    wh = Warehouse(paths["db"])
+    try:
+        rows = q(wh, "SELECT * FROM marts.dim_polyclinic")
+    finally:
+        wh.close()
+    assert rows["polyclinic_name"].tolist() == ["Bedok Polyclinic"]            # the non-polyclinic is left out
+    row = rows.iloc[0]
+    assert row["postal_code"] == "123456" and row["address"] == "1 Some Street"
+    assert (row["latitude"], row["longitude"]) == (1.34, 103.69)
+    assert row["as_of_basis"] == "source_updated" and row["as_of"] == pd.Timestamp("2026-01-04 10:00:00")
+
 
 def test_dim_clinic_as_of_is_the_upstream_update_not_our_download(built):
     rows = q(built, "SELECT clinic_key, as_of, as_of_basis, fetched_at FROM marts.dim_clinic")
@@ -230,7 +262,7 @@ import re  # noqa: E402
 
 from sg_health import config  # noqa: E402
 
-MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "fct_live_ed_snapshot",
+MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "dim_polyclinic", "fct_live_ed_snapshot",
          "fct_planning_area_population", "fct_area_access", "dim_metric"]
 
 
