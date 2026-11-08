@@ -4,6 +4,7 @@
       analytics.duckdb                 ONLY the marts schema plus dq_results; checkpointed, read-only
       parquet/<mart>.parquet           one per mart
       planning_area_access.geojson     the web map layer
+      planning_area_access_svy21.geojson   the 3D map layer (SVY21 metres)
       manifest.json                    snapshot_id, as_of per source, row counts, coverage per hospital,
                                        check summary, sha256 of every artefact, pipeline git commit
 
@@ -205,10 +206,11 @@ def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dic
         con.execute(f"COPY (SELECT * FROM marts.{m} ORDER BY ALL) TO '{_sql_path(parquet_dir / (m + '.parquet'))}' "
                     "(FORMAT parquet)")
 
-    from .geo import WEB_GEOJSON_NAME
-    web = wh.path.parent / "web" / WEB_GEOJSON_NAME
-    if web.exists():
-        shutil.copyfile(web, out_dir / WEB_GEOJSON_NAME)
+    from .geo import SVY21_GEOJSON_NAME, WEB_GEOJSON_NAME
+    for name in (WEB_GEOJSON_NAME, SVY21_GEOJSON_NAME):
+        layer = wh.path.parent / "web" / name
+        if layer.exists():
+            shutil.copyfile(layer, out_dir / name)
     (out_dir / INSIGHTS_JSON).write_text(json.dumps(insights.to_json(insight_run), indent=2, sort_keys=True, default=str) + "\n")
 
     manifest = {

@@ -170,6 +170,7 @@ def area_geo_metrics(wh: Warehouse) -> pd.DataFrame:
 # --------------------------------------------------------------------------- #
 
 WEB_GEOJSON_NAME = "planning_area_access.geojson"
+SVY21_GEOJSON_NAME = "planning_area_access_svy21.geojson"     # the 3D map: metres, no projection in the browser
 WEB_MAX_BYTES = 1_000_000
 SIMPLIFY_TOLERANCES_M = (5, 10, 20, 30, 50, 80, 120)   # tried in order; the first that fits is used
 COORD_DECIMALS = 5                                      # ~1.1 m at Singapore's latitude
@@ -177,6 +178,10 @@ WEB_PROPERTIES = ["planning_area_code", "planning_area", "region_name", "populat
                   "residents_65plus", "chas_clinics", "cdmp_clinics", "clinics_per_1k_seniors",
                   "cdmp_clinics_per_1k_seniors", "pct_area_within_1km_of_cdmp",
                   "approx_km_centroid_to_nearest_polyclinic", "nearest_polyclinic", "dq_note", "as_of", "as_of_basis"]
+# Added from the insight engine's own access-gap code (insights/detectors/access_gap.py), so the map
+# and the findings can't disagree: why an area is left out of the ranking, and its shortfall.
+ACCESS_GAP_PROPERTIES = ["excluded_reason", "cdmp_shortfall"]
+SVY21_PROPERTIES = [*WEB_PROPERTIES, *ACCESS_GAP_PROPERTIES, "label_x", "label_y"]
 
 
 class WebGeometryError(RuntimeError):
@@ -197,14 +202,47 @@ def _round_coords(geom):
     return shapely.transform(geom, lambda xy: xy.round(COORD_DECIMALS))
 
 
-def web_geojson(wh: Warehouse, max_bytes: int = WEB_MAX_BYTES) -> tuple[dict, int]:
-    """Build the web GeoJSON dict. Returns (geojson, simplification tolerance in metres)."""
+def access_gap_columns(a: pd.DataFrame) -> pd.DataFrame:
+    """excluded_reason and cdmp_shortfall for each area, from the insight engine's access-gap code.
+
+    excluded_reason: why the area is left out of the ranking (too few seniors), else null.
+    cdmp_shortfall: CDMP clinics the national rate would give its seniors minus the clinics it has
+    (negative = more than the national rate); null for excluded areas and missing counts.
+    """
+    from .insights.detectors import access_gap
+    from .insights.model import thresholds
+
+    min_seniors = int(thresholds()["access_gap"]["min_seniors"])
+    national = access_gap.national_rate(a["residents_65plus"], a["cdmp_clinics"])
+    reasons = [access_gap.excluded_reason(v, min_seniors) for v in a["residents_65plus"]]
+    short = [None if r is not None or national is None or pd.isna(s) or pd.isna(c)
+             else round(access_gap.shortfall(float(s), float(c), national), 2)
+             for r, s, c in zip(reasons, a["residents_65plus"], a["cdmp_clinics"], strict=True)]
+    return pd.DataFrame({"excluded_reason": reasons, "cdmp_shortfall": short}, index=a.index, dtype=object)
+
+
+def _metres(geom, origin: tuple[float, float]):
+    """SVY21 metres, translated so Singapore's centre is (0, 0), rounded to whole metres."""
+    return shapely.transform(geom, lambda xy: (xy - origin).round(0))
+
+
+def _ints(coords):
+    """Whole-metre coordinates as JSON integers ("12" rather than "12.0"), at any nesting depth."""
+    if isinstance(coords, (list, tuple)):
+        return [_ints(c) for c in coords]
+    return int(coords)
+
+
+def web_layers(wh: Warehouse, max_bytes: int = WEB_MAX_BYTES) -> tuple[dict, dict, int]:
+    """Both web map layers from the same simplified boundaries: (WGS84 doc, SVY21 doc, tolerance in m)."""
     a = areas(wh)
     metrics = wh.query("SELECT * FROM marts.fct_area_access")
     a = a[["planning_area_code", "geometry"]].merge(metrics, on="planning_area_code", how="left", validate="1:1")
     if len(a) != len(metrics):
         raise WebGeometryError(f"{len(a)} boundaries vs {len(metrics)} access rows")
+    a = pd.concat([a, access_gap_columns(a)], axis=1)
     original_union = a.geometry.union_all()
+    boundary_sha = a["boundary_source_sha256"].dropna().iloc[0] if a["boundary_source_sha256"].notna().any() else None
     for tol in SIMPLIFY_TOLERANCES_M:
         # coverage_simplify moves each shared border once, so neighbours keep sharing it exactly:
         # no gaps or slivers open between areas (per-polygon simplify would create them).
@@ -213,16 +251,14 @@ def web_geojson(wh: Warehouse, max_bytes: int = WEB_MAX_BYTES) -> tuple[dict, in
         features = []
         for geom, (_, row) in zip(web, a.iterrows()):
             features.append({"type": "Feature",
-                             "properties": {k: _json_value(row[k]) for k in WEB_PROPERTIES},
+                             "properties": {k: _json_value(row[k]) for k in [*WEB_PROPERTIES, *ACCESS_GAP_PROPERTIES]},
                              "geometry": shapely.geometry.mapping(geom)})
         doc = {"type": "FeatureCollection",
                "metadata": {"title": "Clinic access for residents aged 65+, by planning area",
                             "boundaries": "URA Master Plan 2025 Planning Area (No Sea)",
                             "computed_in": "SVY21 (EPSG:3414); output WGS84 (EPSG:4326)",
                             "simplification_tolerance_m": tol, "coordinate_decimals": COORD_DECIMALS,
-                            "boundary_source_sha256": a["boundary_source_sha256"].dropna().iloc[0]
-                            if a["boundary_source_sha256"].notna().any() else None,
-                            "methodology": "docs/methodology.md"},
+                            "boundary_source_sha256": boundary_sha, "methodology": "docs/methodology.md"},
                "features": features}
         if len(json.dumps(doc, separators=(",", ":")).encode()) <= max_bytes:
             break
@@ -234,16 +270,49 @@ def web_geojson(wh: Warehouse, max_bytes: int = WEB_MAX_BYTES) -> tuple[dict, in
     lost = abs(simple.union_all().area - original_union.area) / original_union.area
     if lost > 0.01:
         raise WebGeometryError(f"simplification changed the total area by {lost:.2%}")
+    return doc, _svy21_doc(a, simple, tol, boundary_sha), tol
+
+
+def _svy21_doc(a: pd.DataFrame, simple: gpd.GeoSeries, tol: int, boundary_sha: str | None) -> dict:
+    """The same areas in SVY21 metres around Singapore's centre, for the 3D map (no projection in the browser)."""
+    minx, miny, maxx, maxy = simple.total_bounds
+    origin = (round((minx + maxx) / 2), round((miny + maxy) / 2))
+    features = []
+    for geom, (_, row) in zip(simple, a.iterrows()):
+        g = _metres(geom, origin)
+        if not g.is_valid or g.is_empty:
+            raise WebGeometryError(f"SVY21 geometry invalid or empty for {row['planning_area']} after rounding to 1 m")
+        label = geom.representative_point()                     # always inside the area, unlike the centroid
+        props = {k: _json_value(row[k]) for k in [*WEB_PROPERTIES, *ACCESS_GAP_PROPERTIES]}
+        props.update(label_x=round(label.x - origin[0]), label_y=round(label.y - origin[1]))
+        mapped = shapely.geometry.mapping(g)
+        features.append({"type": "Feature", "properties": props,
+                         "geometry": {"type": mapped["type"], "coordinates": _ints(mapped["coordinates"])}})
+    return {"type": "FeatureCollection",
+            "metadata": {"title": "Clinic access for residents aged 65+, by planning area (3D map layer)",
+                         "boundaries": "URA Master Plan 2025 Planning Area (No Sea)",
+                         "crs": "SVY21 (EPSG:3414), metres, translated: x = easting - origin[0], y = northing - origin[1]",
+                         "origin": list(origin), "simplification_tolerance_m": tol, "coordinate_decimals": 0,
+                         "boundary_source_sha256": boundary_sha, "methodology": "docs/methodology.md"},
+            "features": features}
+
+
+def web_geojson(wh: Warehouse, max_bytes: int = WEB_MAX_BYTES) -> tuple[dict, int]:
+    """Build the web GeoJSON dict. Returns (geojson, simplification tolerance in metres)."""
+    doc, _, tol = web_layers(wh, max_bytes)
     return doc, tol
 
 
 def write_web_geojson(wh: Warehouse, out_dir: Path | None = None) -> Path:
-    """Write the web GeoJSON next to the warehouse (data/build/web/), compact and deterministic."""
+    """Write both map layers next to the warehouse (data/build/web/), compact and deterministic."""
     out_dir = Path(out_dir) if out_dir else wh.path.parent / "web"
     out_dir.mkdir(parents=True, exist_ok=True)
-    doc, tol = web_geojson(wh)
+    doc, svy, tol = web_layers(wh)
     path = out_dir / WEB_GEOJSON_NAME
     path.write_text(json.dumps(doc, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
-    LOG.info("web GeoJSON written: %s (%d bytes, simplified at %d m)", path, path.stat().st_size, tol,
-             extra={"fields": {"event": "web_geojson", "bytes": path.stat().st_size, "tolerance_m": tol}})
+    svy_path = out_dir / SVY21_GEOJSON_NAME
+    svy_path.write_text(json.dumps(svy, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    LOG.info("web GeoJSON written: %s (%d bytes, simplified at %d m); SVY21 layer %d bytes", path, path.stat().st_size, tol,
+             svy_path.stat().st_size, extra={"fields": {"event": "web_geojson", "bytes": path.stat().st_size, "tolerance_m": tol,
+                                                        "svy21_bytes": svy_path.stat().st_size}})
     return path

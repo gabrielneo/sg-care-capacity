@@ -200,8 +200,30 @@ decimals (about 1 m).
 (never `0` or `NaN`): style them as "no data", not as the lowest class. `metadata` records the
 boundary source and its hash, the CRS, the tolerance used and a pointer to the methodology.
 
+Two more properties come from the insight engine's own access-gap code
+(`insights/detectors/access_gap.py`), so the map and the findings can't disagree:
+
+| Property | Definition | Unit | Caveats |
+|---|---|---|---|
+| `excluded_reason` | Why the area is left out of the access-gap ranking: `no residents aged 65+`, or `fewer than 1,000 residents aged 65+` (`thresholds.yml`); null if it is ranked | text | A clinic or two moves a small area's ratio a lot, so these areas are drawn flat and grey on the 3D map. |
+| `cdmp_shortfall` | CDMP clinics the national rate would give the area's residents aged 65+, minus the CDMP clinics it has. The national rate is all CDMP clinics over all residents aged 65+ | clinics, 2 decimals | **Negative means more than the national rate.** Null for excluded areas and missing counts. Clinics are counted where they are, not where patients go. |
+
 Caveat: rounding coordinates after simplification leaves 52 m² of gaps and 49 m² of overlap in total
 across all 55 areas (invisible at map scale; a test fails above 1,000 m²).
+
+### 3D map layer: `data/build/web/planning_area_access_svy21.geojson`
+
+The same 55 areas, with the same simplified borders and properties, **in SVY21 metres (EPSG:3414)**,
+so the 3D map builds its shapes without any projection in the browser. Written with the web layer
+after every transform; about 250 KB.
+
+- **Coordinates:** whole metres, translated so Singapore's centre is (0, 0):
+  `x = easting − origin[0]`, `y = northing − origin[1]`. `metadata.origin` holds the offset, so the
+  real SVY21 coordinates can always be recovered.
+- **Extra properties:** `label_x`, `label_y`, a point inside the area (shapely's representative point,
+  in the same translated metres) for the 3D map's floating labels.
+- **Checks:** every shape must still be valid after rounding to whole metres, or the transform
+  stops.
 
 ### `main.ref_area_name_map`
 

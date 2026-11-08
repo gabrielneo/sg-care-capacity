@@ -156,6 +156,7 @@ def test_no_geometry_is_invalid_after_reprojection(monkeypatch, paths):
 
 import json  # noqa: E402
 
+import shapely  # noqa: E402
 from shapely.geometry import shape  # noqa: E402
 
 
@@ -165,7 +166,7 @@ def test_web_geojson_is_written_next_to_the_warehouse_with_every_area(monkeypatc
     doc = json.loads(path.read_text())
     assert path.stat().st_size < geo.WEB_MAX_BYTES
     assert [f["properties"]["planning_area"] for f in doc["features"]] == ["Bedok", "Tuas"]
-    assert set(doc["features"][0]["properties"]) == set(geo.WEB_PROPERTIES)
+    assert set(doc["features"][0]["properties"]) == set(geo.WEB_PROPERTIES) | set(geo.ACCESS_GAP_PROPERTIES)
     assert doc["metadata"]["computed_in"].startswith("SVY21")
     for f in doc["features"]:
         g = shape(f["geometry"])
@@ -207,3 +208,49 @@ def test_simplification_tries_coarser_tolerances_until_it_fits(monkeypatch, path
     finally:
         wh.close()
     assert tol_easy == geo.SIMPLIFY_TOLERANCES_M[0] and smallest > 100
+
+
+# ------------------------------------------------------------ 3D layer (SVY21) #
+
+def test_svy21_layer_is_metres_around_singapores_centre_with_the_same_areas(monkeypatch, paths):
+    full_run(monkeypatch, paths)
+    web = json.loads((paths["db"].parent / "web" / geo.WEB_GEOJSON_NAME).read_text())
+    svy = json.loads((paths["db"].parent / "web" / geo.SVY21_GEOJSON_NAME).read_text())
+    assert [f["properties"]["planning_area"] for f in svy["features"]] == [f["properties"]["planning_area"] for f in web["features"]]
+    assert set(svy["features"][0]["properties"]) == set(geo.SVY21_PROPERTIES)
+    ox, oy = svy["metadata"]["origin"]
+    assert 2_000 < ox < 60_000 and 20_000 < oy < 55_000                        # SVY21 eastings and northings
+    assert "EPSG:3414" in svy["metadata"]["crs"]
+    xy = [c for f in svy["features"] for c in shapely.get_coordinates(shape(f["geometry"])).ravel()]
+    assert all(abs(c) < 40_000 for c in xy) and all(float(c).is_integer() for c in xy)   # whole metres, centred
+    geometry = json.dumps([f["geometry"] for f in svy["features"]])
+    assert "." not in geometry                                                 # integers, not 12.0
+
+
+def test_svy21_layer_matches_the_wgs84_layer_when_projected_back(monkeypatch, paths):
+    from pyproj import Transformer
+
+    full_run(monkeypatch, paths)
+    web = json.loads((paths["db"].parent / "web" / geo.WEB_GEOJSON_NAME).read_text())
+    svy = json.loads((paths["db"].parent / "web" / geo.SVY21_GEOJSON_NAME).read_text())
+    ox, oy = svy["metadata"]["origin"]
+    to_wgs = Transformer.from_crs(3414, 4326, always_xy=True)
+    for fs, fw in zip(svy["features"], web["features"], strict=True):
+        x, y = fs["properties"]["label_x"] + ox, fs["properties"]["label_y"] + oy
+        lon, lat = to_wgs.transform(x, y)
+        assert shape(fw["geometry"]).buffer(0.0002).contains(shapely.geometry.Point(lon, lat))   # label inside its area
+        assert shape(fs["geometry"]).area == pytest.approx(geo.areas(Warehouse(paths["db"])).set_index("planning_area_code")
+                                                           .geometry[fs["properties"]["planning_area_code"]].area, rel=0.02)
+
+
+def test_shortfall_and_exclusions_come_from_the_insight_engine(monkeypatch, paths):
+    from sg_health.insights.detectors import access_gap
+
+    full_run(monkeypatch, paths)
+    svy = json.loads((paths["db"].parent / "web" / geo.SVY21_GEOJSON_NAME).read_text())
+    props = {f["properties"]["planning_area"]: f["properties"] for f in svy["features"]}
+    assert props["Tuas"]["excluded_reason"] == "no residents aged 65+" and props["Tuas"]["cdmp_shortfall"] is None
+    bedok = props["Bedok"]
+    national = sum(p["cdmp_clinics"] or 0 for p in props.values()) / sum(p["residents_65plus"] or 0 for p in props.values())
+    assert bedok["excluded_reason"] is None
+    assert bedok["cdmp_shortfall"] == round(access_gap.shortfall(bedok["residents_65plus"], bedok["cdmp_clinics"], national), 2)
