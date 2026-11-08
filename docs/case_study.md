@@ -277,25 +277,29 @@ The same flow in text:
 
 ## Prioritised requirements (MoSCoW)
 
-**Must** and **Won't** follow from the project's own data principles (CLAUDE.md) and the brief.
-Each built item names the test that would fail if it broke. **Should** and **Could** are
-candidates from the documented limitations; their priority is a judgement.
+**Must** and **Won't** follow from the project's data principles and the brief. Each built item
+names the test that would fail if it broke. **Should** and **Could** come from the documented
+limitations and the two personas. Their priority is the author's judgement, reasoned below, and
+not yet validated with users.
 
 | ID | Requirement | Priority | Source | Status |
 |---|---|---|---|---|
 | M1 | No personal or patient-level data, ever | Must | Data principles | Built: only aggregate sources are collected ([methodology](methodology.md#sources)) |
-| M2 | We never fill in missing values; gaps stay gaps | Must | Data principles | Built: gaps in charts and "No data" on the map (`DailyWaitChart.test.tsx`, `quantiles.test.ts`, `test_geo.py`) |
+| M2 | We never fill in missing values; gaps stay gaps | Must | Data principles | Built: gaps in charts and "No data" on the map (`edcharts.test.tsx`, `quantiles.test.ts`, `test_geo.py`) |
 | M3 | Every metric has a definition, unit, source and caveats | Must | Data principles | Built: `data_dictionary.md`, checked against the marts (`test_transform.py`) |
 | M4 | Every number shows its "Data as of" date and source | Must | Data principles | Built: required by the API contract and the site's components ([ADR 0005](adr/0005-typed-api-contract.md)); checked on every page (`web/e2e`) |
 | M5 | Failed error-level checks block publishing; the site keeps the last good weekly data release | Must | Data principles | Built ([ADR 0002](adr/0002-validation-gate.md), `test_publish.py`) |
 | M6 | Every row keeps its lineage | Must | Data principles | Built (`test_lineage.py`) |
 | M7 | WCAG 2.1 AA; usable from 375 px wide | Must | Web brief | Built: axe checks and no sideways scrolling on every page (`web/e2e`) |
-| S1 | Access measured as travel time, not straight-line distance | TODO(me) | [Methodology limitations](methodology.md#limitations) | Not built |
-| S2 | NUHS estimates refreshed more often than weekly | TODO(me) | Live page caveat | Partly: collected every 3 hours into a separate store, not published |
-| S3 | Access by subzone, not just by area | TODO(me) | [Methodology choices](methodology.md#choices-made-deliberately) | Blocked: no Master Plan 2025 subzone boundaries are published |
-| S4 | TODO(me): requirements from stakeholder research | TODO(me) | TODO(me) | |
+| S1 | Access measured as travel time, not straight-line distance | Should | [Methodology limitations](methodology.md#limitations); persona 2 places services "to improve accessibility for Seniors" | Not built: needs a routing service |
+| S2 | Access by subzone, not just by area | Should | [Methodology choices](methodology.md#choices-made-deliberately); persona 2 plans by sub-region, closer to subzones than to the 55 areas | Blocked: no Master Plan 2025 subzone boundaries are published |
+| S3 | Export any chart's figures as CSV | Should | Both personas cross-check against their own data; persona 2's role builds dashboards | Not built |
+| S4 | A printable one-page summary of the latest findings | Should | The author's requirement: a page a planner can bring to a meeting | Not built |
+| C1 | NUHS estimates refreshed more often than weekly | Could | Live page caveat; planners decide monthly or yearly, so near-live data matters more to operations staff | Partly: collected every 3 hours into a separate store, not published |
+| C2 | Compare chosen areas or hospitals side by side | Could | Useful for prioritising; the sortable table already covers most of it | Not built |
 | W1 | ED visits by age or triage category | Won't | Not published by MOH | Not possible with public data |
 | W2 | A blurred map of where residents live | Won't | [Decision record 0004](adr/0004-choropleth-not-heatmap.md) | Would invent locations |
+| W3 | Recommend actions | Won't | Scope in the problem statement: the site analyses, planners decide | Not planned |
 
 ## Success metrics
 

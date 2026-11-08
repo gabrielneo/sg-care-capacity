@@ -65,6 +65,14 @@ describe("case study", () => {
     for (const source of ["moh.gov.sg/seeking-healthcare", "1777", "nuhs.edu.sg"]) expect(flow).toContain(source);
   });
 
+  it("every requirement has a priority, and none is left as TODO(me)", () => {
+    const moscow = section(caseStudy, "Prioritised requirements (MoSCoW)");
+    expect(moscow).not.toContain("TODO(me)");
+    const rows = [...moscow.matchAll(/^\| ([MSCW]\d) \| [^|]+ \| (Must|Should|Could|Won't) \|/gm)];
+    expect(rows.map((r) => r[1])).toEqual(["M1", "M2", "M3", "M4", "M5", "M6", "M7", "S1", "S2", "S3", "S4", "C1", "C2", "W1", "W2", "W3"]);
+    for (const [, id, priority] of rows) expect(priority?.[0]).toBe(id?.[0] === "C" ? "C" : id?.[0] === "W" ? "W" : id?.[0]);
+  });
+
   it("names all six stakeholders", () => {
     const map = section(caseStudy, "Stakeholder map");
     for (const s of ["MOH", "Cluster operations", "ED clinicians", "GPs / Healthier SG clinics", "Seniors and caregivers", "Synapxe"]) {
