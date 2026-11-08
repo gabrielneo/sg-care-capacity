@@ -62,6 +62,16 @@ def test_manifest_contents_and_hashes(built, tmp_path):
     assert ins["engine_version"] == 1 and len(ins["insights"]) == m["insights"]["published"]
     assert json.loads((out / "manifest.json").read_text()) == json.loads(json.dumps(m, default=str))
     assert m["checks"]["blocking"] == 0 and set(m["checks"]["counts"]) == {"pass", "warn", "fail", "skipped"}
+    # The counts are those of the published run, including the insight engine's skips (audit M-3).
+    import duckdb
+    with duckdb.connect(str(out / "analytics.duckdb"), read_only=True) as con:
+        published = dict(con.execute("SELECT status, count(*) FROM main.dq_results WHERE run_id = ? GROUP BY 1",
+                                     [m["checks"]["run_id"]]).fetchall())
+        skipped_insights = con.execute("SELECT count(*) FROM main.dq_results WHERE run_id = ? AND check_id LIKE 'insight.%'",
+                                       [m["checks"]["run_id"]]).fetchall()[0][0]
+    assert sum(m["checks"]["counts"].values()) == sum(published.values())
+    assert m["checks"]["counts"]["pass"] == published.get("pass", 0)
+    assert m["checks"]["counts"]["skipped"] == published.get("skipped", 0) >= skipped_insights
     assert m["sources"]["moh_bed_waits"]["as_of"] == "2026-10-26"
     assert "datagov_metadata" not in m["sources"] and "moh_page" not in m["sources"]
     cgh = m["coverage_per_hospital"]["CGH"]

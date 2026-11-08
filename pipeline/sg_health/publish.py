@@ -128,22 +128,26 @@ def coverage_per_hospital(wh: Warehouse) -> dict:
     return out
 
 
-def check_summary(results: list, run_id: str, wh: Warehouse) -> dict:
+def check_summary(run_id: str, wh: Warehouse) -> dict:
+    """Counts for the manifest, read from the recorded run (dq_results), not from the validation results
+    alone: the insight engine logs its skipped detectors into the same run after validation, and the
+    manifest must count what the published dq_results holds (audit M-3)."""
     counts = {"pass": 0, "warn": 0, "fail": 0, "skipped": 0}
     failing = []
-    for r in results:
-        if r.status == "pass":
+    rows = wh.con.execute('SELECT check_id, "table", severity, scope, status, failing_rows, blocks_publish '
+                          "FROM main.dq_results WHERE run_id = ? ORDER BY check_id, \"table\"", [run_id]).fetchall()
+    for check_id, table, severity, scope, status, failing_rows, blocks_publish in rows:
+        if status == "pass":
             counts["pass"] += 1
-        elif r.status == "skipped":
+        elif status == "skipped":
             counts["skipped"] += 1
-        elif r.check.severity.value == "WARN":
+        elif severity == "WARN":
             counts["warn"] += 1
         else:
             counts["fail"] += 1
-        if r.status == "fail":
-            failing.append({"check_id": r.check.check_id, "table": r.table, "severity": r.check.severity.value,
-                            "scope": r.check.scope.value, "failing_rows": r.failing_rows,
-                            "blocks_publish": r.check.blocks_publish})
+        if status == "fail":
+            failing.append({"check_id": check_id, "table": table, "severity": severity, "scope": scope,
+                            "failing_rows": int(failing_rows), "blocks_publish": bool(blocks_publish)})
     tables = [t for (t,) in wh.con.execute("SELECT table_name FROM duckdb_tables() "
                                             "WHERE table_name LIKE 'quarantine_%' ORDER BY 1").fetchall()]
     quarantined = {t.removeprefix("quarantine_"): int(wh.con.execute(f"SELECT count(*) FROM main.{t}").fetchall()[0][0])
@@ -220,7 +224,7 @@ def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dic
         "sources": sources_as_of(wh),
         "row_counts": {m: int(con.execute(f"SELECT count(*) FROM marts.{m}").fetchall()[0][0]) for m in marts},
         "coverage_per_hospital": coverage_per_hospital(wh),
-        "checks": check_summary(results, run_id, wh),
+        "checks": check_summary(run_id, wh),
         "insights": {"published": len(insight_run.insights), "skipped": len(insight_run.skips),
                      "headline": [r["insight_id"] for r in sorted(insight_run.insights, key=lambda r: r["headline_rank"] or 99)
                                   if r["headline_rank"]]},
