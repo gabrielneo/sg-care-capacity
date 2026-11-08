@@ -5,7 +5,7 @@ against docs/data_dictionary.md (test_fixture_matches_the_data_dictionary), whic
 own tests check against the real marts, so the fixture can't drift from what the API will read.
 
 What's in it, and why:
-- SGH: 14 Sep to 31 Oct 2026. The last ISO week (26 Oct) has 6 of 7 days, as in real MOH data.
+- SGH: 24 Aug to 31 Oct 2026 (8 complete weeks before the latest complete one, as the site's usual level needs). The last ISO week (26 Oct) has 6 of 7 days, as in real MOH data.
   The latest complete week (19 Oct) has higher waits and attendances than the 4 weeks before.
 - AH (a UCC): one missing attendance day on 7 Oct, so 5 Oct is an incomplete week and the
   4-week baseline for AH can't be computed.
@@ -25,7 +25,7 @@ import duckdb
 
 SNAPSHOT_ID = "data-2026-11-01"
 CREATED_AT = "2026-11-01T16:34:48"
-FIRST_DAY, LAST_DAY = date(2026, 9, 14), date(2026, 10, 31)
+FIRST_DAY, LAST_DAY = date(2026, 8, 24), date(2026, 10, 31)
 MOH_FETCHED = datetime(2026, 11, 1, 16, 33, 44)
 
 INSIGHT_EXTRA_DDL = """, display STRUCT(value_text VARCHAR, unit_text VARCHAR, metric_label VARCHAR,
@@ -387,10 +387,10 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
         },
         "coverage_per_hospital": {
             "AH": {"hospital_name": NAMES["AH"], "first_day": FIRST_DAY.isoformat(), "last_day": LAST_DAY.isoformat(),
-                   "expected_days": 48, "days_with_wait": 48, "days_with_attendances": 47,
+                   "expected_days": 69, "days_with_wait": 69, "days_with_attendances": 68,
                    "missing_wait_days": 0, "missing_attendance_days": 1},
             "SGH": {"hospital_name": NAMES["SGH"], "first_day": FIRST_DAY.isoformat(), "last_day": LAST_DAY.isoformat(),
-                    "expected_days": 48, "days_with_wait": 48, "days_with_attendances": 48,
+                    "expected_days": 69, "days_with_wait": 69, "days_with_attendances": 69,
                     "missing_wait_days": 0, "missing_attendance_days": 0},
         },
         "checks": {

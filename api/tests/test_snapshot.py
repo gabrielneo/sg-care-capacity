@@ -62,8 +62,8 @@ def edit_manifest(d: Path, change) -> None:
 
 
 def test_row_counts_that_dont_match_the_manifest_refuse_to_start(fresh_snapshot):
-    edit_manifest(fresh_snapshot, lambda m: m["row_counts"].update(fct_ed_daily=95))
-    with pytest.raises(SnapshotError, match="marts.fct_ed_daily: 96 rows, manifest says 95"):
+    edit_manifest(fresh_snapshot, lambda m: m["row_counts"].update(fct_ed_daily=137))
+    with pytest.raises(SnapshotError, match="marts.fct_ed_daily: 138 rows, manifest says 137"):
         load_local(fresh_snapshot)
 
 

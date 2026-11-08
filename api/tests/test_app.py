@@ -30,7 +30,7 @@ def test_startup_is_refused_for_a_wildcard_cors_origin(monkeypatch):
 def test_meta_describes_the_snapshot_and_only_the_latest_check_run(client):
     body = client.get(f"{API}/meta").json()
     assert body["data"]["snapshot_id"] == SNAPSHOT_ID and body["data"]["release_tag"] is None
-    assert body["data"]["row_counts"]["fct_ed_daily"] == 96 and body["data"]["checks"]["blocking"] == 0
+    assert body["data"]["row_counts"]["fct_ed_daily"] == 138 and body["data"]["checks"]["blocking"] == 0
     meta = body["meta"]
     assert meta["snapshot_id"] == SNAPSHOT_ID and meta["as_of"] == CREATED_AT
     assert {s["id"] for s in meta["sources"]} >= {"moh_bed_waits", "datagov_chas", "singstat_residents", "nuhs_live"}

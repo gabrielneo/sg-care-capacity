@@ -31,7 +31,7 @@ def test_hospitals_list_with_the_ucc_and_coverage_notes(client):
 def test_daily_defaults_to_the_90_days_up_to_the_latest_published_day(client):
     status, body = get(client, "/ed/daily")
     cov = body["meta"]["coverage"]
-    assert status == 200 and (cov["from"], cov["to"]) == ("2026-08-03", "2026-10-31") and cov["rows"] == 96
+    assert status == 200 and (cov["from"], cov["to"]) == ("2026-08-03", "2026-10-31") and cov["rows"] == 138
     assert body["data"][-1]["report_date"] == "2026-10-31"
     assert body["meta"]["as_of"] == "2026-10-31" and {s["id"] for s in body["meta"]["sources"]} == {
         "moh_bed_waits", "moh_ed_attendances"}
@@ -97,7 +97,7 @@ def test_weekly_returns_the_latest_n_iso_weeks_with_day_counts(client):
 
 def test_weekly_defaults_to_12_weeks(client):
     _, body = get(client, "/ed/weekly")
-    assert body["meta"]["coverage"]["weeks"] == 12 and len(body["data"]) == 14   # 7 weeks of data x 2 hospitals
+    assert body["meta"]["coverage"]["weeks"] == 12 and len(body["data"]) == 20   # 10 weeks of data x 2 hospitals
 
 
 @pytest.mark.parametrize("weeks", [0, 105, "four"])

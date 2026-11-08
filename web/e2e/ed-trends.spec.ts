@@ -13,8 +13,8 @@ test.describe("ED Trends", () => {
     expect(await seen(page.getByTestId("chart-card").first())).toContain("AH = urgent care centre; NUH = adults only.");
     expect(await seen(page.getByTestId("bed-wait-explainer"))).toBe(
       "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed.");
-    // Default range is 3 Aug to 31 Oct; the fixture starts on 14 Sep and has no NUH rows.
-    expect(await seen(page.getByTestId("gap-summary"))).toBe("Days with no figure in this range: AH 42, NUH 90, SGH 42.");
+    // Default range is 3 Aug to 31 Oct; the fixture starts on 24 Aug and has no NUH rows.
+    expect(await seen(page.getByTestId("gap-summary"))).toBe("Days with no figure in this range: AH 21, NUH 90, SGH 21.");
     await expectAsOfOnEveryCard(page, 3);
     await expectNoHorizontalScroll(page);
   });
