@@ -1,5 +1,5 @@
 import { formatAsOf } from "@/lib/dates";
-import { type Cadence, freshness, type Level, THRESHOLDS } from "@/lib/freshness";
+import { type Cadence, CADENCE_TEXT, freshness, type Level, THRESHOLDS } from "@/lib/freshness";
 
 const STYLE: Record<Level, string> = {
   green: "bg-ok-soft text-ok border-ok/30",
@@ -11,7 +11,7 @@ const STYLE: Record<Level, string> = {
 /** Green / amber / red from the age of as_of, always with a text label (never colour alone). */
 export function FreshnessBadge({ asOf, cadence, now }: { asOf: string; cadence: Cadence; now?: Date }) {
   const f = freshness(asOf, cadence, now);
-  const text = f.age ? `${f.label} · ${f.age} old` : f.label;
+  const text = f.age ? `${f.label} · ${CADENCE_TEXT[cadence]}, ${f.age} old` : f.label;
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${STYLE[f.level]}`}

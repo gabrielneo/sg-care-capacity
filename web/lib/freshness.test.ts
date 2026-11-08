@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { clinicMeta, edMeta } from "@/test/fixtures/meta";
 
-import { cadenceFor, freshness, humanAge } from "./freshness";
+import { CADENCE_TEXT, cadenceFor, freshness, humanAge, LABELS } from "./freshness";
 
 const at = (iso: string) => new Date(iso);
 
@@ -32,9 +32,15 @@ describe("freshness by cadence", () => {
     expect(freshness("", "weekly")).toMatchObject({ level: "unknown", label: "Date unknown", age: null });
   });
 
+  it("never says \"Ageing\": testers read it as a topic tag on a site about ageing", () => {
+    expect(Object.values(LABELS)).not.toContain("Ageing");
+    expect(LABELS.amber).toBe("Due an update");
+    expect(CADENCE_TEXT).toEqual({ weekly: "weekly data", annual: "yearly data", irregular: "irregular updates", live: "a live reading" });
+  });
+
   it("describes the age in words", () => {
     expect(freshness("2024-06-06T14:36:42", "irregular", at("2026-11-06T12:00:00+08:00"))).toMatchObject({
-      label: "Old",
+      label: "Out of date",
       age: "2 years",
     });
     expect(humanAge(6 * 86_400_000)).toBe("6 days");

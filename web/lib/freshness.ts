@@ -32,7 +32,16 @@ export const CADENCE_BY_SOURCE: Record<string, Cadence> = {
   datagov_polyclinics: "irregular",
 };
 
-export const LABELS: Record<Level, string> = { green: "Up to date", amber: "Ageing", red: "Old", unknown: "Date unknown" };
+// Not "Ageing": on a site about an ageing population, testers read it as a topic tag (comprehension report).
+export const LABELS: Record<Level, string> = { green: "Up to date", amber: "Due an update", red: "Out of date", unknown: "Date unknown" };
+
+/** How often the source publishes, so "4 months old" and "up to date" can sit together without contradiction. */
+export const CADENCE_TEXT: Record<Cadence, string> = {
+  weekly: "weekly data",
+  annual: "yearly data",
+  irregular: "irregular updates",
+  live: "a live reading",
+};
 
 /** The cadence of the source that meta.as_of comes from (the oldest input, for combined data). */
 export function cadenceFor(meta: Pick<Meta, "as_of" | "sources">): Cadence {

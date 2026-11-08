@@ -16,13 +16,13 @@ describe("ChartCard", () => {
       "Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · A plain caveat.");
     const source = screen.getByRole("link", { name: "Ministry of Health (MOH)" });
     expect(source).toHaveAttribute("href", edMeta.sources[0]!.url);
-    expect(screen.getByText(/Up to date · 6 days old/)).toBeInTheDocument();
+    expect(screen.getByText(/Up to date · weekly data, 6 days old/)).toBeInTheDocument();
   });
 
   it("names the right publisher for each dataset, and flags an old one", () => {
     render(<ChartCard title="Clinics" meta={clinicMeta} now={NOW}><p>map</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");
-    expect(screen.getByText(/Old · 2 years old/)).toHaveAttribute("data-level", "red");
+    expect(screen.getByText(/Out of date · irregular updates, 2 years old/)).toHaveAttribute("data-level", "red");
   });
 
   it("public pages show the site's notes and summarise data-quality warnings with a link", () => {

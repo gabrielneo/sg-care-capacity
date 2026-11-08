@@ -7,9 +7,9 @@ import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "./States";
 
 describe("FreshnessBadge", () => {
   it.each([
-    ["2026-10-31", "green", "Up to date · 6 days old"],
-    ["2026-10-20", "amber", "Ageing · 2 weeks old"],
-    ["2026-09-01", "red", "Old · 2 months old"],
+    ["2026-10-31", "green", "Up to date · weekly data, 6 days old"],
+    ["2026-10-20", "amber", "Due an update · weekly data, 2 weeks old"],
+    ["2026-09-01", "red", "Out of date · weekly data, 2 months old"],
     ["", "unknown", "Date unknown"],
   ] as const)("%s is %s with a text label", (asOf, level, text) => {
     render(<FreshnessBadge asOf={asOf} cadence="weekly" now={new Date("2026-11-06T12:00:00+08:00")} />);
