@@ -21,6 +21,7 @@ wait_for() {
 
 E2E_API_PORT=$API_PORT ./e2e/start-api.sh > /dev/null 2>&1 &
 API_PID=$!
+rm -rf .next/cache/fetch-cache          # never serve API responses cached from another API or fixture
 [ -n "${SKIP_BUILD:-}" ] || npm run build
 API_BASE_URL="http://127.0.0.1:$API_PORT" npx next start -p "$WEB_PORT" > /dev/null 2>&1 &
 WEB_PID=$!

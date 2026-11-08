@@ -24,7 +24,8 @@ export default defineConfig({
   webServer: [
     { command: "./e2e/start-api.sh", url: `http://127.0.0.1:${API_PORT}/api/v1/health`, reuseExistingServer: !process.env.CI,
       timeout: 120_000, env: { E2E_API_PORT: String(API_PORT) } },
-    { command: `npm run build && npx next start -p ${WEB_PORT}`, url: `http://127.0.0.1:${WEB_PORT}/methodology`,
+    // The fetch cache outlives builds: clear it, so responses cached from another API or fixture are never served.
+    { command: `rm -rf .next/cache/fetch-cache && npm run build && npx next start -p ${WEB_PORT}`, url: `http://127.0.0.1:${WEB_PORT}/methodology`,
       reuseExistingServer: !process.env.CI, timeout: 300_000, env: { API_BASE_URL: `http://127.0.0.1:${API_PORT}` } },
     { command: `npx next start -p ${WEB_DOWN_PORT}`, url: `http://127.0.0.1:${WEB_DOWN_PORT}/methodology`,
       reuseExistingServer: !process.env.CI, timeout: 120_000, env: { API_BASE_URL: "http://127.0.0.1:8799" } },
