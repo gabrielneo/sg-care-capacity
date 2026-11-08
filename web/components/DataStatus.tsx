@@ -1,4 +1,7 @@
-import { api, settle } from "@/lib/api/client";
+"use client";
+
+import { useEffect, useState } from "react";
+
 import type { SnapshotInfo } from "@/lib/api/types";
 import { formatAsOf } from "@/lib/dates";
 
@@ -19,8 +22,28 @@ export function DataStatusLine({ status }: { status: StatusInput }) {
   );
 }
 
-/** Fetches /meta (cached like every API call) for the status line. Never throws: the footer always renders. */
-export async function DataStatus() {
-  const res = await settle(api.meta());
-  return <DataStatusLine status={res.ok ? { ok: true, info: res.value.data, asOf: res.value.meta.as_of } : { ok: false }} />;
+/** /status.json's body (app/status.json/route.ts). */
+interface StatusBody { ok: boolean; snapshot_id?: string; release_url?: string | null; as_of?: string }
+
+export function toStatus(body: StatusBody): StatusInput {
+  return body.ok && body.snapshot_id && body.as_of
+    ? { ok: true, info: { snapshot_id: body.snapshot_id, release_url: body.release_url ?? null }, asOf: body.as_of }
+    : { ok: false };
+}
+
+/**
+ * Loads the status line in the browser from /status.json, so building a static page never waits on
+ * the API. The line's height is reserved, so it appears without moving anything.
+ */
+export function DataStatus() {
+  const [status, setStatus] = useState<StatusInput | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/status.json")
+      .then((r) => r.json() as Promise<StatusBody>)
+      .then((b) => live && setStatus(toStatus(b)))
+      .catch(() => live && setStatus({ ok: false }));
+    return () => { live = false; };
+  }, []);
+  return <div className="min-h-5">{status ? <DataStatusLine status={status} /> : null}</div>;
 }

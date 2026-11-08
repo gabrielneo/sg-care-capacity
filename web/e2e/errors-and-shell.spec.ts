@@ -16,9 +16,8 @@ test.describe("when the API is down", () => {
   }
 
   test("the footer says the data release isn't available", async ({ page }) => {
-    // A page rendered per request: static pages (e.g. /methodology) keep the line from their last
-    // build or hourly refresh, like every other cached API response.
-    await page.goto(`${DOWN}/`);
+    // A static page: the line is loaded in the browser, so it is current even there.
+    await page.goto(`${DOWN}/methodology`);
     await expect(page.getByTestId("data-status")).toHaveText("Data release: not available right now.");
   });
 });
@@ -34,6 +33,14 @@ test.describe("shell", () => {
     // The e2e API serves a local snapshot, so there is no release page to link to.
     expect(meta.data.release_url).toBeNull();
     await expect(status.getByRole("link")).toHaveCount(0);
+  });
+
+  test("/status.json gives the footer the release, and no figures", async ({ request }) => {
+    const body = await (await request.get("/status.json")).json();
+    expect(Object.keys(body).sort()).toEqual(["as_of", "ok", "release_url", "snapshot_id"]);
+    expect(body.ok).toBe(true);
+    const down = await (await request.get(`${DOWN}/status.json`)).json();
+    expect(down).toEqual({ ok: false });
   });
 
   test("the nav reaches every section and marks the current one", async ({ page }) => {

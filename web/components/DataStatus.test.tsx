@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { DataStatusLine } from "./DataStatus";
+import { DataStatusLine, toStatus } from "./DataStatus";
 
 describe("DataStatusLine", () => {
   it("names the release, its date and links to it", () => {
@@ -21,5 +21,14 @@ describe("DataStatusLine", () => {
   it("says so plainly when the API can't be reached", () => {
     render(<DataStatusLine status={{ ok: false }} />);
     expect(screen.getByTestId("data-status")).toHaveTextContent("Data release: not available right now.");
+  });
+});
+
+describe("toStatus", () => {
+  it("reads /status.json's body, and treats anything incomplete as unavailable", () => {
+    expect(toStatus({ ok: true, snapshot_id: "data-2026-11-08", release_url: null, as_of: "2026-11-08T22:31:13" }))
+      .toEqual({ ok: true, info: { snapshot_id: "data-2026-11-08", release_url: null }, asOf: "2026-11-08T22:31:13" });
+    expect(toStatus({ ok: false })).toEqual({ ok: false });
+    expect(toStatus({ ok: true })).toEqual({ ok: false });
   });
 });
