@@ -1077,6 +1077,11 @@ export interface components {
              * @description GitHub release served; null for a local snapshot
              */
             release_tag: string | null;
+            /**
+             * Release Url
+             * @description The GitHub release page it was downloaded from; null for a local snapshot
+             */
+            release_url: string | null;
             /** Row Counts */
             row_counts: {
                 [key: string]: number;

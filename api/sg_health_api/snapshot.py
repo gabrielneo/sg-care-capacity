@@ -49,10 +49,18 @@ class Snapshot:
     manifest: dict[str, Any]
     con: duckdb.DuckDBPyConnection
     release_tag: str | None          # None for LOCAL_SNAPSHOT_PATH
+    repo: str | None = None          # owner/name the release came from; None for LOCAL_SNAPSHOT_PATH
 
     @property
     def snapshot_id(self) -> str:
         return str(self.manifest["snapshot_id"])
+
+    @property
+    def release_url(self) -> str | None:
+        """The GitHub release page this snapshot was downloaded from, or None for a local snapshot."""
+        if self.release_tag is None or self.repo is None:
+            return None
+        return f"https://github.com/{self.repo}/releases/tag/{self.release_tag}"
 
     def query(self, sql: str, params: list[Any] | tuple[Any, ...] = ()) -> list[dict[str, Any]]:
         """Run one parameterised query on its own cursor (safe across request threads)."""
@@ -247,4 +255,5 @@ def load_snapshot(settings: Settings, client: httpx.Client | None = None) -> Sna
     verify_files(base, manifest)
     con = open_database(base, manifest)
     LOG.info("serving snapshot %s from %s", manifest["snapshot_id"], base)
-    return Snapshot(path=base, manifest=manifest, con=con, release_tag=tag)
+    return Snapshot(path=base, manifest=manifest, con=con, release_tag=tag,
+                    repo=settings.snapshot_repo if tag is not None else None)

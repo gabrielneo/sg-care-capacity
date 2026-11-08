@@ -149,6 +149,7 @@ def test_verified_files_are_not_downloaded_again(snapshot_dir, tmp_path):
 def test_a_pinned_tag_is_served_even_if_newer_ones_exist(snapshot_dir, tmp_path):
     snap = load_from(FakeGitHub(snapshot_dir, RELEASES), tmp_path, data_snapshot="data-2026-10-25")
     assert snap.release_tag == "data-2026-10-25"
+    assert snap.release_url == "https://github.com/gabrielneo/sg-care-capacity/releases/tag/data-2026-10-25"
     snap.close()
 
 

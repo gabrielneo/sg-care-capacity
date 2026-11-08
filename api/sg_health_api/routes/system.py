@@ -15,7 +15,8 @@ router = APIRouter(tags=["snapshot"])
 def meta(ctx: Context = Depends(get_ctx)) -> MetaResponse:
     m = ctx.snap.manifest
     checks = m.get("checks", {})
-    data = SnapshotInfo(snapshot_id=ctx.snapshot_id, release_tag=ctx.snap.release_tag, created_at=ctx.created_at,
+    data = SnapshotInfo(snapshot_id=ctx.snapshot_id, release_tag=ctx.snap.release_tag,
+                        release_url=ctx.snap.release_url, created_at=ctx.created_at,
                         pipeline_commit=m.get("pipeline_commit"), api_version=API_VERSION,
                         row_counts={k: int(v) for k, v in m["row_counts"].items()},
                         checks=CheckSummary(blocking=int(checks.get("blocking", 0)),

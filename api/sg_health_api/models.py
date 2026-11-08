@@ -59,6 +59,7 @@ class CheckSummary(BaseModel):
 class SnapshotInfo(BaseModel):
     snapshot_id: str
     release_tag: str | None = Field(description="GitHub release served; null for a local snapshot")
+    release_url: str | None = Field(description="The GitHub release page it was downloaded from; null for a local snapshot")
     created_at: str
     pipeline_commit: str | None
     api_version: str

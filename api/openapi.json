@@ -2174,6 +2174,18 @@
             "description": "GitHub release served; null for a local snapshot",
             "title": "Release Tag"
           },
+          "release_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The GitHub release page it was downloaded from; null for a local snapshot",
+            "title": "Release Url"
+          },
           "row_counts": {
             "additionalProperties": {
               "type": "integer"
@@ -2189,6 +2201,7 @@
         "required": [
           "snapshot_id",
           "release_tag",
+          "release_url",
           "created_at",
           "pipeline_commit",
           "api_version",
