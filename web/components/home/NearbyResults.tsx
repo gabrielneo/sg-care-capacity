@@ -70,10 +70,14 @@ export function NearbyResults({ located, lists, clinicMeta, polyclinicMeta }: {
                  extra={n.place.has_cdmp ? <span className="block"><Glossed text="Takes part in CDMP" /></span> : null} />
           ))}
         </Column>
-        <Column title={<>Nearest hospital <Term id="ed" plural /> <span className="font-normal text-muted">(for emergencies)</span></>}
-                testId="nearby-hospitals">
-          {lists.hospitals.map((n) => <Row key={n.place.code} name={n.place.name} place={n.place} d={n.km} />)}
-        </Column>
+        {/* A data release from before 2026-11-09 has no hospital locations or polyclinic list: those
+            columns are left out rather than shown empty. */}
+        {lists.hospitals.length ? (
+          <Column title={<>Nearest hospital <Term id="ed" plural /> <span className="font-normal text-muted">(for emergencies)</span></>}
+                  testId="nearby-hospitals">
+            {lists.hospitals.map((n) => <Row key={n.place.code} name={n.place.name} place={n.place} d={n.km} />)}
+          </Column>
+        ) : null}
       </div>
       <div className="mt-2 grid gap-x-6 md:grid-cols-2">
         {polyclinicMeta ? <Provenance meta={polyclinicMeta} compact /> : null}
