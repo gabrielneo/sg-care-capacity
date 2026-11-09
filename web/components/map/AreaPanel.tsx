@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { AREA_METRICS, type AreaProps, areaValueText } from "@/lib/areaMetrics";
 import { formatAsOf } from "@/lib/dates";
 
-import { Glossed } from "../terms/Glossed";
+import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
 
 /** Details for one planning area. Focus moves to its heading when it opens. */
 export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats: Record<string, string>; onClose: () => void }) {

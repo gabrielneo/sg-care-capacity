@@ -26,7 +26,8 @@ export function StatusCard({ status, isUcc, live }: { status: HospitalStatus; is
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-base font-semibold leading-snug text-ink">
           <Link href={`/ed-trends?hospital=${status.code}`} className="text-ink no-underline hover:underline">
-            <Term id={status.code.toLowerCase()} plain />
+            {/* A card's title always gives the full name: cards are read on their own, in any order. */}
+            <Term id={status.code.toLowerCase()} plain standalone />
           </Link>
           {isUcc ? <span className="block text-xs font-normal text-muted">Urgent care centre</span> : null}
         </h3>

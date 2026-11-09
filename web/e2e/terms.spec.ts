@@ -5,7 +5,8 @@ import { expect, test } from "@playwright/test";
 
 import { blockTiles, expectNoA11yViolations } from "./helpers";
 
-const PAGES = ["/", "/findings", "/ed-trends", "/access-map", "/live", "/data-quality", "/methodology", "/case-study", "/summary"];
+// Searches too: they add sections that repeat terms (the React #418 hydration error of 2026-11-09).
+const PAGES = ["/", "/?near=460001", "/?near=bedok", "/findings", "/ed-trends", "/access-map", "/live", "/data-quality", "/methodology", "/case-study", "/summary"];
 
 const openapi = JSON.parse(readFileSync(path.resolve(__dirname, "../../api/openapi.json"), "utf8"));
 const COLUMNS: string[] = [...new Set(Object.values(openapi.components.schemas as Record<string, { properties?: object }>)

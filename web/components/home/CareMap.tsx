@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/States";
-import { Glossed } from "@/components/terms/Glossed";
+import { ClientGlossed as Glossed } from "@/components/terms/ClientGlossed";
 import { LEVELS } from "@/lib/status";
 
 import type { CareMapProps } from "./CareMapLeaflet";

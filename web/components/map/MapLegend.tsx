@@ -2,7 +2,7 @@ import type { AreaMetric } from "@/lib/areaMetrics";
 import { formatValue } from "@/lib/areaMetrics";
 import type { LegendClass } from "@/lib/quantiles";
 
-import { Glossed } from "../terms/Glossed";
+import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
 
 /**
  * Class breaks, the method used, and how many areas have no value: missing data, or a per-senior

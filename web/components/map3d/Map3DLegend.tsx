@@ -2,7 +2,7 @@ import { formatValue } from "@/lib/areaMetrics";
 import { heightSteps, SENIORS_PER_STEP } from "@/lib/map3d";
 import type { LegendClass } from "@/lib/quantiles";
 
-import { Glossed } from "../terms/Glossed";
+import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
 
 /** The 3D map's legend: the height scale, the colour groups (darker = fewer clinics) and the flat grey areas. */
 export function Map3DLegend({ classes, excluded, maxSeniors }: { classes: LegendClass[]; excluded: number; maxSeniors: number }) {

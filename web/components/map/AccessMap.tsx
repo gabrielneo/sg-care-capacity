@@ -9,7 +9,7 @@ import { AREA_METRICS, DEFAULT_METRIC, metricByKey, type MetricKey } from "@/lib
 import { classColors, legendClasses, quantileBreaks } from "@/lib/quantiles";
 
 import { AreaPanel } from "./AreaPanel";
-import { Glossed } from "../terms/Glossed";
+import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
 import { MapLegend } from "./MapLegend";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {

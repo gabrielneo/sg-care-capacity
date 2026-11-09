@@ -1,11 +1,19 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
+import { createScope, setTestScope } from "@/lib/termScope";
+
+import { ClientGlossed } from "./ClientGlossed";
 import { Glossed } from "./Glossed";
 import { Term } from "./Term";
-import { StaticTermScope } from "./TermScope";
+import { TermView } from "./TermView";
 
-const inScope = (ui: React.ReactNode) => render(<StaticTermScope>{ui}</StaticTermScope>);
+/** Render as one page: a fresh scope, as a server request has. */
+const inScope = (ui: React.ReactNode) => {
+  setTestScope(createScope());
+  return render(<>{ui}</>);
+};
+afterEach(() => setTestScope(null));
 
 describe("Term", () => {
   it("spells out an abbreviation on first use, then shows it with a definition", () => {
@@ -43,6 +51,29 @@ describe("Term", () => {
   it("outside any scope, a term is always spelled out", () => {
     render(<p><Term id="moh" /> <Term id="moh" /></p>);
     expect(screen.getAllByText("Ministry of Health (MOH)")).toHaveLength(2);
+  });
+
+  it("the footer's standalone terms neither depend on nor use up the page's first use", () => {
+    inScope(<><footer><Glossed text="MOH data." standalone /></footer><main><Term id="moh" /> then <Term id="moh" /></main></>);
+    expect(screen.getAllByText("Ministry of Health (MOH)")).toHaveLength(2);       // footer, and the page's first use
+    expect(screen.getByRole("button", { name: "MOH" })).toBeInTheDocument();      // the page's second use
+  });
+});
+
+describe("TermView: the server's decision is the only one (no hydration mismatch, React #418)", () => {
+  it("renders exactly what it is told, whatever else is on the page", () => {
+    render(<p><TermView id="cgh" first={false} /> and <TermView id="cgh" first /></p>);
+    // A later use can be the spelled-out one if the server said so: the view never re-decides.
+    const uses = document.querySelectorAll('[data-term="cgh"]');
+    expect(uses[0]).not.toHaveAttribute("data-first");
+    expect(uses[1]).toHaveAttribute("data-first");
+    expect(uses[1]).toHaveTextContent("Changi General Hospital (CGH)");
+  });
+
+  it("client components' terms never spell out: the page's text has done that", () => {
+    render(<p><ClientGlossed text="Nearest GP clinics" /></p>);
+    expect(screen.getByRole("button", { name: "GP" })).toHaveAccessibleDescription(/general practitioner/i);
+    expect(document.querySelector("[data-first]")).toBeNull();
   });
 });
 

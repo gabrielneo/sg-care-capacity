@@ -36,6 +36,8 @@ test.describe("Home", () => {
     await expect(sgh.getByTestId("status-hours")).toHaveText("5.0 h");
     await expect(sgh.getByTestId("status-sentence")).toHaveText("Bed waits were longer than usual last week. Usual: 4.0 h.");
     await expect(sgh.getByTestId("sparkline")).toBeAttached();
+    // Every card names its hospital in full, not only the first.
+    for (const card of await cards.all()) await expect(card.getByRole("heading", { level: 3 })).toContainText(/ \([A-Z]+\)/);
 
     // Missing stays missing: no usual level is "no comparison", never "about usual".
     const ah = page.locator('[data-testid=status-card][data-hospital="AH"]');

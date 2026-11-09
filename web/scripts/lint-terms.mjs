@@ -18,7 +18,7 @@ import { proseFromMarkdown, sentences, words } from "./text-tools.mjs";
 const WEB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = path.resolve(WEB, "..");
 const USER_PROPS = new Set(["title", "label", "description", "caveat", "message", "intro", "aria-label", "placeholder", "alt", "summary"]);
-const WRAPPERS = new Set(["Term", "Glossed"]);
+const WRAPPERS = new Set(["Term", "Glossed", "ClientTerm", "ClientGlossed"]);
 // The nav is site chrome; the glossary page shows terms as definitions; /dev is not public.
 const EXEMPT = [/^app\/dev\//, /^app\/glossary\//, /^components\/Nav\.tsx$/, /^components\/terms\//, /\.test\.tsx?$/];
 const COPY_MODULES = ["lib/copy.ts", "lib/story.ts"];

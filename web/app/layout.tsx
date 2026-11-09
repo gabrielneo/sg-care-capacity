@@ -7,7 +7,6 @@ import type { ReactNode } from "react";
 import { DataStatus } from "@/components/DataStatus";
 import { Nav } from "@/components/Nav";
 import { Glossed } from "@/components/terms/Glossed";
-import { TermScope } from "@/components/terms/TermScope";
 
 export const metadata: Metadata = {
   title: { default: "Right-siting care in a super-aged Singapore", template: "%s · Right-siting care" },
@@ -35,16 +34,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Nav />
           </div>
         </header>
-        {/* Glossary first-use tracking covers the page body only. The nav and footer sit outside it:
-            page content streams in after them, so they must not use up a page's first expansion. */}
-        <TermScope>
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
           {children}
         </main>
-        </TermScope>
         <footer className="border-t border-line bg-surface">
           <div className="mx-auto max-w-6xl px-4 py-4 text-sm text-muted">
-            <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." />{" "}
+            {/* Standalone: the footer is site chrome, so it doesn't use up the page's first use of a term. */}
+            <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
             <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
             {/* Loaded in the browser (/status.json): building a page never waits on the API. */}
             <DataStatus />
