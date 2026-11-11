@@ -11,6 +11,8 @@ import {
   hospitalSeries,
   latestCompleteWeek,
   parseMode,
+  coversWindow,
+  profileFetchFrom,
   profileWindow,
   quantile,
   sequentialClasses,
@@ -167,3 +169,17 @@ describe("findings and the mode", () => {
     expect([parseMode(undefined), parseMode("raw"), parseMode("other"), parseMode(["raw"])]).toEqual(["usual", "raw", "usual", "raw"]);
   });
 });
+
+describe("the early daily fetch for the weekday profile", () => {
+  it("covers the 26-week window while MOH is up to about 4 weeks behind", () => {
+    const from = profileFetchFrom("2026-11-11");
+    expect(coversWindow(from, profileWindow("2026-10-19"))).toBe(true);     // the real gap on 2026-11-11
+    expect(coversWindow(from, profileWindow("2026-10-12"))).toBe(true);
+  });
+
+  it("says when it doesn't, so the page fetches the exact window instead", () => {
+    const from = profileFetchFrom("2026-11-11");
+    expect(coversWindow(from, profileWindow("2026-09-21"))).toBe(false);    // MOH 7 weeks behind
+  });
+});
+

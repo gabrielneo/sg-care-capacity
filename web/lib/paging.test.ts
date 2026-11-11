@@ -14,4 +14,28 @@ describe("fetchAllPages", () => {
   it("stops on an empty page and refuses to return a partial list", async () => {
     await expect(fetchAllPages(async () => ({ items: [], total: 3 }))).rejects.toThrow("Only 0 of 3");
   });
+
+  it("asks for several pages at once, then carries on one by one if the list is longer", async () => {
+    const all = Array.from({ length: 1192 }, (_, i) => i);
+    let inFlight = 0;
+    let most = 0;
+    const page = vi.fn(async (offset: number, limit: number) => {
+      most = Math.max(most, ++inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight--;
+      return { items: all.slice(offset, offset + limit), total: all.length };
+    });
+    const res = await fetchAllPages(page, 500, 20, 3);
+    expect(res.items).toEqual(all);                                         // in order, no duplicates
+    expect(most).toBe(3);                                                   // one round trip
+    const longer = await fetchAllPages(page, 300, 20, 2);                   // 2 at once, then 2 more
+    expect(longer.items).toEqual(all);
+  });
+
+  it("ignores pages past the end when fewer are needed", async () => {
+    const all = [1, 2, 3];
+    const res = await fetchAllPages(async (o, l) => ({ items: all.slice(o, o + l), total: 3 }), 500, 20, 3);
+    expect(res.items).toEqual([1, 2, 3]);
+  });
 });
+

@@ -153,6 +153,10 @@ Two services, both on free plans: the **API** on Render (a Docker container buil
    `RENDER_DEPLOY_HOOK_URL`. Anyone with this URL can redeploy the API, so treat it as a secret.
 4. **API address**: on the same GitHub page, **Variables → New repository variable**,
    `API_PUBLIC_URL` = the Render URL, e.g. `https://sg-health-api.onrender.com` (no trailing path).
+   The **Keep API awake** workflow (`keep-api-awake.yml`) also uses it: it requests `/api/v1/health`
+   every 10 minutes, so the free plan's sleep (after about 15 minutes idle) never makes a visitor wait
+   30-60 seconds. Disable it in the Actions tab if the API moves to a paid plan, or if another free
+   Render service needs the 750 free hours.
 5. **Vercel**: sign in with GitHub, **Add New → Project**, import this repository, set **Root
    Directory** to `web`. Under **Environment Variables** (Production and Preview):
    `API_BASE_URL` = the Render URL, `API_REVALIDATE_SECONDS` = `3600`, `SHOW_DEV_PAGES` = `false`.

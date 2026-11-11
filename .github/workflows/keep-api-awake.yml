@@ -1,0 +1,38 @@
+name: Keep API awake
+
+# Render's free plan puts the API to sleep after about 15 minutes without requests, and waking it
+# takes 30-60 seconds plus the data release download: a visitor arriving cold waits that long.
+# A light request every 10 minutes keeps it awake. One always-on service fits in Render's 750 free
+# instance hours a month (a month has at most 744); a second free service would not.
+# GitHub may run scheduled jobs late at busy times, so an occasional cold start can still happen.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-api-awake
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping the API's health endpoint
+        env:
+          API_URL: ${{ vars.API_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${API_URL:-}" ]; then
+            echo "::warning::API_PUBLIC_URL is not set (Settings > Secrets and variables > Actions > Variables)."
+            exit 0
+          fi
+          # /api/v1/health is never cached, so each ping reaches the API. Up to 3 tries: a sleeping
+          # instance can take a minute to answer.
+          curl -fsS --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 \
+            -o /dev/null -w "API answered %{http_code} in %{time_total}s\n" "${API_URL%/}/api/v1/health"

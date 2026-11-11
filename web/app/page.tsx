@@ -11,7 +11,7 @@ import { api, settle } from "@/lib/api/client";
 import type { Clinic, Meta } from "@/lib/api/types";
 import { plainError } from "@/lib/copy";
 import { renderDocList } from "@/lib/docs";
-import { findingFor, latestCompleteWeek, type Profile, profileWindow, usualLevels, weekdayProfile } from "@/lib/edCompare";
+import { coversWindow, findingFor, latestCompleteWeek, type Profile, profileFetchFrom, profileWindow, usualLevels, weekdayProfile } from "@/lib/edCompare";
 import { type GpPlace, type HospitalPlace, locate, type Located, NEAREST, nearest, type Place, type Places } from "@/lib/nearby";
 import { fetchAllPages } from "@/lib/paging";
 import { byPressure, hospitalStatus, SPARK_WEEKS } from "@/lib/status";
@@ -26,11 +26,12 @@ const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00
 
 async function allClinics(): Promise<{ items: Clinic[]; meta: Meta | null }> {
   let meta: Meta | null = null;
+  // About 1,200 clinics: 3 pages of 500, asked for at once (one round trip, not three).
   const { items } = await fetchAllPages(async (offset, limit) => {
     const page = await api.clinics({ limit, offset });
-    meta ??= page.meta;
+    if (offset === 0) meta = page.meta;
     return page.data;
-  });
+  }, 500, 20, 3);
   return { items, meta };
 }
 
@@ -47,7 +48,10 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const near = (Array.isArray(params.near) ? params.near[0] : params.near)?.slice(0, 60) ?? "";
   const searching = near.trim() !== "";
 
-  const [hospitalsRes, weeklyRes, liveRes, insightsRes, polyRes, clinicsRes, limits] = await Promise.all([
+  // Everything is asked for at once. The daily figures start from a guess at the weekday window
+  // (lib/edCompare.ts, profileFetchFrom); only if MOH is unusually far behind is a second call needed.
+  const earlyFrom = profileFetchFrom(new Date().toISOString().slice(0, 10));
+  const [hospitalsRes, weeklyRes, liveRes, insightsRes, polyRes, clinicsRes, limits, earlyDailyRes] = await Promise.all([
     settle(api.hospitals()),
     settle(api.edWeekly({ weeks: SPARK_WEEKS + 1 })),
     settle(api.liveNuhsLatest()),
@@ -55,6 +59,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     settle(api.polyclinics()),
     searching ? settle(allClinics()) : Promise.resolve(null),
     renderDocList("case_study.md", LIMITS_MARKER),
+    settle(api.edDaily({ from: earlyFrom })),
   ]);
 
   const hospitals = hospitalsRes.ok ? hospitalsRes.value.data : [];
@@ -69,7 +74,9 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   // The weekday pattern: daily figures for the 26 complete weeks up to the latest.
   const window = latest ? profileWindow(latest) : null;
-  const dailyRes = window ? await settle(api.edDaily({ from: window.from, to: window.to })) : null;
+  const dailyRes = !window ? null
+    : earlyDailyRes.ok && coversWindow(earlyFrom, window) ? earlyDailyRes
+    : await settle(api.edDaily({ from: window.from, to: window.to }));
   const profiles = dailyRes?.ok && window
     ? codes.map((c) => weekdayProfile(dailyRes.value.data, c, window.from, window.to, "usual")).filter((p): p is Profile => p != null)
     : [];

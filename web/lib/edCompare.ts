@@ -140,6 +140,23 @@ export function profileWindow(latestWeek: string): { from: string; to: string } 
   return { from: addDays(latestWeek, -7 * (PROFILE_WEEKS - 1)), to: addDays(latestWeek, 6) };
 }
 
+/** How far behind today MOH's latest complete week may be for the early daily fetch to cover it. */
+export const PROFILE_SLACK_DAYS = 28;
+
+/**
+ * Where to start fetching daily figures before the latest complete week is known, so the home page
+ * can ask for them together with everything else (one round trip, not two). It covers the profile
+ * window whenever MOH's latest complete week is under about 4 weeks old; `coversWindow` says
+ * whether it did, and if not the page fetches the exact window instead.
+ */
+export function profileFetchFrom(today: string): string {
+  return addDays(today, -(7 * PROFILE_WEEKS + PROFILE_SLACK_DAYS));
+}
+
+export function coversWindow(fetchedFrom: string, window: { from: string }): boolean {
+  return fetchedFrom <= window.from;
+}
+
 // ------------------------------------------------------------------ colour scales
 
 export interface ColourClass {
