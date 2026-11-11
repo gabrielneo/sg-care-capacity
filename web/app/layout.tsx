@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#F8FAFC" };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children, viewbar }: { children: ReactNode; viewbar: ReactNode }) {
   return (
     <html lang="en-SG">
       <body className="flex min-h-screen flex-col bg-page text-ink">
@@ -38,9 +38,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <header className="border-b border-line bg-surface">
           <div className="mx-auto max-w-6xl px-4 pt-3">
-            <Link href="/" className="text-base font-semibold text-ink no-underline">
-              Right-siting care <span className="font-normal text-muted">· a super-aged Singapore</span>
-            </Link>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <Link href="/" className="text-base font-semibold text-ink no-underline">
+                Right-siting care <span className="font-normal text-muted">· a super-aged Singapore</span>
+              </Link>
+              {/* The home page's view control (app/@viewbar): a slot, because a layout can't read ?view=. */}
+              {viewbar}
+            </div>
             <Nav />
           </div>
         </header>

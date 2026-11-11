@@ -346,6 +346,7 @@ Each record has the full technical reasoning; follow the number.
 | [0007](adr/0007-public-home-page.md) | Lead the home page with what a resident needs (how busy each ED was, and the nearest clinics), with the statistics one click away | Accepted |
 | [0008](adr/0008-glossary-first-use-on-the-server.md) | Decide where a term is first spelled out on the server, so the page never breaks in the browser | Accepted |
 | [0009](adr/0009-run-pages-next-to-the-api.md) | Run the website in Singapore beside the data service, and keep the free data service awake | Accepted |
+| [0010](adr/0010-home-page-views.md) | Show the home page in three views (public, planner, analyst) from the same figures, with the view in the link | Accepted |
 
 ## Limitations and next steps
 

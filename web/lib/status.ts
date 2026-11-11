@@ -83,6 +83,19 @@ export function byPressure(a: HospitalStatus, b: HospitalStatus): number {
   return rank(b) - rank(a) || a.code.localeCompare(b.code);
 }
 
+/** The order a tally reads in: most pressure first, "no comparison" last. */
+export const LEVEL_ORDER: readonly Level[] = ["much_higher", "higher", "usual", "lower", "unknown"];
+
+/**
+ * How many hospitals carry each badge: a count of the badges already shown, nothing more
+ * (docs/data_dictionary.md, "Computed by the site"). Every level is present, 0 if no hospital has it.
+ */
+export function levelCounts(statuses: HospitalStatus[]): Record<Level, number> {
+  const counts: Record<Level, number> = { much_higher: 0, higher: 0, usual: 0, lower: 0, unknown: 0 };
+  for (const s of statuses) counts[s.level] += 1;
+  return counts;
+}
+
 /**
  * A sparkline as SVG path data: one sub-path per run of known values, so a missing week is a gap,
  * never a line drawn through it. y is flipped (higher value = higher on screen).

@@ -24,9 +24,10 @@ export async function expectAsOfOnEveryCard(page: Page, minimum: number) {
   }
 }
 
-/** WCAG 2.1 A and AA rules (axe). */
-export async function expectNoA11yViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+/** WCAG 2.1 A and AA rules (axe); with `wcag22`, the 2.2 AA rules as well (new pages opt in). */
+export async function expectNoA11yViolations(page: Page, { wcag22 = false }: { wcag22?: boolean } = {}) {
+  const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", ...(wcag22 ? ["wcag22aa"] : [])];
+  const results = await new AxeBuilder({ page }).withTags(tags).analyze();
   const summary = results.violations.map((v) => `${v.id}: ${v.nodes.length} × ${v.help} (${v.nodes[0]?.target.join(" ")})`);
   expect(summary).toEqual([]);
 }

@@ -53,7 +53,10 @@ test.describe("Home", () => {
     await expect(sgh.getByTestId("status-badge")).toHaveText("▲Higher than usual");
     await expect(sgh.getByTestId("status-hours")).toHaveText("5.0 h");
     await expect(sgh.getByTestId("status-sentence")).toHaveText("Bed waits were longer than usual last week. Usual: 4.0 h.");
-    await expect(sgh.getByTestId("sparkline")).toBeAttached();
+    // The public view's card is the simple one: no 12-week line, no percentage (e2e/views.spec.ts has the full card).
+    await expect(sgh.getByTestId("sparkline")).toHaveCount(0);
+    await expect(sgh.getByTestId("status-delta")).toHaveCount(0);
+    await expect(page.getByTestId("status-key")).not.toContainText("The line shows");
     // Every card names its hospital in full, not only the first.
     for (const card of await cards.all()) await expect(card.getByRole("heading", { level: 3 })).toContainText(/ \([A-Z]+\)/);
 
@@ -61,6 +64,8 @@ test.describe("Home", () => {
     const ah = page.locator('[data-testid=status-card][data-hospital="AH"]');
     await expect(ah).toHaveAttribute("data-level", "unknown");
     await expect(ah.getByTestId("status-live")).toContainText("To see a doctor: under 1 hour");   // a bound stays a bound
+    await expect(ah.getByTestId("status-live")).toContainText("hospital's own estimate");
+    await expect(ah.getByTestId("status-note")).toHaveText("Urgent care centre");                 // what the figures cover
     const nuh = page.locator('[data-testid=status-card][data-hospital="NUH"]');
     await expect(nuh.getByTestId("status-hours")).toHaveText("–");
     await expect(nuh.getByTestId("status-sentence")).toHaveText("No complete week of figures last week.");
@@ -117,11 +122,11 @@ test.describe("Home", () => {
     await expect(page.getByTestId("map-key")).toContainText("Your search");
   });
 
-  test("the weekday pattern and takeaways come from the API", async ({ page, request }) => {
+  test("the weekday pattern and takeaways come from the API (analyst view)", async ({ page, request }) => {
     const body = await (await request.get("http://127.0.0.1:8791/api/v1/insights")).json() as
       { data: { insight_id: string; headline_rank: number | null; chart: { callout: string } | null }[] };
     const top = body.data.filter((i) => i.headline_rank != null && i.chart).sort((a, b) => a.headline_rank! - b.headline_rank!);
-    await page.goto("/");
+    await page.goto("/?view=analyst");
     await expect(page.getByTestId("week-pattern").getByTestId("heatmap")).toBeVisible();
     const items = page.getByTestId("takeaway");
     await expect(items).toHaveCount(Math.min(3, top.length));
@@ -131,7 +136,7 @@ test.describe("Home", () => {
     }
   });
 
-  test("statistics are in a closed drawer that opens", async ({ page }) => {
+  test("definitions and limits are in a closed drawer that opens", async ({ page }) => {
     await page.goto("/");
     const drawer = page.getByTestId("methods-drawer");
     await expect(drawer).not.toHaveAttribute("open", "");

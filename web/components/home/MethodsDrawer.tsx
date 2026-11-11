@@ -9,14 +9,15 @@ import { HIGHER_PCT, MUCH_HIGHER_PCT } from "@/lib/status";
 const pText = (p: number | null | undefined) => (p == null ? "not tested" : p < 0.001 ? "below 0.001" : p.toFixed(3));
 
 /**
- * Everything technical, closed by default: what each figure means, how the badges are set, and
- * the statistics behind each takeaway. A native <details>, so it opens without JavaScript.
+ * Everything technical: what each figure means, how the badges are set and what the data can't
+ * show. A native <details>, so it opens without JavaScript. Closed unless `open`; the analyst view
+ * opens it and passes the takeaways' findings, whose statistics are then listed (lib/homeViews.ts).
  */
-export function MethodsDrawer({ findings, limits }: { findings: Insight[]; limits: ReactNode }) {
+export function MethodsDrawer({ findings, limits, open = false }: { findings: Insight[]; limits: ReactNode; open?: boolean }) {
   return (
     <section aria-labelledby="methods-heading" className="border-t border-line py-8" data-testid="methods">
       <h2 id="methods-heading" className="text-xl font-semibold tracking-tight text-ink">How these figures are made</h2>
-      <details className="mt-3 rounded-xl border border-line bg-surface p-4" data-testid="methods-drawer">
+      <details open={open} className="mt-3 rounded-xl border border-line bg-surface p-4" data-testid="methods-drawer">
         <summary className="cursor-pointer select-none font-semibold text-accent">Show the data and methods</summary>
         <div className="mt-4 space-y-5 text-sm text-ink">
           <div>

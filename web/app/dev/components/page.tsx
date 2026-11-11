@@ -5,10 +5,12 @@ import { type ReactNode, Suspense } from "react";
 import { CaveatChip } from "@/components/CaveatChip";
 import { ChartCard } from "@/components/ChartCard";
 import { FreshnessBadge } from "@/components/FreshnessBadge";
+import { StatusBadge } from "@/components/home/StatusBadge";
 import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
 import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "@/components/States";
 import { AnnotatedChart, fromInsightChart } from "@/components/story/AnnotatedChart";
+import { ViewSwitch } from "@/components/ViewSwitch";
 import { CountUp } from "@/components/story/CountUp";
 import { DeltaNumber, deltaFromDisplay } from "@/components/story/DeltaNumber";
 import { HighlightPhrase } from "@/components/story/HighlightPhrase";
@@ -16,6 +18,7 @@ import { api, settle } from "@/lib/api/client";
 import { devPagesEnabled } from "@/lib/devPages";
 import { colors, mapScale } from "@/lib/palette";
 import { clinicMeta, edMeta, insightMeta, storySample } from "@/lib/samples";
+import { LEVEL_ORDER } from "@/lib/status";
 import { chartFormat, chartTitle } from "@/lib/story";
 
 export const metadata: Metadata = { title: "Components", robots: { index: false, follow: false } };
@@ -82,6 +85,16 @@ export default function ComponentsPage() {
         <Suspense fallback={<ChartCardSkeleton title="Live snapshot" />}>
           <LiveSnapshot />
         </Suspense>
+      </Section>
+
+      <Section title="ViewSwitch and StatusBadge (home page views)">
+        <p className="mb-3 text-sm text-muted">
+          The header control on the home page: a radio group from 640 px, a select below. Choosing a view here goes to the home page.
+        </p>
+        <ViewSwitch view="planner" home="/dev/components" />
+        <div className="mt-4 flex flex-wrap gap-2">
+          {LEVEL_ORDER.map((level) => <StatusBadge key={level} level={level} />)}
+        </div>
       </Section>
 
       <Section title="KpiTile">

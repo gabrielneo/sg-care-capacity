@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { EdWeek } from "./api/types";
 import { usualLevels } from "./edCompare";
-import { byPressure, hospitalStatus, levelFor, LEVELS, sparkPath, sparkWeeks } from "./status";
+import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkPath, sparkWeeks } from "./status";
 
 const week = (code: string, start: string, v: number | null, complete = true): EdWeek => ({
   hospital_code: code, hospital_name: code, iso_year: 2026, iso_week: 0, week_start: start, week_end: start,
@@ -75,5 +75,28 @@ describe("sparkPath", () => {
 
   it("draws nothing without values", () => {
     expect(sparkPath([null, null], 100, 20)).toBe("");
+  });
+});
+
+describe("levelCounts", () => {
+  const mk = (code: string, pct: number | null) => ({ code, level: levelFor(pct), latest: null, usual: null, pct, spark: [] });
+
+  it("counts the hospitals behind each badge, with 0 for a badge no hospital has", () => {
+    expect(levelCounts([mk("A", 40), mk("B", 20), mk("C", 16), mk("D", 0), mk("E", null)]))
+      .toEqual({ much_higher: 1, higher: 2, usual: 1, lower: 0, unknown: 1 });
+    expect(levelCounts([])).toEqual({ much_higher: 0, higher: 0, usual: 0, lower: 0, unknown: 0 });
+  });
+
+  it("adds up to the number of hospitals: no comparison is counted, never folded into about usual", () => {
+    const statuses = [mk("A", null), mk("B", null), mk("C", -30)];
+    const counts = levelCounts(statuses);
+    expect(LEVEL_ORDER.reduce((n, l) => n + counts[l], 0)).toBe(statuses.length);
+    expect(counts.usual).toBe(0);
+  });
+
+  it("orders every level, most pressure first", () => {
+    expect([...LEVEL_ORDER].sort()).toEqual(Object.keys(LEVELS).sort());
+    expect(LEVEL_ORDER[0]).toBe("much_higher");
+    expect(LEVEL_ORDER.at(-1)).toBe("unknown");
   });
 });
