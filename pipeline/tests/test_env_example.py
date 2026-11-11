@@ -17,6 +17,7 @@ NOT_SETTINGS = {
     "GITHUB_SHA": "set by GitHub Actions (the pipeline records the commit)",
     "CI": "set by CI runners",
     "NODE_ENV": "set by Next.js",
+    "VERCEL_PROJECT_PRODUCTION_URL": "set by Vercel on every deploy (the site's production domain)",
     "E2E_PYTHON": "test harness only (web/e2e/start-api.sh)",
     "E2E_API_PORT": "test harness only",
 }
