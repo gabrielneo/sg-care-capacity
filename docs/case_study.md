@@ -140,7 +140,7 @@ planners are the first users named in the problem statement.
 | Goals | Keep care accessible as the population ages. See where ED pressure is building across the 9 public ED sites, and whether care is shifting to family doctors where seniors live. |
 | Likely frustrations (hypothesis) | MOH's bed waits are daily medians per hospital, with no usual level to compare against. Hospital figures and area figures sit in separate releases with different dates. A single bad week is hard to tell apart from a lasting change. |
 | Decisions this data could inform | Which hospitals' bed waits to look into first. Whether a rise is a one-off week or a steady trend. Which areas to check when weighing primary care capacity against the number of seniors. |
-| What on this site serves them | The Overview's ranked findings; ED Trends, comparing each hospital with its own usual level; the Access Map's priority areas; Data Quality, showing what each figure has passed. |
+| What on this site serves them | The ranked findings (Findings); ED Trends, comparing each hospital with its own usual level; the Access Map's priority areas; Data Quality, showing what each figure has passed. |
 | Evidence behind this persona | MOH's [Careers](https://www.moh.gov.sg/about-us/join-us/careers/) description of Healthcare Services Planning. Not interviewed. |
 
 ### Persona 2: AIC community care planner
@@ -293,7 +293,7 @@ not yet validated with users.
 | S1 | Access measured as travel time, not straight-line distance | Should | [Methodology limitations](methodology.md#limitations); persona 2 places services "to improve accessibility for Seniors" | Not built: needs a routing service |
 | S2 | Access by subzone, not just by area | Should | [Methodology choices](methodology.md#choices-made-deliberately); persona 2 plans by sub-region, closer to subzones than to the 55 areas | Blocked: no Master Plan 2025 subzone boundaries are published |
 | S3 | Export any chart's figures as CSV | Should | Both personas cross-check against their own data; persona 2's role builds dashboards | Built: a CSV link under each chart on ED Trends and the Access Map, and one for every finding; each row carries its "Data as of" date and source (`csv.test.ts`, `web/e2e/exports.spec.ts`) |
-| S4 | A printable one-page summary of the latest findings | Should | The author's requirement: a page a planner can bring to a meeting | Built: `/summary`, linked from the Overview: the top findings, the priority areas and what the data can't show, each with its date and source. A test prints it and checks it fills one A4 page (`summary.test.ts`, `web/e2e/summary.spec.ts`) |
+| S4 | A printable one-page summary of the latest findings | Should | The author's requirement: a page a planner can bring to a meeting | Built: `/summary`, linked from Findings: the top findings, the priority areas and what the data can't show, each with its date and source. A test prints it and checks it fills one A4 page (`summary.test.ts`, `web/e2e/summary.spec.ts`) |
 | C1 | NUHS estimates refreshed more often than weekly | Could | Live page caveat; planners decide monthly or yearly, so near-live data matters more to operations staff | Partly: collected every 3 hours into a separate store, not published |
 | C2 | Compare chosen areas or hospitals side by side | Could | Useful for prioritising; the sortable table already covers most of it | Not built |
 | W1 | ED visits by age or triage category | Won't | Not published by MOH | Not possible with public data |
@@ -311,6 +311,7 @@ Values from weekly data release `data-2026-11-08`.
 | Publication lag | Days between MOH's latest report date and the weekly data release | 8 days (31 Oct → 8 Nov 2026) | 7 days or less: each release carries MOH's latest week | **Not met** in this release |
 | Blocking checks | Failed checks that block publishing, in the published data release | 0 of 77 checks | 0 in every published release | Met (enforced: a failure stops publishing) |
 | ED coverage | Days with both MOH figures, out of the days each site is reported | 100% for all 9 sites | 100% of the days MOH reports; any gap shown, never filled | Met |
+| Visitors | Page views counted by Vercel Web Analytics: page paths only, no cookies, searches never recorded | Counting from 11 Nov 2026; no figure yet | None set | Not applicable yet |
 | Provenance | Figures on the site showing their "Data as of" date and source | All | 100% | Met (enforced by tests). An [independent audit](audit_report.md) of `data-2026-11-08` found one chart giving MOH's date for NUHS's figures; it was fixed, and each source now shows its own date |
 
 ### Outcomes
@@ -342,6 +343,9 @@ Each record has the full technical reasoning; follow the number.
 | [0004](adr/0004-choropleth-not-heatmap.md) | Shade each area on the map by its value, rather than blurring values across the map | Accepted |
 | [0005](adr/0005-typed-api-contract.md) | The website and the data service agree on every field, checked automatically | Accepted |
 | [0006](adr/0006-3d-access-map.md) | Add a 3D map that shows seniors and clinic access together, with the 2D map and table always one click away | Accepted |
+| [0007](adr/0007-public-home-page.md) | Lead the home page with what a resident needs (how busy each ED was, and the nearest clinics), with the statistics one click away | Accepted |
+| [0008](adr/0008-glossary-first-use-on-the-server.md) | Decide where a term is first spelled out on the server, so the page never breaks in the browser | Accepted |
+| [0009](adr/0009-run-pages-next-to-the-api.md) | Run the website in Singapore beside the data service, and keep the free data service awake | Accepted |
 
 ## Limitations and next steps
 
