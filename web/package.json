@@ -29,6 +29,7 @@
     "@mdx-js/mdx": "3.1.1",
     "@react-three/drei": "10.7.9",
     "@react-three/fiber": "9.8.2",
+    "@vercel/analytics": "2.0.1",
     "hast-util-to-string": "3.0.1",
     "leaflet": "1.9.4",
     "mermaid": "12.3.0",

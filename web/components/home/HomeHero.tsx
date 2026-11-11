@@ -19,6 +19,9 @@ export function HomeHero({ near }: { near: string }) {
         <span aria-hidden="true">✚</span>
         In an emergency, call 995 or go to the nearest emergency department.
       </p>
+      <p className="mt-2 max-w-prose text-sm text-muted" data-testid="not-advice">
+        This site shows public statistics. It isn&apos;t medical advice: if you&apos;re unsure where to go, ask a doctor or nurse.
+      </p>
       <form action="/#nearby" method="get" role="search" className="mt-5 max-w-xl" data-testid="near-form">
         <label htmlFor="near" className="block text-sm font-semibold text-ink">Your postcode or area</label>
         <div className="mt-1 flex gap-2">
@@ -29,7 +32,9 @@ export function HomeHero({ near }: { near: string }) {
             Find clinics
           </button>
         </div>
-        <p className="mt-1 text-xs text-muted">Your search stays on this site. It isn&apos;t sent anywhere else or stored.</p>
+        <p className="mt-1 text-xs text-muted" data-testid="search-privacy">
+          Your search is only used to find clinics on this page. It isn&apos;t sent to any other service or saved.
+        </p>
       </form>
     </section>
   );

@@ -6,12 +6,22 @@ import type { ReactNode } from "react";
 
 import { DataStatus } from "@/components/DataStatus";
 import { Nav } from "@/components/Nav";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { Glossed } from "@/components/terms/Glossed";
 
+const DESCRIPTION = "Check how busy Singapore's hospital emergency departments were last week, and find a GP clinic or "
+  + "polyclinic near you. Built from published MOH, data.gov.sg, SingStat and NUHS data.";
+
+// Absolute links for the share preview. Vercel sets VERCEL_PROJECT_PRODUCTION_URL on every deploy.
+const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "Right-siting care in a super-aged Singapore", template: "%s · Right-siting care" },
-  description:
-    "Emergency department pressure and clinic access for residents aged 65+ in Singapore, from published MOH, data.gov.sg, SingStat and NUHS data.",
+  description: DESCRIPTION,
+  openGraph: { title: "Right-siting care in Singapore", description: DESCRIPTION, siteName: "Right-siting care", locale: "en_SG", type: "website" },
+  twitter: { card: "summary_large_image", title: "Right-siting care in Singapore", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#F8FAFC" };
@@ -41,11 +51,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="mx-auto max-w-6xl px-4 py-4 text-sm text-muted">
             {/* Standalone: the footer is site chrome, so it doesn't use up the page's first use of a term. */}
             <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
+            Visits are counted without cookies, and searches aren&apos;t recorded.{" "}
             <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
             {/* Loaded in the browser (/status.json): building a page never waits on the API. */}
             <DataStatus />
           </div>
         </footer>
+        <SiteAnalytics />
       </body>
     </html>
   );

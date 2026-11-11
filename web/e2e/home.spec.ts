@@ -24,6 +24,24 @@ test.describe("Home", () => {
     await expect(page.getByTestId("nearby")).toHaveCount(0);                     // nothing until a search
   });
 
+  test("it says it isn't medical advice, and what happens to a search", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
+    await expect(page.getByTestId("search-privacy")).toHaveText(/isn't sent to any other service or saved/);
+    await page.goto("/?near=460002");
+    await expect(page.getByTestId("nearby-basis")).toContainText("the newest list data.gov.sg publishes");
+  });
+
+  test("a shared link gets a preview image and the new description", async ({ page, request }) => {
+    await page.goto("/");
+    const image = await page.locator('meta[property="og:image"]').getAttribute("content");
+    expect(image).toMatch(/\/opengraph-image/);
+    const res = await request.get(new URL(image!).pathname + new URL(image!).search);
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("image/png");
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /find a GP clinic or polyclinic near you/);
+  });
+
   test("each hospital has a status card, busiest first, with its badge and figure", async ({ page }) => {
     await page.goto("/");
     const cards = page.getByTestId("status-card");

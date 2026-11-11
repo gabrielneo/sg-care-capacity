@@ -56,7 +56,10 @@ export function NearbyResults({ located, lists, clinicMeta, polyclinicMeta }: {
       <h2 id="nearby-heading" className="text-xl font-semibold tracking-tight text-ink">Near {located.label}</h2>
       <p className="mt-1 text-sm text-muted" data-testid="nearby-basis">
         {BASIS_NOTE[located.basis]} Call ahead to check opening hours
-        {clinicMeta ? <>: the <Term id="gp" /> clinic list was last updated on {formatAsOf(clinicMeta.as_of)}.</> : "."}
+        {clinicMeta ? (
+          <>: the <Term id="gp" /> clinic list was last updated on {formatAsOf(clinicMeta.as_of)}. It is the newest list
+            data.gov.sg publishes, so a clinic that opened or closed since then may be missing or still shown.</>
+        ) : "."}
       </p>
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         {lists.polyclinics.length ? (
