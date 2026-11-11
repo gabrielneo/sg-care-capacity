@@ -26,8 +26,7 @@ Run everything from the repository's root folder.
 
 ```bash
 python3.12 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -e "pipeline[dev,browser]"
-python -m playwright install chromium                   # optional: only for JS-rendered pages
+pip install -e "pipeline[dev]"
 pytest -q pipeline/tests                                # offline tests, no network needed
 ```
 

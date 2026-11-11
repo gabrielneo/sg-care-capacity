@@ -156,3 +156,19 @@ def test_make_test_runs_every_suite_separately():
                          capture_output=True, text=True, check=True).stdout.splitlines()
     assert out == ["python3 -m pytest -q pipeline/tests", "python3 -m pytest -q api", "cd web && npm test",
                    "python3 -m pytest -q pipeline/acceptance"]
+
+
+# --------------------------------------------------------------- keep awake #
+
+def test_keep_awake_pings_only_the_never_cached_health_endpoint_often_enough():
+    text = (WF / "keep-api-awake.yml").read_text()
+    # Render's free plan sleeps after about 15 minutes idle: ping well inside that.
+    assert 'cron: "*/10 * * * *"' in text
+    assert "/api/v1/health" in text and "vars.API_PUBLIC_URL" in text
+    assert "contents: read" in text and "contents: write" not in text      # it can't change anything
+
+
+def test_weekly_installs_no_browser():
+    # The Playwright fallback was removed (NUHS's page needs no browser); the job shouldn't pay for Chromium.
+    text = (WF / "weekly.yml").read_text().lower()
+    assert "playwright" not in text and "[dev,browser]" not in text

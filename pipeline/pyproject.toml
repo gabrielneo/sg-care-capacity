@@ -28,7 +28,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-browser = ["playwright>=1.44"]   # optional fallback for JavaScript-rendered pages
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-requests", "types-PyYAML"]   # CI lint and type checks
 
 [project.scripts]

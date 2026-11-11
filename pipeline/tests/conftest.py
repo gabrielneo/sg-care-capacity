@@ -199,12 +199,6 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
 
 
 @pytest.fixture(autouse=True)
-def no_playwright(monkeypatch):
-    """Never launch a browser in tests."""
-    monkeypatch.setattr("sg_health.sources.live.render_with_playwright", lambda url: None)
-
-
-@pytest.fixture(autouse=True)
 def reset_log_handlers():
     """cli.main() installs a JSON handler on the root logger; remove it after each test."""
     import logging

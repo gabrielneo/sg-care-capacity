@@ -63,7 +63,6 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 ```bash
 # Pipeline (run from the repo root; package: pipeline/sg_health, CLI: sg-health)
 # setup:        python3.12 -m venv .venv && source .venv/bin/activate && pip install -e "pipeline[dev]"
-#               (add ,browser to the extras + `python -m playwright install chromium` for JS pages)
 # run ETL:      sg-health run [--sources moh,live,opendata,singstat]   # fetch → data/raw → parse → warehouse
 # backfill:     sg-health backfill --start 2024-01-01 --max-snapshots 80   # MOH history via Wayback
 # reparse:      sg-health reparse        # rebuild all tables from data/raw only; no network

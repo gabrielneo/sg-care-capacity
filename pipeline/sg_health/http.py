@@ -119,26 +119,3 @@ class PoliteHttp:
             LOG.warning("Non-JSON response from %s", url)
             return None
 
-
-def render_with_playwright(url: str, wait_ms: int = 4000) -> str | None:
-    """Fallback for JavaScript-rendered pages. Returns the HTML, or None if Playwright isn't installed.
-
-    Setup: pip install playwright && python -m playwright install chromium
-    """
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        LOG.info("Playwright not installed, skipping JS render for %s", url)
-        return None
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page(user_agent=USER_AGENT)
-            page.goto(url, timeout=30_000, wait_until="domcontentloaded")
-            page.wait_for_timeout(wait_ms)
-            html = page.content()
-            browser.close()
-            return html
-    except Exception as exc:  # browser errors vary widely by platform
-        LOG.warning("Playwright render failed for %s: %s", url, exc)
-        return None
