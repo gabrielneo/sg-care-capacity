@@ -57,10 +57,11 @@ describe("ChartCard", () => {
     expect(document.querySelector("[data-level]")).toBeNull();
   });
 
-  it("names the right publisher for each dataset, and flags an old one", () => {
+  it("names the right publisher for each dataset, and shows an old irregular list as the latest published, not an alarm", () => {
     render(<ChartCard title="Clinics" meta={clinicMeta} now={NOW}><p>map</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");
-    expect(screen.getByText(/Out of date · irregular updates, 2 years old/)).toHaveAttribute("data-level", "red");
+    expect(screen.getByText(/Latest published · irregular updates, 2 years old/)).toHaveAttribute("data-level", "red");   // the level is still reported
+    expect(screen.queryByText(/Out of date/)).toBeNull();
   });
 
   it("public pages show the site's notes and summarise data-quality warnings with a link", () => {

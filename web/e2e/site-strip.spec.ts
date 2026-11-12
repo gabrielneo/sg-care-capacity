@@ -10,28 +10,22 @@ test.describe("site strip", () => {
     const strip = page.getByTestId("site-strip");
     await expect(page.getByTestId("strip-summary")).toContainText(/\d+ of \d+ hospitals busier than usual|No hospital has a comparison/);
     await expect(page.getByTestId("strip-summary")).toHaveAttribute("href", "/?view=planner");
-    const viewport = page.viewportSize()!;
-    if (viewport.width >= 1280) {
-      await expect(page.getByTestId("strip-pill").first()).toBeVisible();
-      expect((await strip.boundingBox())!.height).toBeLessThanOrEqual(46);
-    } else {
-      await expect(page.getByTestId("strip-pill").first()).toBeHidden();
-      await page.getByTestId("strip-details").click();
-      await expect(page.getByTestId("strip-pill").first()).toBeVisible();
-      await expect(page.getByTestId("strip-details")).toHaveAttribute("aria-expanded", "true");
-    }
+    // One fixed height at every width, so nothing shifts when it loads; the pills are behind Details.
+    expect((await strip.boundingBox())!.height).toBeLessThanOrEqual(46);
+    await expect(page.getByTestId("strip-pill").first()).toBeHidden();
+    await page.getByTestId("strip-details").click();
+    await expect(page.getByTestId("strip-pill").first()).toBeVisible();
+    await expect(page.getByTestId("strip-details")).toHaveAttribute("aria-expanded", "true");
     await expect(page.getByText(/995/).first()).toBeVisible();
-    // The count says where it comes from and when, in words, at every width (no tooltip needed): the line under it below 1280px,
-    // the bed-wait pill beside it from 1280px.
-    await expect(viewport.width >= 1280 ? page.locator('[data-pill="bed"]') : page.getByTestId("strip-basis"))
-      .toContainText(/MOH.*(data )?as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
+    // The count says where it comes from and when, in words, at every width (no tooltip needed).
+    await expect(page.getByTestId("strip-basis")).toContainText(/MOH, data as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });
   });
 
   test("each pill carries its own date, so the estimate never sits beside another source's date", async ({ page }) => {
     await page.goto("/");
-    if (page.viewportSize()!.width < 1280) await page.getByTestId("strip-details").click();
+    await page.getByTestId("strip-details").click();
     const bed = page.locator('[data-pill="bed"]');
     await expect(bed).toContainText("Bed waits · MOH");
     await expect(bed).toContainText(/as of \d{1,2} [A-Z][a-z]{2} \d{4}/);

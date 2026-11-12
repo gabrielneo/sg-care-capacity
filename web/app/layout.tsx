@@ -4,14 +4,15 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
 
+import { AuthorByline } from "@/components/AuthorByline";
 import { DataStatus } from "@/components/DataStatus";
 import { Nav } from "@/components/Nav";
 import { SiteStrip } from "@/components/SiteStrip";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { Glossed } from "@/components/terms/Glossed";
 
-const DESCRIPTION = "Check how busy Singapore's hospital emergency departments were last week, and find a GP clinic or "
-  + "polyclinic near you. Built from published MOH, data.gov.sg, SingStat and NUHS data.";
+const DESCRIPTION = "A public-data analytics project by Gabriel Neo: where Singapore's emergency departments wait longest for ward beds, "
+  + "and where seniors have the fewest clinics. Also check how busy EDs were last week and find a clinic near you.";
 
 // Absolute links for the share preview. Vercel sets VERCEL_PROJECT_PRODUCTION_URL on every deploy.
 const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -65,6 +66,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
             <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
             {/* Loaded in the browser (/status.json): building a page never waits on the API. */}
             <DataStatus />
+            <AuthorByline className="mt-2 border-t border-line pt-2" />
           </div>
         </footer>
         <SiteAnalytics />

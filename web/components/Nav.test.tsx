@@ -12,14 +12,14 @@ describe("Nav", () => {
   it("lists the sections in order", () => {
     render(<Nav />);
     expect(screen.getAllByRole("link").map((a) => a.textContent)).toEqual([
-      "Home", "Findings", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
+      "Home", "The project", "Findings", "Explore", "How it's built", "Case Study"]);
     expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
   });
 
   it("marks the current page for assistive tech", () => {
     pathname.value = "/access-map";
     render(<Nav />);
-    expect(screen.getByRole("link", { name: "Access Map" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Explore" })).toHaveAttribute("aria-current", "page");   // a page under Explore
     expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
   });
 
@@ -28,5 +28,7 @@ describe("Nav", () => {
     expect(isCurrent("/ed-trends", "/")).toBe(false);
     expect(isCurrent("/ed-trends/sgh", "/ed-trends")).toBe(true);
     expect(isCurrent("/ed-trendsx", "/ed-trends")).toBe(false);
+    expect(isCurrent("/data-quality", "/how-its-built", ["/data-quality", "/methodology"])).toBe(true);
+    expect(isCurrent("/data-qualityx", "/how-its-built", ["/data-quality"])).toBe(false);
   });
 });

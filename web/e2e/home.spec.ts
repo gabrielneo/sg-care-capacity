@@ -45,7 +45,7 @@ test.describe("Home", () => {
     const res = await request.get(new URL(image!).pathname + new URL(image!).search);
     expect(res.status()).toBe(200);
     expect(res.headers()["content-type"]).toContain("image/png");
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /find a GP clinic or polyclinic near you/);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /analytics project by Gabriel Neo.*find a clinic near you/);
   });
 
   test("without JavaScript the emergency band is still there, and the finder says it needs JavaScript", async ({ browser }) => {

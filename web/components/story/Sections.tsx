@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { Meta, PopulationYear } from "@/lib/api/types";
-import { BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
+import { AVERAGE_VS_TYPICAL, BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
 import { term } from "@/lib/glossary";
 import { formatAsOf } from "@/lib/dates";
 import { cadenceFor } from "@/lib/freshness";
@@ -176,7 +176,9 @@ export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: M
         {" · "}<a href="/export/findings.csv" download data-testid="csv-download">Download every finding (CSV)</a>
         {" · "}<Link href="/summary" data-testid="summary-link">One-page summary to print</Link>
       </p>
-      <p className="mb-6 mt-2 max-w-prose text-sm text-muted" data-testid="bed-wait-explainer"><Glossed text={BED_WAIT_EXPLAINER} /></p>
+      <p className="mb-6 mt-2 max-w-prose text-sm text-muted" data-testid="bed-wait-explainer">
+        <Glossed text={BED_WAIT_EXPLAINER} /> <span data-testid="average-vs-typical">{AVERAGE_VS_TYPICAL}</span>
+      </p>
       {/* Without JavaScript the step can't drive the panel, so each chart sits under its step. */}
       <noscript>
         <style>{".story-inline{display:block!important}.story-panel{display:none!important}"}</style>

@@ -46,8 +46,16 @@ test.describe("shell", () => {
   test("the nav reaches every section and marks the current one", async ({ page }) => {
     await page.goto("/methodology");
     const nav = page.getByRole("navigation", { name: "Main" });
-    await expect(nav.getByRole("link")).toHaveText(["Home", "Findings", "ED Trends", "Access Map", "Live", "Data Quality", "Methodology", "Case Study"]);
-    await expect(nav.getByRole("link", { name: "Methodology" })).toHaveAttribute("aria-current", "page");
+    await expect(nav.getByRole("link")).toHaveText(["Home", "The project", "Findings", "Explore", "How it's built", "Case Study"]);
+    await expect(nav.getByRole("link", { name: "How it's built" })).toHaveAttribute("aria-current", "page");   // /methodology is under it
+    // Every section is on screen at every width: the nav wraps rather than scrolling sideways.
+    const viewport = page.viewportSize()!.width;
+    for (const link of await nav.getByRole("link").all()) {
+      const box = (await link.boundingBox())!;
+      expect(box.x, await link.innerText()).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, await link.innerText()).toBeLessThanOrEqual(viewport);
+      expect(box.height).toBeGreaterThanOrEqual(44);   // tap target
+    }
   });
 
   test("the skip link is the first thing a keyboard user reaches", async ({ page }) => {

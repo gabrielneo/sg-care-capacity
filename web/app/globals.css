@@ -50,6 +50,11 @@
     font-family: var(--font-sans);
     line-height: 1.6;
   }
+  /* Headlines in a system serif: a voice of its own with nothing to download. (A web font put the LCP over its 2.5 s budget.) */
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    letter-spacing: -0.01em;
+  }
   /* Links are underlined unless a component opts out (nav, tabs, cards): colour alone must not
      be the only cue (WCAG 1.4.1). */
   a {

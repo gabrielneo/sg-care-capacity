@@ -11,6 +11,14 @@ export const BED_WAIT_UNIT_WEEKLY = "hours, average of each day's median";
 export const BED_WAIT_EXPLAINER =
   "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed.";
 
+/**
+ * Why a finding's hours can sit above the "typical" 2025 waits in the case study: those are each hospital's middle day for
+ * the year; a finding averages each day's median over recent weeks, and a few very long days pull an average up.
+ * (Checked on the warehouse, 12 Nov 2026: both figures reproduce; they measure different things over different periods.)
+ */
+export const AVERAGE_VS_TYPICAL =
+  "These hours are averages of each day's median over recent weeks. A few very long days pull an average up, so they can sit above the case study's typical yearly waits.";
+
 // The Overview's opening lines (comprehension report: testers didn't know "right-siting", or what the
 // bed wait measured, from the first screen).
 export const SITE_SCOPE = "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.";

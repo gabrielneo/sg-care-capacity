@@ -22,10 +22,11 @@ function Pill({ pill }: { pill: StripPill }) {
 
 /**
  * The slim strip under the top bar: how many hospitals are busier than usual, and how fresh each dataset
- * is. The count always carries its source and as-of date in words, on every width (line 2 below 1280px;
- * the bed-wait pill beside it from 1280px): a date that lives only in a tooltip can't be read on a phone or by keyboard. Every pill is dated by its
- * own source and the NUHS estimates say they cover some hospitals only. Below 1280px the pills sit
- * behind "Details". The cluster filter lives with the hospital map (components/home/CareControls.tsx).
+ * is. The count always carries its source and as-of date in words, on every width (a date that lives
+ * only in a tooltip can't be read on a phone or by keyboard). The pills (each dated by its own source;
+ * the NUHS estimates say they cover some hospitals only) sit behind "Details" at every width: inline,
+ * they fitted on one row only with some machines' fonts, and a row that wraps shifts the page. So the bar is
+ * one fixed height, loaded or not. The cluster filter lives with the hospital map (components/home/CareControls.tsx).
  */
 export function SiteStrip() {
   const [data, setData] = useState<Loaded | null>(null);
@@ -52,22 +53,24 @@ export function SiteStrip() {
 
   return (
     <div className="sticky top-0 z-30 border-b border-line bg-surface" data-testid="site-strip" role="region" aria-label="Data overview">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 xl:min-h-11 xl:flex-row xl:items-center xl:justify-between xl:gap-3">
+      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4">
         <div className="flex min-h-11 shrink-0 items-center justify-between gap-3">
           <Link href={viewHref("planner")} className="min-w-0 py-1 text-xs leading-[15px] text-ink" data-testid="strip-summary">
             <span className="block font-semibold">{lead}</span>
-            {/* One line at every width, so the bar is the same height before and after it loads (no layout shift).
-                Wide screens have room for the pills, which carry the source and date, so the second line says the week. */}
-            {basis ? <span className="block text-muted xl:hidden" data-testid="strip-basis">{basis}</span> : null}
-            {s.week ? <span className="hidden text-muted xl:block" data-testid="strip-week">week of {s.week}</span> : null}
+            {/* One line, so the bar is the same height before and after it loads (no layout shift). The week joins it where there is room. */}
+            {basis ? (
+              <span className="block text-muted" data-testid="strip-basis">
+                {s.week ? <span className="hidden sm:inline">week of {s.week} · </span> : null}{basis}
+              </span>
+            ) : null}
           </Link>
           <button type="button" aria-expanded={open} aria-controls={panel} onClick={() => setOpen(!open)} data-testid="strip-details"
-                  className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2.5 text-xs font-medium text-ink underline-offset-2 hover:underline xl:hidden">
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2.5 text-xs font-medium text-ink underline-offset-2 hover:underline">
             Details <span aria-hidden="true">&nbsp;{open ? "▴" : "▾"}</span>
           </button>
         </div>
         <div id={panel} data-testid="strip-panel"
-             className={`${open ? "flex" : "hidden"} max-h-[60vh] flex-col gap-2 overflow-y-auto pb-2 xl:flex xl:max-h-none xl:flex-row xl:items-center xl:gap-3 xl:overflow-visible xl:pb-0`}>
+             className={`${open ? "flex" : "hidden"} max-h-[60vh] flex-col gap-2 overflow-y-auto pb-2 md:flex-row md:flex-wrap`}>
           {s.pills.map((p) => <Pill key={p.id} pill={p} />)}
         </div>
       </div>

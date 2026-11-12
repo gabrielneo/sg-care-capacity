@@ -24,7 +24,7 @@ describe("SiteStrip", () => {
     render(<SiteStrip />);
     const link = await screen.findByTestId("strip-summary");
     expect(link).toHaveTextContent("3 of 9 hospitals busier than usual");
-    expect(link).toHaveTextContent("week of 19–25 Oct 2026");   // shown from 1280px, where the pills have the source and date
+    expect(link).toHaveTextContent("week of 19–25 Oct 2026");   // joins the line from 640px; below that the line is the source and date
     expect(link).toHaveAttribute("href", "/?view=planner");
   });
 

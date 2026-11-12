@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Term } from "@/components/terms/Term";
 import { TRIAGE_EMERGENCY, TRIAGE_GUIDANCE_LABEL, TRIAGE_GUIDANCE_URL, TRIAGE_NEXT } from "@/lib/copy";
 import type { Density } from "@/lib/homeViews";
@@ -15,6 +17,13 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
   const notAdvice = (
     <p className={`${full ? "mt-2 text-sm text-ink sm:mt-3 sm:text-base" : "text-sm text-muted"} max-w-prose`} data-testid="not-advice">
       This site shows public statistics. It isn&apos;t medical advice: if you&apos;re unsure where to go, ask a doctor or nurse.
+    </p>
+  );
+  // For someone who arrives from a CV or LinkedIn link: the way to the project's story, after the emergency line. Not on phones
+  // in the public view: there it would push the search off the first screen, and the nav's "The project" is in its first row.
+  const project = (
+    <p className={`${full ? "mt-3 hidden sm:block" : ""} text-sm text-ink`} data-testid="project-link">
+      Here from a CV or LinkedIn? <Link href="/project" className="font-semibold">See the project in 60 seconds</Link>
     </p>
   );
   if (full) {
@@ -43,6 +52,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
           Getting care in the most suitable place is called <Term id="right_siting">right-siting</Term>.
         </p>
         {notAdvice}
+        {project}
       </section>
     );
   }
@@ -58,6 +68,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
           In an emergency, call 995 or go to the nearest emergency department.
         </p>
         {notAdvice}
+        {project}
       </div>
     </section>
   );

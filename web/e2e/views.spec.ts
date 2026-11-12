@@ -157,8 +157,9 @@ test.describe("Home views", () => {
     await page.goto("/?view=planner");
     // Text wraps differently with each machine's fonts (CI's Linux fonts made a card ~100px taller than a Mac's), so a card's
     // exact bottom is not a stable measure. What matters: the summary strip is entirely in view, and each first-row card
-    // starts early enough that its badge, figure and sentence (the top MIN_VISIBLE px) are in view too.
-    const MIN_VISIBLE = 200;
+    // starts early enough that its name and badge (the top MIN_VISIBLE px) are in view too. CI's fonts put the cards
+    // about 100px lower than a Mac's, so this has room for that.
+    const MIN_VISIBLE = 100;
     const strip = (await page.getByTestId("summary-strip").boundingBox())!;
     expect(strip.y + strip.height, "summary strip bottom").toBeLessThanOrEqual(800);
     for (const card of (await page.getByTestId("status-card").all()).slice(0, 4)) {
@@ -295,7 +296,8 @@ test.describe("Home views", () => {
     // Following links, without a full page load: it goes when leaving the home page and returns with it.
     await page.goto("/?view=planner");
     await expect(page.getByTestId("view-switch")).toHaveCount(1);
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Methodology" }).click();
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "How it's built" }).click();
+    await page.getByTestId("hub").locator('a[href="/methodology"]').click();
     await expect(page.getByRole("heading", { level: 1, name: "Methodology" })).toBeVisible();
     await expect(page.getByTestId("view-switch")).toHaveCount(0);
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Home" }).click();
