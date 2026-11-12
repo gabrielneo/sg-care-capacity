@@ -13,7 +13,7 @@ test.describe("site strip", () => {
     const viewport = page.viewportSize()!;
     if (viewport.width >= 1280) {
       await expect(page.getByTestId("strip-pill").first()).toBeVisible();
-      expect((await strip.boundingBox())!.height).toBeLessThanOrEqual(41);
+      expect((await strip.boundingBox())!.height).toBeLessThanOrEqual(46);
     } else {
       await expect(page.getByTestId("strip-pill").first()).toBeHidden();
       await page.getByTestId("strip-details").click();
@@ -21,6 +21,10 @@ test.describe("site strip", () => {
       await expect(page.getByTestId("strip-details")).toHaveAttribute("aria-expanded", "true");
     }
     await expect(page.getByText(/995/).first()).toBeVisible();
+    // The count says where it comes from and when, in words, at every width (no tooltip needed): the line under it below 1280px,
+    // the bed-wait pill beside it from 1280px.
+    await expect(viewport.width >= 1280 ? page.locator('[data-pill="bed"]') : page.getByTestId("strip-basis"))
+      .toContainText(/MOH.*(data )?as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });
   });
@@ -30,11 +34,12 @@ test.describe("site strip", () => {
     if (page.viewportSize()!.width < 1280) await page.getByTestId("strip-details").click();
     const bed = page.locator('[data-pill="bed"]');
     await expect(bed).toContainText("Bed waits · MOH");
-    await expect(bed).toHaveAttribute("title", /data as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
+    await expect(bed).toContainText(/as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
     const doctor = page.locator('[data-pill="doctor"]');
     if (await doctor.count()) {
       await expect(doctor).toContainText(/updated \d{1,2} [A-Z][a-z]{2} \d{4}/);
       await expect(doctor).toContainText("NUHS");
+      await expect(doctor).toContainText("some hospitals only");
     }
   });
 
@@ -64,21 +69,7 @@ test.describe("site strip", () => {
     expect(pad).toBeGreaterThanOrEqual(strip!.height);
   });
 
-  test("cluster chips share the address with the map", async ({ page }) => {
-    await page.goto("/");
-    if (page.viewportSize()!.width < 1280) await page.getByTestId("strip-details").click();
-    const chips = page.getByTestId("strip-clusters");
-    const first = chips.locator("button:not([data-cluster=all])").first();
-    const name = (await first.getAttribute("data-cluster"))!;
-    await first.click();
-    await expect(first).toHaveAttribute("aria-pressed", "true");
-    await expect(page).toHaveURL(new RegExp(`cluster=${encodeURIComponent(name).replace("%20", "(\\+|%20)")}`));
-    await expect(page.getByTestId("map-section").getByTestId("care-panel")).toHaveAttribute("data-cluster", name);
-    await chips.getByRole("button", { name: "All" }).click();
-    await expect(page).not.toHaveURL(/cluster=/);
-  });
-
-  test("the strip is on other pages too, without cluster chips", async ({ page }) => {
+  test("the strip is on other pages too", async ({ page }) => {
     await page.goto("/methodology");
     await expect(page.getByTestId("strip-summary")).toBeVisible();
     await expect(page.getByTestId("strip-clusters")).toHaveCount(0);

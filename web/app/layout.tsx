@@ -61,6 +61,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
             {/* Standalone: the footer is site chrome, so it doesn't use up the page's first use of a term. */}
             <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
             Visits are counted without cookies, and searches aren&apos;t recorded.{" "}
+            <span data-testid="footer-notice">This site shows public statistics. It isn&apos;t medical advice. In an emergency, call <a href="tel:995">995</a>.</span>{" "}
             <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
             {/* Loaded in the browser (/status.json): building a page never waits on the API. */}
             <DataStatus />

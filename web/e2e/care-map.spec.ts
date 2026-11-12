@@ -209,7 +209,10 @@ test.describe("The details drawer", () => {
     await expect(drawer(page)).toBeVisible();
     const after = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, w: document.documentElement.scrollWidth,
       top: document.getElementById("map-heading")!.getBoundingClientRect().top + window.scrollY }));
-    expect(after).toEqual(before);
+    // Heights are fractional; a browser may round the document's height 1px either way when the dialog opens.
+    expect(Math.abs(after.h - before.h), "page height").toBeLessThanOrEqual(1);
+    expect(Math.abs(after.top - before.top), "map heading position").toBeLessThanOrEqual(1);
+    expect(after.w, "page width").toBe(before.w);
     await expectNoHorizontalScroll(page);
   });
 

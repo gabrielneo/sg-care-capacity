@@ -13,7 +13,7 @@ import type { Density } from "@/lib/homeViews";
 export function HomeNotice({ density = "full" }: { density?: Density }) {
   const full = density === "full";
   const notAdvice = (
-    <p className={`${full ? "mt-3 text-base text-ink" : "text-sm text-muted"} max-w-prose`} data-testid="not-advice">
+    <p className={`${full ? "mt-2 text-sm text-ink sm:mt-3 sm:text-base" : "text-sm text-muted"} max-w-prose`} data-testid="not-advice">
       This site shows public statistics. It isn&apos;t medical advice: if you&apos;re unsure where to go, ask a doctor or nurse.
     </p>
   );
@@ -21,24 +21,24 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
     return (
       <section aria-labelledby="home-title" className="pb-2" data-testid="home-hero" data-density={density}>
         <div role="note" aria-label="Emergency" className="rounded-xl bg-bad px-4 py-4 text-surface sm:px-6" data-testid="emergency-note">
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-bold leading-tight">
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-bold leading-tight sm:text-2xl">
             <span aria-hidden="true">✚</span>
             <span data-testid="triage-emergency">{TRIAGE_EMERGENCY}</span>
             <a href="tel:995" className="inline-flex min-h-11 items-center rounded-lg bg-surface px-4 text-lg font-bold text-bad no-underline hover:bg-bad-soft">
               Call 995
             </a>
           </p>
-          <p className="mt-2 max-w-prose text-lg" data-testid="triage-next">
+          <p className="mt-2 max-w-prose text-base sm:text-lg" data-testid="triage-next">
             {TRIAGE_NEXT}
             {TRIAGE_GUIDANCE_URL ? (
               <>{" "}<a href={TRIAGE_GUIDANCE_URL} className="font-semibold text-surface underline" data-testid="triage-link">{TRIAGE_GUIDANCE_LABEL}</a></>
             ) : null}
           </p>
         </div>
-        <h1 id="home-title" className="mt-6 max-w-3xl text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        <h1 id="home-title" className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight text-ink sm:mt-6 sm:text-4xl">
           Find a clinic near you
         </h1>
-        <p className="mt-3 max-w-prose text-lg text-ink" data-testid="site-purpose">
+        <p className="mt-2 max-w-prose text-base text-ink sm:mt-3 sm:text-lg" data-testid="site-purpose">
           Not an emergency? A <Term id="gp" /> or <Term id="polyclinic">polyclinic</Term> is often the right place to start.
           Getting care in the most suitable place is called <Term id="right_siting">right-siting</Term>.
         </p>

@@ -23,7 +23,8 @@ test.describe("Home", () => {
     expect(firstInHero).toBe("emergency-note");
     await expect(band.getByRole("button")).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Find a clinic near you");
-    await expect(page.getByLabel("Your postcode or area")).toBeInViewport();
+    // Wholly in view, with the machine's fonts: a half-visible box would pass `toBeInViewport()` and fail on CI's wider fonts.
+    await expect(page.getByLabel("Your postcode or area")).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId("nearby")).toHaveCount(0);                     // nothing until a search
     await expect(page.getByTestId("ed-item")).toHaveCount(0);                    // and no hospital is ranked before one
     await expect(page.getByTestId("status-card")).toHaveCount(0);

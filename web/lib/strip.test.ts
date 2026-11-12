@@ -21,23 +21,23 @@ const series = (code: string, usual: number, last: number) => [...starts.slice(0
 describe("buildStrip", () => {
   const weekly = [...series("SGH", 10, 14), ...series("CGH", 10, 10), ...series("NUH", 10, 11)];
 
-  it("counts hospitals above usual with the existing 15% rule, and says the week and clusters from the data", () => {
+  it("counts hospitals above usual with the existing 15% rule, and says the week from the data", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: null, now: NOW })!;
     expect(s).toMatchObject({ total: 3, above: 1, noComparison: 0, week: "19–25 Oct 2026" });
-    expect(s.clusters).toEqual([{ name: "NUHS", count: 1 }, { name: "SingHealth", count: 2 }]);
   });
 
   it("gives the bed-wait pill its own date and age, with no doctor pill when NUHS has no reading", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: nuhsMeta, now: NOW })!;
     expect(s.pills).toEqual([{ id: "bed", dataset: "Bed waits", source: "MOH", level: "amber", label: "Due an update",
-      detail: "weekly · 12 days old", asOf: "2026-10-31" }]);
+      detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" }]);
+    expect(s.bed).toEqual({ source: "MOH", asOf: "2026-10-31" });
   });
 
   it("labels the estimates with their own time, not the bed-wait date", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [{} as LiveReading], liveMeta: nuhsMeta, now: NOW })!;
     const doctor = s.pills.find((p) => p.id === "doctor")!;
     expect(doctor).toMatchObject({ dataset: "Doctor-wait estimates", source: "NUHS", level: "green", asOf: "2026-11-11T12:01:49" });
-    expect(doctor.detail).toBe("updated 11 Nov 2026, 12:01 pm SGT");
+    expect(doctor.detail).toBe("some hospitals only · updated 11 Nov 2026, 12:01 pm SGT");
     expect(doctor.detail).not.toContain("31 Oct");
   });
 

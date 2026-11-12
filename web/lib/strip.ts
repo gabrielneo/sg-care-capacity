@@ -25,7 +25,7 @@ export interface StripPill {
   level: Level;
   /** "Up to date", "Due an update", "Out of date", "Date unknown". */
   label: string;
-  /** "weekly · 11 days old", or "updated 11 Nov 2026, 12:01 pm SGT" for the estimates. */
+  /** "weekly · as of 31 Oct 2026 · 11 days old", or "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT" for the estimates. */
   detail: string;
   /** The source's own as_of, as the API gave it. */
   asOf: string;
@@ -40,9 +40,9 @@ export interface StripData {
   noComparison: number;
   /** "19–25 Oct 2026". */
   week: string | null;
-  /** dim_hospital.cluster values, A to Z, each with its hospital count. */
-  clusters: { name: string; count: number }[];
   pills: StripPill[];
+  /** The bed-wait source's name and as-of date, for the line under the count (null if the API gave none). */
+  bed: { source: string; asOf: string } | null;
 }
 
 interface Inputs {
@@ -58,9 +58,10 @@ function pillFor(id: StripPill["id"], dataset: string, meta: Meta | null, now: D
   const src = meta ? sourceDates(meta.sources)[0] : undefined;
   if (!src) return null;
   const f = freshness(src.asOf, src.cadence, now);
+  // The date is written out, not only the age: a visitor on a phone can't hover for it.
   const detail = id === "doctor"
-    ? `updated ${formatAsOf(src.asOf, { withTime: true })}`
-    : `${CADENCE_TEXT[src.cadence].replace(" data", "")} · ${f.age ?? "date unknown"}${f.age ? " old" : ""}`;
+    ? `some hospitals only · updated ${formatAsOf(src.asOf, { withTime: true })}`
+    : `${CADENCE_TEXT[src.cadence].replace(" data", "")} · as of ${formatAsOf(src.asOf)}${f.age ? ` · ${f.age} old` : ""}`;
   return { id, dataset, source: src.name, level: f.level, label: f.label, detail, asOf: src.asOf };
 }
 
@@ -70,18 +71,18 @@ export function buildStrip({ hospitals, weekly, weeklyMeta, live, liveMeta, now 
   const latest = latestCompleteWeek(weekly);
   const usual = usualLevels(weekly, codes, latest);
   const statuses = codes.map((c) => hospitalStatus(c, usual[c], weekly, latest));
-  const names = [...new Set(hospitals.map((h) => h.cluster))].sort((a, b) => a.localeCompare(b, "en"));
   const pills = [
     pillFor("bed", "Bed waits", weeklyMeta, now),
     // Only where NUHS publishes an estimate: no reading, no pill.
     live.length ? pillFor("doctor", "Doctor-wait estimates", liveMeta, now) : null,
   ].filter((p): p is StripPill => p != null);
+  const bedPill = pills.find((p) => p.id === "bed");
   return {
     total: statuses.length,
     above: aboveUsual(statuses).length,
     noComparison: levelCounts(statuses).unknown,
     week: latest ? formatWeek({ week_start: latest, week_end: addDays(latest, 6) }) : null,
-    clusters: names.map((name) => ({ name, count: hospitals.filter((h) => h.cluster === name).length })),
     pills,
+    bed: bedPill ? { source: bedPill.source, asOf: bedPill.asOf } : null,
   };
 }
