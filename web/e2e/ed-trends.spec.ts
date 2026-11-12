@@ -133,6 +133,26 @@ test.describe("ED Trends: difference-first charts", () => {
     await expect(page.getByText("Ignored unknown hospital code: XYZ.")).toBeVisible();
   });
 
+  test("callouts sit above the charts: each with strength, as-of, source and a link to Findings; never more than two", async ({ page }) => {
+    await page.goto("/ed-trends");
+    const callouts = page.getByTestId("callouts");
+    await expect(callouts.first()).toBeVisible();
+    for (const c of await page.getByTestId("callout").all()) {
+      await expect(c.getByTestId("callout-strength")).toContainText(/[○◔◑●] Strength: (weak|moderate|strong)/);
+      await expect(c.getByTestId("callout-provenance")).toContainText(/Data as of \d{1,2} [A-Z][a-z]{2} \d{4} \(MOH\)/);
+      await expect(c.getByRole("link", { name: "Read the finding" })).toHaveAttribute("href", /^\/findings#/);
+    }
+    for (const section of await callouts.all()) {
+      expect(await section.locator(":scope > ul > li").count()).toBeLessThanOrEqual(2);
+    }
+    const text = await page.locator('[data-testid=callouts]').allInnerTexts();
+    expect(text.join(" ")).not.toMatch(/due to|caused/i);
+    // The finding about visits and waits is an association, and says so.
+    await expect(page.getByTestId("callout").filter({ hasText: "move" }).first()).toContainText("does not show why waits move");
+    await expectNoHorizontalScroll(page);
+    await page.screenshot({ path: `test-results/callouts-${page.viewportSize()!.width}.png`, fullPage: true });
+  });
+
   for (const path of ["/ed-trends", "/ed-trends?mode=raw"]) {
     test(`passes axe WCAG 2.1 AA checks (${path})`, async ({ page }) => {
       await page.goto(path);

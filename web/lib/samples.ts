@@ -88,6 +88,7 @@ export const insightMeta: Meta = { ...edMeta, as_of: "2026-10-25", coverage: { i
 const PENDING = "Suggested action pending the author's review (docs/insight_actions.yml).";
 const base = {
   p_value: 0, p_adjusted: 0, who_acts: null, action: null, as_of: "2026-10-25", as_of_basis: "latest_data",
+  period_start: "2026-04-27", period_end: "2026-10-25", strength: "strong",
 } as const;
 
 /** The three headline findings of data release data-2026-11-08, as /api/v1/insights?headline=true returns them. */
@@ -139,7 +140,7 @@ export const storySample: StoryInsight[] = [
     detail: "Busier days come with longer bed waits, over 181 days after removing the usual weekday pattern. It is an association only.",
     metric_value: 0.3932, unit: "Spearman correlation", comparison_value: null, direction: "neutral", effect_size: 0.3932, n: 181,
     method: "Spearman correlation, visits on day t vs bed wait on day t+1, after removing each weekday's median",
-    caveats: ["The link is moderate (Spearman correlation 0.39).", "This is an association only.",
+    caveats: ["This is an association only; it does not show why waits move.", "The link is moderate (Spearman correlation 0.39).",
               "MOH's figures for this hospital cover adults only.", PENDING],
     evidence: { endpoint: "/api/v1/ed/daily?hospital=NUH&from=2026-04-27&to=2026-10-25", query: "SELECT ..." },
     display: { value_text: "0.39", unit_text: null, metric_label: "Correlation of ED visits with the bed wait the day after",

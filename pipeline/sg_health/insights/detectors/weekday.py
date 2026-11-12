@@ -64,7 +64,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
         _, p, eps2 = kruskal_epsilon2(groups)
         day, pct = _peak(rows["median_wait_hours"], rows["weekday"])
         out.candidates.append(_candidate(
-            code, "hospital", eps2, p, pct, day, len(rows), n_weeks, completeness, last, cfg, full_effect,
+            code, "hospital", eps2, p, pct, day, len(rows), n_weeks, completeness, first, last, cfg, full_effect,
             {"hospital": hospital_name(h)}, hospital_caveats(h), SQL.format(code=code, start=first, end=last),
             f"/api/v1/ed/daily?hospital={code}&from={first}&to={last}",
             _day_means(rows["median_wait_hours"], rows["weekday"]), float(rows["median_wait_hours"].mean()),
@@ -76,7 +76,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
         _, p, eps2 = kruskal_epsilon2(groups)
         day, pct = _peak(allrows["rel"], allrows["weekday"])
         out.candidates.append(_candidate(
-            "All hospitals", "pooled", eps2, p, pct, day, len(allrows), weeks, 1.0, last, cfg, full_effect,
+            "All hospitals", "pooled", eps2, p, pct, day, len(allrows), weeks, 1.0, first, last, cfg, full_effect,
             {"n_hospitals": len(pooled)}, ["Each hospital's waits are compared with its own weekly average before pooling."],
             "-- each hospital's daily values divided by its own mean, then pooled by weekday",
             f"/api/v1/ed/daily?from={first}&to={last}", _day_means(allrows["rel"], allrows["weekday"]), 1.0, {}))
@@ -89,7 +89,7 @@ def _day_means(values: pd.Series, weekday: pd.Series) -> list[float]:
     return [float(means[k]) for k in range(7)]
 
 
-def _candidate(entity, variant, eps2, p, pct, day, n, n_weeks, completeness, last, cfg, full_effect, values, caveats,
+def _candidate(entity, variant, eps2, p, pct, day, n, n_weeks, completeness, first, last, cfg, full_effect, values, caveats,
                query, endpoint, day_means, mean, action_values) -> Candidate:
     hospital = variant == "hospital"
     peak = day_means[day]
@@ -114,4 +114,5 @@ def _candidate(entity, variant, eps2, p, pct, day, n, n_weeks, completeness, las
         action_key=None, action_values={**action_values, "weekday": WEEKDAYS[day]},
         chart=chart("bar", axis, points, [keys[day]], reference=reference),
         display={"value_text": value_text, "unit_text": unit_text, "change": "up"},
+        period=(first, last),
     )

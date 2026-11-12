@@ -38,6 +38,7 @@ export const EMPTY_STORY = {
 const MEASURE: Record<Insight["type"], "bed_wait" | "clinics"> = {
   trend: "bed_wait",
   anomaly: "bed_wait",
+  usual_gap: "bed_wait",
   weekday: "bed_wait",
   volume_vs_wait: "bed_wait",
   source_gap: "bed_wait",

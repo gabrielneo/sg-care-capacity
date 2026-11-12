@@ -93,7 +93,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
                 values={"hospital": hospital_name(h), "strength": ADVERB[label], "lag_phrase": LAG_PHRASE[int(lag)],
                         "n": f"{len(pair):,d}", "window": f"{first}|lag{lag}", "strength_label": label,
                         "after_phrase": after, "diff": hours(abs(diff)), "longer_shorter": "longer" if diff >= 0 else "shorter"},
-                caveats=[f"The link is {label} (Spearman correlation {rho:.2f}).", "This is an association only.",
+                caveats=["This is an association only; it does not show why waits move.", f"The link is {label} (Spearman correlation {rho:.2f}).",
                          UNIT_CAVEAT, *hospital_caveats(h)],
                 evidence={"endpoint": f"/api/v1/ed/daily?hospital={code}&from={first}&to={last}",
                           "query": SQL.format(code=code, start=first, end=last)},
@@ -103,5 +103,6 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
                             ["q5"], x_label="Days in five equal groups by ED visits" + (" vs usual" if adjusted else ""),
                             reference=(0.0, "Usual for that weekday") if adjusted else None),
                 display={"value_text": f"{rho:.2f}", "unit_text": None, "change": None},
+                period=(first, last),
             ))
     return out

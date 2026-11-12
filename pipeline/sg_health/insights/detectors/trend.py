@@ -73,6 +73,7 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
                       "query": SQL.format(code=code, start=starts[0].isoformat())},
             action_key=direction, action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
             chart=chart("line", WEEKLY_AXIS, points, [last_seen], trend_line=(start, end)),
+            period=(starts[0], rows["week_start"].iloc[-1] + pd.Timedelta(days=6)),
             display={"value_text": value_text, "unit_text": f"{unit_text} a week", "change": "up" if slope > 0 else "down"},
         ))
     return out

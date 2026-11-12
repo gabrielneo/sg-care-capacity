@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 import { blockTiles, expectNoA11yViolations } from "./helpers";
 
 // Searches too: they add sections that repeat terms (the React #418 hydration error of 2026-11-09).
-const PAGES = ["/", "/?near=460001", "/?near=bedok", "/?view=planner", "/?view=analyst", "/findings", "/ed-trends", "/access-map", "/live", "/data-quality", "/methodology", "/case-study", "/summary"];
+const PAGES = ["/", "/#near=460001", "/#near=bedok", "/?view=planner", "/?view=analyst", "/findings", "/ed-trends", "/access-map", "/live", "/data-quality", "/methodology", "/case-study", "/summary"];
 
 const openapi = JSON.parse(readFileSync(path.resolve(__dirname, "../../api/openapi.json"), "utf8"));
 const COLUMNS: string[] = [...new Set(Object.values(openapi.components.schemas as Record<string, { properties?: object }>)
@@ -57,7 +57,7 @@ for (const route of PAGES) {
   });
 }
 
-const PUBLIC = ["/", "/?near=460001", "/?view=planner", "/?view=analyst", "/findings", "/ed-trends", "/access-map", "/access-map?view=table", "/live", "/data-quality", "/case-study"];
+const PUBLIC = ["/", "/#near=460001", "/?view=planner", "/?view=analyst", "/findings", "/ed-trends", "/access-map", "/access-map?view=table", "/live", "/data-quality", "/case-study"];
 for (const route of PUBLIC) {
   test(`no database column names in the visible text of ${route}`, async ({ page }) => {
     await page.goto(route);

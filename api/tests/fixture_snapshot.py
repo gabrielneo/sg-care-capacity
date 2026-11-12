@@ -73,7 +73,7 @@ DDL = {
         unit VARCHAR, comparison_value DOUBLE, direction VARCHAR, effect_size DOUBLE, p_value DOUBLE, p_adjusted DOUBLE,
         n INTEGER, method VARCHAR, caveats VARCHAR[], who_acts VARCHAR, action VARCHAR,
         evidence STRUCT(endpoint VARCHAR, query VARCHAR), as_of DATE, as_of_basis VARCHAR, rank_score DOUBLE,
-        headline_rank INTEGER""" + INSIGHT_EXTRA_DDL,
+        headline_rank INTEGER, period_start DATE, period_end DATE, strength VARCHAR""" + INSIGHT_EXTRA_DDL,
 }
 
 WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -124,7 +124,7 @@ INSIGHTS = [
      "Busier days come with longer bed waits, over 40 days after removing the usual weekday pattern. It is an association only.",
      0.42, "Spearman correlation", None, "neutral", 0.42, 0.001, 0.006, 40,
      "Spearman correlation, visits on day t vs bed wait on day t+1, after removing each weekday's median",
-     ["The link is moderate (Spearman correlation 0.42).", "This is an association only.",
+     ["This is an association only; it does not show why waits move.", "The link is moderate (Spearman correlation 0.42).",
       "MOH's figures for this hospital cover adults only."], None, None,
      {"endpoint": "/api/v1/ed/daily?hospital=NUH&from=2026-09-14&to=2026-10-25", "query": "SELECT 4"},
      date(2026, 10, 25), "latest_data", 0.4, 3,
@@ -153,6 +153,11 @@ INSIGHTS = [
      _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Singapore overall", 0.0328)],
             ["area"], "About 1 clinic short of the national rate", None)),
 ]
+# period_start, period_end and strength sit between headline_rank (column 22) and display (column 25).
+_PERIOD = {"weekday": (date(2026, 4, 27), date(2026, 10, 25), "moderate"), "anomaly": (date(2026, 10, 19), date(2026, 10, 25), "strong"),
+           "volume_vs_wait": (date(2026, 9, 14), date(2026, 10, 25), "moderate"),
+           "access_gap": (date(2024, 6, 6), date(2024, 6, 6), "weak")}
+INSIGHTS = [(*r[:22], *_PERIOD[r[1]], *r[22:]) for r in INSIGHTS]
 DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
     details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""
 
@@ -374,7 +379,7 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
                         [(*m, H) for m in METRICS])
         con.executemany("INSERT INTO main.dq_results VALUES (?,?,?,?,?,?,?,?,?,?)", DQ)
         if insights:
-            rows = INSIGHTS if insight_charts else [r[:22] for r in INSIGHTS]
+            rows = INSIGHTS if insight_charts else [r[:25] for r in INSIGHTS]
             con.executemany(f"INSERT INTO marts.fct_insight VALUES ({', '.join('?' * len(rows[0]))})", rows)
         (out / "parquet").mkdir(exist_ok=True)
         for mart in marts:

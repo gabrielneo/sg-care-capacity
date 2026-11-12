@@ -11,25 +11,15 @@ from . import ERRORS, get_ctx
 
 router = APIRouter(tags=["insights"], responses=ERRORS)
 
-InsightType = Literal["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
+InsightType = Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
 
-INSIGHTS_SQL = """
-    SELECT insight_id, type, entity, headline, detail, metric_value, unit, comparison_value, direction, effect_size,
-           p_value, p_adjusted, n, method, caveats, who_acts, action, evidence, as_of, as_of_basis, rank_score,
-           headline_rank, display, chart
-    FROM marts.fct_insight ORDER BY rank_score DESC, insight_id
-"""
-# Releases from before the engine wrote display and chart still serve their insights, with nulls.
-INSIGHTS_BEFORE_CHARTS_SQL = """
-    SELECT insight_id, type, entity, headline, detail, metric_value, unit, comparison_value, direction, effect_size,
-           p_value, p_adjusted, n, method, caveats, who_acts, action, evidence, as_of, as_of_basis, rank_score,
-           headline_rank, NULL AS display, NULL AS chart
-    FROM marts.fct_insight ORDER BY rank_score DESC, insight_id
-"""
+INSIGHTS_SQL = "SELECT * FROM marts.fct_insight ORDER BY rank_score DESC, insight_id"
+# Columns added over time. A release from before one of them still serves its insights, with nulls there.
+LATER_COLUMNS = ("period_start", "period_end", "strength", "display", "chart")
 HAS_TABLE_SQL = "SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
 COLUMNS_SQL = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
 SOURCES_BY_TYPE = {
-    "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
+    "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "usual_gap": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
     "access_gap": ("datagov_chas", "singstat_residents", "datagov_planning_areas"),
     "regional": ("moh_bed_waits", "datagov_chas", "singstat_residents"), "source_gap": ("nuhs_live", "moh_bed_waits"),
@@ -37,7 +27,7 @@ SOURCES_BY_TYPE = {
 # The warehouse tables each detector reads (the pipeline's insights.engine.INPUT_TABLES; a pipeline
 # test keeps the two equal). A finding's data-quality warnings are those on these tables only.
 TABLES_BY_TYPE = {
-    "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
+    "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "usual_gap": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
     "access_gap": ("chas_clinics", "pop_65plus_by_area", "planning_area_boundaries"),
     "regional": ("moh_bed_waits", "chas_clinics", "pop_65plus_by_area"),
@@ -57,10 +47,7 @@ def _all(ctx: Context) -> list[dict[str, Any]] | None:
             ctx.cache["insights"] = None
         else:
             cols = {r["column_name"] for r in ctx.snap.query(COLUMNS_SQL)}
-            if {"display", "chart"} <= cols:
-                ctx.cache["insights"] = ctx.snap.query(INSIGHTS_SQL)
-            else:
-                ctx.cache["insights"] = ctx.snap.query(INSIGHTS_BEFORE_CHARTS_SQL)
+            ctx.cache["insights"] = [{**{c: None for c in LATER_COLUMNS if c not in cols}, **r} for r in ctx.snap.query(INSIGHTS_SQL)]
     return ctx.cache["insights"]
 
 

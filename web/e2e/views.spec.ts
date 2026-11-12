@@ -16,7 +16,8 @@ const SECTIONS: Record<string, View[]> = {
   "home-hero": ["public", "planner", "analyst"],
   "clinic-finder": ["public"],
   "summary-strip": ["planner", "analyst"],
-  "status-grid": ["public", "planner", "analyst"],
+  "ed-near": ["public"],
+  "status-grid": ["planner", "analyst"],
   "map-section": ["public"],
   "takeaways": ["planner", "analyst"],
   "week-pattern": ["analyst"],
@@ -64,48 +65,107 @@ test.describe("Home views", () => {
       }
       // On every view: one page heading, the emergency line, "not medical advice", and a dated source on every block.
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-      await expect(page.getByTestId("emergency-note")).toHaveText(/call 995/);
+      await expect(page.getByTestId("emergency-note")).toHaveText(/call 995/i);
       await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
       const lines = page.getByTestId("home").getByTestId("provenance-line");
-      expect(await lines.count()).toBeGreaterThan(0);
+      // Public shows no figure until a search (then each block is dated: e2e/finder.spec.ts); the other views always do.
+      if (view !== "public") expect(await lines.count()).toBeGreaterThan(0);
       for (const line of await lines.all()) await expect(line).toHaveText(AS_OF);
-      // What MOH's figures cover stays on the cards, whatever the density.
-      await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-note")).toHaveText("Urgent care centre");
-      await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-live"))
-        .toContainText(/To see a doctor: .+hospital's own estimate/);
+      // What MOH's figures cover stays on the cards (Planner and Analyst); Public shows the nearest three after a search.
+      if (view !== "public") {
+        await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-note")).toHaveText("Urgent care centre");
+        await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-live"))
+          .toContainText(/To see a doctor: .+hospital's own estimate/);
+      }
     });
   }
 
-  test("public cards are simple; planner and analyst cards add the line and the change", async ({ page }) => {
+  test("public has no list of every hospital; planner and analyst have the full cards with the line and the change", async ({ page }) => {
     await page.goto("/");
+    await expect(page.getByTestId("status-grid")).toHaveCount(0);
+    await expect(page.getByTestId("status-card")).toHaveCount(0);
     const sgh = page.locator('[data-testid=status-card][data-hospital="SGH"]');
-    await expect(page.getByTestId("status-grid")).toHaveAttribute("data-density", "simple");
-    await expect(sgh.getByTestId("status-badge")).toHaveText("▲Higher than usual");
-    await expect(sgh.getByTestId("sparkline")).toHaveCount(0);
-    await expect(sgh.getByTestId("status-delta")).toHaveCount(0);
-
     for (const view of ["planner", "analyst"] as const) {
       await page.goto(`/?view=${view}`);
       await expect(page.getByTestId("status-grid")).toHaveAttribute("data-density", "full");
-      await expect(sgh.getByTestId("status-badge")).toHaveText("▲Higher than usual");     // the same badge, the same figure
+      await expect(sgh.getByTestId("status-badge")).toHaveText("▲Higher than usual");
       await expect(sgh.getByTestId("status-hours")).toHaveText("5.0 h");
-      await expect(sgh.getByTestId("status-delta")).toHaveText("+25% against usual");
+      await expect(sgh.getByTestId("status-delta")).toHaveText("▲ 25%+25% vs usual");
       await expect(sgh.getByTestId("sparkline")).toBeAttached();
       // No usual level: no percentage, never a 0%.
       await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-delta")).toHaveCount(0);
     }
   });
 
-  test("the summary strip counts the badges on the cards", async ({ page }) => {
+  test("the summary strip: four tiles from the cards' figures, each dated and sourced", async ({ page }) => {
     await page.goto("/?view=planner");
     const strip = page.getByTestId("summary-strip");
-    const counts = await strip.getByTestId("summary-count").evaluateAll((els) => els.map((e) =>
-      [e.getAttribute("data-level"), e.querySelector('[data-testid="summary-number"]')!.textContent]));
-    expect(counts).toEqual([["much_higher", "0"], ["higher", "1"], ["usual", "0"], ["lower", "0"], ["unknown", "2"]]);
-    for (const [level, n] of counts) {
-      await expect(page.locator(`[data-testid=status-card][data-level="${level}"]`)).toHaveCount(Number(n));
+    const tiles = strip.getByTestId("summary-tile");
+    expect(await tiles.evaluateAll((els) => els.map((e) => e.getAttribute("data-tile")))).toEqual(["above", "longest", "change", "middle"]);
+    for (const t of await tiles.all()) await expect(t.getByTestId("provenance-line")).toHaveText(AS_OF);
+    // Fixture: SGH +25% (higher); AH and NUH have no usual level.
+    const tile = (id: string) => strip.locator(`[data-tile="${id}"]`);
+    await expect(tile("above")).toContainText("1 of 3");
+    await expect(tile("above").getByTestId("above-unknown")).toHaveText("2 with no comparison.");
+    await expect(tile("change")).toContainText("+25% vs usual");
+    await expect(tile("change")).toContainText("Usual is the 8-week median.");
+    await expect(tile("change")).toContainText("Singapore General Hospital (SGH)");
+    await expect(tile("longest")).toContainText("The urgent care centre isn't ranked.");
+    await expect(tile("middle")).toContainText("Needs 3+ hospitals");   // 2 full EDs here: no middle value, said so
+  });
+
+  test("the list behind 'above usual' opens on keyboard focus and closes on Escape", async ({ page }) => {
+    await page.goto("/?view=planner");
+    const trigger = page.getByTestId("above-list").getByRole("button");
+    await trigger.focus();
+    const tip = page.getByTestId("above-list").getByRole("tooltip");
+    await expect(tip).toBeVisible();
+    await expect(tip).toContainText("Singapore General Hospital (SGH): +25% vs usual");
+    await page.keyboard.press("Escape");
+    await expect(tip).toBeHidden();
+  });
+
+  test("the cards' order is in the URL: against usual, hours, A–Z", async ({ page }) => {
+    const order = async () => page.getByTestId("status-card").evaluateAll((els) => els.map((e) => e.getAttribute("data-hospital")));
+    await page.goto("/?view=planner");
+    expect(await order()).toEqual(["SGH", "AH", "NUH"]);                                   // no usual level last, then by code
+    const nav = page.getByRole("navigation", { name: "Order of the hospitals" });
+    await nav.getByRole("link", { name: "A–Z" }).click();
+    await expect(page).toHaveURL(/\?view=planner&sort=name$/);
+    expect(await order()).toEqual(["AH", "NUH", "SGH"]);                                  // Alexandra, National, Singapore
+    await expect(nav.getByRole("link", { name: "A–Z" })).toHaveAttribute("aria-current", "true");
+    await nav.getByRole("link", { name: "Hours" }).click();
+    await expect(page).toHaveURL(/sort=hours$/);
+    expect((await order())[0]).toBe("SGH");                                                // the only hospital with a complete week
+    await page.goto("/?view=planner&sort=bogus");                                          // unknown order: the default
+    expect(await order()).toEqual(["SGH", "AH", "NUH"]);
+    await page.goto("/");                                                                  // Public has no order control
+    await expect(page.getByTestId("sort-links")).toHaveCount(0);
+  });
+
+  test("the whole card links to the hospital's trends", async ({ page }) => {
+    await page.goto("/?view=planner");
+    const card = page.locator('[data-testid=status-card][data-hospital="SGH"]');
+    const box = (await card.boundingBox())!;
+    await card.click({ position: { x: box.width - 8, y: box.height - 8 } });              // a corner, away from the title text
+    await expect(page).toHaveURL(/\/ed-trends\?hospital=SGH/);
+  });
+
+  test("planner at 1280×800: the summary strip and the first row of cards are above the fold", async ({ page }) => {
+    test.skip(narrow(page), "the fold is a desktop measure");
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/?view=planner");
+    for (const id of ["summary-strip", "status-card"]) {
+      const box = (await page.getByTestId(id).first().boundingBox())!;
+      expect(box.y + box.height, id).toBeLessThanOrEqual(800);
     }
-    await expect(strip.getByTestId("provenance-line")).toHaveText(AS_OF);
+    const strip = (await page.getByTestId("summary-strip").boundingBox())!;
+    for (const card of (await page.getByTestId("status-card").all()).slice(0, 4)) {
+      const box = (await card.boundingBox())!;
+      expect(box.y, "first row: top").toBeGreaterThanOrEqual(strip.y + strip.height - 1);
+      expect(box.y + box.height, "first row: bottom").toBeLessThanOrEqual(800);
+    }
+    await page.screenshot({ path: "test-results/planner-1280x800.png" });
   });
 
   test("analyst: the statistics are open, with links to Data Quality and Methodology", async ({ page }) => {
@@ -164,15 +224,19 @@ test.describe("Home views", () => {
     await expectView(page, "public");
   });
 
-  test("changing the view keeps the search", async ({ page }) => {
-    await page.goto("/?near=460001");
-    await expect(page.getByTestId("nearby")).toBeVisible();
+  test("the clinic search is never sent to the server, however the views are switched", async ({ page }) => {
+    const urls: string[] = [];
+    page.on("request", (r) => urls.push(r.url()));
+    await page.goto("/#near=460001");
+    await expect(page.getByTestId("nearby-place").first()).toBeVisible();
     await choose(page, "planner");
-    await expect(page).toHaveURL(/\/\?near=460001&view=planner$/);
+    await expect(page).toHaveURL(/\/\?view=planner$/);
     await expect(page.getByTestId("nearby")).toHaveCount(0);              // the planner view has no clinic finder
     await choose(page, "public");
-    await expect(page).toHaveURL(/\/\?near=460001$/);
-    await expect(page.getByTestId("nearby")).toBeVisible();
+    await expect(page.getByTestId("home")).toHaveAttribute("data-view", "public");
+    await expect(page.getByTestId("clinic-finder")).toBeVisible();
+    // Next may bring the address's fragment back with the page; the fragment stays in the browser.
+    expect(urls.filter((u) => u.includes("460001"))).toEqual([]);
   });
 
   test("keyboard: Tab reaches the group once, arrow keys move the choice, focus is visible", async ({ page }) => {

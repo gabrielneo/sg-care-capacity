@@ -771,6 +771,16 @@ export interface components {
              */
             p_value: number | null;
             /**
+             * Period End
+             * @description Last day of the data the finding uses. Null in releases from before it was written
+             */
+            period_end: string | null;
+            /**
+             * Period Start
+             * @description First day of the data the finding uses. Null in releases from before it was written
+             */
+            period_start: string | null;
+            /**
              * Rank Score
              * @description normalised effect x (1 - p_adjusted) x completeness x recency
              */
@@ -781,10 +791,15 @@ export interface components {
              */
             source_ids?: string[];
             /**
+             * Strength
+             * @description How strong the finding is, from its normalised effect. Null in releases from before it was written
+             */
+            strength: ("negligible" | "weak" | "moderate" | "strong") | null;
+            /**
              * Type
              * @enum {string}
              */
-            type: "trend" | "anomaly" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap";
+            type: "trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap";
             /** Unit */
             unit: string;
             /**
@@ -1624,7 +1639,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only this detector */
-                type?: ("trend" | "anomaly" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap") | null;
+                type?: ("trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap") | null;
                 /** @description Only this hospital code or planning area (case-insensitive) */
                 entity?: string | null;
                 /** @description The N highest rank_score */

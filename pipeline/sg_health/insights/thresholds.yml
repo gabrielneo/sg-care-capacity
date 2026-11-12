@@ -14,6 +14,7 @@ ranking:
     anomaly_z_full: 7.0       # |robust z| at which the effect counts as 1
     weekday_eps2_full: 0.14   # epsilon-squared of a "large" effect counts as 1
     source_gap_hours_full: 4.0
+    usual_gap_pct_full: 0.60  # 60% above the usual level counts as 1
 
 trend:
   weeks: 26                   # window: the last 26 ISO weeks up to the latest complete week
@@ -47,3 +48,13 @@ regional:
 
 source_gap:
   min_paired_days: 20
+
+usual_gap:
+  trailing_weeks: 8           # the usual level: median of the 8 complete weeks before the latest (as the site's badge)
+  min_pct_above: 0.30         # "much higher" line of the site's status badge; a plain comparison, no p-value
+
+strength:
+  # Label for how strong a finding is, from its normalised effect (0-1; the same cut-offs as the correlation labels).
+  negligible: 0.1
+  weak: 0.3
+  moderate: 0.5

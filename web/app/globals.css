@@ -43,6 +43,8 @@
     background: var(--color-page);
     color: var(--color-ink);
     -webkit-text-size-adjust: 100%;
+    /* The sticky site strip (40px) must never cover a focused or anchored element. */
+    scroll-padding-top: 3.5rem;
   }
   body {
     font-family: var(--font-sans);
@@ -124,9 +126,9 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 }
 .term-tip {
   display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 60;
-  width: max-content; max-width: min(18rem, calc(100vw - 2rem));
+  width: max-content; max-width: min(20rem, calc(100vw - 2rem));
   background: var(--color-ink); color: var(--color-surface); border-radius: 6px;
-  padding: 0.45rem 0.6rem; font-size: 0.8125rem; line-height: 1.45; font-weight: 400;
+  padding: 0.5rem 0.7rem; font-size: 1rem; line-height: 1.45; font-weight: 400;
   text-align: left; white-space: normal; letter-spacing: normal; text-transform: none;
   box-shadow: 0 4px 12px rgb(15 23 42 / 0.2);
 }
@@ -201,3 +203,38 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   .summary { max-width: none; font-size: 10pt; }
   .summary-block { break-inside: avoid; }
 }
+
+/* Hospital markers on the map are keyboard buttons (components/home/CareMapLeaflet.tsx): a ring that shows on a map. */
+.leaflet-interactive:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* The hospital details drawer (components/home/HospitalDrawer.tsx): a fixed overlay, so opening it moves nothing.
+   A panel at the right from 640px, a sheet from the bottom below. The slide is off for prefers-reduced-motion. */
+.care-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  height: 100dvh;
+  max-height: none;
+  width: min(26rem, 100vw);
+}
+.care-drawer:not([open]) { display: none; }
+.care-drawer::backdrop { background: rgb(0 0 0 / 0.4); }
+@media (max-width: 639.98px) {
+  .care-drawer {
+    inset: auto 0 0 0;
+    height: auto;
+    max-height: 85dvh;
+    width: 100%;
+    border-radius: 1rem 1rem 0 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .care-drawer[open] { animation: care-drawer-in 180ms ease-out; }
+  @media (max-width: 639.98px) {
+    .care-drawer[open] { animation-name: care-sheet-in; }
+  }
+}
+@keyframes care-drawer-in { from { transform: translateX(2rem); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes care-sheet-in { from { transform: translateY(2rem); opacity: 0; } to { transform: none; opacity: 1; } }

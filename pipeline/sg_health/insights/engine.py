@@ -24,7 +24,7 @@ import pandas as pd
 from .. import config
 from ..warehouse import Warehouse
 from . import actions, ranking, wording
-from .detectors import access_gap, anomaly, regional, source_gap, trend, volume_vs_wait, weekday
+from .detectors import access_gap, anomaly, regional, source_gap, trend, usual_gap, volume_vs_wait, weekday
 from .model import Candidate, Skip, thresholds, thresholds_sha256
 from .stats import benjamini_hochberg
 
@@ -32,7 +32,7 @@ ENGINE_VERSION = 1
 
 # Raw tables behind each detector's marts: a blocking check on any of them skips the detector.
 INPUT_TABLES = {
-    "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
+    "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "usual_gap": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
     "access_gap": ("chas_clinics", "pop_65plus_by_area", "planning_area_boundaries"),
     "regional": ("moh_bed_waits", "chas_clinics", "pop_65plus_by_area"),
@@ -47,7 +47,7 @@ FCT_INSIGHT_DDL = """CREATE OR REPLACE TABLE marts.fct_insight (
     unit VARCHAR, comparison_value DOUBLE, direction VARCHAR, effect_size DOUBLE, p_value DOUBLE, p_adjusted DOUBLE,
     n INTEGER, method VARCHAR, caveats VARCHAR[], who_acts VARCHAR, action VARCHAR,
     evidence STRUCT(endpoint VARCHAR, query VARCHAR), as_of DATE, as_of_basis VARCHAR, rank_score DOUBLE,
-    headline_rank INTEGER,
+    headline_rank INTEGER, period_start DATE, period_end DATE, strength VARCHAR,
     display STRUCT(value_text VARCHAR, unit_text VARCHAR, metric_label VARCHAR, comparison_label VARCHAR, change VARCHAR,
                    change_word VARCHAR),
     chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
@@ -55,7 +55,7 @@ FCT_INSIGHT_DDL = """CREATE OR REPLACE TABLE marts.fct_insight (
                  trend_line STRUCT(first DOUBLE, last DOUBLE)))"""
 COLUMNS = ["insight_id", "type", "entity", "headline", "detail", "metric_value", "unit", "comparison_value", "direction",
            "effect_size", "p_value", "p_adjusted", "n", "method", "caveats", "who_acts", "action", "evidence", "as_of",
-           "as_of_basis", "rank_score", "headline_rank", "display", "chart"]
+           "as_of_basis", "rank_score", "headline_rank", "period_start", "period_end", "strength", "display", "chart"]
 
 
 @dataclass
@@ -146,6 +146,7 @@ def run(inputs: dict[str, pd.DataFrame], failed: pd.DataFrame, today: date,
     runners = {
         "trend": lambda: trend.detect(w, h, cfg["trend"], min_c),
         "anomaly": lambda: anomaly.detect(w, h, cfg["anomaly"], min_c, float(norm["anomaly_z_full"])),
+        "usual_gap": lambda: usual_gap.detect(w, h, cfg["usual_gap"], min_c, float(norm["usual_gap_pct_full"])),
         "weekday": lambda: weekday.detect(d, w, h, cfg["weekday"], min_c, float(norm["weekday_eps2_full"])),
         "volume_vs_wait": lambda: volume_vs_wait.detect(d, w, h, cfg["volume_vs_wait"], min_c),
         "access_gap": lambda: access_gap.detect(inputs["areas"], cfg["access_gap"], min_c),
@@ -213,6 +214,7 @@ def run(inputs: dict[str, pd.DataFrame], failed: pd.DataFrame, today: date,
     for r in rows:
         r["headline_rank"] = ranks.get(r["insight_id"])
     rows.sort(key=ranking.order)
+    check_rows(rows)
     return InsightRun(today=today, insights=rows, candidates=candidates, skips=skips, extra=extra, tests=len(tested))
 
 
@@ -251,6 +253,7 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
                  chart["reference"]["label"] if chart["reference"] else None]
         for text in (t for t in texts if t):
             wording.check(text, kind="label", forbidden=forbidden)
+    period_start, period_end = c.period or (c.as_of, c.as_of)
     recency = ranking.recency_weight(c.source, (dates or {}).get(c.source, c.as_of), today)
     return {
         "insight_id": c.insight_id, "type": c.type, "entity": c.entity, "headline": headline, "detail": detail,
@@ -260,8 +263,33 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
         "action": act, "evidence": c.evidence, "as_of": c.as_of,
         "as_of_basis": "source_updated" if c.source == "datagov_chas" else "latest_data",
         "rank_score": ranking.rank_score(c.effect_norm, c.p_adjusted, c.completeness, recency), "headline_rank": None,
+        "period_start": period_start, "period_end": period_end, "strength": strength_label(c.effect_norm),
         "display": display, "chart": chart,
     }
+
+
+STRENGTHS = ("negligible", "weak", "moderate", "strong")
+
+
+def check_rows(rows: list[dict[str, Any]]) -> None:
+    """Data check on what is about to be published: every finding has a period that ends on or after it starts, a
+    strength label, and a period that does not run past its as_of date. A failure stops the build."""
+    for r in rows:
+        problems = []
+        if r["period_start"] is None or r["period_end"] is None or r["period_end"] < r["period_start"]:
+            problems.append(f"bad period {r['period_start']} to {r['period_end']}")
+        elif r["period_end"] > r["as_of"]:
+            problems.append(f"period ends {r['period_end']}, after as_of {r['as_of']}")
+        if r["strength"] not in STRENGTHS:
+            problems.append(f"strength {r['strength']!r}")
+        if problems:
+            raise ValueError(f"{r['type']} {r['entity']}: {'; '.join(problems)}")
+
+
+def strength_label(effect_norm: float) -> str:
+    """negligible / weak / moderate / strong, from the normalised effect (0-1; cut-offs in thresholds.yml)."""
+    cut = thresholds()["strength"]
+    return next((k for k in ("negligible", "weak", "moderate") if effect_norm < float(cut[k])), "strong")
 
 
 def _round(v: float | None, digits: int = 4) -> float | None:

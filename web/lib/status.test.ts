@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { EdWeek } from "./api/types";
 import { usualLevels } from "./edCompare";
-import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkPath, sparkWeeks } from "./status";
+import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkDomain, sparkPath, sparkWeeks, sparkY, usualBand } from "./status";
 
 const week = (code: string, start: string, v: number | null, complete = true): EdWeek => ({
   hospital_code: code, hospital_name: code, iso_year: 2026, iso_week: 0, week_start: start, week_end: start,
@@ -75,6 +75,26 @@ describe("sparkPath", () => {
 
   it("draws nothing without values", () => {
     expect(sparkPath([null, null], 100, 20)).toBe("");
+  });
+
+  it("shares its scale with the usual band, so the line and the band line up", () => {
+    const values = [4, null, 5];
+    const band = usualBand(4)!;
+    expect(band[0]).toBeCloseTo(3.4);
+    expect(band[1]).toBeCloseTo(4.6);
+    const domain = sparkDomain(values, band)!;
+    expect(domain[0]).toBeCloseTo(3.4);                  // widened down to the band; the top is the line's own 5
+    expect(domain[1]).toBe(5);
+    // Two sub-paths (the missing week is a gap); the 4 sits below the top because the band widened the scale.
+    expect(sparkPath(values, 100, 20, 2, domain)).toBe(`M2.0 ${sparkY(4, domain, 20, 2).toFixed(1)}M98.0 2.0`);
+    expect(sparkY(band[1], domain, 20, 2)).toBeLessThan(sparkY(4, domain, 20, 2));    // the band's top is above the usual level
+    expect(sparkY(band[0], domain, 20, 2)).toBe(18);
+  });
+
+  it("has no band without a usual level, and no scale without values", () => {
+    expect(usualBand(null)).toBeNull();
+    expect(usualBand(undefined)).toBeNull();
+    expect(sparkDomain([null], [1, 2])).toBeNull();
   });
 });
 

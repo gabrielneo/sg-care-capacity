@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { CaveatChip } from "@/components/CaveatChip";
 import { ChartCard } from "@/components/ChartCard";
+import { Callouts } from "@/components/edcharts/Callouts";
 import { Dumbbell } from "@/components/edcharts/Dumbbell";
 import { ModeToggle } from "@/components/edcharts/ModeToggle";
 import { type Panel, SmallMultiples } from "@/components/edcharts/SmallMultiples";
@@ -14,7 +15,7 @@ import { EmptyState, ErrorState } from "@/components/States";
 import { Glossed } from "@/components/terms/Glossed";
 import { Term } from "@/components/terms/Term";
 import { api, settle } from "@/lib/api/client";
-import type { Meta } from "@/lib/api/types";
+import type { Insight, Meta } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, BED_WAIT_LABEL, CAVEAT, dayText, plainError } from "@/lib/copy";
 import {
   band,
@@ -106,6 +107,9 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const usuals = usualLevels(weekly, codes, latest);
   const latestText = latest ? formatWeek({ week_start: latest, week_end: profileWindow(latest).to }) : "the latest complete week";
   const findings = insightsRes.ok ? insightsRes.value.data : [];
+  // Short findings above each chart (at most two each, strongest first); the engine writes every word of them.
+  const callouts = (types: Insight["type"][], label: string) => insightsRes.ok
+    ? <Callouts insights={findings} types={types} codes={chosen.map((h) => h.hospital_code)} meta={insightsRes.value.meta} label={label} /> : null;
 
   // 1. Small multiples over the chosen range.
   const days = eachDay(from, to);
@@ -153,6 +157,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
                      <span className="mt-1 block text-ink" data-testid="bed-wait-explainer"><Glossed text={BED_WAIT_EXPLAINER} /></span>
                      <span className="mt-1 block"><Glossed text="The shaded band is the middle half of the 8 full EDs each day, with their median dashed. Alexandra Hospital's UCC is left out of the band. A break in a line is a day MOH didn't publish." /></span>
                    </>}>
+          {callouts(["trend", "volume_vs_wait"], "daily bed waits")}
           <SmallMultiples panels={panels} bandPoints={bandPoints} mode={mode} finding={findingFor(findings, "trend")} />
           <p className="mt-2 text-xs text-muted" data-testid="gap-summary">
             {gapText ? <Glossed text={`Days with no figure in this range: ${gapText}.`} /> : "Every day in this range has a figure for each hospital shown."}
@@ -163,6 +168,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
           <ChartCard title="The latest week against the usual level" slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      download="/export/ed-weekly.csv?weeks=10"
                      description={<Glossed text={`${latestText} for each hospital, against its usual level. ${usualDef} Largest difference first.`} />}>
+            {callouts(["usual_gap", "anomaly"], "latest week against usual")}
             <Dumbbell usuals={usuals} hospitals={chosen} mode={mode} finding={findingFor(findings, "anomaly")} />
           </ChartCard>
         ) : <ErrorState title="The weekly figures can't be shown" error={plainError(weeklyRes.error)} />}
@@ -171,6 +177,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
           <ChartCard title="Bed wait by day of the week" slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      download={csv("/export/ed-daily.csv", { from: window.from, to: window.to })}
                      description={<Glossed text={`${mode === "usual" ? "Each weekday against the hospital's own average" : "The average bed wait on each weekday"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)} (up to 26).`} />}>
+            {callouts(["weekday"], "day of the week")}
             <WeekdayHeatmap profiles={profiles} hospitals={chosen} mode={mode} finding={findingFor(findings, "weekday")} />
           </ChartCard>
         ) : null}
@@ -178,6 +185,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         {slopeMeta ? (
           <ChartCard title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} cadence="weekly" bySource
                      description={<Glossed text="For each NUHS site: MOH's latest daily median beside NUHS's latest estimate of the bed wait. This chart shows values only; the comparison toggle doesn't apply." />}>
+            {callouts(["source_gap"], "NUHS estimate and MOH figure")}
             <SlopeChart pairs={pairs} finding={findingFor(findings, "source_gap")} />
           </ChartCard>
         ) : null}

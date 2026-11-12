@@ -32,7 +32,7 @@ export function CareMap(props: CareMapProps) {
 
   return (
     <div>
-      <div ref={box} role="region" aria-label="Map of hospital emergency departments and polyclinics. The same places are listed on this page."
+      <div ref={box} role="region" aria-label="Map of hospital emergency departments and polyclinics. The same hospitals are in the list view."
            className="h-[380px] w-full overflow-hidden rounded-xl border border-line bg-page sm:h-[460px]" data-testid="care-map">
         {show ? <CareMapLeaflet {...props} /> : null}
       </div>

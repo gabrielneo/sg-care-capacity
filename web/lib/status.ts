@@ -29,14 +29,16 @@ export interface LevelInfo {
   icon: string;
   tone: "bad" | "warn" | "ok" | "none";
   sentence: string;
+  /** The public view's words for the badge: what a resident reads, on the same scale as `label`. */
+  plain: string;
 }
 
 export const LEVELS: Record<Level, LevelInfo> = {
-  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "bad", sentence: "Bed waits were much longer than usual last week." },
-  higher: { label: "Higher than usual", icon: "▲", tone: "warn", sentence: "Bed waits were longer than usual last week." },
-  usual: { label: "About usual", icon: "●", tone: "ok", sentence: "Bed waits were about usual last week." },
-  lower: { label: "Lower than usual", icon: "▼", tone: "ok", sentence: "Bed waits were shorter than usual last week." },
-  unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual." },
+  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "bad", sentence: "Bed waits were much longer than usual last week.", plain: "Much busier than usual for this hospital" },
+  higher: { label: "Higher than usual", icon: "▲", tone: "warn", sentence: "Bed waits were longer than usual last week.", plain: "Busier than usual for this hospital" },
+  usual: { label: "About usual", icon: "●", tone: "ok", sentence: "Bed waits were about usual last week.", plain: "About as busy as usual for this hospital" },
+  lower: { label: "Lower than usual", icon: "▼", tone: "ok", sentence: "Bed waits were shorter than usual last week.", plain: "Less busy than usual for this hospital" },
+  unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual.", plain: "No comparison with usual available" },
 };
 
 export function levelFor(pct: number | null | undefined): Level {
@@ -96,18 +98,28 @@ export function levelCounts(statuses: HospitalStatus[]): Record<Level, number> {
   return counts;
 }
 
+/** The value range a sparkline is drawn over: its known values, widened to hold `extra` (the usual band). Null without values. */
+export function sparkDomain(values: (number | null)[], extra: number[] = []): [number, number] | null {
+  const known = values.filter((v): v is number => v != null);
+  if (!known.length) return null;
+  const all = [...known, ...extra.filter((v) => Number.isFinite(v))];
+  return [Math.min(...all), Math.max(...all)];
+}
+
+/** A value's y in a sparkline of this height (higher value = higher on screen). A flat range sits on the bottom edge. */
+export function sparkY(v: number, [lo, hi]: [number, number], height: number, pad = 2): number {
+  return height - pad - ((v - lo) / (hi - lo || 1)) * (height - 2 * pad);
+}
+
 /**
  * A sparkline as SVG path data: one sub-path per run of known values, so a missing week is a gap,
- * never a line drawn through it. y is flipped (higher value = higher on screen).
+ * never a line drawn through it. y is flipped (higher value = higher on screen). `domain` is the
+ * value range to draw over, when something else (the usual band) shares the scale.
  */
-export function sparkPath(values: (number | null)[], width: number, height: number, pad = 2): string {
-  const known = values.filter((v): v is number => v != null);
-  if (!known.length || values.length < 2) return "";
-  const lo = Math.min(...known);
-  const hi = Math.max(...known);
-  const span = hi - lo || 1;
+export function sparkPath(values: (number | null)[], width: number, height: number, pad = 2,
+                          domain: [number, number] | null = sparkDomain(values)): string {
+  if (!domain || values.length < 2) return "";
   const x = (i: number) => pad + (i * (width - 2 * pad)) / (values.length - 1);
-  const y = (v: number) => height - pad - ((v - lo) / span) * (height - 2 * pad);
   let d = "";
   let open = false;
   values.forEach((v, i) => {
@@ -115,8 +127,17 @@ export function sparkPath(values: (number | null)[], width: number, height: numb
       open = false;
       return;
     }
-    d += `${open ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`;
+    d += `${open ? "L" : "M"}${x(i).toFixed(1)} ${sparkY(v, domain, height, pad).toFixed(1)}`;
     open = true;
   });
   return d;
+}
+
+/**
+ * The "about usual" zone around a usual level: from HIGHER_PCT below it to HIGHER_PCT above it.
+ * A week above the band is a week the badge would call higher than usual; no usual level, no band.
+ */
+export function usualBand(usual: number | null | undefined): [number, number] | null {
+  if (usual == null || !Number.isFinite(usual)) return null;
+  return [usual * (1 - HIGHER_PCT / 100), usual * (1 + HIGHER_PCT / 100)];
 }

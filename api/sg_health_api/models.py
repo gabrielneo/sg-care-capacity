@@ -411,7 +411,7 @@ class InsightChart(BaseModel):
 
 class Insight(BaseModel):
     insight_id: str
-    type: Literal["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
+    type: Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
     source_ids: list[str] = Field(default_factory=list, description=(
         "The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED "
         "finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries"))
@@ -437,6 +437,10 @@ class Insight(BaseModel):
     as_of_basis: str
     rank_score: float = Field(description="normalised effect x (1 - p_adjusted) x completeness x recency")
     headline_rank: int | None = Field(description="1-3 for the headline findings (at most one per detector)")
+    period_start: date | None = Field(description="First day of the data the finding uses. Null in releases from before it was written")
+    period_end: date | None = Field(description="Last day of the data the finding uses. Null in releases from before it was written")
+    strength: Literal["negligible", "weak", "moderate", "strong"] | None = Field(description=(
+        "How strong the finding is, from its normalised effect. Null in releases from before it was written"))
     display: InsightDisplay | None = Field(description="Null in data releases from before the engine wrote it")
     chart: InsightChart | None = Field(description="Null in data releases from before the engine wrote it")
 

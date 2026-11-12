@@ -64,3 +64,14 @@ export function dayText(iso: string): string {
   return new Intl.DateTimeFormat("en-SG", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" })
     .format(new Date(`${iso}T00:00:00Z`));
 }
+
+// The triage band (docs/adr/0011-public-view.md). The line is deliberately short: the site gives no
+// medical advice beyond "call 995" and a pointer to the official page.
+export const TRIAGE_EMERGENCY = "Life-threatening emergency? Call 995.";
+export const TRIAGE_NEXT = "Not life-threatening? A GP clinic or polyclinic can often help instead of an emergency department.";
+/**
+ * The official MOH or HealthHub page on when to go to an emergency department and when to see a GP
+ * or polyclinic. TODO(me): confirm the URL. Until it is set, the band shows no link: no address is guessed.
+ */
+export const TRIAGE_GUIDANCE_URL: string | null = null;
+export const TRIAGE_GUIDANCE_LABEL = "Where to go: official guidance";

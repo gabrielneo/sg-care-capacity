@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sg_health.insights import actions, engine, stats, wording
-from sg_health.insights.detectors import access_gap, anomaly, weekday
+from sg_health.insights.detectors import access_gap, anomaly, usual_gap, weekday
 from sg_health.insights.model import thresholds
 
 LATEST = date(2026, 10, 19)             # a Monday: the latest complete ISO week
@@ -353,7 +353,7 @@ def test_fct_insight_columns_are_in_the_data_dictionary():
     assert documented == set(engine.COLUMNS)
 
 
-@pytest.mark.parametrize("detector", ["trend", "anomaly", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"])
+@pytest.mark.parametrize("detector", ["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"])
 def test_every_detector_is_documented(detector):
     import re
 
@@ -512,3 +512,94 @@ def test_the_api_reads_the_same_tables_per_detector_as_the_engine():
     tree = ast.parse((config.REPO_ROOT / "api" / "sg_health_api" / "routes" / "insights.py").read_text())
     node = next(n for n in tree.body if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "TABLES_BY_TYPE")
     assert ast.literal_eval(node.value) == engine.INPUT_TABLES
+
+
+# --------------------------------------------------------------------------- #
+# callouts: usual_gap, period, strength, and the weeks with nothing to say
+# --------------------------------------------------------------------------- #
+
+USUAL = [4.0, 4.2, 3.9, 4.1, 4.0, 4.3, 3.8, 4.1]          # median 4.05
+
+
+def test_a_week_30_percent_above_usual_is_a_finding():
+    [c] = usual_gap.detect(weekly({"SGH": [*USUAL, 5.4]}), hospitals("SGH"), thresholds()["usual_gap"], MIN_C, 0.6).candidates
+    assert c.passes_effect and c.p_value is None and c.comparison_value == pytest.approx(4.05)
+    assert c.values["pct"] == "33%" and c.values["usual"] == "4.0 hours"
+    assert c.period == (LATEST, LATEST + timedelta(days=6))
+
+
+def test_a_week_just_under_the_30_percent_line_is_not_published():
+    result = engine.run(inputs(weekly({"SGH": [*USUAL, 5.2]})), NO_FAILS, TODAY)     # +28%
+    assert published(result, "usual_gap") == []
+
+
+def test_a_quiet_week_has_no_findings_and_no_callouts():
+    result = engine.run(inputs(weekly({"SGH": [*USUAL, 4.1]})), NO_FAILS, TODAY)
+    assert result.insights == []                                       # missing evidence means no sentence
+
+
+def test_usual_gap_needs_all_eight_weeks_before():
+    out = usual_gap.detect(weekly({"SGH": [4.0] * 5 + [9.0]}), hospitals("SGH"), thresholds()["usual_gap"], MIN_C, 0.6)
+    assert out.candidates == [] and "needs the latest week and all 8 weeks" in out.skips[0].reason
+
+
+def test_usual_gap_wording_matches_the_plan():
+    result = engine.run(inputs(weekly({"SGH": [*USUAL, 6.075]})), NO_FAILS, TODAY)    # +50%
+    [r] = published(result, "usual_gap")
+    assert r["headline"] == ("Singapore General Hospital: bed wait 6.1 hours, 50% above its usual 4.0 hours "
+                             "(week of 19–25 Oct 2026).")
+    assert r["chart"]["callout"] == "19–25 Oct 2026: 50% above usual" and r["display"]["change_word"] == "higher than usual"
+    assert r["strength"] == "strong" and r["p_value"] is None
+
+
+def test_every_published_insight_has_a_period_and_a_strength():
+    result, _ = busy_run()
+    for r in result.insights:
+        assert r["strength"] in ("negligible", "weak", "moderate", "strong")
+        assert r["period_start"] <= r["period_end"], r["type"]
+    by_type = {r["type"]: r for r in result.insights}
+    assert (by_type["trend"]["period_start"], by_type["trend"]["period_end"]) == (date(2026, 4, 27), date(2026, 10, 25))
+    assert by_type["access_gap"]["period_start"] == by_type["access_gap"]["period_end"] == by_type["access_gap"]["as_of"]
+
+
+@pytest.mark.parametrize("norm, label", [(0.05, "negligible"), (0.2, "weak"), (0.4, "moderate"), (0.9, "strong")])
+def test_strength_labels(norm, label):
+    assert engine.strength_label(norm) == label
+
+
+@pytest.mark.parametrize("bad", ["Waits are long due to flu.", "Waits were caused by flu.", "Due to flu, waits rose."])
+def test_due_to_and_caused_are_banned(bad):
+    with pytest.raises(wording.WordingError, match="causal"):
+        wording.check(bad, kind="label")
+
+
+def test_association_findings_say_they_do_not_show_why():
+    result, _ = busy_run()
+    for r in published(result, "volume_vs_wait"):
+        assert "association" in r["detail"] and r["caveats"][0] == "This is an association only; it does not show why waits move."
+
+
+def test_no_callout_or_label_says_due_to_or_caused():
+    result, _ = busy_run()
+    for r in result.insights:
+        for text in (r["headline"], r["detail"], r["chart"]["callout"], *r["caveats"]):
+            assert "due to" not in text.lower() and "caused" not in text.lower(), text
+
+
+def test_period_and_strength_columns_are_written_to_the_mart(tmp_path):
+    from sg_health.warehouse import Warehouse
+    result, _ = busy_run()
+    wh = Warehouse(tmp_path / "w.duckdb")
+    engine.write_mart(wh, result)
+    n_bad = wh.con.execute("SELECT count(*) FROM marts.fct_insight WHERE period_start IS NULL OR period_end IS NULL "
+                           "OR period_end < period_start OR strength NOT IN ('negligible','weak','moderate','strong')").fetchone()[0]
+    assert n_bad == 0
+
+
+@pytest.mark.parametrize("change", [{"period_end": date(2020, 1, 1)}, {"strength": "huge"}, {"period_start": None},
+                                    {"period_end": date(2030, 1, 1)}])
+def test_a_finding_with_a_bad_period_or_strength_stops_the_build(change):
+    result, _ = busy_run()
+    row = {**result.insights[0], **change}
+    with pytest.raises(ValueError):
+        engine.check_rows([row])

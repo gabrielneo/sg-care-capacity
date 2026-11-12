@@ -44,7 +44,7 @@ export interface Nearby<P extends Place> {
   km: number;
 }
 
-export const NEAREST = { polyclinics: 3, gps: 5, hospitals: 2 } as const;
+export const NEAREST = { polyclinics: 3, gps: 5, hospitals: 3 } as const;
 
 const mean = (xs: number[]) => xs.reduce((s, v) => s + v, 0) / xs.length;
 const centre = (ps: Place[]) => ({ latitude: mean(ps.map((p) => p.latitude)), longitude: mean(ps.map((p) => p.longitude)) });

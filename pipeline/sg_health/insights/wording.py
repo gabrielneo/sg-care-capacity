@@ -15,7 +15,7 @@ MAX_LABEL_WORDS = 12          # the labels around the key number, chart labels a
 DISPLAY_FIELDS = ("metric_label", "comparison_label", "change_word", "callout")   # templates.yml keys
 REQUIRED_DISPLAY = ("metric_label", "callout")
 # Rule 5 (docs/language_rules.md): never causal words. Word forms included.
-CAUSAL = re.compile(r"\b(caus(e|es|ed|ing)|driv(e|es|en|ing)|drove|lead(s|ing)? to|led to|because)\b", re.I)
+CAUSAL = re.compile(r"\b(caus(e|es|ed|ing)|due to|driv(e|es|en|ing)|drove|lead(s|ing)? to|led to|because)\b", re.I)
 
 
 class WordingError(ValueError):

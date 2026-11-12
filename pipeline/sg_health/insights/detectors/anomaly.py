@@ -66,6 +66,7 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
                       "query": SQL.format(code=code, start=trailing[0].isoformat(), end=latest.isoformat())},
             action_key=direction, action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
             chart=chart("line", WEEKLY_AXIS, points, [latest.isoformat()], reference=(med, "Usual level")),
+            period=(latest, latest + timedelta(days=6)),
             display={"value_text": value_text, "unit_text": unit_text, "change": "up" if x > med else "down"},
         ))
     return out

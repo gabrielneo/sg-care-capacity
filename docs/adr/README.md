@@ -16,6 +16,7 @@ decision that is reversed gets a new record, and the old one is marked *Supersed
 | [0008](0008-glossary-first-use-on-the-server.md) | Decide a glossary term's first use on the server | Accepted | 2026-11-10 |
 | [0009](0009-run-pages-next-to-the-api.md) | Run the website next to the API, and keep the free API awake | Accepted | 2026-11-11 |
 | [0010](0010-home-page-views.md) | One home page with three views, chosen in the URL | Accepted | 2026-11-11 |
+| [0011](0011-public-view.md) | The public view leads with a triage band and a client-side clinic finder; EDs are context | Accepted | 2026-11-12 |
 
 Each record has the same sections: **Status**, **Context**, **Decision**, **Alternatives considered**,
 **Consequences**, and **How it is enforced** (the tests or checks that would fail if the decision

@@ -3,12 +3,11 @@ import { parseView } from "@/lib/homeViews";
 
 /**
  * The header's view control, for the home page. A layout can't read the query string, but a slot's
- * page can: this one reads ?view= and ?near= on the server, so the control is in the first HTML with
+ * page can: this one reads ?view= on the server, so the control is in the first HTML with
  * the right view chosen, and works as a plain form without JavaScript. Only "/" matches this page;
  * on a full load of any other address the slot renders default.tsx, which is nothing.
  */
 export default async function ViewBar({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
-  const near = (Array.isArray(params.near) ? params.near[0] : params.near)?.slice(0, 60) ?? "";
-  return <ViewSwitch view={parseView(params.view)} near={near} />;
+  return <ViewSwitch view={parseView(params.view)} />;
 }

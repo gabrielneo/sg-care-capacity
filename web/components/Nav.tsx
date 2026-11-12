@@ -10,7 +10,7 @@ export function Nav() {
   const pathname = usePathname() ?? "/";
   return (
     <nav aria-label="Main" className="-mx-4 overflow-x-auto px-4">
-      <ul className="flex min-w-max gap-1 py-2">
+      <ul className="flex min-w-max gap-1 py-1">
         {NAV_ITEMS.map((item) => {
           const current = isCurrent(pathname, item.href);
           return (

@@ -23,9 +23,9 @@ describe("parseView", () => {
 });
 
 describe("sectionsFor", () => {
-  it("public: notice, clinic finder, simple hospital cards, map", () => {
-    expect(ids("public")).toEqual(["notice", "finder", "hospitals", "map", "methods"]);
-    expect(densityOf("public", "hospitals")).toBe("simple");
+  it("public: notice, clinic finder, the nearest EDs, map; not the list of every hospital", () => {
+    expect(ids("public")).toEqual(["notice", "finder", "ednear", "map", "methods"]);
+    expect(densityOf("public", "hospitals")).toBeNull();
   });
 
   it("planner: summary strip, full hospital cards, takeaways", () => {
@@ -44,7 +44,8 @@ describe("sectionsFor", () => {
     for (const v of VIEWS) {
       expect(ids(v.id)).toContain("notice");
       expect(ids(v.id)).toContain("methods");
-      expect(ids(v.id)).toContain("hospitals");
+      // Hospital figures: the full list on Planner and Analyst, the nearest three on Public.
+      expect(ids(v.id).some((id) => id === "hospitals" || id === "ednear")).toBe(true);
     }
   });
 
@@ -70,9 +71,9 @@ describe("viewHref", () => {
     expect(viewHref("planner")).toBe("/?view=planner");
   });
 
-  it("keeps the search", () => {
-    expect(viewHref("analyst", "near=460001")).toBe("/?near=460001&view=analyst");
-    expect(viewHref("public", "near=460001&view=planner")).toBe("/?near=460001");
-    expect(viewHref("planner", new URLSearchParams({ view: "bogus", near: "Bedok" }))).toBe("/?near=Bedok&view=planner");
+  it("keeps the rest of the query string", () => {
+    expect(viewHref("analyst", "sort=hours")).toBe("/?sort=hours&view=analyst");
+    expect(viewHref("public", "sort=hours&view=planner")).toBe("/?sort=hours");
+    expect(viewHref("planner", new URLSearchParams({ view: "bogus", sort: "name" }))).toBe("/?sort=name&view=planner");
   });
 });

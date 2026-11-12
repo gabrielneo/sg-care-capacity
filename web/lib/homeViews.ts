@@ -1,5 +1,5 @@
 /**
- * The home page's views: one page, three readers (docs/adr/0010-home-page-views.md).
+ * The home page's views: one page, three readers (docs/adr/0010-home-page-views.md; the public view: 0011).
  *
  * The view is in the URL (?view=planner), so it can be shared and works with back and forward.
  * Each section says which views it appears in and how much it shows there; the page renders
@@ -22,7 +22,7 @@ export function parseView(value: string | string[] | null | undefined): View {
   return VIEWS.some((v) => v.id === one) ? (one as View) : DEFAULT_VIEW;
 }
 
-export type SectionId = "notice" | "finder" | "summary" | "hospitals" | "map" | "takeaways" | "weekdays" | "links" | "methods";
+export type SectionId = "notice" | "finder" | "ednear" | "summary" | "hospitals" | "map" | "takeaways" | "weekdays" | "links" | "methods";
 
 /** How much a section shows: "simple" is the short form, "full" adds the detail. */
 export type Density = "simple" | "full";
@@ -38,9 +38,11 @@ export const SECTIONS: readonly SectionSpec[] = [
   // The 995 line and "not medical advice": on every view. Full adds where to go instead of a hospital.
   { id: "notice", views: { public: "full", planner: "simple", analyst: "simple" } },
   { id: "finder", views: { public: "full" } },
+  // The three nearest EDs, in plain words, after a search. Public only: the full list is on Planner and Analyst.
+  { id: "ednear", views: { public: "full" } },
   { id: "summary", views: { planner: "full", analyst: "full" } },
   // Simple: badge, last week's figure and one sentence. Full adds the 12-week line and the change against usual.
-  { id: "hospitals", views: { public: "simple", planner: "full", analyst: "full" } },
+  { id: "hospitals", views: { planner: "full", analyst: "full" } },
   { id: "map", views: { public: "full" } },
   { id: "takeaways", views: { planner: "full", analyst: "full" } },
   { id: "weekdays", views: { analyst: "full" } },
@@ -68,8 +70,9 @@ export function densityOf(view: View, id: SectionId, sections: readonly SectionS
 }
 
 /**
- * The home page's address for a view, keeping everything else in the query string (the search).
- * The public view is the plain address: no ?view= at all.
+ * The home page's address for a view, keeping everything else in the query string. The public view
+ * is the plain address: no ?view= at all. The clinic search isn't in the query string: it is in the
+ * fragment, which the browser keeps to itself, so changing view starts without it.
  */
 export function viewHref(view: View, current: string | URLSearchParams = ""): string {
   const q = new URLSearchParams(current);

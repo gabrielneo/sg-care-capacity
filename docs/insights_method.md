@@ -54,7 +54,8 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
      - weekday: ε² / 0.14 (a "large" effect), capped at 1;
      - visits vs waits: |ρ|;
      - access gap: the priority score;
-     - source gap: |gap| / 4 hours, capped at 1.
+     - source gap: |gap| / 4 hours, capped at 1;
+     - usual gap: the % above usual / 60%, capped at 1.
    - **Descriptive detectors** (no p-value) use 1 for (1 − p).
    - **Recency** is the source's freshness: green 1.0, amber 0.7, red 0.4. The June 2024 clinic
      list scores 0.4, so access findings rank lower; that's deliberate.
@@ -86,6 +87,7 @@ the engine, so the website writes no finding text and computes no finding number
   | Detector | Chart | Highlighted | Reference line |
   |---|---|---|---|
   | trend | the weekly values, with the Theil-Sen line; a missing week is a gap | the latest week | none |
+  | usual_gap | the 8 weeks before and the latest week | the latest week | the usual level (median) |
   | anomaly | the 8 weeks before and the latest week | the latest week | the usual level (median) |
   | weekday | the average for each day of the week | the peak day | the weekly average |
   | volume_vs_wait | days in five equal groups by visits, with the median bed wait for each | the busiest group | the usual for that weekday (0) |
@@ -275,3 +277,24 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - **Today there are 0 paired days.** The data release holds about one NUHS reading a week, and
     MOH's figures end a week earlier, so this detector will say nothing for months. Feeding the
     3-hourly live store into the weekly build would speed this up; that's a separate decision.
+
+## 8. usual_gap
+
+- **Question:** Is a hospital's latest complete week far above its own usual level?
+- **Method:**
+  - **Data:** the latest complete week's average of daily medians, against the **median of the 8
+    complete weeks before it**: the same comparison as the site's status badge and ED Trends.
+  - **Size:** the percentage above usual.
+- **Gate:**
+  - the latest week and all 8 weeks before it must be complete;
+  - at least **30% above** usual (the badge's "much higher" line, `usual_gap.min_pct_above`);
+  - only a rise is published; there is no p-value, so the finding is outside the Benjamini-Hochberg
+    correction and is worded as a plain comparison, never as a significant result.
+- **Why this method:** it is the figure a planner already sees on the home page, so a finding and the badge
+  never disagree. A tested detector (`anomaly`) can say the same week is unusual; this one says how far above
+  usual it is.
+- **Limitations:**
+  - **Not a test:** with 9 hospitals checked weekly, a few weeks above the line are expected by chance.
+  - **Eight weeks is a short baseline,** and a flu season can lift every week in it.
+  - **The figure is an average of daily medians,** not a weekly median.
+  - **Alexandra Hospital** is an urgent care centre; it is compared only with itself.

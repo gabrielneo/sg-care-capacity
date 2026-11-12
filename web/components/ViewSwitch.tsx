@@ -19,7 +19,7 @@ import { parseView, type View, viewHref, VIEWS } from "@/lib/homeViews";
  * A header slot keeps its last page when a link is followed, so the control checks the path itself
  * and renders nothing anywhere else (`home` is for /dev/components, which shows it off the home page).
  */
-export function ViewSwitch({ view: current, near = "", home = "/" }: { view: View; near?: string; home?: string }) {
+export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   // Show the new choice at once; the page follows when the server has rendered it.
@@ -35,7 +35,6 @@ export function ViewSwitch({ view: current, near = "", home = "/" }: { view: Vie
   };
   if (pathname !== home) return null;
 
-  const keep = near ? <input type="hidden" name="near" value={near} /> : null;
   const submit = (
     <noscript>
       <button type="submit" className="ml-2 min-h-11 rounded-md border border-line bg-surface px-3 text-sm font-medium text-ink">
@@ -47,7 +46,6 @@ export function ViewSwitch({ view: current, near = "", home = "/" }: { view: Vie
   return (
     <div data-testid="view-switch" data-view={view}>
       <form action="/" method="get" className="hidden items-center sm:flex">
-        {keep}
         <div role="radiogroup" aria-label="View" className="inline-flex rounded-md border border-line bg-surface p-1"
              data-testid="view-radios">
           {VIEWS.map((v) => (
@@ -64,7 +62,6 @@ export function ViewSwitch({ view: current, near = "", home = "/" }: { view: Vie
       </form>
 
       <form action="/" method="get" className="flex items-center sm:hidden">
-        {keep}
         <label htmlFor="view-select" className="mr-2 text-sm font-medium text-muted">View</label>
         <select id="view-select" name="view" value={view} onChange={(e) => go(parseView(e.target.value))}
                 className="min-h-11 rounded-md border border-line bg-surface px-2 text-base font-medium text-ink"

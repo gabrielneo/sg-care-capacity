@@ -42,6 +42,15 @@ anomaly:
     change_word: "lower than usual"
     callout: "{week}: {value}"
 
+usual_gap:
+  worse:
+    headline: "{hospital}: bed wait {value}, {pct} above its usual {usual} (week of {week})."
+    detail: "Usual is the median of the {trailing} weeks before. This is a plain comparison, not a statistical test."
+    metric_label: "Average of daily median bed waits, week of {week}"
+    comparison_label: "{usual}, usual for this hospital"
+    change_word: "higher than usual"
+    callout: "{week}: {pct} above usual"
+
 weekday:
   hospital:
     headline: "At {hospital}, bed waits are longest on {weekday}s, {pct} above its weekly average."

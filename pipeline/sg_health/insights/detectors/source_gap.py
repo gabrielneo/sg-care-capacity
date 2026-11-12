@@ -51,5 +51,6 @@ def detect(live: pd.DataFrame, daily: pd.DataFrame, cfg: dict[str, Any], full_ef
         action_key=None, action_values={"hospital": "National University Hospital", "cluster": "NUHS"},
         chart=chart("bar", "Hours, median of the days with both figures", points, ["nuhs"]),
         display={"value_text": value_text, "unit_text": unit_text, "change": "up" if med > 0 else "down" if med < 0 else None},
+        period=(min(pair.index), max(pair.index)),
     ))
     return out

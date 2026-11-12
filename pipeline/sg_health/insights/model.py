@@ -53,6 +53,7 @@ class Candidate:
     action_values: dict[str, Any] = field(default_factory=dict)
     chart: dict[str, Any] | None = None     # from chart(): the data the test ran on, for the site's chart
     display: dict[str, Any] = field(default_factory=dict)   # value_text, unit_text, change ("up" / "down" / None)
+    period: tuple[date, date] | None = None   # first and last day of the data the finding uses (None: as_of only)
     p_adjusted: float | None = None
     reason: str = ""                   # why it was not published (filled by the engine)
 

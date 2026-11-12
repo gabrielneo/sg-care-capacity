@@ -2,10 +2,11 @@ import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 
 import { DataStatus } from "@/components/DataStatus";
 import { Nav } from "@/components/Nav";
+import { SiteStrip } from "@/components/SiteStrip";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { Glossed } from "@/components/terms/Glossed";
 
@@ -37,7 +38,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
           Skip to content
         </a>
         <header className="border-b border-line bg-surface">
-          <div className="mx-auto max-w-6xl px-4 pt-3">
+          <div className="mx-auto max-w-6xl px-4 pt-2">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <Link href="/" className="text-base font-semibold text-ink no-underline">
                 Right-siting care <span className="font-normal text-muted">· a super-aged Singapore</span>
@@ -48,7 +49,11 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
             <Nav />
           </div>
         </header>
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
+        {/* Loaded in the browser (/strip.json), like the footer status: building a page never waits on the API. */}
+        <Suspense fallback={<div className="h-10 border-b border-line bg-surface" />}>
+          <SiteStrip />
+        </Suspense>
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 pb-6 pt-3 sm:pb-8 sm:pt-4">
           {children}
         </main>
         <footer className="border-t border-line bg-surface">

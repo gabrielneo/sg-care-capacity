@@ -54,6 +54,9 @@ export function Provenance({
   bySource = false,
   findingTo,
   release = false,
+  freshness = true,
+  tight = false,
+  large = false,
 }: {
   meta: Meta;
   caveat?: string | null;
@@ -65,6 +68,12 @@ export function Provenance({
   bySource?: boolean;
   findingTo?: string | null;
   release?: boolean;
+  /** false: no freshness badge (a block of tiles that shows one for them all). The date and source stay. */
+  freshness?: boolean;
+  /** Less space above the line, for a small tile. */
+  tight?: boolean;
+  /** 14px instead of 12px: the public view's size for the date and source. */
+  large?: boolean;
 }) {
   const c = cadence ?? cadenceFor(meta);
   const perSource = bySource ? sourceDates(meta.sources) : [];
@@ -73,7 +82,7 @@ export function Provenance({
   const extra = detail ? meta.caveats : notes;
   const count = extra.length + (detail ? warnings.length : warnings.length ? 1 : 0);
   return (
-    <footer className="mt-4 border-t border-line pt-3 text-xs text-muted">
+    <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-sm" : "text-xs"} text-muted`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <p data-testid="provenance-line">
           Data as of{" "}
@@ -105,7 +114,7 @@ export function Provenance({
           ) : null}
           {caveat && !compact ? <>{" · "}<Glossed text={caveat} /></> : null}
         </p>
-        {release ? null : dates.map((d) => (
+        {release || !freshness ? null : dates.map((d) => (
           <FreshnessBadge key={d.name || "all"} asOf={d.asOf} cadence={d.cadence} now={now} source={d.name || undefined} />
         ))}
       </div>

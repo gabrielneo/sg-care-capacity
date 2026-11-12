@@ -132,7 +132,7 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
 function StepText({ insight, index, total }: { insight: StoryInsight; index: number; total: number }) {
   const caveat = primaryCaveat(insight);
   return (
-    <article className="story-card rounded-lg border border-line bg-surface p-5 shadow-sm" data-insight={insight.insight_id}>
+    <article id={insight.insight_id} className="story-card rounded-lg border border-line bg-surface p-5 shadow-sm" data-insight={insight.insight_id}>
       <p className="text-xs font-medium uppercase tracking-wide text-muted">Finding {index + 1} of {total}</p>
       <h3 className="mt-1 text-lg font-semibold leading-snug text-ink" data-testid="step-headline">
         <Glossed text={insight.headline} />

@@ -29,6 +29,12 @@ export interface KpiTileProps {
   now?: Date;
   /** The date is the data release's (labelled so, no badge). See Provenance. */
   release?: boolean;
+  /** What the number belongs to or is drawn from (a hospital's name, a small line), under the number. */
+  detail?: ReactNode;
+  /** false: the date and source without the freshness badge, for a row of tiles that shows one badge for them all. */
+  freshness?: boolean;
+  /** A tighter tile, for dense strips. */
+  dense?: boolean;
 }
 
 const defaultFormat = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 1 });
@@ -50,10 +56,10 @@ function ChangeLine({ change }: { change: KpiChange }) {
 }
 
 /** One headline number with its unit, change and provenance. Missing is shown as missing, never 0. */
-export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, cadence, now, release }: KpiTileProps) {
+export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, cadence, now, release, detail, freshness = true, dense = false }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
-    <div data-testid="kpi-tile" className="rounded-lg border border-line bg-surface p-4 shadow-sm">
+    <div data-testid="kpi-tile" className={`h-full rounded-lg border border-line bg-surface shadow-sm ${dense ? "p-3" : "p-4"}`}>
       <p className="text-sm font-medium text-muted">{label}</p>
       {problems.length ? (
         <div className="mt-2">
@@ -61,7 +67,7 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
         </div>
       ) : (
         <>
-          <p className="mt-1 text-3xl font-semibold tabular-nums text-ink">
+          <p className={`mt-1 font-semibold tabular-nums text-ink ${dense ? "text-2xl" : "text-3xl"}`}>
             {value === null ? (
               <>
                 <span aria-hidden="true">—</span>
@@ -72,13 +78,14 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
             )}
             {value !== null && unit ? <>{" "}<span className="text-base font-normal text-muted">{unit}</span></> : null}
           </p>
+          {detail ? <div className="mt-1 text-sm text-muted" data-testid="kpi-detail">{detail}</div> : null}
           {change ? <ChangeLine change={change} /> : null}
           {caveat ? (
             <div className="mt-2">
               <CaveatChip><Glossed text={caveat} /></CaveatChip>
             </div>
           ) : null}
-          <Provenance meta={meta} cadence={cadence} now={now} compact release={release} />
+          <Provenance meta={meta} cadence={cadence} now={now} compact release={release} freshness={freshness} tight={dense} />
         </>
       )}
     </div>

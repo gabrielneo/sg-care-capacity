@@ -1433,6 +1433,32 @@
             "description": "Null for descriptive detectors (no test)",
             "title": "P Value"
           },
+          "period_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Last day of the data the finding uses. Null in releases from before it was written",
+            "title": "Period End"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "First day of the data the finding uses. Null in releases from before it was written",
+            "title": "Period Start"
+          },
           "rank_score": {
             "description": "normalised effect x (1 - p_adjusted) x completeness x recency",
             "title": "Rank Score",
@@ -1446,10 +1472,29 @@
             "title": "Source Ids",
             "type": "array"
           },
+          "strength": {
+            "anyOf": [
+              {
+                "enum": [
+                  "negligible",
+                  "weak",
+                  "moderate",
+                  "strong"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How strong the finding is, from its normalised effect. Null in releases from before it was written",
+            "title": "Strength"
+          },
           "type": {
             "enum": [
               "trend",
               "anomaly",
+              "usual_gap",
               "weekday",
               "volume_vs_wait",
               "access_gap",
@@ -1499,6 +1544,9 @@
           "as_of_basis",
           "rank_score",
           "headline_rank",
+          "period_start",
+          "period_end",
+          "strength",
           "display",
           "chart"
         ],
@@ -3308,6 +3356,7 @@
                   "enum": [
                     "trend",
                     "anomaly",
+                    "usual_gap",
                     "weekday",
                     "volume_vs_wait",
                     "access_gap",

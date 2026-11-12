@@ -48,8 +48,17 @@ function isKeyboardFocus(el: Element): boolean {
   }
 }
 
-/** The underlined term and its tooltip. Hover or keyboard focus opens it; a tap toggles it; Escape closes. */
+/** The underlined term and its tooltip. */
 function TermTip({ entry, label, data }: { entry: GlossaryEntry; label: ReactNode; data: DataAttrs }) {
+  const title = entry.abbreviation && !selfNamed(entry) ? `${entry.full_name} (${entry.abbreviation})` : entry.full_name;
+  return <Tip label={label} data={data}><strong>{title}:</strong> {entry.plain_definition}</Tip>;
+}
+
+/**
+ * Underlined text with a tooltip: hover or keyboard focus opens it; a tap toggles it; Escape closes.
+ * Glossary terms use it, and so does any short detail that belongs beside a figure (`children`).
+ */
+export function Tip({ label, children, data = {} }: { label: ReactNode; children: ReactNode; data?: DataAttrs }) {
   const [open, setOpen] = useState(false);
   const [shift, setShift] = useState(0);
   const tipId = `tip-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -81,7 +90,6 @@ function TermTip({ entry, label, data }: { entry: GlossaryEntry; label: ReactNod
     return () => document.removeEventListener("pointerdown", outside);
   }, [open]);
 
-  const title = entry.abbreviation && !selfNamed(entry) ? `${entry.full_name} (${entry.abbreviation})` : entry.full_name;
   return (
     <span ref={wrap} className="term-wrap" {...data}>
       <button
@@ -109,7 +117,7 @@ function TermTip({ entry, label, data }: { entry: GlossaryEntry; label: ReactNod
       </button>
       <span ref={tip} role="tooltip" id={tipId} className="term-tip" data-open={open ? "true" : "false"}
             style={shift ? { transform: `translateX(${shift}px)` } : undefined}>
-        <strong>{title}:</strong> {entry.plain_definition}
+        {children}
       </span>
     </span>
   );

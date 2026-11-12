@@ -35,11 +35,10 @@ describe("ViewSwitch", () => {
     expect(screen.getByTestId("view-switch")).toHaveAttribute("data-view", "analyst");
   });
 
-  it("puts the choice in the URL and keeps the search", () => {
-    at("near=460001");
-    render(<ViewSwitch view="public" near="460001" />);
+  it("puts the choice in the URL", () => {
+    render(<ViewSwitch view="public" />);
     fireEvent.click(screen.getByRole("radio", { name: "Planner summary" }));
-    expect(nav.push).toHaveBeenCalledWith("/?near=460001&view=planner", { scroll: false });
+    expect(nav.push).toHaveBeenCalledWith("/?view=planner", { scroll: false });
   });
 
   it("goes back to the plain address for Public, from the select too", () => {
@@ -61,14 +60,14 @@ describe("ViewSwitch", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("without JavaScript, each form sends the view and keeps the search", () => {
-    const { container } = render(<ViewSwitch view="public" near="Bedok" />);
+  it("without JavaScript, each form sends the view and nothing else (the clinic search is never in the address)", () => {
+    const { container } = render(<ViewSwitch view="public" />);
     const forms = [...container.querySelectorAll("form")];
     expect(forms).toHaveLength(2);
     for (const form of forms) {
       expect(form).toHaveAttribute("method", "get");
       expect(form.getAttribute("action")).toBe("/");
-      expect(new FormData(form).get("near")).toBe("Bedok");
+      expect(new FormData(form).has("near")).toBe(false);
       expect(new FormData(form).get("view")).toBe("public");
     }
   });
