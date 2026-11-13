@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from functools import partial
 from typing import Any
 
 import pandas as pd
@@ -85,7 +86,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             after = AFTER_PHRASE[int(lag)]
             out.candidates.append(Candidate(
                 n_unit="days", ci_null=0.0,
-                ci_fn=lambda v=pair["v"].to_numpy(), w=pair["w"].to_numpy(): spearman_ci(v, w, **thresholds()["engine"]["bootstrap"]),
+                ci_fn=partial(spearman_ci, pair["v"].to_numpy(), pair["w"].to_numpy(), **thresholds()["engine"]["bootstrap"]),
                 type="volume_vs_wait", entity=code, variant=variant,
                 method=f"Spearman correlation, visits on day t vs bed wait on day t+{lag}"
                        + (", after removing each weekday's median" if cfg.get("adjust_for_weekday", True) else ""),

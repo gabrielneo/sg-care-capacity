@@ -1,6 +1,7 @@
 """Does NUHS's live estimate match MOH's official figure? Paired median difference, Wilcoxon signed-rank."""
 from __future__ import annotations
 
+from functools import partial
 from typing import Any
 
 import pandas as pd
@@ -52,6 +53,6 @@ def detect(live: pd.DataFrame, daily: pd.DataFrame, cfg: dict[str, Any], full_ef
         chart=chart("bar", "Hours, median of the days with both figures", points, ["nuhs"]),
         display={"value_text": value_text, "unit_text": unit_text, "change": "up" if med > 0 else "down" if med < 0 else None},
         period=(min(pair.index), max(pair.index)),
-        n_unit="days", ci_null=0.0, ci_fn=lambda d=diffs: median_ci(d, **thresholds()["engine"]["bootstrap"]),
+        n_unit="days", ci_null=0.0, ci_fn=partial(median_ci, diffs, **thresholds()["engine"]["bootstrap"]),
     ))
     return out
