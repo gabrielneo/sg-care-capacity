@@ -24,6 +24,7 @@ SQL = ("SELECT report_date, median_wait_hours FROM marts.fct_ed_daily WHERE hosp
        "AND is_complete_week AND report_date BETWEEN DATE '{start}' AND DATE '{end}' ORDER BY report_date")
 WEEKDAY_AXIS = "Hours, average of the daily medians on that weekday"
 CAVEAT = "The test shows that weekdays differ; the peak day is the one with the highest average."
+TIE_CAVEAT = "The test shows that weekdays differ; the two peak days are too close to tell apart, so both are named."
 
 
 def _peak(values: pd.Series, weekday: pd.Series) -> tuple[int, float]:
@@ -144,7 +145,7 @@ def _candidate(raw, raw_weekday, entity, variant, eps2, p, pct, day, n, n_weeks,
         completeness=min(completeness, 1.0), as_of=last, source="moh_bed_waits",
         values={**values, "weekday": WEEKDAYS[day], "pct": percent(pct), "weeks": n_weeks, "window": str(last),
                 "mean": mean_text, **tie_values},
-        caveats=[CAVEAT, UNIT_CAVEAT, *caveats],
+        caveats=[CAVEAT if second is None else TIE_CAVEAT, UNIT_CAVEAT, *caveats],
         evidence={"endpoint": endpoint, "query": query},
         action_key=None, action_values={**action_values, "weekday": WEEKDAYS[day]},
         chart=chart("bar", axis, points, highlight, reference=reference),

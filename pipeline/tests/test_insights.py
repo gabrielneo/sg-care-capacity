@@ -732,6 +732,7 @@ def test_a_peak_shared_by_two_close_days_is_worded_as_a_two_day_peak():
     assert "peak on Tuesday–Wednesday" in r["headline"]
     assert r["chart"]["highlight"] == ["tue", "wed"]
     assert r["chart"]["callout"].startswith("Tuesday–Wednesday peak:")
+    assert r["caveats"][0].startswith("The test shows that weekdays differ; the two peak days")
 
 
 def test_a_clear_single_peak_keeps_its_one_day_wording():
