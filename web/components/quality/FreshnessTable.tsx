@@ -2,7 +2,7 @@ import { FreshnessBadge } from "@/components/FreshnessBadge";
 import type { Source } from "@/lib/api/types";
 import { formatAsOf } from "@/lib/dates";
 import { BASIS } from "@/lib/copy";
-import { CADENCE_BY_SOURCE, THRESHOLDS } from "@/lib/freshness";
+import { cadenceOf, datasetFreshness, ruleText } from "@/lib/freshness";
 
 import { Glossed } from "../terms/Glossed";
 
@@ -21,18 +21,19 @@ export function FreshnessTable({ sources }: { sources: Source[] }) {
         </thead>
         <tbody>
           {sources.map((s) => {
-            const cadence = CADENCE_BY_SOURCE[s.id] ?? "irregular";
+            const cadence = cadenceOf(s.id);
             return (
               <tr key={s.id} className="border-b border-line align-top">
                 <th scope="row" className="py-1.5 pr-3 text-left font-normal">
                   {s.url ? <a href={s.url}><Glossed text={s.name} plain /></a> : <Glossed text={s.name} />}
                 </th>
-                <td className="py-1.5 pr-3 tabular-nums">{s.as_of ? <Glossed text={formatAsOf(s.as_of, { withTime: cadence === "live" })} /> : "Unknown"}</td>
+                <td className="py-1.5 pr-3 tabular-nums">{s.as_of ? <Glossed text={formatAsOf(s.as_of, { withTime: cadence === "moment" })} /> : "Unknown"}</td>
                 <td className="py-1.5 pr-3 text-muted">{BASIS[s.id] ?? ""}</td>
                 <td className="py-1.5 pr-3 tabular-nums text-muted">{s.last_fetched_at ? formatAsOf(s.last_fetched_at) : "Unknown"}</td>
                 <td className="py-1.5">
-                  {s.as_of ? <FreshnessBadge asOf={s.as_of} cadence={cadence} /> : null}
-                  <span className="mt-0.5 block text-xs text-muted">{THRESHOLDS[cadence].describe}</span>
+                  {/* One function and one config for every dataset (docs/datasets.yml). */}
+                  {s.as_of ? <FreshnessBadge freshness={datasetFreshness(s.id, s.as_of)} /> : null}
+                  <span className="mt-0.5 block text-xs text-muted">{ruleText(s.id)}</span>
                 </td>
               </tr>
             );

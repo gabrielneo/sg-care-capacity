@@ -7,7 +7,6 @@ import { Term } from "@/components/terms/Term";
 import { Tip } from "@/components/terms/TermView";
 import type { Hospital, Meta } from "@/lib/api/types";
 import { BED_WAIT_SHORT } from "@/lib/copy";
-import { cadenceFor } from "@/lib/freshness";
 import { USUAL_WEEKS } from "@/lib/edCompare";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { aboveUsual, acrossHospitals, formatDelta, largestChange, longestWait, MIN_HOSPITALS } from "@/lib/planner";
@@ -48,7 +47,7 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 id="summary-heading" className="text-xl font-semibold tracking-tight text-ink">Last week at a glance</h2>
         {/* One badge for the four tiles: they share one source and date. */}
-        <FreshnessBadge asOf={meta.as_of} cadence={cadenceFor(meta)} />
+        <FreshnessBadge meta={meta} />
       </div>
       <p className="mt-1 text-sm text-muted">
         {latestWeek ? <>Week of {formatWeek(latestWeek)}. </> : null}

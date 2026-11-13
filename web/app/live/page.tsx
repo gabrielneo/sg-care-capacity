@@ -59,7 +59,7 @@ export default async function LivePage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {data.map((r) => (
-            <ChartCard key={`${r.site_name}|${r.department}`} title={`${r.site_name}: ${r.department}`} meta={meta} cadence="live"
+            <ChartCard key={`${r.site_name}|${r.department}`} title={`${r.site_name}: ${r.department}`} meta={meta}
                        caveat={r.is_adult_ed === false ? CAVEAT.childrensEmergency : CAVEAT.live}
                        description={
                          <span data-testid="reading-label">

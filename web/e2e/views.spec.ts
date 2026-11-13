@@ -76,7 +76,7 @@ test.describe("Home views", () => {
       if (view !== "public") {
         await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-note")).toHaveText("Urgent care centre");
         await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-live"))
-          .toContainText(/To see a doctor: .+hospital's own estimate/);
+          .toContainText(/To see a doctor: .+ estimate, .+\. Published separately by NUHS, so newer than the weekly data\./);
       }
     });
   }

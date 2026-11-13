@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import type { Meta } from "@/lib/api/types";
-import type { Cadence } from "@/lib/freshness";
 
 import { CaveatChip } from "./CaveatChip";
 import { Provenance, provenanceProblems } from "./Provenance";
@@ -25,7 +24,6 @@ export interface KpiTileProps {
   format?: (value: number) => string;
   change?: KpiChange;
   caveat?: string;
-  cadence?: Cadence;
   now?: Date;
   /** The date is the data release's (labelled so, no badge). See Provenance. */
   release?: boolean;
@@ -56,7 +54,7 @@ function ChangeLine({ change }: { change: KpiChange }) {
 }
 
 /** One headline number with its unit, change and provenance. Missing is shown as missing, never 0. */
-export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, cadence, now, release, detail, freshness = true, dense = false }: KpiTileProps) {
+export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, now, release, detail, freshness = true, dense = false }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
     <div data-testid="kpi-tile" className={`h-full rounded-lg border border-line bg-surface shadow-sm ${dense ? "p-3" : "p-4"}`}>
@@ -85,7 +83,7 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
               <CaveatChip><Glossed text={caveat} /></CaveatChip>
             </div>
           ) : null}
-          <Provenance meta={meta} cadence={cadence} now={now} compact release={release} freshness={freshness} tight={dense} />
+          <Provenance meta={meta} now={now} compact release={release} freshness={freshness} tight={dense} />
         </>
       )}
     </div>

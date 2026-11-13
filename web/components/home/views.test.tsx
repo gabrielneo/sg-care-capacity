@@ -27,7 +27,7 @@ afterEach(() => setTestScope(null));
 
 describe("StatusCard densities", () => {
   it("simple: badge, figure and sentence, without the line or the change", () => {
-    render(<ul><StatusCard status={status("SGH", 25)} note={null} live={live} density="simple" /></ul>);
+    render(<ul><StatusCard status={status("SGH", 25)} note={null} live={live} weeklyAsOf="2026-10-31" density="simple" /></ul>);
     const card = screen.getByTestId("status-card");
     expect(within(card).getByTestId("status-badge")).toHaveTextContent("▲Higher than usual");
     expect(within(card).getByTestId("status-hours")).toHaveTextContent("5.0 h");
@@ -35,7 +35,8 @@ describe("StatusCard densities", () => {
     expect(within(card).queryByTestId("sparkline")).toBeNull();
     expect(within(card).queryByTestId("status-delta")).toBeNull();
     // The estimate keeps its label and its own time on every density.
-    expect(within(card).getByTestId("status-live")).toHaveTextContent(/To see a doctor: under 1 hour \(hospital's own estimate, .*2026/);
+    expect(within(card).getByTestId("status-live")).toHaveTextContent(/To see a doctor: under 1 hour \(.*NUHS\) estimate, .*2026, .* SGT\)/);
+    expect(within(card).getByTestId("nuhs-timing")).toHaveTextContent("Published separately by NUHS, so newer than the weekly data.");
   });
 
   it("full: adds the 12-week line and the change against usual", () => {

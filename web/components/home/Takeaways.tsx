@@ -4,7 +4,7 @@ import { Provenance } from "@/components/Provenance";
 import { Glossed } from "@/components/terms/Glossed";
 import { Term } from "@/components/terms/Term";
 import type { Meta } from "@/lib/api/types";
-import type { Takeaway } from "@/lib/takeaways";
+import { type Takeaway, takeawaysMeta } from "@/lib/takeaways";
 
 /** Up to three findings, one line each. The full sentence and the statistics are a click away. */
 export function Takeaways({ items, meta }: { items: Takeaway[]; meta: Meta }) {
@@ -25,7 +25,8 @@ export function Takeaways({ items, meta }: { items: Takeaway[]; meta: Meta }) {
         ))}
       </ul>
       <p className="mt-3 text-sm"><Link href="/findings">See every finding, with charts</Link></p>
-      <Provenance meta={meta} compact />
+      {/* Dated, sourced and judged for freshness by the datasets these takeaways use, not every finding's (A2, A3). */}
+      <Provenance meta={takeawaysMeta(items, meta)} compact />
     </section>
   );
 }

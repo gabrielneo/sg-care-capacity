@@ -3,8 +3,9 @@
  * and number is the engine's own (chart callout, display numbers); this file only picks and joins
  * them. The full sentence, method and statistics stay on /findings and in the methods drawer.
  */
-import type { Hospital, Insight } from "./api/types";
+import type { Hospital, Insight, Meta } from "./api/types";
 import { systemFindings } from "./hospitals";
+import { findingMeta } from "./provenance";
 
 export interface Takeaway {
   id: string;
@@ -16,6 +17,9 @@ export interface Takeaway {
   /** "12.7 hours · vs 8.9 hours, its weekly average" (no number if the title has it), or null without a comparison. */
   numbers: string | null;
   headline: string;
+  /** The datasets the finding is computed from (the engine's source_ids) and the tables it reads. */
+  sourceIds: string[];
+  dqTables: string[];
 }
 
 export const MAX_TAKEAWAYS = 3;
@@ -43,6 +47,20 @@ export function takeaways(insights: Insight[], hospitals: readonly Pick<Hospital
         title,
         numbers: value && d?.comparison_label ? `${lead}vs ${d.comparison_label}` : null,
         headline: i.headline,
+        sourceIds: i.source_ids ?? [],
+        dqTables: i.dq_tables ?? [],
       };
     });
+}
+
+/**
+ * The takeaways' own meta: only the datasets they are computed from (an ED finding is never "sourced" from
+ * data.gov.sg or SingStat), so their date, source line and freshness are those datasets' (lib/provenance.ts).
+ */
+export function takeawaysMeta(items: readonly Takeaway[], meta: Meta): Meta {
+  return findingMeta({
+    source_ids: [...new Set(items.flatMap((t) => t.sourceIds))],
+    dq_tables: [...new Set(items.flatMap((t) => t.dqTables))],
+    as_of: meta.as_of,
+  }, meta);
 }

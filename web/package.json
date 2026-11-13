@@ -21,8 +21,10 @@
     "ui:metrics": "playwright test -c playwright.visual.config.ts --project=metrics",
     "gen:glossary": "node scripts/gen-glossary.mjs",
     "check:glossary": "npm run gen:glossary && git diff --exit-code -- lib/glossary.generated.ts",
-    "predev": "npm run gen:glossary",
-    "prebuild": "npm run gen:glossary",
+    "gen:datasets": "node scripts/gen-datasets.mjs",
+    "check:datasets": "npm run gen:datasets && git diff --exit-code -- lib/datasets.generated.ts",
+    "predev": "npm run gen:glossary && npm run gen:datasets",
+    "prebuild": "npm run gen:glossary && npm run gen:datasets",
     "lint:terms": "node scripts/lint-terms.mjs",
     "readability": "vitest run test/readability.test.ts --silent=false",
     "lighthouse": "bash scripts/lighthouse.sh"

@@ -48,7 +48,8 @@ test.describe("Findings: the scroll story", () => {
     const hero = page.getByTestId("hero");
     await expect(hero.getByTestId("finding-window")).toHaveText(/^ · This finding uses data to \d{1,2} [A-Z][a-z]{2} \d{4}$/);
     // (Checked by date, not by colour: the colour depends on the day the test runs.)
-    await expect(hero.locator("[data-level]")).toHaveAttribute("title", /^Data as of 31 Oct 2026;/);   // MOH's day, not the window's end
+    // The badge shows its cadence and MOH's own date, not the window's end (25 Oct) or the release date.
+    await expect(hero.getByTestId("freshness-badge")).toContainText(/· weekly · as of 31 Oct 2026$/);
     await expect(page.getByTestId("hero").locator("[data-level]")).toBeVisible();          // the freshness badge
   });
 

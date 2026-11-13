@@ -16,7 +16,7 @@ describe("ChartCard", () => {
       "Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · A plain caveat.");
     const source = screen.getByRole("link", { name: "Ministry of Health (MOH)" });
     expect(source).toHaveAttribute("href", edMeta.sources[0]!.url);
-    expect(screen.getByText(/Up to date · weekly data, 6 days old/)).toBeInTheDocument();
+    expect(screen.getByText(/Up to date · weekly · as of 31 Oct 2026/)).toBeInTheDocument();
   });
 
   it("offers the figures as a CSV only when the card has one (S3)", () => {
@@ -37,18 +37,18 @@ describe("ChartCard", () => {
     const nuhs = { id: "nuhs_live", name: "NUHS, ED waiting times", url: "https://www.nuhs.edu.sg/", as_of: "2026-11-06T12:01:49",
                    as_of_basis: "NUHS 'Last updated at'", last_fetched_at: null, licence: null };
     const meta = { ...edMeta, sources: [nuhs, ...edMeta.sources] } as typeof edMeta;
-    render(<ChartCard title="NUHS and MOH" meta={meta} now={NOW} cadence="weekly" bySource><p>chart</p></ChartCard>);
+    render(<ChartCard title="NUHS and MOH" meta={meta} now={NOW} bySource><p>chart</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent(
       /^Data as of 6 Nov 2026, 12:01 pm SGT \(NUHS\) and 31 Oct 2026 \(MOH\) · Source: /);
-    expect(screen.getByText(/^NUHS: Up to date · a live reading/)).toBeInTheDocument();
-    expect(screen.getByText(/^MOH: Up to date · weekly data, 6 days old/)).toBeInTheDocument();
+    expect(screen.getByText(/^NUHS: Up to date · a reading at one moment · as of 6 Nov 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/^MOH: Up to date · weekly · as of 31 Oct 2026/)).toBeInTheDocument();
   });
 
   it("findingTo states a finding's data window, while the date and badge stay the source's (audit M-1)", () => {
     render(<ChartCard title="Bed waits" meta={edMeta} now={NOW} findingTo="2026-10-25"><p>chart</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent(
       "Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · This finding uses data to 25 Oct 2026");
-    expect(screen.getByText(/Up to date · weekly data, 6 days old/)).toBeInTheDocument();
+    expect(screen.getByText(/Up to date · weekly · as of 31 Oct 2026/)).toBeInTheDocument();
   });
 
   it("release labels the date as the data release's, with no cadence badge (audit L-6)", () => {
@@ -60,8 +60,8 @@ describe("ChartCard", () => {
   it("names the right publisher for each dataset, and shows an old irregular list as the latest published, not an alarm", () => {
     render(<ChartCard title="Clinics" meta={clinicMeta} now={NOW}><p>map</p></ChartCard>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");
-    expect(screen.getByText(/Latest published · irregular updates, 2 years old/)).toHaveAttribute("data-level", "red");   // the level is still reported
-    expect(screen.queryByText(/Out of date/)).toBeNull();
+    expect(screen.getByText(/Latest published · updated irregularly · as of 6 Jun 2024/)).toHaveAttribute("data-level", "overdue");   // the level is still reported
+    expect(screen.queryByText(/Overdue/)).toBeNull();
   });
 
   it("public pages show the site's notes and summarise data-quality warnings with a link", () => {

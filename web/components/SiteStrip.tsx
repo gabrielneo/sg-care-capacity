@@ -21,7 +21,7 @@ function Pill({ pill }: { pill: StripPill }) {
 }
 
 /**
- * The slim strip under the top bar: how many emergency departments are busier than usual, and how fresh each dataset
+ * The slim strip under the top bar: how many emergency departments are above usual, and how fresh each dataset
  * is. The count always carries its source and as-of date in words, on every width (a date that lives
  * only in a tooltip can't be read on a phone or by keyboard). The pills (each dated by its own source;
  * the NUHS estimates say they cover some hospitals only) sit behind "Details" at every width: inline,
@@ -48,11 +48,11 @@ export function SiteStrip() {
   }
 
   const s = data.strip;
-  // "EDs" below 640px keeps the lead on one line, so the strip keeps its fixed height there (no layout shift).
-  const eds = <><span className="sm:hidden">EDs</span><span className="hidden sm:inline">emergency departments</span></>;
+  // The tile's own words ("Emergency departments above usual"), and short enough to stay one line at 375px,
+  // so the strip keeps its fixed height (no layout shift).
   const lead = s.noComparison === s.total
-    ? <>No <span className="sm:hidden">ED</span><span className="hidden sm:inline">emergency department</span> has a comparison with usual yet</>
-    : <>{s.above} of {s.total} {eds} busier than usual</>;
+    ? "No comparison with usual yet"
+    : `${s.above} of ${s.total} emergency departments above usual`;
   const basis = s.bed ? `${s.bed.source}, data as of ${formatAsOf(s.bed.asOf)}` : null;
 
   return (

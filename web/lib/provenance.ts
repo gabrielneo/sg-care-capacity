@@ -5,13 +5,15 @@
  */
 import type { Insight, Meta, Source } from "./api/types";
 import { parseAsOf } from "./dates";
-import { type Cadence, CADENCE_BY_SOURCE } from "./freshness";
+import { type Cadence, cadenceOf } from "./freshness";
 
 export interface SourceDate {
   /** The publisher, e.g. "MOH" (sources from one publisher are grouped). */
   name: string;
   asOf: string;
   cadence: Cadence;
+  /** The publisher's sources, each judged by its own freshness rule (docs/datasets.yml). */
+  sources: Source[];
 }
 
 const publisherOf = (s: Source) => s.name.split(",")[0]?.trim() || s.id;
@@ -31,7 +33,7 @@ export function sourceDates(sources: Source[]): SourceDate[] {
   for (const s of sources) groups.set(publisherOf(s), [...(groups.get(publisherOf(s)) ?? []), s]);
   return [...groups].flatMap(([name, group]) => {
     const asOf = oldestAsOf(group);
-    return asOf ? [{ name, asOf, cadence: CADENCE_BY_SOURCE[group[0]!.id] ?? "weekly" }] : [];
+    return asOf ? [{ name, asOf, cadence: cadenceOf(group[0]!.id), sources: group }] : [];
   });
 }
 

@@ -138,7 +138,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       const cards = Object.fromEntries(statuses.flatMap((st) => {
         const h = byCode.get(st.code);
         const reading = live.find((r) => r.hospital_code === st.code && r.is_adult_ed) ?? null;
-        return h ? [[st.code, <EdNearbyCard key={st.code} status={st} hospital={h} live={reading} />]] : [];
+        return h ? [[st.code, <EdNearbyCard key={st.code} status={st} hospital={h} live={reading} weeklyAsOf={weeklyRes.value.meta.as_of} />]] : [];
       }));
       const exclusions = hospitals.find((h) => h.exclusions_note)?.exclusions_note ?? null;
       return (

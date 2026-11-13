@@ -2,19 +2,28 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { CaveatChip } from "./CaveatChip";
+import { datasetFreshness } from "@/lib/freshness";
+
 import { FreshnessBadge } from "./FreshnessBadge";
 import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "./States";
 
 describe("FreshnessBadge", () => {
   it.each([
-    ["2026-10-31", "green", "Up to date · weekly data, 6 days old"],
-    ["2026-10-20", "amber", "Due an update · weekly data, 2 weeks old"],
-    ["2026-09-01", "red", "Out of date · weekly data, 2 months old"],
+    ["2026-10-31", "up_to_date", "Up to date · weekly · as of 31 Oct 2026"],
+    ["2026-10-20", "due", "Due an update · weekly · as of 20 Oct 2026"],
+    ["2026-09-01", "overdue", "Overdue · weekly · as of 1 Sept 2026"],
     ["", "unknown", "Date unknown"],
-  ] as const)("%s is %s with a text label", (asOf, level, text) => {
-    render(<FreshnessBadge asOf={asOf} cadence="weekly" now={new Date("2026-11-06T12:00:00+08:00")} />);
-    const badge = screen.getByText(text);
-    expect(badge).toHaveAttribute("data-level", level);
+  ] as const)("%s is %s with a text label, the cadence and the date", (asOf, level, text) => {
+    const now = new Date("2026-11-06T12:00:00+08:00");
+    render(<FreshnessBadge freshness={datasetFreshness("moh_bed_waits", asOf, now)} />);
+    expect(screen.getByTestId("freshness-badge")).toHaveTextContent(text);
+    expect(screen.getByTestId("freshness-badge")).toHaveAttribute("data-level", level);
+  });
+
+  it("judges a meta by the least fresh of its sources", () => {
+    const meta = { sources: [{ id: "nuhs_live", as_of: "2026-11-06T08:00:00" }, { id: "moh_bed_waits", as_of: "2026-10-20" }] };
+    render(<FreshnessBadge meta={meta as never} now={new Date("2026-11-06T12:00:00+08:00")} />);
+    expect(screen.getByTestId("freshness-badge")).toHaveAttribute("data-level", "due");
   });
 });
 

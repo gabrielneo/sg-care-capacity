@@ -8,7 +8,7 @@ test.describe("site strip", () => {
   test("shows the overview, a pill per dataset and the 995 notice stays on the page", async ({ page }) => {
     await page.goto("/");
     const strip = page.getByTestId("site-strip");
-    await expect(page.getByTestId("strip-summary")).toContainText(/\d+ of \d+ (emergency departments|EDs) busier than usual|No (emergency department|ED) has a comparison/, { useInnerText: true });
+    await expect(page.getByTestId("strip-summary")).toContainText(/\d+ of \d+ emergency departments above usual|No comparison with usual yet/);
     await expect(page.getByTestId("strip-summary")).toHaveAttribute("href", "/?view=planner");
     // One fixed height at every width, so nothing shifts when it loads; the pills are behind Details.
     expect((await strip.boundingBox())!.height).toBeLessThanOrEqual(46);

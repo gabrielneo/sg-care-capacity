@@ -103,6 +103,8 @@ jobs:
         run: npm run check:api-types
       - name: Glossary module matches docs/glossary.yml (regenerate with npm run gen:glossary)
         run: npm run check:glossary
+      - name: Freshness rules match docs/datasets.yml (regenerate with npm run gen:datasets)
+        run: npm run check:datasets
       - name: Lint (ESLint, terminology lint, readability report)
         run: npm run lint
       - name: Type-check (strict)

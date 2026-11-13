@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { Insight } from "./api/types";
+import type { Insight, Meta } from "./api/types";
+import { metaFreshness } from "./freshness";
 import { storySample } from "./samples";
-import { takeaways } from "./takeaways";
+import { takeaways, takeawaysMeta } from "./takeaways";
 
 const ed = (hospital_code: string) => ({ hospital_code, facility_type: "ED" as const });
 const HOSPITALS = [ed("SKH"), ed("NUH"), { hospital_code: "AH", facility_type: "UCC" as const }];
@@ -42,5 +43,30 @@ describe("takeaways", () => {
     const base = storySample[0] as unknown as Insight;
     expect(takeaways([{ ...base, headline_rank: null }], [])).toEqual([]);
     expect(takeaways([{ ...base, headline_rank: 1, chart: null }], [])).toEqual([]);
+  });
+});
+
+describe("takeawaysMeta", () => {
+  // The /insights response cites every source behind every finding; ED takeaways use MOH's only.
+  const meta = {
+    as_of: "2026-10-25", caveats: [], coverage: null, snapshot_id: "data-2026-11-09", dq_warnings: [],
+    sources: [
+      { id: "datagov_chas", name: "data.gov.sg, CHAS clinics", as_of: "2024-06-06T14:36:42", as_of_basis: null, last_fetched_at: null, url: null },
+      { id: "moh_bed_waits", name: "MOH, bed waits", as_of: "2026-10-31", as_of_basis: null, last_fetched_at: null, url: null },
+      { id: "singstat_residents", name: "SingStat, residents", as_of: "2026-06-30", as_of_basis: null, last_fetched_at: null, url: null },
+    ],
+  } as unknown as Meta;
+  const base = storySample[0] as unknown as Insight;
+
+  it("cites only the datasets the takeaways use, never data.gov.sg or SingStat for ED findings", () => {
+    const t = takeaways([{ ...base, headline_rank: 1, source_ids: ["moh_bed_waits"], dq_tables: ["moh_bed_waits"] }], [ed(base.entity)]);
+    const own = takeawaysMeta(t, meta);
+    expect(own.sources.map((s) => s.id)).toEqual(["moh_bed_waits"]);
+    expect(own.as_of).toBe("2026-10-31");
+  });
+
+  it("inherits MOH's freshness: never up to date while MOH is due an update", () => {
+    const t = takeaways([{ ...base, headline_rank: 1, source_ids: ["moh_bed_waits"], dq_tables: [] }], [ed(base.entity)]);
+    expect(metaFreshness(takeawaysMeta(t, meta), new Date("2026-11-14T12:00:00+08:00"))!.label).toBe("Due an update");
   });
 });

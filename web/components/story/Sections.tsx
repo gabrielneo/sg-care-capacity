@@ -5,7 +5,6 @@ import type { Meta, PopulationYear } from "@/lib/api/types";
 import { AVERAGE_VS_TYPICAL, BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
 import { term } from "@/lib/glossary";
 import { formatAsOf } from "@/lib/dates";
-import { cadenceFor } from "@/lib/freshness";
 import { findingMeta, sourceDates } from "@/lib/provenance";
 import {
   chartFormat,
@@ -90,7 +89,7 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
       </h1>
       <p className="mt-2 max-w-3xl text-sm text-muted" data-testid="hero-bed-wait"><Glossed text={BED_WAIT_SHORT} /></p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
-        <FreshnessBadge asOf={own.as_of} cadence={cadenceFor(own)} />
+        <FreshnessBadge meta={own} />
         <AsOfLine asOf={own.as_of} meta={own} bySource findingTo={insight.as_of} />
       </div>
     </header>

@@ -15,9 +15,9 @@ const meta = { snapshot_id: "data-2026-11-08", as_of: "2026-10-25", sources: [CH
 
 describe("source dates", () => {
   it("gives each publisher its own date (the NUHS-vs-MOH chart: audit H-1)", () => {
-    expect(sourceDates([NUHS, MOH_WAIT, MOH_ATT])).toEqual([
-      { name: "NUHS", asOf: "2026-11-08T22:00:44", cadence: "live" },
-      { name: "MOH", asOf: "2026-10-31", cadence: "weekly" }]);
+    expect(sourceDates([NUHS, MOH_WAIT, MOH_ATT])).toMatchObject([
+      { name: "NUHS", asOf: "2026-11-08T22:00:44", cadence: "moment", sources: [NUHS] },
+      { name: "MOH", asOf: "2026-10-31", cadence: "weekly", sources: [MOH_WAIT, MOH_ATT] }]);
   });
 
   it("compares dates as times, and skips sources without one", () => {

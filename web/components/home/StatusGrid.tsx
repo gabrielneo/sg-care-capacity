@@ -75,7 +75,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
       </div>
       <ul className={gridClass} data-testid="status-group" data-group="ed">
         {rankable.map((s) => (
-          <StatusCard key={s.code} status={s} note={noteFor(s.code)} live={liveFor(s.code)} density={density} />
+          <StatusCard key={s.code} status={s} note={noteFor(s.code)} live={liveFor(s.code)} weeklyAsOf={meta.as_of} density={density} />
         ))}
       </ul>
       {urgentCare.length ? (
@@ -84,7 +84,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
           <p className="text-sm text-muted">{URGENT_CARE_NOTE}.</p>
           <ul className={gridClass} data-testid="status-group" data-group="ucc">
             {urgentCare.map((s) => (
-              <StatusCard key={s.code} status={s} note={noteFor(s.code)} live={liveFor(s.code)} density={density} />
+              <StatusCard key={s.code} status={s} note={noteFor(s.code)} live={liveFor(s.code)} weeklyAsOf={meta.as_of} density={density} />
             ))}
           </ul>
         </div>

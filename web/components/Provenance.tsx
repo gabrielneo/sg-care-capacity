@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import type { Meta, Source } from "@/lib/api/types";
 import { formatAsOf, parseAsOf } from "@/lib/dates";
-import { type Cadence, cadenceFor } from "@/lib/freshness";
+import { cadenceOf } from "@/lib/freshness";
 import { sourceDates } from "@/lib/provenance";
 
 import { FreshnessBadge } from "./FreshnessBadge";
@@ -48,7 +48,6 @@ export function Provenance({
   caveat,
   notes = [],
   detail = false,
-  cadence,
   now,
   compact = false,
   bySource = false,
@@ -62,7 +61,6 @@ export function Provenance({
   caveat?: string | null;
   notes?: string[];
   detail?: boolean;
-  cadence?: Cadence;
   now?: Date;
   compact?: boolean;
   bySource?: boolean;
@@ -75,9 +73,12 @@ export function Provenance({
   /** 14px instead of 12px: the public view's size for the date and source. */
   large?: boolean;
 }) {
-  const c = cadence ?? cadenceFor(meta);
+  // Each source is judged by its own rule (docs/datasets.yml). One date for the figure: its badge is the least
+  // fresh of its sources. By source: each publisher's own date and badge.
   const perSource = bySource ? sourceDates(meta.sources) : [];
-  const dates = perSource.length > 1 ? perSource : [{ name: "", asOf: meta.as_of, cadence: perSource[0]?.cadence ?? c }];
+  const live = meta.sources.length > 0 && meta.sources.every((s) => cadenceOf(s.id) === "moment");
+  const dates = perSource.length > 1 ? perSource
+    : [{ name: "", asOf: meta.as_of, cadence: live ? "moment" as const : "weekly" as const, sources: meta.sources }];
   const warnings = meta.dq_warnings;
   const extra = detail ? meta.caveats : notes;
   const count = extra.length + (detail ? warnings.length : warnings.length ? 1 : 0);
@@ -89,7 +90,7 @@ export function Provenance({
           {dates.map((d, i) => (
             <span key={d.name || "all"}>
               {i > 0 ? " and " : null}
-              <time dateTime={d.asOf}>{formatAsOf(d.asOf, { withTime: d.cadence === "live" })}</time>
+              <time dateTime={d.asOf}>{formatAsOf(d.asOf, { withTime: d.cadence === "moment" })}</time>
               {d.name ? ` (${d.name})` : null}
             </span>
           ))}
@@ -115,7 +116,7 @@ export function Provenance({
           {caveat && !compact ? <>{" · "}<Glossed text={caveat} /></> : null}
         </p>
         {release || !freshness ? null : dates.map((d) => (
-          <FreshnessBadge key={d.name || "all"} asOf={d.asOf} cadence={d.cadence} now={now} source={d.name || undefined} />
+          <FreshnessBadge key={d.name || "all"} meta={{ sources: d.sources }} now={now} source={d.name || undefined} />
         ))}
       </div>
       {!compact && count > 0 ? (

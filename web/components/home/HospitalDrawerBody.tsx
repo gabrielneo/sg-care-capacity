@@ -7,7 +7,7 @@ import { Term } from "@/components/terms/Term";
 import type { Hospital, LiveReading, Meta } from "@/lib/api/types";
 import { BED_WAIT_LABEL } from "@/lib/copy";
 import { formatAsOf } from "@/lib/dates";
-import { estimateText } from "@/lib/estimates";
+import { estimateText, nuhsTimingNote } from "@/lib/estimates";
 import { shortNote } from "@/lib/hospitalNotes";
 import { formatDelta } from "@/lib/planner";
 import { type HospitalStatus, LEVELS, SPARK_WEEKS, usualBand } from "@/lib/status";
@@ -86,6 +86,7 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
           To see a doctor (<Term id="nuhs" /> estimate): {estimateText(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
           <span className="block text-xs text-muted">
             As of <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { withTime: true })}</time>. An estimate, not live, and not the bed wait above.
+            {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, meta.as_of)}</span>
           </span>
         </p>
       ) : null}

@@ -3,7 +3,7 @@ import { Term } from "@/components/terms/Term";
 import type { Hospital, LiveReading } from "@/lib/api/types";
 import { BED_WAIT_LABEL } from "@/lib/copy";
 import { formatAsOf } from "@/lib/dates";
-import { estimateText } from "@/lib/estimates";
+import { estimateText, nuhsTimingNote } from "@/lib/estimates";
 import { shortNote } from "@/lib/hospitalNotes";
 import { type HospitalStatus, LEVELS } from "@/lib/status";
 
@@ -19,7 +19,8 @@ const hours = (v: number) => `${v.toFixed(1)} ${v === 1 ? "hour" : "hours"}`;
  * - The bed wait always carries the full label (Rule 4) and a "?" saying it isn't the time to see a doctor.
  * - "To see a doctor" appears only where NUHS publishes an estimate, labelled so, with its own time.
  */
-export function EdNearbyCard({ status, hospital, live }: { status: HospitalStatus; hospital: Hospital; live: LiveReading | null }) {
+export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
+  status: HospitalStatus; hospital: Hospital; live: LiveReading | null; weeklyAsOf?: string | null }) {
   const note = shortNote(hospital);
   const info = LEVELS[status.level];
   return (
@@ -47,6 +48,7 @@ export function EdNearbyCard({ status, hospital, live }: { status: HospitalStatu
           To see a doctor (<Term id="nuhs" /> estimate): {estimateText(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
           <span className="block text-sm text-muted">
             As of <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { withTime: true })}</time>. An estimate, not live.
+            {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, weeklyAsOf)}</span>
           </span>
         </p>
       ) : null}

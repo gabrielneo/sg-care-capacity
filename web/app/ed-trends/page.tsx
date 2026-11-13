@@ -185,7 +185,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         ) : null}
 
         {slopeMeta ? (
-          <ChartCard title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} cadence="weekly" bySource
+          <ChartCard title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} bySource
                      description={<Glossed text="For each NUHS site: MOH's latest daily median beside NUHS's latest estimate of the bed wait. This chart shows values only; the comparison toggle doesn't apply." />}>
             {callouts(["source_gap"], "NUHS estimate and MOH figure")}
             <SlopeChart pairs={pairs} finding={findingFor(findings, "source_gap", hospitals)} />

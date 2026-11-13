@@ -1,59 +1,64 @@
 /**
- * How fresh meta.as_of is, judged against how often its source publishes. One threshold for all
- * sources would be wrong: MOH publishes weekly, SingStat once a year, and the CHAS clinic list
- * was last updated in June 2024 (so it shows as old, which is true).
+ * How fresh each dataset is: one function, one config (docs/datasets.yml, generated into
+ * lib/datasets.generated.ts; the pipeline's insight ranking reads the same file).
+ *
+ * - Each dataset has its own cadence and limits: MOH publishes weekly, SingStat once a year, and the
+ *   CHAS clinic list was last updated in June 2024 (so it shows as old, which is true).
+ * - The age counts from the dataset's own as-of date (the last day its figures describe), never from
+ *   the date of the site's data release.
+ * - A figure computed from several datasets (a finding, a takeaway) inherits the least fresh of them,
+ *   so it can never say "Up to date" while one of its sources says "Due an update".
+ * - `now` is injected everywhere, so tests never read the real clock.
  */
-import type { Meta } from "./api/types";
-import { parseAsOf } from "./dates";
+import type { Meta, Source } from "./api/types";
+import { DATASETS, type DatasetCadence, type DatasetRule, type Span } from "./datasets.generated";
+import { formatAsOf, parseAsOf } from "./dates";
 
-export type Cadence = "weekly" | "annual" | "irregular" | "live";
-export type Level = "green" | "amber" | "red" | "unknown";
+export type Cadence = DatasetCadence;
+export type Level = "up_to_date" | "due" | "overdue" | "unknown";
 
-interface Span {
-  days?: number;
-  months?: number;
-}
-
-export const THRESHOLDS: Record<Cadence, { green: Span; amber: Span; describe: string }> = {
-  weekly: { green: { days: 10 }, amber: { days: 21 }, describe: "published weekly: up to date within 10 days" },
-  annual: { green: { months: 15 }, amber: { months: 18 }, describe: "published yearly: up to date within 15 months" },
-  irregular: { green: { months: 12 }, amber: { months: 24 }, describe: "updated irregularly: up to date within 12 months" },
-  live: { green: { days: 1 }, amber: { days: 7 }, describe: "a reading at one moment: up to date within a day" },
+export const LABELS: Record<Level, string> = {
+  up_to_date: "Up to date",
+  // Not "Ageing": on a site about an ageing population, testers read it as a topic tag (comprehension report).
+  due: "Due an update",
+  overdue: "Overdue",
+  unknown: "Date unknown",
 };
 
-export const CADENCE_BY_SOURCE: Record<string, Cadence> = {
-  moh_bed_waits: "weekly",
-  moh_ed_attendances: "weekly",
-  nuhs_live: "live",
-  singstat_residents: "annual",
-  datagov_annual_ae: "annual",
-  datagov_chas: "irregular",
-  datagov_planning_areas: "irregular",
-  datagov_polyclinics: "irregular",
-};
-
-// Not "Ageing": on a site about an ageing population, testers read it as a topic tag (comprehension report).
-export const LABELS: Record<Level, string> = { green: "Up to date", amber: "Due an update", red: "Out of date", unknown: "Date unknown" };
-
-/** How often the source publishes, so "4 months old" and "up to date" can sit together without contradiction. */
+/** The cadence in a word or two, as the badge shows it. */
 export const CADENCE_TEXT: Record<Cadence, string> = {
-  weekly: "weekly data",
-  annual: "yearly data",
-  irregular: "irregular updates",
-  live: "a live reading",
+  weekly: "weekly",
+  yearly: "yearly",
+  irregular: "updated irregularly",
+  moment: "a reading at one moment",
 };
 
-/** The cadence of the source that meta.as_of comes from (the oldest input, for combined data). */
-export function cadenceFor(meta: Pick<Meta, "as_of" | "sources">): Cadence {
-  const source = meta.sources.find((s) => s.as_of === meta.as_of) ?? meta.sources[0];
-  return (source && CADENCE_BY_SOURCE[source.id]) ?? "weekly";
+/** Least fresh last: what a combined figure inherits is the furthest along this list. */
+const ORDER: readonly Level[] = ["up_to_date", "due", "overdue", "unknown"];
+
+/** An unknown source id is judged as an irregular list: the most lenient rule, never a false alarm. */
+const FALLBACK: DatasetRule = { label: "Data", publisher: "", cadence: "irregular", due_after: { months: 12 }, overdue_after: { months: 24 } };
+
+export function datasetRule(sourceId: string): DatasetRule {
+  return DATASETS[sourceId] ?? FALLBACK;
 }
+
+export const cadenceOf = (sourceId: string): Cadence => datasetRule(sourceId).cadence;
 
 function addSpan(d: Date, span: Span): Date {
   const out = new Date(d.getTime());
   if (span.months) out.setUTCMonth(out.getUTCMonth() + span.months);
   if (span.days) out.setUTCDate(out.getUTCDate() + span.days);
   return out;
+}
+
+const spanText = (s: Span) => (s.months ? `${s.months} months` : `${s.days} day${s.days === 1 ? "" : "s"}`);
+
+/** "weekly: due an update after 10 days, overdue after 21 days", for the Data Quality page and the badge's tooltip. */
+export function ruleText(sourceId: string): string {
+  const r = datasetRule(sourceId);
+  if (r.inherits) return `${CADENCE_TEXT[r.cadence]}: as fresh as the least fresh data it uses`;
+  return `${CADENCE_TEXT[r.cadence]}: due an update after ${spanText(r.due_after!)}, overdue after ${spanText(r.overdue_after!)}`;
 }
 
 export function humanAge(ms: number): string {
@@ -69,14 +74,44 @@ export function humanAge(ms: number): string {
 export interface Freshness {
   level: Level;
   label: string;
+  /** The as-of date the age counts from (the dataset's own). */
+  asOf: string;
+  /** "2 weeks", or null when the date can't be read. */
   age: string | null;
   cadence: Cadence;
+  /** The dataset it was judged by (for a combined figure, the least fresh one). */
+  sourceId: string;
 }
 
-export function freshness(asOf: string, cadence: Cadence, now: Date = new Date()): Freshness {
+/** One dataset's freshness: its own as-of date against its own limits. */
+export function datasetFreshness(sourceId: string, asOf: string, now: Date = new Date()): Freshness {
+  const rule = datasetRule(sourceId);
   const d = parseAsOf(asOf);
-  if (!d) return { level: "unknown", label: LABELS.unknown, age: null, cadence };
-  const t = THRESHOLDS[cadence];
-  const level: Level = now <= addSpan(d, t.green) ? "green" : now <= addSpan(d, t.amber) ? "amber" : "red";
-  return { level, label: LABELS[level], age: humanAge(Math.max(0, now.getTime() - d.getTime())), cadence };
+  if (!d || rule.inherits) return { level: "unknown", label: LABELS.unknown, asOf, age: null, cadence: rule.cadence, sourceId };
+  const level: Level = now <= addSpan(d, rule.due_after!) ? "up_to_date" : now <= addSpan(d, rule.overdue_after!) ? "due" : "overdue";
+  return { level, label: LABELS[level], asOf, age: humanAge(Math.max(0, now.getTime() - d.getTime())), cadence: rule.cadence, sourceId };
+}
+
+/** The least fresh of several. Empty -> unknown. */
+export function worstFreshness(list: readonly Freshness[]): Freshness | null {
+  if (!list.length) return null;
+  return list.reduce((a, b) => (ORDER.indexOf(b.level) > ORDER.indexOf(a.level) ? b : a));
+}
+
+/**
+ * A figure's freshness from the sources it uses (meta.sources, each with its own as_of): the least
+ * fresh of them. This is how findings and takeaways inherit their datasets' freshness.
+ */
+export function sourcesFreshness(sources: readonly Pick<Source, "id" | "as_of">[], now: Date = new Date()): Freshness | null {
+  return worstFreshness(sources.flatMap((s) => (s.as_of ? [datasetFreshness(s.id, s.as_of, now)] : [])));
+}
+
+export function metaFreshness(meta: Pick<Meta, "sources">, now: Date = new Date()): Freshness | null {
+  return sourcesFreshness(meta.sources, now);
+}
+
+/** "Due an update · weekly · as of 31 Oct 2026": the label, the cadence and the as-of date, in that order. */
+export function freshnessText(f: Freshness): string {
+  if (f.level === "unknown") return f.label;
+  return `${f.label} · ${CADENCE_TEXT[f.cadence]} · as of ${formatAsOf(f.asOf, { withTime: f.cadence === "moment" })}`;
 }

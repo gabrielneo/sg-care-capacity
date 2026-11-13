@@ -34,7 +34,7 @@ describe("buildStrip", () => {
 
   it("gives the bed-wait pill its own date and age, with no doctor pill when NUHS has no reading", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: nuhsMeta, now: NOW })!;
-    expect(s.pills).toEqual([{ id: "bed", dataset: "Bed waits", source: "MOH", level: "amber", label: "Due an update",
+    expect(s.pills).toEqual([{ id: "bed", dataset: "Bed waits", source: "MOH", level: "due", label: "Due an update",
       detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" }]);
     expect(s.bed).toEqual({ source: "MOH", asOf: "2026-10-31" });
   });
@@ -42,16 +42,16 @@ describe("buildStrip", () => {
   it("labels the estimates with their own time, not the bed-wait date", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [{} as LiveReading], liveMeta: nuhsMeta, now: NOW })!;
     const doctor = s.pills.find((p) => p.id === "doctor")!;
-    expect(doctor).toMatchObject({ dataset: "Doctor-wait estimates", source: "NUHS", level: "green", asOf: "2026-11-11T12:01:49" });
+    expect(doctor).toMatchObject({ dataset: "Doctor-wait estimates", source: "NUHS", level: "up_to_date", asOf: "2026-11-11T12:01:49" });
     expect(doctor.detail).toBe("some hospitals only · updated 11 Nov 2026, 12:01 pm SGT");
     expect(doctor.detail).not.toContain("31 Oct");
   });
 
   it("turns amber to green to red as the injected date moves", () => {
     const at = (iso: string) => buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: null, now: new Date(iso) })!.pills[0]!.level;
-    expect(at("2026-11-10T00:00:00+08:00")).toBe("green");
-    expect(at("2026-11-12T00:00:00+08:00")).toBe("amber");
-    expect(at("2026-11-22T00:00:00+08:00")).toBe("red");
+    expect(at("2026-11-10T00:00:00+08:00")).toBe("up_to_date");
+    expect(at("2026-11-12T00:00:00+08:00")).toBe("due");
+    expect(at("2026-11-22T00:00:00+08:00")).toBe("overdue");
   });
 
   it("keeps hospitals with no comparison separate from 'not above usual'", () => {

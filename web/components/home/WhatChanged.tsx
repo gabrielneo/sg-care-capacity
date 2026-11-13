@@ -1,6 +1,5 @@
 import { FreshnessBadge } from "@/components/FreshnessBadge";
 import type { Meta } from "@/lib/api/types";
-import { cadenceFor } from "@/lib/freshness";
 import { LEVELS } from "@/lib/status";
 import { formatWeek, type WeekRange } from "@/lib/weeks";
 import type { WeekChanges } from "@/lib/weekChanges";
@@ -19,7 +18,7 @@ export function WhatChanged({ changes, names, meta, latestWeek }: {
     <section aria-labelledby="changes-heading" className="py-6" data-testid="what-changed">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 id="changes-heading" className="text-xl font-semibold tracking-tight text-ink">What changed since the week before</h2>
-        <FreshnessBadge asOf={meta.as_of} cadence={cadenceFor(meta)} />
+        <FreshnessBadge meta={meta} />
       </div>
       <p className="mt-1 text-sm text-muted">Week of {formatWeek(latestWeek)} compared with {before}. A badge compares a week with the hospital&apos;s own usual.</p>
       {moved.length ? (

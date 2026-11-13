@@ -1,5 +1,5 @@
 /**
- * The site strip's content: how many emergency departments are busier than usual (the urgent care
+ * The site strip's content: how many emergency departments are above usual (the urgent care
  * centre is never counted), and how fresh each dataset is.
  * Built on the server (app/strip.json) from the same statuses as the cards, so the strip can't disagree
  * with them, and with the age worked out there: the browser's clock is never used to judge freshness.
@@ -8,7 +8,7 @@
 import type { EdWeek, Hospital, LiveReading, Meta } from "./api/types";
 import { formatAsOf } from "./dates";
 import { latestCompleteWeek, usualLevels } from "./edCompare";
-import { CADENCE_TEXT, freshness, type Level } from "./freshness";
+import { CADENCE_TEXT, sourcesFreshness, type Level } from "./freshness";
 import { rankableCodes } from "./hospitals";
 import { aboveUsual } from "./planner";
 import { sourceDates } from "./provenance";
@@ -25,7 +25,7 @@ export interface StripPill {
   /** Publisher, e.g. "MOH". */
   source: string;
   level: Level;
-  /** "Up to date", "Due an update", "Out of date", "Date unknown". */
+  /** "Up to date", "Due an update", "Overdue", "Date unknown". */
   label: string;
   /** "weekly · as of 31 Oct 2026 · 11 days old", or "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT" for the estimates. */
   detail: string;
@@ -59,11 +59,13 @@ interface Inputs {
 function pillFor(id: StripPill["id"], dataset: string, meta: Meta | null, now: Date): StripPill | null {
   const src = meta ? sourceDates(meta.sources)[0] : undefined;
   if (!src) return null;
-  const f = freshness(src.asOf, src.cadence, now);
+  // Judged by the dataset's own rule (docs/datasets.yml), from its own as-of date.
+  const f = sourcesFreshness(src.sources, now);
+  if (!f) return null;
   // The date is written out, not only the age: a visitor on a phone can't hover for it.
   const detail = id === "doctor"
     ? `some hospitals only · updated ${formatAsOf(src.asOf, { withTime: true })}`
-    : `${CADENCE_TEXT[src.cadence].replace(" data", "")} · as of ${formatAsOf(src.asOf)}${f.age ? ` · ${f.age} old` : ""}`;
+    : `${CADENCE_TEXT[src.cadence]} · as of ${formatAsOf(src.asOf)}${f.age ? ` · ${f.age} old` : ""}`;
   return { id, dataset, source: src.name, level: f.level, label: f.label, detail, asOf: src.asOf };
 }
 

@@ -16,6 +16,7 @@ import { DeltaNumber, deltaFromDisplay } from "@/components/story/DeltaNumber";
 import { HighlightPhrase } from "@/components/story/HighlightPhrase";
 import { api, settle } from "@/lib/api/client";
 import { devPagesEnabled } from "@/lib/devPages";
+import { datasetFreshness } from "@/lib/freshness";
 import { colors, mapScale } from "@/lib/palette";
 import { clinicMeta, edMeta, insightMeta, storySample } from "@/lib/samples";
 import { LEVEL_ORDER } from "@/lib/status";
@@ -129,11 +130,11 @@ export default function ComponentsPage() {
 
       <Section title="FreshnessBadge">
         <div className="flex flex-wrap gap-2">
-          <FreshnessBadge asOf="2026-10-31" cadence="weekly" now={SAMPLE_NOW} />
-          <FreshnessBadge asOf="2026-10-20" cadence="weekly" now={SAMPLE_NOW} />
-          <FreshnessBadge asOf="2024-06-06T14:36:42" cadence="irregular" now={SAMPLE_NOW} />
-          <FreshnessBadge asOf="2026-06-30" cadence="annual" now={SAMPLE_NOW} />
-          <FreshnessBadge asOf="" cadence="weekly" now={SAMPLE_NOW} />
+          <FreshnessBadge freshness={datasetFreshness("moh_bed_waits", "2026-10-31", SAMPLE_NOW)} />
+          <FreshnessBadge freshness={datasetFreshness("moh_bed_waits", "2026-10-20", SAMPLE_NOW)} />
+          <FreshnessBadge freshness={datasetFreshness("datagov_chas", "2024-06-06T14:36:42", SAMPLE_NOW)} />
+          <FreshnessBadge freshness={datasetFreshness("singstat_residents", "2026-06-30", SAMPLE_NOW)} />
+          <FreshnessBadge freshness={datasetFreshness("moh_bed_waits", "", SAMPLE_NOW)} />
         </div>
       </Section>
 

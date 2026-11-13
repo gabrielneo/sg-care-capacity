@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { StripData } from "@/lib/strip";
@@ -9,8 +9,8 @@ const strip: StripData = {
   total: 9, above: 3, noComparison: 0, week: "19–25 Oct 2026",
   bed: { source: "MOH", asOf: "2026-10-31" },
   pills: [
-    { id: "bed", dataset: "Bed waits", source: "MOH", level: "amber", label: "Due an update", detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" },
-    { id: "doctor", dataset: "Doctor-wait estimates", source: "NUHS", level: "green", label: "Up to date", detail: "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT", asOf: "2026-11-11T12:01:49" },
+    { id: "bed", dataset: "Bed waits", source: "MOH", level: "due", label: "Due an update", detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" },
+    { id: "doctor", dataset: "Doctor-wait estimates", source: "NUHS", level: "up_to_date", label: "Up to date", detail: "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT", asOf: "2026-11-11T12:01:49" },
   ],
 };
 
@@ -23,10 +23,7 @@ describe("SiteStrip", () => {
     serve({ ok: true, strip });
     render(<SiteStrip />);
     const link = await screen.findByTestId("strip-summary");
-    // Both wordings are in the DOM; CSS shows "EDs" below 640px and the full words above, so the bar stays one line.
-    expect(link).toHaveTextContent(/3 of 9 EDsemergency departments busier than usual/);
-    expect(within(link).getByText("EDs")).toHaveClass("sm:hidden");
-    expect(within(link).getByText("emergency departments")).toHaveClass("hidden", "sm:inline");
+    expect(link).toHaveTextContent("3 of 9 emergency departments above usual");
     expect(link).toHaveTextContent("week of 19–25 Oct 2026");   // joins the line from 640px; below that the line is the source and date
     expect(link).toHaveAttribute("href", "/?view=planner");
   });

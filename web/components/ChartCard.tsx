@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import type { Meta } from "@/lib/api/types";
-import type { Cadence } from "@/lib/freshness";
 
 import { Provenance, provenanceProblems } from "./Provenance";
 import { ErrorState } from "./States";
@@ -20,7 +19,6 @@ export interface ChartCardProps {
   notes?: string[];
   /** Show the API's own caveats and each warning's details (Data Quality only). */
   detail?: boolean;
-  cadence?: Cadence;
   now?: Date;
   /** 3 inside a section that already has an h2 (e.g. the Overview's findings). */
   headingLevel?: 2 | 3;
@@ -38,7 +36,7 @@ export interface ChartCardProps {
  * A titled chart with its provenance footer. If meta has no usable as_of or no source, the chart
  * is NOT rendered: a figure without a date and source is never shown.
  */
-export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, cadence, now, headingLevel = 2,
+export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, now, headingLevel = 2,
                            download, bySource, findingTo, release }: ChartCardProps) {
   const id = `chart-${(slug ?? (typeof title === "string" ? title : "card")).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
@@ -56,7 +54,7 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
       ) : (
         <>
           <div className="mt-4">{children}</div>
-          <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} cadence={cadence} now={now}
+          <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} now={now}
                       bySource={bySource} findingTo={findingTo} release={release} />
           {download ? (
             <p className="mt-2 text-xs">
