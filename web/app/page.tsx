@@ -11,6 +11,7 @@ import { HomeNotice } from "@/components/home/HomeHero";
 import { MethodsDrawer } from "@/components/home/MethodsDrawer";
 import { StatusGrid } from "@/components/home/StatusGrid";
 import { SummaryStrip } from "@/components/home/SummaryStrip";
+import { WhatChanged } from "@/components/home/WhatChanged";
 import { Takeaways } from "@/components/home/Takeaways";
 import { WeekPattern } from "@/components/home/WeekPattern";
 import { Provenance } from "@/components/Provenance";
@@ -25,6 +26,7 @@ import { parseSort, sortStatuses } from "@/lib/planner";
 import { shortNote } from "@/lib/hospitalNotes";
 import { hospitalStatus, SPARK_WEEKS } from "@/lib/status";
 import { takeaways } from "@/lib/takeaways";
+import { weekChanges } from "@/lib/weekChanges";
 import { formatWeek } from "@/lib/weeks";
 
 export const dynamic = "force-dynamic"; // rendered per request (the search and the view are in the URL); API responses are cached for an hour
@@ -154,6 +156,10 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     // Without the hospital figures the cards below show the one error message; no second one here.
     summary: () => (statusOk ? (
       <SummaryStrip statuses={statuses} hospitals={hospitals} meta={weeklyRes.value.meta} latestWeek={latestWeek} />
+    ) : null),
+
+    changes: () => (statusOk ? (
+      <WhatChanged changes={weekChanges(weekly, codes, latest, statuses)} names={names} meta={weeklyRes.value.meta} latestWeek={latestWeek} />
     ) : null),
 
     hospitals: (density) => (statusOk ? (

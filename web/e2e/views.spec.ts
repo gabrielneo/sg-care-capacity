@@ -16,6 +16,7 @@ const SECTIONS: Record<string, View[]> = {
   "home-hero": ["public", "planner", "analyst"],
   "clinic-finder": ["public"],
   "summary-strip": ["planner", "analyst"],
+  "what-changed": ["planner", "analyst"],
   "ed-near": ["public"],
   "status-grid": ["planner", "analyst"],
   "map-section": ["public"],

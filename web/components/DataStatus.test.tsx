@@ -12,6 +12,18 @@ describe("DataStatusLine", () => {
       .toHaveAttribute("href", "https://github.com/o/r/releases/tag/data-2026-11-08");
   });
 
+  it("says when the next weekly check is and that the sources lag", () => {
+    render(<DataStatusLine now={new Date("2026-11-14T10:00:00+08:00")} status={{ ok: true, asOf: "2026-11-08T17:44:14",
+      info: { snapshot_id: "data-2026-11-08", release_url: null } }} />);
+    expect(screen.getByTestId("data-cadence")).toHaveTextContent("Checked weekly on Sundays. Next check Sun, 15 Nov.");
+    expect(screen.getByTestId("data-cadence")).toHaveTextContent("The sources publish with a lag");
+  });
+
+  it("says plainly when the scheduled check hasn't produced a newer release", () => {
+    render(<DataStatusLine now={new Date("2026-11-17T09:00:00+08:00")} status={{ ok: true, asOf: "2026-11-08", info: { snapshot_id: "data-2026-11-08", release_url: null } }} />);
+    expect(screen.getByTestId("data-cadence")).toHaveTextContent("hasn't produced a newer release yet");
+  });
+
   it("has no link for a local snapshot", () => {
     render(<DataStatusLine status={{ ok: true, asOf: "2026-11-08", info: { snapshot_id: "data-2026-11-08", release_url: null } }} />);
     expect(screen.getByTestId("data-status")).toHaveTextContent("Data release data-2026-11-08, as of 8 Nov 2026");

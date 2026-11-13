@@ -29,12 +29,12 @@ describe("sectionsFor", () => {
   });
 
   it("planner: summary strip, full hospital cards, takeaways", () => {
-    expect(ids("planner")).toEqual(["notice", "summary", "hospitals", "takeaways", "methods"]);
+    expect(ids("planner")).toEqual(["notice", "summary", "hospitals", "changes", "takeaways", "methods"]);
     expect(densityOf("planner", "hospitals")).toBe("full");
   });
 
   it("analyst: everything in planner, plus the weekday pattern, links and the statistics", () => {
-    expect(ids("analyst")).toEqual(["notice", "summary", "hospitals", "takeaways", "weekdays", "links", "methods"]);
+    expect(ids("analyst")).toEqual(["notice", "summary", "hospitals", "changes", "takeaways", "weekdays", "links", "methods"]);
     for (const s of sectionsFor("planner")) expect(ids("analyst")).toContain(s.id);
     expect(densityOf("planner", "methods")).toBe("simple");
     expect(densityOf("analyst", "methods")).toBe("full");

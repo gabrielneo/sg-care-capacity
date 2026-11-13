@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { FigureCadenceNote } from "@/components/FigureCadenceNote";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { type DepthCard, DepthCards, Findings, Hero, Limits, WhyNow } from "@/components/story/Sections";
@@ -69,6 +70,7 @@ export default async function FindingsPage() {
 
       {insights.ok && steps.length ? <Findings insights={steps} meta={insights.value.meta} /> : null}
 
+      <div className="mx-auto max-w-3xl pt-6"><FigureCadenceNote kind="findings" /></div>
       <Limits list={limits.content} />
       <DepthCards cards={cards} />
     </>

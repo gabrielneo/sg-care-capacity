@@ -4,20 +4,23 @@ import { useEffect, useState } from "react";
 
 import type { SnapshotInfo } from "@/lib/api/types";
 import { formatAsOf } from "@/lib/dates";
+import { cadenceSentence } from "@/lib/release";
 
 export type StatusInput = { ok: true; info: Pick<SnapshotInfo, "snapshot_id" | "release_url">; asOf: string } | { ok: false };
 
 /** The footer's status line: which weekly data release the site is serving, when it was made, and a link to it. */
-export function DataStatusLine({ status }: { status: StatusInput }) {
+export function DataStatusLine({ status, now }: { status: StatusInput; now?: Date }) {
   if (!status.ok) {
     return <p className="mt-1" data-testid="data-status">Data release: not available right now.</p>;
   }
   const { snapshot_id, release_url } = status.info;
+  const cadence = cadenceSentence(status.asOf, now);
   return (
     <p className="mt-1" data-testid="data-status">
       Data release <span className="font-mono text-ink">{snapshot_id}</span>, as of{" "}
       <time dateTime={status.asOf}>{formatAsOf(status.asOf)}</time>
       {release_url ? <>{" · "}<a href={release_url}>View the release</a></> : null}
+      {cadence ? <span className="block" data-testid="data-cadence">{cadence} The sources publish with a lag, so the newest week can end days before the check.</span> : null}
     </p>
   );
 }

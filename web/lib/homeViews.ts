@@ -22,7 +22,7 @@ export function parseView(value: string | string[] | null | undefined): View {
   return VIEWS.some((v) => v.id === one) ? (one as View) : DEFAULT_VIEW;
 }
 
-export type SectionId = "notice" | "finder" | "ednear" | "summary" | "hospitals" | "map" | "takeaways" | "weekdays" | "links" | "methods";
+export type SectionId = "notice" | "finder" | "ednear" | "summary" | "changes" | "hospitals" | "map" | "takeaways" | "weekdays" | "links" | "methods";
 
 /** How much a section shows: "simple" is the short form, "full" adds the detail. */
 export type Density = "simple" | "full";
@@ -43,6 +43,8 @@ export const SECTIONS: readonly SectionSpec[] = [
   { id: "summary", views: { planner: "full", analyst: "full" } },
   // Simple: badge, last week's figure and one sentence. Full adds the 12-week line and the change against usual.
   { id: "hospitals", views: { planner: "full", analyst: "full" } },
+  // Which hospitals' badge moved since the week before: computed from the same weekly figures, never written by hand.
+  { id: "changes", views: { planner: "full", analyst: "full" } },
   { id: "map", views: { public: "full" } },
   { id: "takeaways", views: { planner: "full", analyst: "full" } },
   { id: "weekdays", views: { analyst: "full" } },

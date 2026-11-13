@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AuthorByline } from "@/components/AuthorByline";
+import { FigureCadenceNote } from "@/components/FigureCadenceNote";
 import { DocPage } from "@/components/docs/DocPage";
 import { docWords, renderDoc } from "@/lib/docs";
 import { readingMinutes } from "@/lib/story";
@@ -28,6 +29,7 @@ export default async function CaseStudyPage() {
         </p>
         <AuthorByline className="mt-3 text-sm text-muted" />
       </aside>
+      <FigureCadenceNote kind="case-study" />
       {doc.content}
     </DocPage>
   );
