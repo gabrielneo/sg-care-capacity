@@ -13,7 +13,7 @@ const hrs = (v: number) => `${v.toFixed(1)} h`;
 const COLUMNS: { sort: Sort; label: string; dir: "ascending" | "descending" }[] = [
   { sort: "name", label: "Hospital", dir: "ascending" },
   { sort: "usual", label: "Status against usual", dir: "descending" },
-  { sort: "hours", label: "Wait for a ward bed, last week", dir: "descending" },
+  { sort: "hours", label: "Wait for a ward bed, latest complete week", dir: "descending" },
 ];
 
 /**
@@ -62,7 +62,7 @@ export function CareList({ rows, sort, onSort, onOpen }: {
     <div className="overflow-x-auto rounded-xl border border-line bg-surface" data-testid="care-list">
       <table className="w-full text-left text-sm">
         <caption className="p-3 text-left text-sm text-muted">
-          Hospital emergency departments: last week&apos;s wait for a ward bed after the decision to admit, against each hospital&apos;s own usual.
+          Hospital emergency departments: the wait for a ward bed after the decision to admit in the latest complete week, against each hospital&apos;s own usual.
           Sorted by {COLUMNS.find((c) => c.sort === sort)?.label.toLowerCase()}.
         </caption>
         <thead className="border-y border-line bg-page text-xs text-muted">

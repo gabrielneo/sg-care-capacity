@@ -111,7 +111,7 @@ test.describe("Home views", () => {
     await expect(tile("above").getByTestId("above-unknown")).toHaveText("1 with no comparison.");
     await expect(strip.getByTestId("summary-ucc-note")).toContainText("The urgent care centre is left out of these four figures.");
     await expect(tile("change")).toContainText("+25% vs usual");
-    await expect(tile("change")).toContainText("Usual is the 8-week median.");
+    await expect(tile("change")).toContainText("Largest change vs usual (previous 8 complete weeks)");
     await expect(tile("change")).toContainText("Singapore General Hospital (SGH)");
     await expect(tile("middle")).toContainText("Needs 3+ emergency departments");   // 2 full EDs here: no middle value, said so
   });

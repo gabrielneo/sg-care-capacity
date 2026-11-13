@@ -31,7 +31,7 @@ describe("StatusCard densities", () => {
     const card = screen.getByTestId("status-card");
     expect(within(card).getByTestId("status-badge")).toHaveTextContent("▲Higher than usual");
     expect(within(card).getByTestId("status-hours")).toHaveTextContent("5.0 h");
-    expect(within(card).getByTestId("status-sentence")).toHaveTextContent("Bed waits were longer than usual last week. Usual: 4.0 h.");
+    expect(within(card).getByTestId("status-sentence")).toHaveTextContent("Bed waits were longer than usual in the latest complete week. Usual: 4.0 h.");
     expect(within(card).queryByTestId("sparkline")).toBeNull();
     expect(within(card).queryByTestId("status-delta")).toBeNull();
     // The estimate keeps its label and its own time on every density.
@@ -166,26 +166,26 @@ describe("SummaryStrip", () => {
     }
     // Above usual: the higher and much higher badges, with the list in a tooltip a keyboard can reach.
     // The urgent care centre (AH, +45%) is left out of all four (ADR 0012), and one line says so.
-    expect(tile("above")).toHaveTextContent("Emergency departments above usual2 of 4");
+    expect(tile("above")).toHaveTextContent("Emergency departments above usual, latest complete week2 of 4");
     const which = within(tile("above")).getByRole("button", { name: "See which hospitals" });
     expect(document.getElementById(which.getAttribute("aria-describedby")!)).toHaveTextContent(
       "Singapore General Hospital (SGH): +31% vs usualChangi General Hospital (CGH): +16% vs usual");
     expect(screen.getByTestId("summary-ucc-note")).toHaveTextContent(
       "The urgent care centre is left out of these four figures. Not compared with full emergency departments.");
     expect(within(tile("above")).queryByTestId("above-unknown")).toBeNull();
-    expect(tile("longest")).toHaveTextContent("Longest bed wait last week7.5 hNational University Hospital (NUH).");
-    expect(tile("middle")).toHaveTextContent(/bed wait across emergency departments, last week5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
+    expect(tile("longest")).toHaveTextContent("Longest bed wait, latest complete week7.5 hNational University Hospital (NUH).");
+    expect(tile("middle")).toHaveTextContent(/bed wait across emergency departments, latest complete week5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
     expect(tile("middle")).toHaveTextContent("Last 12 weeks; middle of 4 emergency departments.");
     expect(within(tile("middle")).getByTestId("sparkline")).toBeInTheDocument();
     // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; cut, not rounded.
-    expect(tile("change")).toHaveTextContent("Largest change against usual+31% vs usualSingapore General Hospital (SGH). Usual is the 8-week median.");
-    expect(screen.getByTestId("summary-strip")).toHaveTextContent("Week of 19–25 Oct 2026.");
+    expect(tile("change")).toHaveTextContent("Largest change vs usual (previous 8 complete weeks)+31% vs usualSingapore General Hospital (SGH). Usual is the median of those weeks.");
+    expect(screen.getByTestId("summary-strip")).toHaveTextContent("At a glance: latest complete week (19–25 Oct 2026)");
     expect(screen.getByTestId("summary-strip")).toHaveTextContent("It is not the time to see a doctor.");
   });
 
   it("a fall can be the largest change, and it is signed", () => {
     render(<SummaryStrip statuses={[at("SGH", 16, 5), at("TTSH", -32.7, 4)]} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
-    expect(tile("change")).toHaveTextContent("−32% vs usualTan Tock Seng Hospital (TTSH). Usual is the 8-week median.");
+    expect(tile("change")).toHaveTextContent("−32% vs usualTan Tock Seng Hospital (TTSH). Usual is the median of those weeks.");
   });
 
   it("missing stays missing: no comparison is counted on its own, and nothing is shown as 0", () => {

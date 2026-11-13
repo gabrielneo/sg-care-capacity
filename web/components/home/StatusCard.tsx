@@ -61,10 +61,10 @@ export function StatusCard({ status, note, live, weeklyAsOf, density = "full" }:
           <span className="block text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
             {status.latest == null ? "–" : hrs(status.latest)}
           </span>
-          <span className="block text-xs text-muted">wait for a ward bed, last week</span>
+          <span className="block text-xs text-muted">wait for a ward bed, latest complete week</span>
         </p>
         <p className="mt-3 text-sm text-ink" data-testid="status-sentence">
-          {status.latest == null ? "No complete week of figures last week." : info.sentence}
+          {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
           {status.usual != null ? <span className="text-muted"> Usual: {hrs(status.usual)}.</span> : null}
         </p>
         {liveLine}
@@ -79,7 +79,7 @@ export function StatusCard({ status, note, live, weeklyAsOf, density = "full" }:
         <StatusBadge level={status.level} quiet />
         {note ? <CaveatChip><span data-testid="status-note">{note}</span></CaveatChip> : null}
       </div>
-      <p className="mt-2 text-xs text-muted">Wait for a ward bed, last week</p>
+      <p className="mt-2 text-xs text-muted">Wait for a ward bed, latest complete week</p>
       <div className="flex items-end justify-between gap-2">
         <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
           {status.latest == null ? "–" : hrs(status.latest)}
@@ -95,7 +95,7 @@ export function StatusCard({ status, note, live, weeklyAsOf, density = "full" }:
         </p>
       ) : (
         <p className="mt-1.5 text-sm text-muted" data-testid="status-sentence">
-          {status.latest == null ? "No complete week of figures last week." : "Too few weeks to compare."}
+          {status.latest == null ? "No complete figures for the latest complete week." : "Too few weeks to compare."}
         </p>
       )}
       {liveLine}

@@ -14,10 +14,13 @@ import { type HospitalStatus, LEVELS, SPARK_WEEKS, usualBand } from "@/lib/statu
 
 import { Sparkline } from "./Sparkline";
 import { StatusBadge } from "./StatusBadge";
+import { formatWindow, USUAL_WEEKS } from "@/lib/windows";
 
 const hours = (v: number) => `${v.toFixed(1)} h`;
 
 /** The line in words: the range of its complete weeks and how many there are. Only what the line already draws. */
+const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
 export function sparkSummary(values: (number | null)[]): string {
   const known = values.filter((v): v is number => v != null);
   if (!known.length) return `No complete week in the last ${SPARK_WEEKS}.`;
@@ -52,11 +55,11 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
             {status.latest == null ? "–" : hours(status.latest)}
           </span>
           <span className="block text-sm text-muted">
-            Average of each day&apos;s median{latestWeek ? ", last week" : ""}
+            Average of each day&apos;s median, {formatWindow({ kind: "latest_week", week: latestWeek ? { week_start: latestWeek, week_end: addDays(latestWeek, 6) } : null })}
           </span>
         </p>
         <p className="mt-2 text-sm text-ink" data-testid="drawer-sentence">
-          {status.latest == null ? "No complete week of figures last week." : info.sentence}
+          {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
         </p>
         {status.usual != null ? (
           <p className="mt-1 text-sm tabular-nums text-muted" data-testid="drawer-usual">
@@ -68,12 +71,12 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
             ) : null}
           </p>
         ) : (
-          <p className="mt-1 text-sm text-muted" data-testid="drawer-usual">No usual level: fewer than 8 complete weeks to compare with.</p>
+          <p className="mt-1 text-sm text-muted" data-testid="drawer-usual">No usual level: fewer than {USUAL_WEEKS} complete weeks to compare with.</p>
         )}
       </section>
 
       <section aria-labelledby={`drawer-line-${status.code}`}>
-        <h3 id={`drawer-line-${status.code}`} className="text-sm font-semibold text-ink">Last {SPARK_WEEKS} weeks</h3>
+        <h3 id={`drawer-line-${status.code}`} className="text-sm font-semibold text-ink">{formatWindow({ kind: "weeks", n: SPARK_WEEKS }, { capital: true })}</h3>
         <div className="mt-1"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} /></div>
         <p className="mt-1 text-sm text-ink tabular-nums" data-testid="drawer-spark-summary">{sparkSummary(status.spark)}</p>
         <p className="mt-1 text-xs text-muted">

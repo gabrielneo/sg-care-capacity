@@ -16,9 +16,9 @@
 import type { EdDay, EdWeek, Hospital, Insight, LiveReading } from "./api/types";
 import { rankableCodes, systemFindings } from "./hospitals";
 import { divergingScale, mapScale } from "./palette";
+import { PROFILE_WEEKS, USUAL_WEEKS } from "./windows";
 
-export const USUAL_WEEKS = 8;
-export const PROFILE_WEEKS = 26;
+export { PROFILE_WEEKS, USUAL_WEEKS };
 /** A weekday profile from fewer complete weeks than this is too thin to show. */
 export const PROFILE_MIN_WEEKS = 4;
 export const BAND_MIN_HOSPITALS = 3;

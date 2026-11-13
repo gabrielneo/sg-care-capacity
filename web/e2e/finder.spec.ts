@@ -73,7 +73,7 @@ test.describe("Public finder", () => {
     await page.goto("/#near=460002");
     const list = page.getByTestId("ed-list");
     await expect(page.getByTestId("ed-item")).toHaveCount(3);
-    await expect(page.getByRole("heading", { level: 2, name: /^How busy were (Emergency Departments \(EDs\)|EDs) near you last week\?$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: /^How busy were (Emergency Departments \(EDs\)|EDs) near you in the latest complete week\?$/ })).toBeVisible();
     for (const km of await list.getByTestId("ed-km").allTextContents()) expect(km).toMatch(/km straight-line distance$/);
 
     const card = (code: string) => page.locator(`[data-testid=ed-card][data-hospital="${code}"]`);

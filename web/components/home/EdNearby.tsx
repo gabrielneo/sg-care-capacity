@@ -23,7 +23,7 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
   );
   return (
     <section aria-labelledby="ed-heading" className="py-8" data-testid="ed-near">
-      <h2 id="ed-heading" className="text-2xl font-semibold tracking-tight text-ink">How busy were <ClientTerm id="ed" plural /> near you last week?</h2>
+      <h2 id="ed-heading" className="text-2xl font-semibold tracking-tight text-ink">How busy were <ClientTerm id="ed" plural /> near you in the latest complete week?</h2>
       {eds.length ? (
         <>
           <p className="mt-1 max-w-prose text-base text-ink">

@@ -34,6 +34,7 @@ import { parseEdFilters } from "@/lib/edParams";
 import { rankableHospitals, urgentCareHospitals } from "@/lib/hospitals";
 import { eachDay, missingDays } from "@/lib/series";
 import { formatWeek } from "@/lib/weeks";
+import { formatWindow, PROFILE_WEEKS, USUAL_WEEKS } from "@/lib/windows";
 
 export const metadata: Metadata = { title: "ED Trends" };
 export const dynamic = "force-dynamic";
@@ -106,7 +107,8 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const weekly = weeklyRes.ok ? weeklyRes.value.data : [];
   const latest = latestCompleteWeek(weekly);
   const usuals = usualLevels(weekly, codes, latest);
-  const latestText = latest ? formatWeek({ week_start: latest, week_end: profileWindow(latest).to }) : "the latest complete week";
+  const latestRange = latest ? { week_start: latest, week_end: profileWindow(latest).to } : null;
+  const latestText = latestRange ? formatWeek(latestRange) : "the latest complete week";
   const findings = insightsRes.ok ? insightsRes.value.data : [];
   // Short findings above each chart (at most two each, strongest first); the engine writes every word of them.
   const callouts = (types: Insight["type"][], label: string) => insightsRes.ok
@@ -119,7 +121,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const panels: Panel[] = [...rankableHospitals(chosen), ...urgentCareHospitals(chosen)].map((h) => {
     const u = usuals[h.hospital_code];
     const missingUsual = mode === "usual" && u?.usual == null
-      ? `No usual level: ${u?.weeks ?? 0} of the 8 weeks before ${latestText} are complete.` : null;
+      ? `No usual level: ${u?.weeks ?? 0} of the ${USUAL_WEEKS} weeks before ${latestText} are complete.` : null;
     return { hospital: h, series: hospitalSeries(daily, h.hospital_code, days, mode, u?.usual ?? null), missingUsual };
   });
   const gaps = missingDays(days.map((date) => Object.fromEntries([["date", date], ...chosen.map((h) => [h.hospital_code,
@@ -145,13 +147,13 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     for (const [k, v] of Object.entries(extra)) q.set(k, v);
     return `${path}${q.size ? `?${q}` : ""}`;
   };
-  const usualDef = `The usual level is the median of the 8 complete weeks before ${latestText}.`;
+  const usualDef = `The usual level is the median of the ${USUAL_WEEKS} complete weeks before ${latestText}.`;
 
   return (
     <>
       {header(from, to)}
       <div className="space-y-6">
-        <ChartCard title={BED_WAIT_LABEL} meta={meta} caveat={CAVEAT.bedWaitUnit} download={csv("/export/ed-daily.csv", { from, to })}
+        <ChartCard title={`${BED_WAIT_LABEL}, ${formatWindow({ kind: "days", from, to })}`} meta={meta} caveat={CAVEAT.bedWaitUnit} download={csv("/export/ed-daily.csv", { from, to })}
                    description={<>
                      <Glossed text={mode === "usual"
                        ? `Each hospital's daily median, in hours above or below its own usual level, ${range}. ${usualDef}`
@@ -167,7 +169,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         </ChartCard>
 
         {weeklyRes.ok ? (
-          <ChartCard title="The latest week against the usual level" slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
+          <ChartCard title={`The ${formatWindow({ kind: "latest_week", week: latestRange })} ${formatWindow({ kind: "usual" })}`} slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      download="/export/ed-weekly.csv?weeks=10"
                      description={<Glossed text={`${latestText} for each hospital, against its usual level. ${usualDef} Largest difference first.`} />}>
             {callouts(["usual_gap", "anomaly"], "latest week against usual")}
@@ -176,7 +178,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         ) : <ErrorState title="The weekly figures can't be shown" error={plainError(weeklyRes.error)} />}
 
         {profileRes?.ok && window ? (
-          <ChartCard title="Bed wait by day of the week" slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
+          <ChartCard title={`Bed wait by day of the week, ${formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}`} slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      download={csv("/export/ed-daily.csv", { from: window.from, to: window.to })}
                      description={<Glossed text={`${mode === "usual" ? "Each weekday against the hospital's own average" : "The average bed wait on each weekday"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)} (up to 26).`} />}>
             {callouts(["weekday"], "day of the week")}

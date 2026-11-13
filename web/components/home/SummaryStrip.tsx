@@ -7,13 +7,13 @@ import { Term } from "@/components/terms/Term";
 import { Tip } from "@/components/terms/TermView";
 import type { Hospital, Meta } from "@/lib/api/types";
 import { BED_WAIT_SHORT } from "@/lib/copy";
-import { USUAL_WEEKS } from "@/lib/edCompare";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { aboveUsual, acrossHospitals, formatDelta, largestChange, longestWait, MIN_HOSPITALS } from "@/lib/planner";
-import { HIGHER_PCT, type HospitalStatus, levelCounts } from "@/lib/status";
-import { formatWeek, type WeekRange } from "@/lib/weeks";
+import { HIGHER_PCT, type HospitalStatus, levelCounts, SPARK_WEEKS } from "@/lib/status";
+import type { WeekRange } from "@/lib/weeks";
 
 import { Sparkline } from "./Sparkline";
+import { formatWindow } from "@/lib/windows";
 
 const hours = (v: number) => v.toFixed(1);
 const name = (code: string) => <Term id={code.toLowerCase()} plain standalone />;
@@ -45,17 +45,18 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
   return (
     <section aria-labelledby="summary-heading" className="pb-2" data-testid="summary-strip">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="summary-heading" className="text-xl font-semibold tracking-tight text-ink">Last week at a glance</h2>
+        <h2 id="summary-heading" className="text-xl font-semibold tracking-tight text-ink">
+          At a glance: {formatWindow({ kind: "latest_week", week: latestWeek })}
+        </h2>
         {/* One badge for the four tiles: they share one source and date. */}
         <FreshnessBadge meta={meta} />
       </div>
       <p className="mt-1 text-sm text-muted">
-        {latestWeek ? <>Week of {formatWeek(latestWeek)}. </> : null}
         <Glossed text={BED_WAIT_SHORT} />
       </p>
       <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile id="above">
-          <KpiTile dense freshness={false} label="Emergency departments above usual" value={above.length} unit={`of ${rankable.length}`} meta={meta}
+          <KpiTile dense freshness={false} label="Emergency departments above usual, latest complete week" value={above.length} unit={`of ${rankable.length}`} meta={meta}
                    detail={
                      <>
                        {above.length ? (
@@ -72,21 +73,21 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
                    } />
         </Tile>
         <Tile id="longest">
-          <KpiTile dense freshness={false} label="Longest bed wait last week" value={longest?.latest ?? null} unit="h" format={hours} meta={meta}
+          <KpiTile dense freshness={false} label="Longest bed wait, latest complete week" value={longest?.latest ?? null} unit="h" format={hours} meta={meta}
                    detail={longest ? <>{name(longest.code)}.</> : "No emergency department has a complete week of figures."} />
         </Tile>
         <Tile id="change">
-          <KpiTile dense freshness={false} label="Largest change against usual" value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
+          <KpiTile dense freshness={false} label={`Largest change ${formatWindow({ kind: "usual" })}`} value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
                    unit="vs usual" meta={meta}
-                   detail={change ? <>{name(change.code)}. Usual is the {USUAL_WEEKS}-week median.</> : "No emergency department has enough complete weeks to compare."} />
+                   detail={change ? <>{name(change.code)}. Usual is the median of those weeks.</> : "No emergency department has enough complete weeks to compare."} />
         </Tile>
         <Tile id="middle">
-          <KpiTile dense freshness={false} label={<><Term id="median">Median</Term> bed wait across emergency departments, last week</>} value={middleNow} unit="h" format={hours}
+          <KpiTile dense freshness={false} label={<><Term id="median">Median</Term> bed wait across emergency departments, latest complete week</>} value={middleNow} unit="h" format={hours}
                    meta={meta}
                    detail={middleNow != null ? (
                      <span className="flex flex-wrap items-center gap-x-2">
                        <Sparkline values={middle} tone="none" />
-                       <span>Last 12 weeks; middle of {fullEds} emergency departments.</span>
+                       <span>{formatWindow({ kind: "weeks", n: SPARK_WEEKS }, { capital: true })}; middle of {fullEds} emergency departments.</span>
                      </span>
                    ) : `Needs ${MIN_HOSPITALS}+ emergency departments with a complete week.`} />
         </Tile>

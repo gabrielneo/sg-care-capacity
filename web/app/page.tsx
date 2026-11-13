@@ -28,7 +28,7 @@ import { isUrgentCare, rankableCodes, splitByCare } from "@/lib/hospitals";
 import { hospitalStatus, SPARK_WEEKS } from "@/lib/status";
 import { takeaways } from "@/lib/takeaways";
 import { weekChanges } from "@/lib/weekChanges";
-import { formatWeek } from "@/lib/weeks";
+import { formatWindow } from "@/lib/windows";
 
 export const dynamic = "force-dynamic"; // rendered per request (the search and the view are in the URL); API responses are cached for an hour
 
@@ -144,7 +144,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       return (
         <EdNearby cards={cards} analystHref={viewHref("analyst")}
                   notes={<>
-                    {latestWeek ? <p>Last week is {formatWeek(latestWeek)}. These are weekly figures, not live.</p> : null}
+                    {latestWeek ? <p>{formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}: weekly figures, not live.</p> : null}
                     {exclusions ? <p data-testid="status-exclusions"><Glossed text={exclusions} /></p> : null}
                   </>}
                   provenance={<>
@@ -189,7 +189,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
         <section aria-labelledby="map-heading" className="py-8" data-testid="map-section">
           <h2 id="map-heading" className="text-2xl font-semibold tracking-tight text-ink">On the map</h2>
           <p className="mb-3 mt-1 max-w-prose text-base text-ink">
-            Hospitals are coloured by last week&apos;s bed wait against their own usual, and marked with a symbol and the words in the list.
+            Hospitals are coloured by the latest complete week&apos;s bed wait against their own usual, and marked with a symbol and the words in the list.
             Search above to mark your search and the nearest clinics.
           </p>
           <Suspense fallback={<Skeleton className="h-[380px] w-full rounded-xl sm:h-[460px]" label="Loading map" />}>

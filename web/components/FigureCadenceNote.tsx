@@ -15,7 +15,7 @@ export function FigureCadenceNote({ kind }: { kind: "case-study" | "findings" })
         <p className="mt-1 max-w-prose">
           This page is written up from slow-moving data: emergency department visits and bed waits by year, the latest clinic list and
           the latest resident count. Those change when their publishers release new figures, not every week.
-          For what moved last week, see the <Link href="/?view=planner">weekly summary</Link>.
+          For what moved in the latest complete week, see the <Link href="/?view=planner">weekly summary</Link>.
         </p>
       ) : (
         <p className="mt-1 max-w-prose">

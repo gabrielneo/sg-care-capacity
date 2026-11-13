@@ -8,10 +8,11 @@ import type { Density } from "@/lib/homeViews";
 import { shortNote } from "@/lib/hospitalNotes";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { type Sort, sortHref, SORTS } from "@/lib/planner";
-import { type HospitalStatus, HIGHER_PCT, MUCH_HIGHER_PCT } from "@/lib/status";
-import { formatWeek, type WeekRange } from "@/lib/weeks";
+import { type HospitalStatus, HIGHER_PCT, MUCH_HIGHER_PCT, SPARK_WEEKS } from "@/lib/status";
+import type { WeekRange } from "@/lib/weeks";
 
 import { StatusCard } from "./StatusCard";
+import { formatWindow, USUAL_WEEKS } from "@/lib/windows";
 
 /**
  * The order of the cards, as links: the order is in the URL (?sort=), so it can be shared and works
@@ -62,11 +63,11 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div>
           <h2 id="status-heading" className="text-xl font-semibold tracking-tight text-ink">
-            {full ? `Each hospital, week of ${latestWeek ? formatWeek(latestWeek) : "last week"}` : "How busy were hospital emergency departments last week?"}
+            {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How busy were hospital emergency departments in the latest complete week?"}
           </h2>
           {full ? null : (
             <p className="mt-1 max-w-prose text-sm text-muted">
-              {latestWeek ? <>Week of {formatWeek(latestWeek)}, compared with each hospital&apos;s own usual week. </> : null}
+              {latestWeek ? <>{formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}, compared with each hospital&apos;s own usual week. </> : null}
               <Glossed text={BED_WAIT_SHORT} />
             </p>
           )}
@@ -91,8 +92,8 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
       ) : null}
       {full ? <p className="mt-3 max-w-prose text-xs text-muted" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></p> : null}
       <p className={`${full ? "mt-1" : "mt-3"} text-xs text-muted`} data-testid="status-key">
-        Usual = the middle of the 8 weeks before. Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.
-        {full ? ` The line shows the last 12 weeks. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.` : null}
+        Usual = the median of the previous {USUAL_WEEKS} complete weeks. Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.
+        {full ? ` The line shows the ${formatWindow({ kind: "weeks", n: SPARK_WEEKS })}. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.` : null}
       </p>
       {exclusions ? (
         <p className="mt-1 text-xs text-muted" data-testid="status-exclusions"><Glossed text={exclusions} /></p>

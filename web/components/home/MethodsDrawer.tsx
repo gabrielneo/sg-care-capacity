@@ -5,6 +5,7 @@ import { Glossed } from "@/components/terms/Glossed";
 import type { Insight } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
 import { HIGHER_PCT, MUCH_HIGHER_PCT } from "@/lib/status";
+import { USUAL_WEEKS } from "@/lib/windows";
 
 const pText = (p: number | null | undefined) => (p == null ? "not tested" : p < 0.001 ? "below 0.001" : p.toFixed(3));
 
@@ -27,9 +28,9 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
           <div>
             <h3 className="font-semibold">The badges</h3>
             <p className="mt-1 max-w-prose">
-              Each hospital is compared with itself. &quot;Usual&quot; is the middle value of its 8 complete weeks before the latest
+              Each hospital is compared with itself. &quot;Usual&quot; is the middle value of its {USUAL_WEEKS} complete weeks before the latest
               one. A week that is {HIGHER_PCT}% or more above usual is higher; {MUCH_HIGHER_PCT}% or more is much higher;
-              {" "}{HIGHER_PCT}% or more below is lower. With fewer than 8 complete weeks, there is no comparison.
+              {" "}{HIGHER_PCT}% or more below is lower. With fewer than {USUAL_WEEKS} complete weeks, there is no comparison.
               The badges are a plain comparison, not a statistical test.
             </p>
           </div>

@@ -16,10 +16,11 @@
  */
 import type { EdWeek } from "./api/types";
 import type { Usual } from "./edCompare";
+import { SPARK_WEEKS } from "./windows";
 
+export { SPARK_WEEKS };
 export const HIGHER_PCT = 15;
 export const MUCH_HIGHER_PCT = 30;
-export const SPARK_WEEKS = 12;
 
 export type Level = "much_higher" | "higher" | "usual" | "lower" | "unknown";
 
@@ -34,10 +35,10 @@ export interface LevelInfo {
 }
 
 export const LEVELS: Record<Level, LevelInfo> = {
-  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "bad", sentence: "Bed waits were much longer than usual last week.", plain: "Much busier than usual for this hospital" },
-  higher: { label: "Higher than usual", icon: "▲", tone: "warn", sentence: "Bed waits were longer than usual last week.", plain: "Busier than usual for this hospital" },
-  usual: { label: "About usual", icon: "●", tone: "ok", sentence: "Bed waits were about usual last week.", plain: "About as busy as usual for this hospital" },
-  lower: { label: "Lower than usual", icon: "▼", tone: "ok", sentence: "Bed waits were shorter than usual last week.", plain: "Less busy than usual for this hospital" },
+  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "bad", sentence: "Bed waits were much longer than usual in the latest complete week.", plain: "Much busier than usual for this hospital" },
+  higher: { label: "Higher than usual", icon: "▲", tone: "warn", sentence: "Bed waits were longer than usual in the latest complete week.", plain: "Busier than usual for this hospital" },
+  usual: { label: "About usual", icon: "●", tone: "ok", sentence: "Bed waits were about usual in the latest complete week.", plain: "About as busy as usual for this hospital" },
+  lower: { label: "Lower than usual", icon: "▼", tone: "ok", sentence: "Bed waits were shorter than usual in the latest complete week.", plain: "Less busy than usual for this hospital" },
   unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual.", plain: "No comparison with usual available" },
 };
 

@@ -8,6 +8,7 @@ import { DeltaNumber } from "../story/DeltaNumber";
 import { Glossed } from "../terms/Glossed";
 import { Term } from "../terms/Term";
 import { hours, signed } from "./format";
+import { USUAL_WEEKS } from "@/lib/windows";
 
 /**
  * Usual level (median of the 8 complete weeks before) against the latest complete week, one row per
@@ -85,7 +86,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
           ) : null}
         </>
       ) : (
-        <p className="text-sm text-muted">No hospital has a complete latest week and 8 complete weeks before it.</p>
+        <p className="text-sm text-muted">No hospital has a complete latest week and {USUAL_WEEKS} complete weeks before it.</p>
       )}
       <p className="mt-3 text-xs text-muted" data-testid="dumbbell-legend">
         {mode === "raw"

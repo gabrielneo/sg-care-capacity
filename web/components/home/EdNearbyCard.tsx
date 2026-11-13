@@ -37,10 +37,10 @@ export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
         <span className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="ed-hours">
           {status.latest == null ? "–" : hours(status.latest)}
         </span>
-        <span className="block text-sm text-muted">Average of each day&apos;s median, last week</span>
+        <span className="block text-sm text-muted">Average of each day&apos;s median, latest complete week</span>
       </p>
       <p className="mt-2 text-base text-ink" data-testid="ed-sentence">
-        {status.latest == null ? "No complete week of figures last week." : info.sentence}
+        {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
         {status.usual != null ? <span className="text-muted"> Usual: {hours(status.usual)}.</span> : null}
       </p>
       {live ? (

@@ -59,7 +59,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
   return (
     <section aria-labelledby="home-title" className="pb-0 pt-0" data-testid="home-hero" data-density={density}>
       <h1 id="home-title" className="max-w-4xl text-xl font-semibold tracking-tight text-ink sm:text-2xl">
-        Hospital emergency departments: last week against a usual week
+        Hospital emergency departments: the latest complete week against a usual week
       </h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
         <p role="note" className="inline-flex max-w-prose items-center gap-2 rounded-lg border border-bad/30 bg-bad-soft px-3 py-1.5 text-sm font-medium text-bad"
