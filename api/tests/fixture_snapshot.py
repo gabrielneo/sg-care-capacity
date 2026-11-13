@@ -32,7 +32,8 @@ INSIGHT_EXTRA_DDL = """, display STRUCT(value_text VARCHAR, unit_text VARCHAR, m
         comparison_label VARCHAR, change VARCHAR, change_word VARCHAR),
     chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
         highlight VARCHAR[], callout VARCHAR, reference STRUCT(value DOUBLE, label VARCHAR),
-        trend_line STRUCT(first DOUBLE, last DOUBLE))"""
+        trend_line STRUCT(first DOUBLE, last DOUBLE)),
+    scope VARCHAR"""
 
 DDL = {
     "dim_hospital": """hospital_code VARCHAR, hospital_name VARCHAR, short_name VARCHAR, cluster VARCHAR, facility_type VARCHAR,
@@ -158,6 +159,8 @@ _PERIOD = {"weekday": (date(2026, 4, 27), date(2026, 10, 25), "moderate"), "anom
            "volume_vs_wait": (date(2026, 9, 14), date(2026, 10, 25), "moderate"),
            "access_gap": (date(2024, 6, 6), date(2024, 6, 6), "weak")}
 INSIGHTS = [(*r[:22], *_PERIOD[r[1]], *r[22:]) for r in INSIGHTS]
+# scope (ADR 0012): a finding about the urgent care centre is scoped urgent_care.
+INSIGHTS = [(*r, "urgent_care" if r[2] == "AH" else "system") for r in INSIGHTS]
 DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
     details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""
 

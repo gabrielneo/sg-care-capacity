@@ -446,6 +446,9 @@ class Insight(BaseModel):
         "How strong the finding is, from its normalised effect. Null in releases from before it was written"))
     display: InsightDisplay | None = Field(description="Null in data releases from before the engine wrote it")
     chart: InsightChart | None = Field(description="Null in data releases from before the engine wrote it")
+    scope: Literal["system", "urgent_care"] | None = Field(None, description=(
+        "urgent_care: a finding about the urgent care centre, compared only with itself and never a headline "
+        "(ADR 0012). Null in releases from before it was written"))
 
 
 class InsightsResponse(BaseModel):

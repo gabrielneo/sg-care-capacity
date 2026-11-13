@@ -1476,6 +1476,22 @@
             "title": "Rank Score",
             "type": "number"
           },
+          "scope": {
+            "anyOf": [
+              {
+                "enum": [
+                  "system",
+                  "urgent_care"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "urgent_care: a finding about the urgent care centre, compared only with itself and never a headline (ADR 0012). Null in releases from before it was written",
+            "title": "Scope"
+          },
           "source_ids": {
             "description": "The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries",
             "items": {

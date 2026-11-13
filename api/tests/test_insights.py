@@ -97,3 +97,20 @@ def test_a_findings_warnings_are_only_those_on_the_tables_it_uses(client):
     assert all(i["dq_tables"] == ["moh_bed_waits"] for i in body["data"])
     access = client.get("/api/v1/insights", params={"type": "access_gap"}).json()
     assert {w["table"] for w in access["meta"]["dq_warnings"]} <= {"chas_clinics", "pop_65plus_by_area", "planning_area_boundaries"}
+
+
+def test_an_urgent_care_finding_is_scoped_and_not_a_headline(client):
+    data = {r["insight_id"]: r for r in client.get(API).json()["data"]}
+    assert data["weekday-cccccccccc"]["scope"] == "urgent_care" and data["weekday-cccccccccc"]["headline_rank"] is None
+    assert {r["scope"] for k, r in data.items() if r["entity"] != "AH"} == {"system"}
+    heads = client.get(API, params={"headline": "true"}).json()["data"]
+    assert heads and all(r["scope"] == "system" for r in heads)
+
+
+def test_a_release_from_before_scope_serves_it_as_null(tmp_path):
+    from fixture_snapshot import build
+
+    snap = build(tmp_path / "old", insight_charts=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        body = c.get(API).json()
+    assert body["data"] and {r["scope"] for r in body["data"]} == {None}

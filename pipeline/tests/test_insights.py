@@ -18,9 +18,11 @@ MIN_C = 0.8
 
 
 def hospitals(*codes: str) -> pd.DataFrame:
-    names = {"SGH": "Singapore General Hospital", "CGH": "Changi General Hospital", "TTSH": "Tan Tock Seng Hospital"}
+    names = {"SGH": "Singapore General Hospital", "CGH": "Changi General Hospital", "TTSH": "Tan Tock Seng Hospital",
+             "AH": "Alexandra Hospital (UCC)"}
     return pd.DataFrame([{"hospital_code": c, "hospital_name": names.get(c, c), "cluster": "SingHealth",
-                          "facility_type": "ED", "reported_from": None, "coverage_note": None} for c in codes])
+                          "facility_type": "UCC" if c == "AH" else "ED", "reported_from": None, "coverage_note": None}
+                         for c in codes])
 
 
 def weekly(values: dict[str, list[float]], complete: bool = True) -> pd.DataFrame:
@@ -330,6 +332,42 @@ def test_headline_findings_take_at_most_one_per_detector():
     heads = sorted((r for r in result.insights if r["headline_rank"]), key=lambda r: r["headline_rank"])
     assert [r["headline_rank"] for r in heads] == list(range(1, len(heads) + 1)) and len(heads) <= 3
     assert len({r["type"] for r in heads}) == len(heads)
+
+
+def _ucc_run():
+    """AH (the urgent care centre) has by far the strongest weekday pattern; SGH and CGH a weaker one."""
+    d = daily(lambda rng, c, i, wd: (2 + (6.0 if c == "AH" and wd == 0 else 1.0 if wd == 0 else 0) + rng.normal(0, 0.3),
+                                     400 + rng.normal(0, 20)), codes=("AH", "SGH", "CGH"), seed=11)
+    return engine.run(inputs(weekly_from(d), d, hospitals("AH", "SGH", "CGH"), areas_frame()), NO_FAILS, TODAY)
+
+
+def test_an_urgent_care_finding_is_published_scoped_and_never_a_headline():
+    result = _ucc_run()
+    ah = [r for r in result.insights if r["entity"] == "AH"]
+    assert ah, "the urgent care centre's own findings are still published"
+    for r in ah:
+        assert r["scope"] == "urgent_care" and r["headline_rank"] is None
+        assert r["caveats"][0] == engine.SCOPE_CAVEAT
+    assert all(r["scope"] == "system" for r in result.insights if r["entity"] != "AH")
+    # It scores as high as a headline would need, yet the headlines are all system-wide findings.
+    heads = [r for r in result.insights if r["headline_rank"]]
+    assert heads and all(r["entity"] != "AH" for r in heads)
+    assert max(r["rank_score"] for r in ah) >= min(r["rank_score"] for r in heads)
+
+
+def test_the_pooled_weekday_finding_leaves_the_urgent_care_centre_out():
+    result = _ucc_run()
+    [pooled] = [c for c in result.candidates if c.type == "weekday" and c.variant == "pooled"]
+    assert pooled.values["n_hospitals"] == 2
+    assert pooled.n == 2 * 26 * 7
+
+
+def test_headline_ranks_skip_urgent_care_rows():
+    rows = [{"insight_id": "a", "type": "trend", "rank_score": 0.9, "effect_size": 1, "scope": "urgent_care"},
+            {"insight_id": "b", "type": "trend", "rank_score": 0.5, "effect_size": 1, "scope": "system"},
+            {"insight_id": "c", "type": "weekday", "rank_score": 0.4, "effect_size": 1, "scope": "system"}]
+    from sg_health.insights import ranking
+    assert ranking.headline_ranks(rows) == {"b": 1, "c": 2}
 
 
 def test_the_same_input_gives_the_same_output():

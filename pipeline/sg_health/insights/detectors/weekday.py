@@ -69,7 +69,9 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             f"/api/v1/ed/daily?hospital={code}&from={first}&to={last}",
             _day_means(rows["median_wait_hours"], rows["weekday"]), float(rows["median_wait_hours"].mean()),
             {"hospital": hospital_name(h), "cluster": h["cluster"]}))
-        pooled.append(rows.assign(rel=rows["median_wait_hours"] / rows["median_wait_hours"].mean()))
+        # The pooled finding is across hospitals, so the urgent care centre is left out (ADR 0012).
+        if h.get("facility_type") != "UCC":
+            pooled.append(rows.assign(rel=rows["median_wait_hours"] / rows["median_wait_hours"].mean()))
     if len(pooled) >= 2:
         allrows = pd.concat(pooled)
         groups = [allrows.loc[allrows["weekday"] == k, "rel"].to_numpy(dtype=float) for k in range(7)]

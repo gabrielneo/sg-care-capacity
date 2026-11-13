@@ -791,6 +791,11 @@ export interface components {
              */
             rank_score: number;
             /**
+             * Scope
+             * @description urgent_care: a finding about the urgent care centre, compared only with itself and never a headline (ADR 0012). Null in releases from before it was written
+             */
+            scope?: ("system" | "urgent_care") | null;
+            /**
              * Source Ids
              * @description The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries
              */

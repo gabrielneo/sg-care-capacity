@@ -52,10 +52,12 @@ FCT_INSIGHT_DDL = """CREATE OR REPLACE TABLE marts.fct_insight (
                    change_word VARCHAR),
     chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
                  highlight VARCHAR[], callout VARCHAR, reference STRUCT(value DOUBLE, label VARCHAR),
-                 trend_line STRUCT(first DOUBLE, last DOUBLE)))"""
+                 trend_line STRUCT(first DOUBLE, last DOUBLE)),
+    scope VARCHAR)"""
 COLUMNS = ["insight_id", "type", "entity", "headline", "detail", "metric_value", "unit", "comparison_value", "direction",
            "effect_size", "p_value", "p_adjusted", "n", "method", "caveats", "who_acts", "action", "evidence", "as_of",
-           "as_of_basis", "rank_score", "headline_rank", "period_start", "period_end", "strength", "display", "chart"]
+           "as_of_basis", "rank_score", "headline_rank", "period_start", "period_end", "strength", "display", "chart",
+           "scope"]
 
 
 @dataclass
@@ -207,7 +209,8 @@ def run(inputs: dict[str, pd.DataFrame], failed: pd.DataFrame, today: date,
             c.reason = "a stronger result for the same hospital was published"
 
     dates = source_dates(inputs)
-    rows = [_row(c, today, forbidden, dates) for c in sorted(best.values(), key=lambda c: (c.type, c.entity))]
+    ucc = urgent_care_codes(h)
+    rows = [_row(c, today, forbidden, dates, ucc) for c in sorted(best.values(), key=lambda c: (c.type, c.entity))]
     for c in best.values():
         c.reason = "published"
     ranks = ranking.headline_ranks(rows)
@@ -232,12 +235,24 @@ def source_dates(inputs: dict[str, pd.DataFrame]) -> dict[str, date]:
     return out
 
 
-def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, date] | None = None) -> dict[str, Any]:
+def urgent_care_codes(hospitals: pd.DataFrame) -> frozenset[str]:
+    """The codes of the urgent care centres (dim_hospital.facility_type = 'UCC')."""
+    if hospitals is None or not len(hospitals) or "facility_type" not in hospitals:
+        return frozenset()
+    return frozenset(hospitals.loc[hospitals["facility_type"] == "UCC", "hospital_code"].astype(str))
+
+
+SCOPE_CAVEAT = "An urgent-care finding: the urgent care centre is compared only with itself, not with full emergency departments."
+
+
+def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, date] | None = None,
+         ucc: frozenset[str] = frozenset()) -> dict[str, Any]:
     values = {**c.values, "p": wording.p_text(c.p_adjusted) if c.p_adjusted is not None else "",
               "chance": wording.chance_text(c.p_adjusted) if c.p_adjusted is not None else ""}
     headline, detail = wording.render(c.type, c.variant, values, forbidden)
     who, act, note = actions.action_for(c.type, c.action_key, c.action_values)
-    caveats = [*c.caveats, *([note] if note else [])]
+    scope = ranking.URGENT_CARE if c.entity in ucc else "system"
+    caveats = [*([SCOPE_CAVEAT] if scope == ranking.URGENT_CARE else []), *c.caveats, *([note] if note else [])]
     for text in caveats:
         if wording.CAUSAL.search(text):
             raise wording.WordingError(f"causal word in a caveat: {text!r}")
@@ -264,7 +279,7 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
         "as_of_basis": "source_updated" if c.source == "datagov_chas" else "latest_data",
         "rank_score": ranking.rank_score(c.effect_norm, c.p_adjusted, c.completeness, recency), "headline_rank": None,
         "period_start": period_start, "period_end": period_end, "strength": strength_label(c.effect_norm),
-        "display": display, "chart": chart,
+        "display": display, "chart": chart, "scope": scope,
     }
 
 

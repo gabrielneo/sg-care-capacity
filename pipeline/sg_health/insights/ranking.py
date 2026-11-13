@@ -11,6 +11,9 @@ SOURCE_CADENCE = {"moh_bed_waits": "weekly", "moh_ed_attendances": "weekly", "nu
                   "singstat_residents": "annual", "datagov_chas": "irregular"}
 
 
+URGENT_CARE = "urgent_care"
+
+
 def freshness_level(source: str, as_of: date, today: date) -> str:
     green, amber = CADENCE_DAYS[SOURCE_CADENCE.get(source, "irregular")]
     age = (today - as_of).days
@@ -32,12 +35,13 @@ def order(r: dict) -> tuple:
 
 
 def headline_ranks(rows: list[dict]) -> dict[str, int]:
-    """insight_id -> 1..N: the highest rank_score, at most one per detector."""
+    """insight_id -> 1..N: the highest rank_score, at most one per detector. An urgent-care finding is
+    never a headline: the headlines are the system-wide takeaways, and the UCC isn't compared with EDs (ADR 0012)."""
     n = int(thresholds()["engine"]["headline_count"])
     out: dict[str, int] = {}
     used: set[str] = set()
     for r in sorted(rows, key=order):
-        if r["type"] in used:
+        if r.get("scope") == URGENT_CARE or r["type"] in used:
             continue
         used.add(r["type"])
         out[r["insight_id"]] = len(out) + 1

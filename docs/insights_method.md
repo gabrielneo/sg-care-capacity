@@ -59,7 +59,10 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
    - **Descriptive detectors** (no p-value) use 1 for (1 − p).
    - **Recency** is the source's freshness: green 1.0, amber 0.7, red 0.4. The June 2024 clinic
      list scores 0.4, so access findings rank lower; that's deliberate.
-   - **The top 3, at most one per detector, are the headline findings.**
+   - **The top 3, at most one per detector, are the headline findings.** A finding about the
+     urgent care centre (`scope` = `urgent_care`) is never one: the headlines are the system-wide
+     takeaways, and the centre isn't compared with full EDs. It is still published, labelled as an
+     urgent-care finding ([decision record 0012](adr/0012-urgent-care-centre-out-of-aggregates.md)).
    - These weights are judgements. They're all in `thresholds.yml`.
 10. **Logging:**
     - Every skip becomes a `dq_results` row in the published validation run. Its check is
@@ -169,7 +172,8 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - **Peak day:** the weekday with the highest average, and how far it is above the hospital's
     overall average.
   - **Pooled across hospitals:** each hospital's values are first divided by its own average, so
-    differences between hospitals don't hide the weekday pattern.
+    differences between hospitals don't hide the weekday pattern. The urgent care centre is left
+    out of the pool; it still gets its own, urgent-care finding.
 - **Gate:**
   - at least 12 complete weeks, and 80% completeness;
   - adjusted p < 0.05;
