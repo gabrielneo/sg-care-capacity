@@ -51,3 +51,22 @@ describe("findingMeta", () => {
     expect(findingMeta({ as_of: "2026-10-25" }, meta).sources).toHaveLength(5);
   });
 });
+
+describe("source lines are generated from the API's meta, never hand-written (A3)", () => {
+  it("only Provenance and AsOfLine write \"Source:\", and no code types a publisher after it", async () => {
+    const { readdirSync, readFileSync, statSync } = await import("node:fs");
+    const path = await import("node:path");
+    const ROOT = path.resolve(import.meta.dirname, "..");
+    const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => {
+      const p = path.join(dir, f);
+      return statSync(p).isDirectory() ? files(p) : /\.(ts|tsx)$/.test(f) && !/\.test\.|samples\.ts|schema\.d\.ts/.test(f) ? [p] : [];
+    });
+    const writers: string[] = [];
+    for (const f of ["app", "components", "lib"].flatMap((d) => files(path.join(ROOT, d)))) {
+      const code = readFileSync(f, "utf8").replace(/^\s*(\*|\/\/).*$/gm, "");
+      if (/Source: /.test(code)) writers.push(path.relative(ROOT, f));
+      expect(code, path.relative(ROOT, f)).not.toMatch(/Sources?: (MOH|NUHS|SingStat|data\.gov\.sg|Ministry of Health)/);
+    }
+    expect(writers.sort()).toEqual(["components/Provenance.tsx", "components/story/Sections.tsx"]);
+  });
+});
