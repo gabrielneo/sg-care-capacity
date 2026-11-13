@@ -9,7 +9,7 @@ engine:
 ranking:
   # rank_score = normalised effect x (1 - p_adjusted) x completeness x recency
   # Recency comes from the source's freshness (same rules as the site's badge).
-  recency: {green: 1.0, amber: 0.7, red: 0.4, unknown: 0.4}
+  recency: {up_to_date: 1.0, due: 0.7, overdue: 0.4}   # freshness levels from docs/datasets.yml
   normalise:
     anomaly_z_full: 7.0       # |robust z| at which the effect counts as 1
     weekday_eps2_full: 0.14   # epsilon-squared of a "large" effect counts as 1

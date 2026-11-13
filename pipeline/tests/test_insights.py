@@ -641,3 +641,46 @@ def test_a_finding_with_a_bad_period_or_strength_stops_the_build(change):
     row = {**result.insights[0], **change}
     with pytest.raises(ValueError):
         engine.check_rows([row])
+
+
+# --------------------------------------------------------------------------- #
+# freshness (docs/datasets.yml, shared with the site)
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize("source, as_of, today, expected", [
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 10), "up_to_date"),     # 10 days
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 11), "due"),
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 21), "due"),            # 21 days
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 22), "overdue"),
+    ("datagov_chas", date(2024, 6, 6), date(2025, 6, 6), "up_to_date"),          # 12 calendar months
+    ("datagov_chas", date(2024, 6, 6), date(2025, 6, 7), "due"),
+    ("datagov_chas", date(2024, 6, 6), date(2026, 11, 14), "overdue"),
+    ("singstat_residents", date(2026, 6, 30), date(2027, 9, 30), "up_to_date"),  # 15 months
+    ("singstat_residents", date(2026, 6, 30), date(2027, 10, 1), "due"),
+    ("nuhs_live", date(2026, 11, 8), date(2026, 11, 16), "overdue"),
+])
+def test_freshness_levels_from_the_shared_config(source, as_of, today, expected):
+    from sg_health import freshness
+    assert freshness.level(source, as_of, today) == expected
+
+
+def test_freshness_months_are_calendar_months_and_findings_inherit():
+    from sg_health import freshness
+    assert freshness.add_span(date(2026, 1, 31), {"months": 1}) == date(2026, 2, 28)
+    assert freshness.worst(["up_to_date", "overdue", "due"]) == "overdue"
+    assert freshness.datasets()["insight_findings"]["inherits"] is True
+    with pytest.raises(ValueError):
+        freshness.level("insight_findings", date(2026, 11, 1), date(2026, 11, 2))
+
+
+def test_every_source_the_api_cites_has_a_freshness_rule():
+    import re
+
+    from sg_health import config as cfg
+    from sg_health import freshness
+    route = (cfg.REPO_ROOT / "api" / "sg_health_api" / "routes" / "insights.py").read_text()
+    block = route[route.index("SOURCES_BY_TYPE = {"):route.index("TABLES_BY_TYPE")]
+    cited = set(re.findall(r'"((?:moh|nuhs|datagov|singstat)_[a-z_]+)"', block))
+    assert cited and cited <= set(freshness.datasets())
+    for k, ds in freshness.datasets().items():
+        assert ds.get("inherits") or {"due_after", "overdue_after"} <= set(ds), k

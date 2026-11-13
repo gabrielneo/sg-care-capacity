@@ -57,8 +57,9 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
      - source gap: |gap| / 4 hours, capped at 1;
      - usual gap: the % above usual / 60%, capped at 1.
    - **Descriptive detectors** (no p-value) use 1 for (1 − p).
-   - **Recency** is the source's freshness: green 1.0, amber 0.7, red 0.4. The June 2024 clinic
-     list scores 0.4, so access findings rank lower; that's deliberate.
+   - **Recency** is the source's freshness, by the same rules as the site's badge
+     ([`datasets.yml`](datasets.yml)): up to date 1.0, due an update 0.7, overdue 0.4. The June 2024
+     clinic list scores 0.4, so access findings rank lower; that's deliberate.
    - **The top 3, at most one per detector, are the headline findings.** A finding about the
      urgent care centre (`scope` = `urgent_care`) is never one: the headlines are the system-wide
      takeaways, and the centre isn't compared with full EDs. It is still published, labelled as an

@@ -3,21 +3,15 @@ from __future__ import annotations
 
 from datetime import date
 
+from .. import freshness
 from .model import thresholds
-
-# Freshness rules (the same as the site's badge, web/lib/freshness.ts): (green, amber) limits in days.
-CADENCE_DAYS = {"weekly": (10, 21), "live": (1, 7), "annual": (457, 548), "irregular": (365, 730)}
-SOURCE_CADENCE = {"moh_bed_waits": "weekly", "moh_ed_attendances": "weekly", "nuhs_live": "live",
-                  "singstat_residents": "annual", "datagov_chas": "irregular"}
-
 
 URGENT_CARE = "urgent_care"
 
 
 def freshness_level(source: str, as_of: date, today: date) -> str:
-    green, amber = CADENCE_DAYS[SOURCE_CADENCE.get(source, "irregular")]
-    age = (today - as_of).days
-    return "green" if age <= green else "amber" if age <= amber else "red"
+    """up_to_date / due / overdue, from docs/datasets.yml (the same rules as the site's badge)."""
+    return freshness.level(source, as_of, today)
 
 
 def rank_score(effect_norm: float, p_adjusted: float | None, completeness: float, recency: float) -> float:

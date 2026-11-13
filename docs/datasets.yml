@@ -1,0 +1,76 @@
+# How fresh each dataset is: one config for the pipeline and the site.
+#
+#   pipeline: sg_health/freshness.py reads this file (the insight engine's recency weight).
+#   site:     web/lib/datasets.generated.ts is generated from it (cd web && npm run gen:datasets;
+#             CI fails if the committed file is stale).
+#
+# Each dataset is keyed by its source id (the snapshot manifest's sources.<id>).
+#   label          what the site calls the dataset
+#   publisher      who publishes it
+#   cadence        how often the publisher updates it: weekly | yearly | irregular | moment
+#                  ("moment": a reading at one moment, such as NUHS's estimates)
+#   due_after      older than this: "Due an update"
+#   overdue_after  older than this (the cadence plus a grace period for publishing lags): "Overdue"
+#   inherits       (instead of the two limits) as fresh as the least fresh dataset it is computed from
+#
+# Ages are counted from the dataset's own as-of date (the last day its figures describe, or the
+# publisher's last update), never from the date of the site's data release. Spans are {days: n} or
+# {months: n}; months are calendar months.
+
+datasets:
+  moh_bed_waits:
+    label: Bed waits
+    publisher: MOH
+    cadence: weekly
+    # MOH files cover Sunday to Saturday and appear a few days later.
+    due_after: {days: 10}
+    overdue_after: {days: 21}
+  moh_ed_attendances:
+    label: ED visits
+    publisher: MOH
+    cadence: weekly
+    due_after: {days: 10}
+    overdue_after: {days: 21}
+  nuhs_live:
+    label: Doctor-wait estimates
+    publisher: NUHS
+    cadence: moment
+    # NUHS updates its page continuously; the site reads it once a week, so a reading is up to 7 days old.
+    due_after: {days: 1}
+    overdue_after: {days: 7}
+  datagov_chas:
+    label: CHAS clinics
+    publisher: data.gov.sg
+    cadence: irregular
+    due_after: {months: 12}
+    overdue_after: {months: 24}
+  datagov_polyclinics:
+    label: Polyclinics
+    publisher: data.gov.sg
+    cadence: irregular
+    due_after: {months: 12}
+    overdue_after: {months: 24}
+  datagov_planning_areas:
+    label: URA planning-area boundaries
+    publisher: data.gov.sg
+    cadence: irregular
+    due_after: {months: 12}
+    overdue_after: {months: 24}
+  singstat_residents:
+    label: Resident population
+    publisher: SingStat
+    cadence: yearly
+    # The end-June figures appear around September.
+    due_after: {months: 15}
+    overdue_after: {months: 18}
+  datagov_annual_ae:
+    label: Yearly ED visits
+    publisher: data.gov.sg
+    cadence: yearly
+    due_after: {months: 15}
+    overdue_after: {months: 18}
+  insight_findings:
+    label: Findings
+    publisher: this site's insight engine
+    cadence: weekly
+    inherits: true
