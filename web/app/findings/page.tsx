@@ -22,14 +22,15 @@ const LIMITS_MARKER = "**What the data can't show**";
  * docs/case_study.md. This file writes none of them.
  */
 export default async function FindingsPage() {
-  const [insights, population, limits, problemWords, methodWords] = await Promise.all([
+  const [insights, hospitals, population, limits, problemWords, methodWords] = await Promise.all([
     settle(api.insights({ headline: true })),
+    settle(api.hospitals()),
     settle(api.population()),
     renderDocList("case_study.md", LIMITS_MARKER),
     docWords("case_study.md", "Problem statement"),
     docWords("insights_method.md"),
   ]);
-  const steps = insights.ok ? storySteps(insights.value.data) : [];
+  const steps = insights.ok ? storySteps(insights.value.data, hospitals.ok ? hospitals.value.data : []) : [];
   const top = steps[0];
 
   const cards: DepthCard[] = [

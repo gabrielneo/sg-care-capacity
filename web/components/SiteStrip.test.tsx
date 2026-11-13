@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { StripData } from "@/lib/strip";
@@ -23,7 +23,10 @@ describe("SiteStrip", () => {
     serve({ ok: true, strip });
     render(<SiteStrip />);
     const link = await screen.findByTestId("strip-summary");
-    expect(link).toHaveTextContent("3 of 9 hospitals busier than usual");
+    // Both wordings are in the DOM; CSS shows "EDs" below 640px and the full words above, so the bar stays one line.
+    expect(link).toHaveTextContent(/3 of 9 EDsemergency departments busier than usual/);
+    expect(within(link).getByText("EDs")).toHaveClass("sm:hidden");
+    expect(within(link).getByText("emergency departments")).toHaveClass("hidden", "sm:inline");
     expect(link).toHaveTextContent("week of 19–25 Oct 2026");   // joins the line from 640px; below that the line is the source and date
     expect(link).toHaveAttribute("href", "/?view=planner");
   });

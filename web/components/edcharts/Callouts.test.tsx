@@ -37,10 +37,14 @@ const TEMPLATES: Record<string, Insight> = {
     caveats: ["The two figures measure different things: an estimate at one moment, and the day's median for admitted patients."] }),
 };
 const ALL = Object.values(TEMPLATES);
+// These tests are about how a callout reads, so no hospital is marked as the urgent care centre here;
+// the urgent-care rule has its own tests at the end (with UCC).
+const NO_REF: { hospital_code: string; facility_type: "ED" | "UCC" }[] = [];
+const UCC = [{ hospital_code: "AH", facility_type: "UCC" as const }, { hospital_code: "SGH", facility_type: "ED" as const }];
 const ids = (xs: Insight[]) => xs.map((i) => i.insight_id);
 
 function renderOne(i: Insight, types: Insight["type"][] = [i.type]) {
-  return render(<Callouts insights={[i]} types={types} codes={["AH", "NUH", "SGH", "SKH"]} meta={insightMeta} label="test" />);
+  return render(<Callouts insights={[i]} types={types} codes={["AH", "NUH", "SGH", "SKH"]} hospitals={NO_REF} meta={insightMeta} label="test" />);
 }
 
 describe("Callouts: one snapshot per template", () => {
@@ -85,7 +89,7 @@ describe("Callouts: never a cause", () => {
   it("no rendered callout contains 'due to' or 'caused' (or any causal word)", () => {
     const { container } = render(
       <Callouts insights={[...ALL, ...storySample]} types={["usual_gap", "anomaly", "weekday", "trend", "volume_vs_wait", "source_gap"]}
-                codes={["AH", "NUH", "SGH", "SKH"]} meta={insightMeta} label="all" />);
+                codes={["AH", "NUH", "SGH", "SKH"]} hospitals={NO_REF} meta={insightMeta} label="all" />);
     const text = container.textContent ?? "";
     expect(text.length).toBeGreaterThan(100);
     expect(text).not.toMatch(/due to/i);
@@ -104,24 +108,31 @@ describe("selectCallouts", () => {
 
   it("shows the two strongest and puts the rest behind More findings", () => {
     const xs = [at("SGH", 0.3), at("AH", 0.9), at("NUH", 0.6), at("SKH", 0.1)];
-    const { shown, more } = selectCallouts(xs, ["weekday"], ["SGH", "AH", "NUH", "SKH"]);
+    const { shown, more } = selectCallouts(xs, ["weekday"], ["SGH", "AH", "NUH", "SKH"], NO_REF);
     expect(ids(shown)).toEqual(["weekday-AH", "weekday-NUH"]);
     expect(ids(more)).toEqual(["weekday-SGH", "weekday-SKH"]);
   });
 
   it("keeps one finding per hospital: the stronger of two describing the same week", () => {
     const xs = [at("AH", 0.4, "usual_gap"), at("AH", 0.7, "anomaly"), at("SGH", 0.2, "usual_gap")];
-    const { shown } = selectCallouts(xs, ["usual_gap", "anomaly"], ["AH", "SGH"]);
+    const { shown } = selectCallouts(xs, ["usual_gap", "anomaly"], ["AH", "SGH"], NO_REF);
     expect(ids(shown)).toEqual(["anomaly-AH", "usual_gap-SGH"]);
   });
 
   it("leaves out other sections' types, hospitals not chosen, and findings with no chart data", () => {
     const xs = [at("AH", 0.9, "trend"), at("SGH", 0.5), { ...at("NUH", 0.8), display: null } as Insight, at("All hospitals", 0.4)];
-    expect(ids(selectCallouts(xs, ["weekday"], ["SGH"]).shown)).toEqual(["weekday-SGH", "weekday-All hospitals"]);
+    expect(ids(selectCallouts(xs, ["weekday"], ["SGH"], NO_REF).shown)).toEqual(["weekday-SGH", "weekday-All hospitals"]);
+  });
+
+  it("never shows an urgent-care finding, by its scope or (older releases) by the hospital reference", () => {
+    const xs = [at("AH", 0.9), at("SGH", 0.3)];
+    expect(ids(selectCallouts(xs, ["weekday"], ["AH", "SGH"], UCC).shown)).toEqual(["weekday-SGH"]);
+    const scoped = [{ ...at("AH", 0.9), scope: "urgent_care" } as Insight, at("SGH", 0.3)];
+    expect(ids(selectCallouts(scoped, ["weekday"], ["AH", "SGH"], NO_REF).shown)).toEqual(["weekday-SGH"]);
   });
 
   it("is empty when nothing applies (a quiet week)", () => {
-    expect(selectCallouts([], ["weekday"], ["SGH"])).toEqual({ shown: [], more: [] });
+    expect(selectCallouts([], ["weekday"], ["SGH"], NO_REF)).toEqual({ shown: [], more: [] });
   });
 });
 
@@ -129,7 +140,7 @@ describe("Callouts: layout", () => {
   const four = ["SGH", "AH", "NUH", "SKH"].map((e, k) => ({ ...TEMPLATES["weekday (hospital)"]!, insight_id: `w-${e}`, entity: e, rank_score: 0.9 - k / 10 }));
 
   it("renders two callouts and a keyboard-reachable More findings with the rest", () => {
-    render(<Callouts insights={four} types={["weekday"]} codes={["SGH", "AH", "NUH", "SKH"]} meta={insightMeta} label="weekday" />);
+    render(<Callouts insights={four} types={["weekday"]} codes={["SGH", "AH", "NUH", "SKH"]} hospitals={NO_REF} meta={insightMeta} label="weekday" />);
     expect(screen.getAllByTestId("callout")).toHaveLength(4);                      // 2 shown + 2 inside the closed <details>
     const more = screen.getByTestId("callouts-more");
     expect(more.tagName).toBe("DETAILS");
@@ -139,7 +150,7 @@ describe("Callouts: layout", () => {
   });
 
   it("renders nothing at all when there is no finding (the chart stands alone)", () => {
-    const { container } = render(<Callouts insights={[]} types={["weekday"]} codes={["SGH"]} meta={insightMeta} label="weekday" />);
+    const { container } = render(<Callouts insights={[]} types={["weekday"]} codes={["SGH"]} hospitals={NO_REF} meta={insightMeta} label="weekday" />);
     expect(container).toBeEmptyDOMElement();
   });
 });

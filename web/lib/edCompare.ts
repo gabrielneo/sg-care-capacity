@@ -14,6 +14,7 @@
  * without a figure is a gap, never a guess.
  */
 import type { EdDay, EdWeek, Hospital, Insight, LiveReading } from "./api/types";
+import { rankableCodes, systemFindings } from "./hospitals";
 import { divergingScale, mapScale } from "./palette";
 
 export const USUAL_WEEKS = 8;
@@ -29,7 +30,7 @@ const DAY = 86_400_000;
 const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 
 /** The full EDs: everything but the urgent care centre (the band and raw comparisons need like with like). */
-export const fullEds = (hospitals: Hospital[]) => hospitals.filter((h) => h.facility_type !== "UCC").map((h) => h.hospital_code);
+export const fullEds = (hospitals: Hospital[]) => rankableCodes(hospitals);
 
 /** The latest week every chart is anchored to: the newest complete ISO week of any hospital. */
 export function latestCompleteWeek(weekly: EdWeek[]): string | null {
@@ -222,8 +223,10 @@ export function slopePairs(daily: EdDay[], live: LiveReading[]): SlopePair[] {
  * The finding a chart annotates: the highest-ranked published insight of that type, if any, in the
  * engine's own order (rank score, then the size of the effect; scores are capped at 1, so ties happen).
  */
-export function findingFor(insights: Insight[], type: Insight["type"]): Insight | null {
-  return insights.filter((i) => i.type === type && i.chart)
+export function findingFor(insights: Insight[], type: Insight["type"],
+                           hospitals: readonly Pick<Hospital, "hospital_code" | "facility_type">[]): Insight | null {
+  // A chart across hospitals is annotated with a system-wide finding only (lib/hospitals.ts, ADR 0012).
+  return systemFindings(insights, hospitals).filter((i) => i.type === type && i.chart)
     .sort((a, b) => b.rank_score - a.rank_score || Math.abs(b.effect_size ?? 0) - Math.abs(a.effect_size ?? 0)
       || a.insight_id.localeCompare(b.insight_id))[0] ?? null;
 }

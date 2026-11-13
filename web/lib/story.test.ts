@@ -15,19 +15,29 @@ import {
   storySteps,
 } from "./story";
 
+// The sample's anomaly (rank 2) is about Alexandra Hospital, as in the 9 Nov 2026 release.
+const HOSPITALS = [{ hospital_code: "AH", facility_type: "UCC" as const },
+  ...["SKH", "NUH"].map((hospital_code) => ({ hospital_code, facility_type: "ED" as const }))];
+const NO_REF: typeof HOSPITALS = [];
+
 const [weekday, anomaly, volume] = storySample as [(typeof storySample)[0], (typeof storySample)[0], (typeof storySample)[0]];
 
 describe("storySteps", () => {
   it("takes the headline findings in rank order, at most three", () => {
     const shuffled = [volume, weekday, anomaly];
-    expect(storySteps(shuffled).map((i) => i.headline_rank)).toEqual([1, 2, 3]);
-    expect(storySteps(shuffled, 2)).toHaveLength(2);
+    expect(storySteps(shuffled, NO_REF).map((i) => i.headline_rank)).toEqual([1, 2, 3]);
+    expect(storySteps(shuffled, NO_REF, 2)).toHaveLength(2);
   });
 
   it("leaves out insights that aren't headline findings, and ones from a release without display or chart", () => {
     const notHeadline = { ...weekday, insight_id: "x", headline_rank: null };
     const noChart: Insight = { ...anomaly, chart: null };
-    expect(storySteps([notHeadline, noChart, volume]).map((i) => i.insight_id)).toEqual([volume.insight_id]);
+    expect(storySteps([notHeadline, noChart, volume], NO_REF).map((i) => i.insight_id)).toEqual([volume.insight_id]);
+  });
+
+  it("never shows an urgent-care finding, even from a release made before the engine scoped it", () => {
+    expect(storySteps([volume, weekday, anomaly], HOSPITALS).map((i) => i.entity)).toEqual(["SKH", "NUH"]);
+    expect(storySteps([{ ...anomaly, scope: "urgent_care" } as Insight], NO_REF)).toEqual([]);
   });
 });
 

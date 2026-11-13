@@ -28,14 +28,15 @@ const MISSING = <span className="text-muted">No figure</span>;
  * docs/case_study.md. The print styles (globals.css) drop the site's header, nav and footer.
  */
 export default async function SummaryPage() {
-  const [insights, gaps, areas, population, limits] = await Promise.all([
+  const [insights, hospitals, gaps, areas, population, limits] = await Promise.all([
     settle(api.insights({ headline: true })),
+    settle(api.hospitals()),
     settle(api.insights({ type: "access_gap", top: SUMMARY_AREAS })),
     settle(api.areasAccess()),
     settle(api.population()),
     renderDocList("case_study.md", LIMITS_MARKER),
   ]);
-  const findings = insights.ok ? storySteps(insights.value.data) : [];
+  const findings = insights.ok ? storySteps(insights.value.data, hospitals.ok ? hospitals.value.data : []) : [];
   // Dated by the sources these findings use, each with its own date: not by the end of their windows (audit M-1).
   const findingsMeta = insights.ok
     ? findingMeta({ source_ids: [...new Set(findings.flatMap((f) => f.source_ids ?? []))], as_of: insights.value.meta.as_of },

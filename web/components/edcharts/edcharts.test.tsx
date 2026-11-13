@@ -27,9 +27,12 @@ describe("Dumbbell", () => {
   it("sorts by the size of the difference and labels each row with an arrow and a word", () => {
     render(<Dumbbell usuals={usuals} hospitals={HOSPITALS} mode="usual" finding={null} />);
     const rows = screen.getAllByTestId("dumbbell-row");
-    expect(rows.map((r) => r.getAttribute("data-hospital"))).toEqual(["AH", "NUH", "SGH"]);   // +56%, −10%, +5%
-    expect(within(rows[0]!).getByTestId("delta-number")).toHaveTextContent("+56%▲ higher than usual (worse)");
-    expect(within(rows[1]!).getByTestId("delta-change")).toHaveClass("text-ok");            // a shorter wait is better
+    // The EDs by size (−10%, +5%), then the urgent care centre (+56%) in its own group, never ranked among them.
+    expect(rows.map((r) => r.getAttribute("data-hospital"))).toEqual(["NUH", "SGH", "AH"]);
+    expect(within(screen.getByTestId("dumbbell-ucc")).getByTestId("dumbbell-row")).toHaveAttribute("data-hospital", "AH");
+    expect(screen.getByTestId("dumbbell-ucc")).toHaveTextContent("Urgent care centre · Not compared with full emergency departments");
+    expect(within(rows[2]!).getByTestId("delta-number")).toHaveTextContent("+56%▲ higher than usual (worse)");
+    expect(within(rows[0]!).getByTestId("delta-change")).toHaveClass("text-ok");            // a shorter wait is better
     expect(screen.getByTestId("dumbbell-missing")).toHaveTextContent("Sengkang General Hospital (SKH) (7 of 8)");
   });
 

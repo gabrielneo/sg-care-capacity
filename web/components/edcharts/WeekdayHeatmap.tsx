@@ -1,6 +1,7 @@
 import type { Hospital, Insight } from "@/lib/api/types";
 import { classFor, type ColourClass, divergingClasses, findingWeekday, type Mode, type Profile, sequentialClasses, textOn } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
+import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 
 import { CaveatChip } from "../CaveatChip";
 import { Glossed } from "../terms/Glossed";
@@ -24,6 +25,32 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
   const fmt = (v: number) => (mode === "raw" ? hours(v) : `${signed(v, 0)}%`);
   // Only hospitals that were asked for: the page passes the selected ones (audit L-3).
   const missing = hospitals.filter((h) => !profiles.some((p) => p.code === h.hospital_code));
+  // The EDs, then the urgent care centre in its own row group, never ordered among them (ADR 0012).
+  const { rankable: eds, urgentCare: ucc } = splitByCare(profiles, (p) => p.code, hospitals);
+  const row = (p: Profile) => {
+    const h = byCode.get(p.code);
+    const note = h ? pinnedCaveat(h) : null;
+    return (
+      <tr key={p.code} data-hospital={p.code}>
+        <th scope="row" className="whitespace-nowrap pr-2 text-left font-medium text-ink">
+          <Term id={p.code.toLowerCase()} />
+          {mode === "raw" && note ? <span className="block font-normal" data-testid="pinned-caveat"><CaveatChip><Glossed text={note} /></CaveatChip></span> : null}
+        </th>
+        {p.values.map((v, d) => {
+          const c = v == null ? null : classFor(v, classes);
+          const marked = finding?.entity === p.code && peak === d;
+          return (
+            <td key={d} data-testid="heat-cell" data-value={v == null ? "" : v.toFixed(2)} data-color={c?.color ?? ""}
+                data-annotated={marked ? "" : undefined}
+                className={`h-9 rounded-sm text-center tabular-nums ${marked ? "outline outline-2 outline-offset-1 outline-ink" : ""}`}
+                style={{ background: c?.color ?? "transparent", color: c && textOn(c.color) === "light" ? "#FFFFFF" : "#0F172A" }}>
+              {v == null ? <span className="text-muted">no data</span> : fmt(v)}
+            </td>
+          );
+        })}
+      </tr>
+    );
+  };
 
   return (
     <div>
@@ -43,32 +70,19 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
               {DAYS.map((d) => <th key={d} scope="col" className="font-medium text-muted">{d}</th>)}
             </tr>
           </thead>
-          <tbody>
-            {profiles.map((p) => {
-              const h = byCode.get(p.code);
-              const note = h ? pinnedCaveat(h) : null;
-              return (
-                <tr key={p.code} data-hospital={p.code}>
-                  <th scope="row" className="whitespace-nowrap pr-2 text-left font-medium text-ink">
-                    <Term id={p.code.toLowerCase()} />
-                    {mode === "raw" && note ? <span className="block font-normal" data-testid="pinned-caveat"><CaveatChip><Glossed text={note} /></CaveatChip></span> : null}
-                  </th>
-                  {p.values.map((v, d) => {
-                    const c = v == null ? null : classFor(v, classes);
-                    const marked = finding?.entity === p.code && peak === d;
-                    return (
-                      <td key={d} data-testid="heat-cell" data-value={v == null ? "" : v.toFixed(2)} data-color={c?.color ?? ""}
-                          data-annotated={marked ? "" : undefined}
-                          className={`h-9 rounded-sm text-center tabular-nums ${marked ? "outline outline-2 outline-offset-1 outline-ink" : ""}`}
-                          style={{ background: c?.color ?? "transparent", color: c && textOn(c.color) === "light" ? "#FFFFFF" : "#0F172A" }}>
-                        {v == null ? <span className="text-muted">no data</span> : fmt(v)}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
+          <tbody data-group="ed">
+            {eds.map(row)}
           </tbody>
+          {ucc.length ? (
+            <tbody data-group="ucc" data-testid="heat-ucc">
+              <tr>
+                <th scope="rowgroup" colSpan={8} className="pt-2 text-left font-semibold text-ink">
+                  {URGENT_CARE_HEADING} <span className="font-normal text-muted">· {URGENT_CARE_NOTE}</span>
+                </th>
+              </tr>
+              {ucc.map(row)}
+            </tbody>
+          ) : null}
         </table>
       </div>
       <div className="mt-3" data-testid="heat-legend" data-min={classes[0]?.min} data-max={classes.at(-1)?.max}>

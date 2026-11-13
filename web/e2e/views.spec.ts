@@ -104,15 +104,16 @@ test.describe("Home views", () => {
     const tiles = strip.getByTestId("summary-tile");
     expect(await tiles.evaluateAll((els) => els.map((e) => e.getAttribute("data-tile")))).toEqual(["above", "longest", "change", "middle"]);
     for (const t of await tiles.all()) await expect(t.getByTestId("provenance-line")).toHaveText(AS_OF);
-    // Fixture: SGH +25% (higher); AH and NUH have no usual level.
+    // Fixture: SGH +25% (higher); NUH has no usual level; AH, the urgent care centre, is left out of all four.
     const tile = (id: string) => strip.locator(`[data-tile="${id}"]`);
-    await expect(tile("above")).toContainText("1 of 3");
-    await expect(tile("above").getByTestId("above-unknown")).toHaveText("2 with no comparison.");
+    await expect(tile("above")).toContainText("Emergency departments above usual");
+    await expect(tile("above")).toContainText("1 of 2");
+    await expect(tile("above").getByTestId("above-unknown")).toHaveText("1 with no comparison.");
+    await expect(strip.getByTestId("summary-ucc-note")).toContainText("The urgent care centre is left out of these four figures.");
     await expect(tile("change")).toContainText("+25% vs usual");
     await expect(tile("change")).toContainText("Usual is the 8-week median.");
     await expect(tile("change")).toContainText("Singapore General Hospital (SGH)");
-    await expect(tile("longest")).toContainText("The urgent care centre isn't ranked.");
-    await expect(tile("middle")).toContainText("Needs 3+ hospitals");   // 2 full EDs here: no middle value, said so
+    await expect(tile("middle")).toContainText("Needs 3+ emergency departments");   // 2 full EDs here: no middle value, said so
   });
 
   test("the list behind 'above usual' opens on keyboard focus and closes on Escape", async ({ page }) => {
@@ -129,17 +130,19 @@ test.describe("Home views", () => {
   test("the cards' order is in the URL: against usual, hours, A–Z", async ({ page }) => {
     const order = async () => page.getByTestId("status-card").evaluateAll((els) => els.map((e) => e.getAttribute("data-hospital")));
     await page.goto("/?view=planner");
-    expect(await order()).toEqual(["SGH", "AH", "NUH"]);                                   // no usual level last, then by code
+    // The EDs in order, then the urgent care centre in its own group (ADR 0012).
+    expect(await order()).toEqual(["SGH", "NUH", "AH"]);                                   // no usual level last, then by code
+    await expect(page.locator('[data-testid="status-group"][data-group="ucc"] [data-testid="status-card"]')).toHaveCount(1);
     const nav = page.getByRole("navigation", { name: "Order of the hospitals" });
     await nav.getByRole("link", { name: "A–Z" }).click();
     await expect(page).toHaveURL(/\?view=planner&sort=name$/);
-    expect(await order()).toEqual(["AH", "NUH", "SGH"]);                                  // Alexandra, National, Singapore
+    expect(await order()).toEqual(["NUH", "SGH", "AH"]);                                  // National, Singapore; then the UCC
     await expect(nav.getByRole("link", { name: "A–Z" })).toHaveAttribute("aria-current", "true");
     await nav.getByRole("link", { name: "Hours" }).click();
     await expect(page).toHaveURL(/sort=hours$/);
     expect((await order())[0]).toBe("SGH");                                                // the only hospital with a complete week
     await page.goto("/?view=planner&sort=bogus");                                          // unknown order: the default
-    expect(await order()).toEqual(["SGH", "AH", "NUH"]);
+    expect(await order()).toEqual(["SGH", "NUH", "AH"]);
     await page.goto("/");                                                                  // Public has no order control
     await expect(page.getByTestId("sort-links")).toHaveCount(0);
   });
@@ -163,7 +166,8 @@ test.describe("Home views", () => {
     const MIN_VISIBLE = 100;
     const strip = (await page.getByTestId("summary-strip").boundingBox())!;
     expect(strip.y + strip.height, "summary strip bottom").toBeLessThanOrEqual(800);
-    for (const card of (await page.getByTestId("status-card").all()).slice(0, 4)) {
+    // The first row of the EDs' cards (the urgent care centre has its own group below them).
+    for (const card of (await page.locator('[data-group="ed"] [data-testid="status-card"]').all()).slice(0, 4)) {
       const box = (await card.boundingBox())!;
       expect(box.y, "first row: top").toBeGreaterThanOrEqual(strip.y + strip.height - 1);
       expect(box.y + Math.min(box.height, MIN_VISIBLE), "first row: top of card in view").toBeLessThanOrEqual(800);

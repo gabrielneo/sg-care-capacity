@@ -24,6 +24,7 @@ import { coversWindow, findingFor, latestCompleteWeek, type Profile, profileFetc
 import { type Density, densityOf, parseView, type SectionId, sectionsFor, viewHref } from "@/lib/homeViews";
 import { parseSort, sortStatuses } from "@/lib/planner";
 import { shortNote } from "@/lib/hospitalNotes";
+import { isUrgentCare, rankableCodes, splitByCare } from "@/lib/hospitals";
 import { hospitalStatus, SPARK_WEEKS } from "@/lib/status";
 import { takeaways } from "@/lib/takeaways";
 import { weekChanges } from "@/lib/weekChanges";
@@ -76,7 +77,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const statuses = sortStatuses(codes.map((c) => hospitalStatus(c, usual[c], weekly, latest)), sort, names);
   const live = liveRes.ok ? liveRes.value.data : [];
   const insights = insightsRes?.ok ? insightsRes.value.data : [];
-  const top = takeaways(insights, codes);
+  const top = takeaways(insights, hospitals);
 
   // The weekday pattern: daily figures for the 26 complete weeks up to the latest.
   const window = latest && earlyDailyRes ? profileWindow(latest) : null;
@@ -101,7 +102,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     ? hospitals.flatMap((h) => {
         const st = statusByCode.get(h.hospital_code);
         return st ? [{ code: st.code, level: st.level, latest: st.latest, usual: st.usual, pct: st.pct, name: h.hospital_name, cluster: h.cluster,
-          latitude: h.latitude ?? null, longitude: h.longitude ?? null, note: shortNote(h) }] : [];
+          latitude: h.latitude ?? null, longitude: h.longitude ?? null, note: shortNote(h), urgentCare: isUrgentCare(h) }] : [];
       })
     : [];
 
@@ -159,7 +160,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     ) : null),
 
     changes: () => (statusOk ? (
-      <WhatChanged changes={weekChanges(weekly, codes, latest, statuses)} names={names} meta={weeklyRes.value.meta} latestWeek={latestWeek} />
+      <WhatChanged changes={weekChanges(weekly, rankableCodes(hospitals), latest, splitByCare(statuses, (st) => st.code, hospitals).rankable)} names={names} meta={weeklyRes.value.meta} latestWeek={latestWeek} />
     ) : null),
 
     hospitals: (density) => (statusOk ? (
@@ -202,7 +203,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     takeaways: () => (insightsRes?.ok ? <Takeaways items={top} meta={insightsRes.value.meta} /> : null),
 
     weekdays: () => (profiles.length && dailyRes?.ok ? (
-      <WeekPattern profiles={profiles} hospitals={hospitals} finding={findingFor(insights, "weekday")} meta={dailyRes.value.meta} />
+      <WeekPattern profiles={profiles} hospitals={hospitals} finding={findingFor(insights, "weekday", hospitals)} meta={dailyRes.value.meta} />
     ) : null),
 
     links: () => (

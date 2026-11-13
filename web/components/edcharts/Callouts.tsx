@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { CaveatChip } from "@/components/CaveatChip";
 import { Glossed } from "@/components/terms/Glossed";
-import type { Insight, Meta } from "@/lib/api/types";
+import type { Hospital, Insight, Meta } from "@/lib/api/types";
 import { selectCallouts, STRENGTH_SYMBOL } from "@/lib/callouts";
 import { formatAsOf } from "@/lib/dates";
 import { findingMeta, sourceDates } from "@/lib/provenance";
@@ -42,10 +42,10 @@ function Callout({ insight, meta }: { insight: Insight; meta: Meta }) {
  * the sentence, its strength, its caveat and its dates, comes from the insight engine through the API; nothing is
  * written here. Renders nothing when no finding applies, so a quiet week leaves the chart as it is.
  */
-export function Callouts({ insights, types, codes, meta, label }: {
-  insights: Insight[]; types: Insight["type"][]; codes: string[]; meta: Meta; label: string;
+export function Callouts({ insights, types, codes, hospitals, meta, label }: {
+  insights: Insight[]; types: Insight["type"][]; codes: string[]; hospitals: readonly Pick<Hospital, "hospital_code" | "facility_type">[]; meta: Meta; label: string;
 }) {
-  const { shown, more } = selectCallouts(insights, types, codes);
+  const { shown, more } = selectCallouts(insights, types, codes, hospitals);
   if (!shown.length) return null;
   return (
     <section aria-label={`Findings: ${label}`} className="mb-4" data-testid="callouts">

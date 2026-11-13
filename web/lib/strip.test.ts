@@ -5,7 +5,7 @@ import { buildStrip } from "./strip";
 
 const NOW = new Date("2026-11-12T10:00:00+08:00"); // injected: no test reads the real clock
 
-const hosp = (code: string, cluster: string) => ({ hospital_code: code, cluster }) as Hospital;
+const hosp = (code: string, cluster: string, facility_type: "ED" | "UCC" = "ED") => ({ hospital_code: code, cluster, facility_type }) as Hospital;
 const hospitals = [hosp("SGH", "SingHealth"), hosp("CGH", "SingHealth"), hosp("NUH", "NUHS")];
 
 const src = (id: string, name: string, as_of: string) => ({ id, name, as_of, as_of_basis: null, last_fetched_at: null, url: null });
@@ -24,6 +24,12 @@ describe("buildStrip", () => {
   it("counts hospitals above usual with the existing 15% rule, and says the week from the data", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: null, now: NOW })!;
     expect(s).toMatchObject({ total: 3, above: 1, noComparison: 0, week: "19–25 Oct 2026" });
+  });
+
+  it("never counts the urgent care centre, even when it is far above its usual", () => {
+    const withUcc = [...hospitals, hosp("AH", "NUHS", "UCC")];
+    const s = buildStrip({ hospitals: withUcc, weekly: [...weekly, ...series("AH", 1, 3)], weeklyMeta: mohMeta, live: [], liveMeta: null, now: NOW })!;
+    expect(s).toMatchObject({ total: 3, above: 1 });
   });
 
   it("gives the bed-wait pill its own date and age, with no doctor pill when NUHS has no reading", () => {

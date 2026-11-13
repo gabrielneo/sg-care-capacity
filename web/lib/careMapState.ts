@@ -24,6 +24,8 @@ export interface CareRow extends Pick<HospitalStatus, "code" | "level" | "latest
   longitude: number | null;
   /** Short coverage label ("Urgent care centre", "Adults only"), from lib/hospitalNotes.ts. */
   note: string | null;
+  /** The urgent care centre: listed in its own group after the EDs, never ranked with them (lib/hospitals.ts). */
+  urgentCare: boolean;
 }
 
 export interface CareParams {
@@ -77,11 +79,16 @@ export function filterByCluster<T extends { cluster: string }>(rows: readonly T[
   return cluster ? rows.filter((r) => r.cluster === cluster) : [...rows];
 }
 
-/** The list's rows in the chosen order (the Planner cards' own sort, so the two can't disagree). */
+/**
+ * The list's rows in the chosen order (the Planner cards' own sort, so the two can't disagree): the
+ * EDs ranked, then the urgent care centre in its own group, never ranked among them (ADR 0012).
+ */
 export function sortRows(rows: readonly CareRow[], sort: Sort): CareRow[] {
   const byCode = new Map(rows.map((r) => [r.code, r]));
   const names = Object.fromEntries(rows.map((r) => [r.code, r.name]));
-  return sortStatuses(rows.map((r) => ({ ...r, spark: [] })), sort, names).map((s) => byCode.get(s.code) as CareRow);
+  const sorted = (group: readonly CareRow[]) =>
+    sortStatuses(group.map((r) => ({ ...r, spark: [] })), sort, names).map((s) => byCode.get(s.code) as CareRow);
+  return [...sorted(rows.filter((r) => !r.urgentCare)), ...sorted(rows.filter((r) => r.urgentCare))];
 }
 
 /** Hospitals the map can place. */

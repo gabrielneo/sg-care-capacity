@@ -77,7 +77,9 @@ export function CareMapPanel({ rows, bodies, map, provenance }: {
         <LayoutToggle value={params.layout} fallback={wide ? "map" : "list"} onSelect={choose} />
       </div>
       <p className="mb-3 text-sm text-muted" aria-live="polite" data-testid="care-count">
-        Showing {shown.length} of {rows.length} hospitals{params.cluster ? ` in ${params.cluster}` : ""}.
+        {/* EDs are counted; the urgent care centre is said separately, never counted among them (ADR 0012). */}
+        Showing {shown.filter((r) => !r.urgentCare).length} of {rows.filter((r) => !r.urgentCare).length} emergency departments
+        {params.cluster ? ` in ${params.cluster}` : ""}{shown.some((r) => r.urgentCare) ? ", and the urgent care centre" : ""}.
         {unpinned > 0 ? ` ${unpinned} ${unpinned === 1 ? "has" : "have"} no map location and appears in the list only.` : ""}
       </p>
       <div className={mapClass} data-testid="care-map-view">

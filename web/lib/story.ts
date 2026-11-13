@@ -3,8 +3,9 @@
  * number comes from the insight engine (docs/insights_method.md); this module only picks, orders and
  * formats. It writes no finding text and computes no finding number.
  */
-import type { Insight, InsightChart, InsightDisplay, PopulationYear } from "./api/types";
+import type { Hospital, Insight, InsightChart, InsightDisplay, PopulationYear } from "./api/types";
 import { BED_WAIT_LABEL } from "./copy";
+import { systemFindings } from "./hospitals";
 
 /** An insight the story can show: the engine wrote its labels and chart (releases before that didn't). */
 export type StoryInsight = Insight & { display: InsightDisplay; chart: InsightChart };
@@ -13,9 +14,13 @@ export function isStoryInsight(i: Insight): i is StoryInsight {
   return i.display != null && i.chart != null;
 }
 
-/** The headline findings, in rank order: the hero is the first, the scroll story shows up to three. */
-export function storySteps(insights: Insight[], max = 3): StoryInsight[] {
-  return insights
+/**
+ * The headline findings, in rank order: the hero is the first, the scroll story shows up to three.
+ * An urgent-care finding is never one, even in a release from before the engine scoped it (ADR 0012).
+ */
+export function storySteps(insights: Insight[], hospitals: readonly Pick<Hospital, "hospital_code" | "facility_type">[],
+                           max = 3): StoryInsight[] {
+  return systemFindings(insights, hospitals)
     .filter((i): i is StoryInsight => i.headline_rank != null && isStoryInsight(i))
     .sort((a, b) => (a.headline_rank as number) - (b.headline_rank as number))
     .slice(0, max);

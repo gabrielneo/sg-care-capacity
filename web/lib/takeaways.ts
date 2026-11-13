@@ -3,7 +3,8 @@
  * and number is the engine's own (chart callout, display numbers); this file only picks and joins
  * them. The full sentence, method and statistics stay on /findings and in the methods drawer.
  */
-import type { Insight } from "./api/types";
+import type { Hospital, Insight } from "./api/types";
+import { systemFindings } from "./hospitals";
 
 export interface Takeaway {
   id: string;
@@ -19,8 +20,13 @@ export interface Takeaway {
 
 export const MAX_TAKEAWAYS = 3;
 
-export function takeaways(insights: Insight[], hospitalCodes: string[]): Takeaway[] {
-  return [...insights]
+/**
+ * Up to three, from the headline findings. A finding about the urgent care centre is never a takeaway,
+ * even from a release made before the engine scoped it (lib/hospitals.ts, ADR 0012).
+ */
+export function takeaways(insights: Insight[], hospitals: readonly Pick<Hospital, "hospital_code" | "facility_type">[]): Takeaway[] {
+  const hospitalCodes = hospitals.map((h) => h.hospital_code);
+  return systemFindings(insights, hospitals)
     .filter((i) => i.headline_rank != null && i.chart?.callout)
     .sort((a, b) => (a.headline_rank as number) - (b.headline_rank as number))
     .slice(0, MAX_TAKEAWAYS)

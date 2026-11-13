@@ -164,18 +164,20 @@ describe("SummaryStrip", () => {
       expect(within(t).getByTestId("provenance-line")).toHaveTextContent(/Data as of 31 Oct 2026 · Source: /);
     }
     // Above usual: the higher and much higher badges, with the list in a tooltip a keyboard can reach.
-    expect(tile("above")).toHaveTextContent("Hospitals above usual3 of 5");
+    // The urgent care centre (AH, +45%) is left out of all four (ADR 0012), and one line says so.
+    expect(tile("above")).toHaveTextContent("Emergency departments above usual2 of 4");
     const which = within(tile("above")).getByRole("button", { name: "See which hospitals" });
     expect(document.getElementById(which.getAttribute("aria-describedby")!)).toHaveTextContent(
-      "Alexandra Hospital (AH): +45% vs usualSingapore General Hospital (SGH): +31% vs usualChangi General Hospital (CGH): +16% vs usual");
+      "Singapore General Hospital (SGH): +31% vs usualChangi General Hospital (CGH): +16% vs usual");
+    expect(screen.getByTestId("summary-ucc-note")).toHaveTextContent(
+      "The urgent care centre is left out of these four figures. Not compared with full emergency departments.");
     expect(within(tile("above")).queryByTestId("above-unknown")).toBeNull();
-    // Longest bed wait and the middle hospital: raw hours, so the urgent care centre is left out and said to be.
-    expect(tile("longest")).toHaveTextContent("Longest bed wait last week7.5 hNational University Hospital (NUH). The urgent care centre isn't ranked.");
-    expect(tile("middle")).toHaveTextContent(/bed wait across hospitals, last week5\.6 h/);       // 4.0, 5.0, 6.2, 7.5 -> 5.6
-    expect(tile("middle")).toHaveTextContent("Last 12 weeks; middle of 4 hospitals. Urgent care centre left out.");
+    expect(tile("longest")).toHaveTextContent("Longest bed wait last week7.5 hNational University Hospital (NUH).");
+    expect(tile("middle")).toHaveTextContent(/bed wait across emergency departments, last week5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
+    expect(tile("middle")).toHaveTextContent("Last 12 weeks; middle of 4 emergency departments.");
     expect(within(tile("middle")).getByTestId("sparkline")).toBeInTheDocument();
-    // Largest change: each hospital against itself, so the urgent care centre counts; cut, not rounded.
-    expect(tile("change")).toHaveTextContent("Largest change against usual+45% vs usualAlexandra Hospital (AH). Usual is the 8-week median.");
+    // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; cut, not rounded.
+    expect(tile("change")).toHaveTextContent("Largest change against usual+31% vs usualSingapore General Hospital (SGH). Usual is the 8-week median.");
     expect(screen.getByTestId("summary-strip")).toHaveTextContent("Week of 19–25 Oct 2026.");
     expect(screen.getByTestId("summary-strip")).toHaveTextContent("It is not the time to see a doctor.");
   });
@@ -188,17 +190,17 @@ describe("SummaryStrip", () => {
   it("missing stays missing: no comparison is counted on its own, and nothing is shown as 0", () => {
     render(<SummaryStrip statuses={[at("NUH", null, null), at("AH", null, 1.2), at("SGH", 2, 5)]} hospitals={hospitals} meta={edMeta}
                          latestWeek={null} />);
-    expect(tile("above")).toHaveTextContent("0 of 3None is 15% or more above its usual week.2 with no comparison.");
+    expect(tile("above")).toHaveTextContent("0 of 2None is 15% or more above its usual week.1 with no comparison.");
     expect(within(tile("above")).queryByRole("button")).toBeNull();
     expect(tile("longest")).toHaveTextContent("5.0 hSingapore General Hospital (SGH).");
     // One full ED with a complete week: no middle value, said so, not a number.
-    expect(tile("middle")).toHaveTextContent("No dataNeeds 3+ hospitals with a complete week. Urgent care centre left out.");
+    expect(tile("middle")).toHaveTextContent("No dataNeeds 3+ emergency departments with a complete week.");
     expect(within(tile("middle")).queryByTestId("sparkline")).toBeNull();
   });
 
   it("no usual level anywhere: the largest change is empty, not 0%", () => {
     render(<SummaryStrip statuses={[at("NUH", null, 5)]} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
-    expect(tile("change")).toHaveTextContent("No dataNo hospital has enough complete weeks to compare.");
+    expect(tile("change")).toHaveTextContent("No dataNo emergency department has enough complete weeks to compare.");
     expect(tile("change")).not.toHaveTextContent("0%");
   });
 

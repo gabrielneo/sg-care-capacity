@@ -5,7 +5,9 @@
  * Everything here reads the statuses the cards are drawn from (lib/status.ts): the same latest
  * complete week, the same usual level and the same badge thresholds. Nothing is a second scale.
  */
+import type { Hospital } from "./api/types";
 import { median } from "./edCompare";
+import { splitByCare } from "./hospitals";
 import { byPressure, type HospitalStatus } from "./status";
 
 export type Sort = "usual" | "hours" | "name";
@@ -79,26 +81,29 @@ export function formatDelta(pct: number | null | undefined): Delta | null {
     : { direction: "down", text: `▼ ${size}%`, spoken: `−${size}%`, whole };
 }
 
-/** The hospitals whose badge is higher or much higher than usual, largest change first. */
-export function aboveUsual(statuses: readonly HospitalStatus[]): HospitalStatus[] {
-  return statuses.filter((s) => s.level === "higher" || s.level === "much_higher").sort(byPressure);
+type Typed = Pick<Hospital, "hospital_code" | "facility_type">;
+
+/** The statuses that can be compared across hospitals: the urgent care centre is left out (lib/hospitals.ts). */
+const comparable = (statuses: readonly HospitalStatus[], hospitals: readonly Typed[]) =>
+  splitByCare(statuses, (s) => s.code, hospitals).rankable;
+
+/** The full EDs whose badge is higher or much higher than usual, largest change first. */
+export function aboveUsual(statuses: readonly HospitalStatus[], hospitals: readonly Typed[]): HospitalStatus[] {
+  return comparable(statuses, hospitals).filter((s) => s.level === "higher" || s.level === "much_higher").sort(byPressure);
 }
 
-/**
- * The longest bed wait in the latest complete week, in hours. `exclude` is the urgent care centre:
- * its waits are shorter by design, so it isn't ranked against the full EDs (docs/methodology.md).
- */
-export function longestWait(statuses: readonly HospitalStatus[], exclude: readonly string[] = []): HospitalStatus | null {
-  const ranked = sortStatuses(statuses.filter((s) => s.latest != null && !exclude.includes(s.code)), "hours");
+/** The longest bed wait in the latest complete week, in hours, among the full EDs. */
+export function longestWait(statuses: readonly HospitalStatus[], hospitals: readonly Typed[]): HospitalStatus | null {
+  const ranked = sortStatuses(comparable(statuses, hospitals).filter((s) => s.latest != null), "hours");
   return ranked[0] ?? null;
 }
 
 /**
- * The hospital furthest from its own usual level, up or down. Each hospital is compared with
- * itself, so the urgent care centre is in. Null when no hospital has a usual level.
+ * The full ED furthest from its own usual level, up or down. Null when none has a usual level. The
+ * urgent care centre is left out: "largest" ranks hospitals, even though each is compared with itself.
  */
-export function largestChange(statuses: readonly HospitalStatus[]): HospitalStatus | null {
-  const known = statuses.filter((s) => s.pct != null);
+export function largestChange(statuses: readonly HospitalStatus[], hospitals: readonly Typed[]): HospitalStatus | null {
+  const known = comparable(statuses, hospitals).filter((s) => s.pct != null);
   const size = (s: HospitalStatus) => Math.abs(s.pct as number);
   return [...known].sort((a, b) => size(b) - size(a) || a.code.localeCompare(b.code))[0] ?? null;
 }
@@ -107,13 +112,13 @@ export function largestChange(statuses: readonly HospitalStatus[]): HospitalStat
 export const MIN_HOSPITALS = 3;
 
 /**
- * The middle (median) of the hospitals' weekly bed waits, for each of the 12 weeks on the cards'
+ * The middle (median) of the full EDs' weekly bed waits, for each of the 12 weeks on the cards'
  * lines, oldest first. It is the median across hospitals of each one's weekly average of daily
- * medians: not a median of patients, which MOH's figures can't give. `exclude` is the urgent care
- * centre. A week with fewer than MIN_HOSPITALS complete hospitals is null: a gap, never a guess.
+ * medians: not a median of patients, which MOH's figures can't give. The urgent care centre is left
+ * out. A week with fewer than MIN_HOSPITALS complete hospitals is null: a gap, never a guess.
  */
-export function acrossHospitals(statuses: readonly HospitalStatus[], exclude: readonly string[] = []): (number | null)[] {
-  const series = statuses.filter((s) => !exclude.includes(s.code)).map((s) => s.spark);
+export function acrossHospitals(statuses: readonly HospitalStatus[], hospitals: readonly Typed[]): (number | null)[] {
+  const series = comparable(statuses, hospitals).map((s) => s.spark);
   const weeks = Math.max(0, ...series.map((s) => s.length));
   return Array.from({ length: weeks }, (_, i) => {
     const values = series.map((s) => s[i]).filter((v): v is number => v != null);

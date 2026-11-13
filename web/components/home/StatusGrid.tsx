@@ -6,6 +6,7 @@ import type { Hospital, LiveReading, Meta } from "@/lib/api/types";
 import { BED_WAIT_SHORT } from "@/lib/copy";
 import type { Density } from "@/lib/homeViews";
 import { shortNote } from "@/lib/hospitalNotes";
+import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { type Sort, sortHref, SORTS } from "@/lib/planner";
 import { type HospitalStatus, HIGHER_PCT, MUCH_HIGHER_PCT } from "@/lib/status";
 import { formatWeek, type WeekRange } from "@/lib/weeks";
@@ -36,7 +37,7 @@ function SortLinks({ sort, query }: { sort: Sort; query: string }) {
 }
 
 /**
- * Every public ED as a status card, in the order given. `density` is the view's (lib/homeViews.ts).
+ * Every public ED as a status card, in the order given, and the urgent care centre in its own group. `density` is the view's (lib/homeViews.ts).
  * Full cards are smaller and sit four to a row on a wide screen; `sort` adds the order control
  * (lib/planner.ts), which the Planner and Analyst views have.
  */
@@ -44,6 +45,9 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
   statuses: HospitalStatus[]; hospitals: Hospital[]; live: LiveReading[]; meta: Meta; latestWeek: WeekRange | null; density?: Density;
   sort?: Sort; query?: string }) {
   const full = density === "full";
+  // The full EDs in the order given; the urgent care centre in its own group below (ADR 0012).
+  const { rankable, urgentCare } = splitByCare(statuses, (s) => s.code, hospitals);
+  const gridClass = full ? "mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
   const byCode = new Map(hospitals.map((h) => [h.hospital_code, h]));
   const liveFor = (code: string) => live.find((r) => r.hospital_code === code && r.is_adult_ed) ?? null;
   const noteFor = (code: string) => {
@@ -69,11 +73,22 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
         </div>
         {full && sort ? <SortLinks sort={sort} query={query} /> : null}
       </div>
-      <ul className={full ? "mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
-        {statuses.map((s) => (
+      <ul className={gridClass} data-testid="status-group" data-group="ed">
+        {rankable.map((s) => (
           <StatusCard key={s.code} status={s} note={noteFor(s.code)} live={liveFor(s.code)} density={density} />
         ))}
       </ul>
+      {urgentCare.length ? (
+        <div className="mt-4" data-testid="status-ucc">
+          <h3 className="text-base font-semibold text-ink">{URGENT_CARE_HEADING}</h3>
+          <p className="text-sm text-muted">{URGENT_CARE_NOTE}.</p>
+          <ul className={gridClass} data-testid="status-group" data-group="ucc">
+            {urgentCare.map((s) => (
+              <StatusCard key={s.code} status={s} note={noteFor(s.code)} live={liveFor(s.code)} density={density} />
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {full ? <p className="mt-3 max-w-prose text-xs text-muted" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></p> : null}
       <p className={`${full ? "mt-1" : "mt-3"} text-xs text-muted`} data-testid="status-key">
         Usual = the middle of the 8 weeks before. Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.

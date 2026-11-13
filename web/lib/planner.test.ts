@@ -73,34 +73,34 @@ describe("formatDelta: the change against usual as text", () => {
 
 describe("the summary tiles", () => {
   const list = [mk("SGH", 25, 6.2), mk("AH", 45, 1.1), mk("CGH", 14.9, 4.0), mk("NUH", null, 9.9), mk("TTSH", -32, 9.5)];
+  const eds = (...xs: string[]) => xs.map((c) => ({ hospital_code: c, facility_type: "ED" as const }));
+  const HOSPITALS = [...eds("SGH", "CGH", "NUH", "TTSH", "B", "A"), { hospital_code: "AH", facility_type: "UCC" as const }];
 
-  it("above usual: the hospitals with a higher or much higher badge, largest first", () => {
-    expect(codes(aboveUsual(list))).toEqual(["AH", "SGH"]);
-    expect(aboveUsual([mk("CGH", 14.9), mk("NUH", null)])).toEqual([]);
+  it("above usual: the full EDs with a higher or much higher badge, largest first", () => {
+    expect(codes(aboveUsual(list, HOSPITALS))).toEqual(["SGH"]);
+    expect(aboveUsual([mk("CGH", 14.9), mk("NUH", null)], HOSPITALS)).toEqual([]);
   });
 
-  it("longest bed wait: raw hours, without the urgent care centre", () => {
-    expect(longestWait(list)?.code).toBe("NUH");
-    expect(longestWait(list, ["NUH"])?.code).toBe("TTSH");
-    expect(longestWait([mk("AH", 1, 9), mk("SGH", 1, null)], ["AH"])).toBeNull();
+  it("longest bed wait: raw hours, among the full EDs", () => {
+    expect(longestWait(list, HOSPITALS)?.code).toBe("NUH");
+    expect(longestWait([mk("AH", 1, 9), mk("SGH", 1, null)], HOSPITALS)).toBeNull();
   });
 
-  it("largest change: furthest from its own usual, up or down; none without a usual level", () => {
-    expect(largestChange(list)?.code).toBe("AH");
-    expect(largestChange([mk("SGH", 25), mk("TTSH", -32)])?.code).toBe("TTSH");
-    expect(largestChange([mk("B", 20), mk("A", -20)])?.code).toBe("A");
-    expect(largestChange([mk("NUH", null)])).toBeNull();
+  it("largest change: the full ED furthest from its own usual, up or down; none without a usual level", () => {
+    expect(largestChange(list, HOSPITALS)?.code).toBe("TTSH");     // AH's +45% is left out
+    expect(largestChange([mk("SGH", 25), mk("TTSH", -32)], HOSPITALS)?.code).toBe("TTSH");
+    expect(largestChange([mk("B", 20), mk("A", -20)], HOSPITALS)?.code).toBe("A");
+    expect(largestChange([mk("NUH", null), mk("AH", 80)], HOSPITALS)).toBeNull();
   });
 
-  it("across hospitals: the middle of each week's values, a gap under 3 hospitals", () => {
+  it("across hospitals: the middle of each week's full-ED values, a gap under 3 hospitals", () => {
     const s = [
       mk("SGH", 1, 5, [4, 5, 6, null]), mk("CGH", 1, 5, [2, 9, null, null]), mk("TTSH", 1, 5, [3, 1, 8, 7]),
       mk("NUH", 1, 5, [9, 3, 7, 5]), mk("AH", 1, 1, [1, 1, 1, 1]),
     ];
-    // Week 1: 2,3,4,9 -> 3.5. Week 2: 1,3,5,9 -> 4. Week 3: 6,7,8 -> 7. Week 4: only two hospitals.
-    expect(acrossHospitals(s, ["AH"])).toEqual([3.5, 4, 7, null]);
-    expect(acrossHospitals(s)).toEqual([3, 3, 6.5, 5]);          // with the fifth hospital counted
-    expect(acrossHospitals([mk("SGH", 1, 5, [4]), mk("CGH", 1, 5, [5])])).toEqual([null]);
-    expect(acrossHospitals([])).toEqual([]);
+    // Week 1: 2,3,4,9 -> 3.5. Week 2: 1,3,5,9 -> 4. Week 3: 6,7,8 -> 7. Week 4: only two EDs (AH doesn't count).
+    expect(acrossHospitals(s, HOSPITALS)).toEqual([3.5, 4, 7, null]);
+    expect(acrossHospitals([mk("SGH", 1, 5, [4]), mk("CGH", 1, 5, [5])], HOSPITALS)).toEqual([null]);
+    expect(acrossHospitals([], HOSPITALS)).toEqual([]);
   });
 });

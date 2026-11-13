@@ -34,7 +34,7 @@ test.describe("Map controls", () => {
       await expect(page.getByTestId("care-panel")).toHaveAttribute("data-cluster", "NUHS");
       await expect(page.getByTestId("care-panel")).toHaveAttribute("data-layout", "list");
       await expect(page.locator('[data-testid="cluster-chip"][data-cluster="NUHS"]')).toHaveAttribute("aria-pressed", "true");
-      expect(await rowCodes(page)).toEqual(["AH", "NUH"]);
+      expect(await rowCodes(page)).toEqual(["NUH", "AH"]);                // the urgent care centre in its own group, last
       await expect(drawer(page)).toBeVisible();
       await expect(drawer(page).getByRole("heading", { level: 2 })).toContainText("Alexandra Hospital");
       await expect(page.getByTestId("care-list-view")).toBeVisible();
@@ -56,7 +56,8 @@ test.describe("Map controls", () => {
     await expect(page).toHaveURL(/sort=hours/);
     await page.reload();
     await hydrated(page);
-    expect(await rowCodes(page)).toEqual(["AH", "NUH"]);                    // longest first, no figure last
+    expect(await rowCodes(page)).toEqual(["NUH", "AH"]);                    // EDs ranked, then the urgent care centre's group
+    await expect(page.getByTestId("care-ucc")).toContainText("Urgent care centre · Not compared with full emergency departments");
     await expect(page.locator('th[aria-sort="descending"]')).toContainText("Wait for a ward bed");
     await page.getByTestId("cluster-chip").filter({ hasText: "All" }).click();
     await expect(page).not.toHaveURL(/cluster=/);
@@ -67,7 +68,7 @@ test.describe("Map controls", () => {
     await hydrated(page);
     await expect(page.getByTestId("care-panel")).toHaveAttribute("data-cluster", "all");
     await expect(drawer(page)).toBeHidden();
-    await expect(page.getByTestId("care-count")).toContainText("Showing 3 of 3 hospitals");
+    await expect(page.getByTestId("care-count")).toContainText("Showing 2 of 2 emergency departments, and the urgent care centre.");
   });
 
   test("the default layout is the list on a phone and the map from 640px; ?layout= wins", async ({ page }, info) => {
@@ -92,7 +93,9 @@ test.describe("Map controls", () => {
       await page.getByTestId("layout-toggle").getByRole("button", { name: /Map/ }).click();
       await expect(page.getByTestId("care-map-view")).toBeVisible();
       await expect.poll(() => markerCodes(page)).toEqual(expected);
-      await expect(page.getByTestId("care-count")).toContainText(`Showing ${expected.length} of 3`);
+      // EDs are counted (2 in the fixture); the urgent care centre is said separately, never counted among them.
+      const eds = expected.filter((c) => c !== "AH").length;
+      await expect(page.getByTestId("care-count")).toContainText(`Showing ${eds} of 2 emergency departments`);
     }
   });
 });

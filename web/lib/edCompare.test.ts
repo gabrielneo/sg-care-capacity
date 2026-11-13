@@ -149,20 +149,29 @@ describe("NUHS against MOH", () => {
   });
 });
 
+const HOSPITALS = [{ hospital_code: "AH", facility_type: "UCC" as const },
+  ...["NUH", "SKH", "SGH", "KTPH"].map((hospital_code) => ({ hospital_code, facility_type: "ED" as const }))];
+
 describe("findings and the mode", () => {
   it("annotates with the highest-ranked finding of the chart's kind", () => {
     const f = (type: Insight["type"], entity: string, rank_score: number, key = "tue") =>
       ({ type, entity, rank_score, chart: { highlight: [key] } } as unknown as Insight);
     const insights = [f("weekday", "NUH", 0.3), f("weekday", "SKH", 1.0), f("anomaly", "AH", 0.5)];
-    expect(findingFor(insights, "weekday")!.entity).toBe("SKH");
-    expect(findingFor(insights, "trend")).toBeNull();
-    expect(findingWeekday(findingFor(insights, "weekday"))).toBe(1);
+    expect(findingFor(insights, "weekday", HOSPITALS)!.entity).toBe("SKH");
+    expect(findingFor(insights, "trend", HOSPITALS)).toBeNull();
+    expect(findingWeekday(findingFor(insights, "weekday", HOSPITALS))).toBe(1);
+  });
+
+  it("never annotates a chart across hospitals with an urgent-care finding", () => {
+    const f = (entity: string, rank_score: number) => ({ type: "anomaly", entity, rank_score, chart: {} } as unknown as Insight);
+    expect(findingFor([f("AH", 0.9), f("SGH", 0.2)], "anomaly", HOSPITALS)!.entity).toBe("SGH");
+    expect(findingFor([f("AH", 0.9)], "anomaly", HOSPITALS)).toBeNull();
   });
 
   it("breaks a tie in rank score by the size of the effect, as the engine ranks", () => {
     const tied = [{ type: "weekday", entity: "KTPH", rank_score: 1, effect_size: 0.412, insight_id: "a", chart: {} },
                   { type: "weekday", entity: "SKH", rank_score: 1, effect_size: 0.4945, insight_id: "b", chart: {} }] as unknown as Insight[];
-    expect(findingFor(tied, "weekday")!.entity).toBe("SKH");
+    expect(findingFor(tied, "weekday", HOSPITALS)!.entity).toBe("SKH");
   });
 
   it("defaults to each hospital against its own usual level", () => {

@@ -2,7 +2,8 @@
  * Which findings a section's callouts show. The text and every number come from the insight engine
  * (docs/insights_method.md); this only picks, orders and splits them.
  */
-import type { Insight } from "./api/types";
+import type { Hospital, Insight } from "./api/types";
+import { systemFindings } from "./hospitals";
 
 /** Callouts shown before "More findings". */
 export const MAX_CALLOUTS = 2;
@@ -29,8 +30,10 @@ export interface Selection {
  * describe the same week (a week far above usual is also an unusual week), and the stronger one is kept.
  * "All hospitals" findings are always in scope. A finding with no chart data (an older release) is left out.
  */
-export function selectCallouts(insights: Insight[], types: Insight["type"][], codes: string[]): Selection {
-  const inScope = insights
+export function selectCallouts(insights: Insight[], types: Insight["type"][], codes: string[],
+                               hospitals: readonly Pick<Hospital, "hospital_code" | "facility_type">[]): Selection {
+  // Callouts are ranked by strength, so an urgent-care finding is never one (lib/hospitals.ts, ADR 0012).
+  const inScope = systemFindings(insights, hospitals)
     .filter((i) => types.includes(i.type) && i.display && (i.entity === "All hospitals" || codes.includes(i.entity)))
     .sort(byStrength);
   const seen = new Set<string>();

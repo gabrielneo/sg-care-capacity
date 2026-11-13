@@ -35,12 +35,13 @@ const BigNumber = ({ children }: { children: ReactNode }) => (
  * code are the engineering facts in lib/author.ts, which a test checks against the README.
  */
 export default async function ProjectPage() {
-  const [insights, population, quality] = await Promise.all([
+  const [insights, hospitals, population, quality] = await Promise.all([
     settle(api.insights({ headline: true })),
+    settle(api.hospitals()),
     settle(api.population()),
     settle(api.quality()),
   ]);
-  const findings = insights.ok ? findingTiles(insights.value.data) : [];
+  const findings = insights.ok ? findingTiles(insights.value.data, hospitals.ok ? hospitals.value.data : []) : [];
   const share = population.ok ? shareText(population.value.data) : null;
   const checks = quality.ok ? checksSummary(quality.value.data) : null;
   const link = (id: string) => AUTHOR_LINKS.find((l) => l.id === id);

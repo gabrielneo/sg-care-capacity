@@ -88,8 +88,8 @@ describe("HospitalDrawerBody", () => {
 });
 
 const rows: CareRow[] = [
-  { code: "SGH", name: "Singapore General Hospital", cluster: "SingHealth", latitude: 1.28, longitude: 103.83, note: null, level: "higher", latest: 5, usual: 4, pct: 25 },
-  { code: "AH", name: "Alexandra Hospital (UCC)", cluster: "NUHS", latitude: 1.28, longitude: 103.8, note: "Urgent care centre", level: "unknown", latest: 2, usual: null, pct: null },
+  { code: "SGH", name: "Singapore General Hospital", cluster: "SingHealth", latitude: 1.28, longitude: 103.83, note: null, level: "higher", latest: 5, usual: 4, pct: 25, urgentCare: false },
+  { code: "AH", name: "Alexandra Hospital (UCC)", cluster: "NUHS", latitude: 1.28, longitude: 103.8, note: "Urgent care centre", level: "unknown", latest: 2, usual: null, pct: null, urgentCare: true },
 ];
 
 describe("CareList", () => {

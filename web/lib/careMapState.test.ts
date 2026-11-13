@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { type CareRow, clusterList, filterByCluster, matchCluster, parseCareParams, pinned, sortRows, withCareParams } from "./careMapState";
 
 const row = (code: string, cluster: string, over: Partial<CareRow> = {}): CareRow => ({
-  code, name: `${code} Hospital`, cluster, latitude: 1.3, longitude: 103.8, note: null, level: "usual", latest: 4, usual: 4, pct: 0, ...over });
+  code, name: `${code} Hospital`, cluster, latitude: 1.3, longitude: 103.8, note: null, level: "usual", latest: 4, usual: 4, pct: 0,
+  urgentCare: code === "AH", ...over });
 const rows = [row("SGH", "SingHealth", { latest: 5, pct: 25, level: "higher" }), row("TTSH", "NHG Health", { latest: 6, pct: 40, level: "much_higher" }),
   row("AH", "NUHS", { latest: 2, pct: null, usual: null, level: "unknown" }), row("NUH", "NUHS", { latest: null, pct: -20, level: "lower" })];
 
@@ -49,15 +50,18 @@ describe("withCareParams", () => {
   });
 });
 
-describe("sortRows uses the Planner cards' orders", () => {
+describe("sortRows uses the Planner cards' orders, with the urgent care centre in its own group last", () => {
   it("usual: largest change first, no comparison last", () => {
     expect(sortRows(rows, "usual").map((r) => r.code)).toEqual(["TTSH", "SGH", "NUH", "AH"]);
   });
-  it("hours: longest first, no figure last", () => {
-    expect(sortRows(rows, "hours").map((r) => r.code)).toEqual(["TTSH", "SGH", "AH", "NUH"]);
+  it("hours: longest first, no figure last; the urgent care centre is never ranked among the EDs", () => {
+    expect(sortRows(rows, "hours").map((r) => r.code)).toEqual(["TTSH", "SGH", "NUH", "AH"]);
+    const fast = [...rows.filter((r) => r.code !== "AH"), row("AH", "NUHS", { latest: 99, pct: 300, level: "much_higher" })];
+    expect(sortRows(fast, "hours").at(-1)!.code).toBe("AH");
+    expect(sortRows(fast, "usual").at(-1)!.code).toBe("AH");
   });
-  it("name: A to Z", () => {
-    expect(sortRows(rows, "name").map((r) => r.code)).toEqual(["AH", "NUH", "SGH", "TTSH"]);
+  it("name: A to Z within each group", () => {
+    expect(sortRows(rows, "name").map((r) => r.code)).toEqual(["NUH", "SGH", "TTSH", "AH"]);
   });
   it("does not change the list it is given", () => {
     const before = rows.map((r) => r.code);

@@ -76,8 +76,9 @@ test.describe("ED Trends: difference-first charts", () => {
     await expect(page).toHaveURL(/hospital=AH&hospital=NUH&hospital=SGH&mode=raw/);
     const pinned = page.getByTestId("small-multiples").getByTestId("pinned-caveat");
     await expect(pinned).toHaveCount(2);
-    expect(await plain(pinned.first())).toMatch(/not a full .*so its waits are shorter/);
-    expect(await plain(pinned.nth(1))).toMatch(/^i ?Adults only/);
+    // The EDs' panels first, the urgent care centre's last (ADR 0012).
+    expect(await plain(pinned.first())).toMatch(/^i ?Adults only/);
+    expect(await plain(pinned.nth(1))).toMatch(/not a full .*so its waits are shorter/);
     await expect(page.getByTestId("dumbbell-row").first().getByTestId("delta-number")).toContainText(/5\.0 hours\s*vs 4\.0 usual/);
     await expect(page.locator('[data-testid=multiple][data-hospital="AH"] [data-testid=series]')).not.toHaveCount(0);
     await page.getByRole("link", { name: "Each against its own usual level" }).click();

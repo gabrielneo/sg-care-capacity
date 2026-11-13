@@ -1,5 +1,6 @@
 /**
- * The site strip's content: how many hospitals are busier than usual, and how fresh each dataset is.
+ * The site strip's content: how many emergency departments are busier than usual (the urgent care
+ * centre is never counted), and how fresh each dataset is.
  * Built on the server (app/strip.json) from the same statuses as the cards, so the strip can't disagree
  * with them, and with the age worked out there: the browser's clock is never used to judge freshness.
  * `now` is injected, so tests never read the real clock.
@@ -8,6 +9,7 @@ import type { EdWeek, Hospital, LiveReading, Meta } from "./api/types";
 import { formatAsOf } from "./dates";
 import { latestCompleteWeek, usualLevels } from "./edCompare";
 import { CADENCE_TEXT, freshness, type Level } from "./freshness";
+import { rankableCodes } from "./hospitals";
 import { aboveUsual } from "./planner";
 import { sourceDates } from "./provenance";
 import { hospitalStatus, levelCounts } from "./status";
@@ -32,7 +34,7 @@ export interface StripPill {
 }
 
 export interface StripData {
-  /** Hospitals with a status (dim_hospital rows). */
+  /** Full EDs with a status (dim_hospital rows other than the urgent care centre). */
   total: number;
   /** Higher or much higher than usual. */
   above: number;
@@ -67,7 +69,8 @@ function pillFor(id: StripPill["id"], dataset: string, meta: Meta | null, now: D
 
 export function buildStrip({ hospitals, weekly, weeklyMeta, live, liveMeta, now }: Inputs): StripData | null {
   if (!hospitals.length || !weeklyMeta) return null;
-  const codes = hospitals.map((h) => h.hospital_code);
+  // The count is across hospitals, so it is over the full EDs only (lib/hospitals.ts, ADR 0012).
+  const codes = rankableCodes(hospitals);
   const latest = latestCompleteWeek(weekly);
   const usual = usualLevels(weekly, codes, latest);
   const statuses = codes.map((c) => hospitalStatus(c, usual[c], weekly, latest));
@@ -79,7 +82,7 @@ export function buildStrip({ hospitals, weekly, weeklyMeta, live, liveMeta, now 
   const bedPill = pills.find((p) => p.id === "bed");
   return {
     total: statuses.length,
-    above: aboveUsual(statuses).length,
+    above: aboveUsual(statuses, hospitals).length,
     noComparison: levelCounts(statuses).unknown,
     week: latest ? formatWeek({ week_start: latest, week_end: addDays(latest, 6) }) : null,
     pills,

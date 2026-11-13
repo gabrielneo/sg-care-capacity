@@ -3,7 +3,7 @@
  * figure: the findings are the insight engine's headline findings, the share is /api/v1/population,
  * and the checks are the latest data-quality run.
  */
-import type { Insight, PopulationYear, QualityReport } from "./api/types";
+import type { Hospital, Insight, PopulationYear, QualityReport } from "./api/types";
 import { percentText, populationShare, type StoryInsight, storySteps } from "./story";
 
 export interface ChecksSummary {
@@ -29,8 +29,8 @@ export function checksSummary(report: QualityReport): ChecksSummary | null {
 }
 
 /** Up to three headline findings for the tiles, in rank order. */
-export function findingTiles(insights: Insight[]): StoryInsight[] {
-  return storySteps(insights, 3);
+export function findingTiles(insights: Insight[], hospitals: readonly Pick<Hospital, "hospital_code" | "facility_type">[]): StoryInsight[] {
+  return storySteps(insights, hospitals, 3);
 }
 
 /** The latest 65+ share as the text the tile shows ("19.5%"), or null without a population year. */
