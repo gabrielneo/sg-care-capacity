@@ -29,7 +29,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
   if (full) {
     return (
       <section aria-labelledby="home-title" className="pb-2" data-testid="home-hero" data-density={density}>
-        <div role="note" aria-label="Emergency" className="rounded-xl bg-bad px-4 py-4 text-surface sm:px-6" data-testid="emergency-note">
+        <div role="note" aria-label="Emergency" className="rounded-xl bg-bad px-4 py-3 text-surface sm:px-6 sm:py-4" data-testid="emergency-note">
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-bold leading-tight sm:text-2xl">
             <span aria-hidden="true">✚</span>
             <span data-testid="triage-emergency">{TRIAGE_EMERGENCY}</span>
@@ -44,7 +44,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
             ) : null}
           </p>
         </div>
-        <h1 id="home-title" className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight text-ink sm:mt-6 sm:text-4xl">
+        <h1 id="home-title" className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight text-ink sm:mt-6 sm:text-4xl">
           Find a clinic near you
         </h1>
         <p className="mt-2 max-w-prose text-base text-ink sm:mt-3 sm:text-lg" data-testid="site-purpose">

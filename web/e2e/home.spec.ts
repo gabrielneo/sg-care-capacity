@@ -30,6 +30,18 @@ test.describe("Home", () => {
     await expect(page.getByTestId("status-card")).toHaveCount(0);
   });
 
+  test("with a wider font, as Linux's fallback font is, the search is still on the first screen", async ({ page }) => {
+    // CI's Chromium falls back to a wider font than macOS: the site title wrapped there and pushed the search below the fold.
+    await page.addInitScript(() => document.addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = "html, body, * { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }";
+      document.head.append(style);
+    }));
+    await page.goto("/");
+    await expect(page.getByTestId("emergency-note")).toBeInViewport();
+    await expect(page.getByLabel("Your postcode or area")).toBeInViewport({ ratio: 1 });
+  });
+
   test("it says it isn't medical advice, and that a search stays in the browser", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);

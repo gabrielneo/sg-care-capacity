@@ -42,7 +42,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
           <div className="mx-auto max-w-6xl px-4 pt-2">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <Link href="/" className="text-base font-semibold text-ink no-underline">
-                Right-siting care <span className="font-normal text-muted">· a super-aged Singapore</span>
+                Right-siting care <span className="hidden font-normal text-muted sm:inline">· a super-aged Singapore</span>
               </Link>
               {/* The home page's view control (app/@viewbar): a slot, because a layout can't read ?view=. */}
               {viewbar}
