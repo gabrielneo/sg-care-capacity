@@ -2,6 +2,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { InsightChart } from "@/lib/api/types";
 import { insightMeta, storySample } from "@/lib/samples";
 import { chartFormat } from "@/lib/story";
 
@@ -189,5 +190,18 @@ describe("Scrolly", () => {
     expect(states()).toEqual(["false", "false", "true"]);
     expect(screen.getByTestId("scrolly")).toHaveAttribute("data-active", "2");
     expect(screen.getByText("inline b")).toBeInTheDocument();                        // every step keeps its own chart for phones
+  });
+});
+
+describe("fromInsightChart: a date axis is in date order (audit A5)", () => {
+  it("sorts a line chart's weeks by their dates, whatever order they arrive in", () => {
+    const chart = {
+      kind: "line", y_label: "Hours", x_label: null, highlight: ["2026-10-19"], callout: "c", reference: null, trend_line: null,
+      points: [["2026-09-07", "7 Sep", 3], ["2026-08-31", "31 Aug", 2], ["2026-10-19", "19 Oct", 5], ["2026-09-14", "14 Sep", 4]]
+        .map(([key, label, value]) => ({ key, label, value })),
+    } as unknown as InsightChart;
+    const props = fromInsightChart(chart);
+    expect(props.categories.map((c) => c.label)).toEqual(["31 Aug", "7 Sep", "14 Sep", "19 Oct"]);
+    expect(props.series[0]!.values).toEqual([2, 3, 4, 5]);       // the values move with their dates
   });
 });

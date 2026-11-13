@@ -4,6 +4,7 @@
  * "not expected", not gaps.
  */
 import type { EdDay, Hospital } from "./api/types";
+import { sortByDate } from "./dates";
 import { eachDay } from "./series";
 
 export type CellState = "both" | "wait_only" | "attendance_only" | "missing" | "not_expected";
@@ -56,7 +57,7 @@ export function dateRuns(dates: string[]): string[] {
   const fmt = new Intl.DateTimeFormat("en-SG", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" });
   const day = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
   const runs: [string, string][] = [];
-  for (const d of [...dates].sort()) {
+  for (const d of sortByDate(dates, (x) => x)) {
     const last = runs.at(-1);
     if (last && day(d) - day(last[1]) === 86_400_000) last[1] = d;
     else runs.push([d, d]);

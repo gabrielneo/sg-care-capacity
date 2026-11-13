@@ -27,3 +27,16 @@ export function formatAsOf(value: string, opts: { withTime?: boolean } = {}): st
   if (!d) return "unknown date";
   return opts.withTime && hasTime(value) ? `${DAY.format(d)}, ${TIME.format(d)} SGT` : DAY.format(d);
 }
+
+/**
+ * Items in date order, by their real dates (Date values), never by their text: a label like "7 Sep"
+ * sorted as text comes before "31 Aug" (audit A5). Stable for equal dates. If any key isn't a date,
+ * the list is returned in the order given: a category axis keeps its own order.
+ */
+export function sortByDate<T>(items: readonly T[], key: (item: T) => string): T[] {
+  const times = items.map((item) => parseAsOf(key(item))?.getTime() ?? null);
+  if (times.some((t) => t == null)) return [...items];
+  return items.map((item, i) => ({ item, t: times[i] as number, i }))
+    .sort((a, b) => a.t - b.t || a.i - b.i)
+    .map((x) => x.item);
+}

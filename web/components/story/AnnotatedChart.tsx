@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { InsightChart, Meta } from "@/lib/api/types";
+import { sortByDate } from "@/lib/dates";
 import { colors } from "@/lib/palette";
 
 import { ChartCard } from "../ChartCard";
@@ -60,10 +61,13 @@ const BOTTOM = 26;       // px: x labels
 /** The props for an insight's chart. */
 export function fromInsightChart(chart: InsightChart): Pick<AnnotatedChartProps, "kind" | "categories" | "series" | "highlight" |
   "callout" | "reference" | "trendLine" | "xLabel"> {
+  // A date axis (a line of weeks) is put in date order by its ISO keys, never by its labels (audit A5).
+  // Weekdays and groups have non-date keys and keep the engine's order.
+  const points = sortByDate(chart.points, (p) => p.key);
   return {
     kind: chart.kind,
-    categories: chart.points.map((p) => ({ key: p.key, label: p.label })),
-    series: [{ key: "values", label: chart.y_label, values: chart.points.map((p) => p.value) }],
+    categories: points.map((p) => ({ key: p.key, label: p.label })),
+    series: [{ key: "values", label: chart.y_label, values: points.map((p) => p.value) }],
     highlight: chart.highlight,
     callout: chart.callout,
     reference: chart.reference,

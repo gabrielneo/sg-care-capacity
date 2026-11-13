@@ -17,6 +17,7 @@ import { Term } from "@/components/terms/Term";
 import { api, settle } from "@/lib/api/client";
 import type { Insight, Meta } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, BED_WAIT_LABEL, CAVEAT, dayText, plainError } from "@/lib/copy";
+import { sortByDate } from "@/lib/dates";
 import {
   band,
   findingFor,
@@ -122,7 +123,8 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     const u = usuals[h.hospital_code];
     const missingUsual = mode === "usual" && u?.usual == null
       ? `No usual level: ${u?.weeks ?? 0} of the ${USUAL_WEEKS} weeks before ${latestText} are complete.` : null;
-    return { hospital: h, series: hospitalSeries(daily, h.hospital_code, days, mode, u?.usual ?? null), missingUsual };
+    // In date order by Date values, whatever order the API gave (audit A5).
+    return { hospital: h, series: sortByDate(hospitalSeries(daily, h.hospital_code, days, mode, u?.usual ?? null), (d) => d.date), missingUsual };
   });
   const gaps = missingDays(days.map((date) => Object.fromEntries([["date", date], ...chosen.map((h) => [h.hospital_code,
     daily.find((r) => r.hospital_code === h.hospital_code && r.report_date === date)?.median_wait_hours ?? null])])), selected);
