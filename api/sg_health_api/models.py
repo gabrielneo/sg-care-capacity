@@ -89,8 +89,11 @@ class HealthResponse(BaseModel):
 class Hospital(BaseModel):
     hospital_code: str
     hospital_name: str
+    short_name: str | None = Field(None, description='Name for cards and tables, e.g. "Sengkang General"; '
+                                   "null in releases before 2026-11-14")
     cluster: str
-    facility_type: Literal["ED", "UCC"] = Field(description="AH is an Urgent Care Centre, not a full ED")
+    facility_type: Literal["ED", "UCC"] = Field(description="AH is an Urgent Care Centre, not a full ED. Leave UCC out of "
+                                                "every rank, count and median across hospitals")
     reported_from: date | None = Field(description="First day MOH reports the site; null = from the series start")
     coverage_note: str | None
     exclusions_note: str | None

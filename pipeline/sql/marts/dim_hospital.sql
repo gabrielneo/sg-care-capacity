@@ -5,6 +5,7 @@ CREATE OR REPLACE TABLE marts.dim_hospital AS
 SELECT
     hospital_code,
     hospital_name,
+    short_name,
     cluster,
     facility_type,
     CAST(reported_from AS DATE)      AS reported_from,

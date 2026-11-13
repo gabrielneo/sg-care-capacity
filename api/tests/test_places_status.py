@@ -192,6 +192,13 @@ def test_hospitals_carry_their_map_pins(client):
     assert (sgh["postal_code"], sgh["latitude"], sgh["longitude"]) == ("169608", 1.278429, 103.834043)
 
 
+def test_hospitals_carry_short_names_and_facility_type(client):
+    _, body = get(client, "/hospitals")
+    by_code = {h["hospital_code"]: h for h in body["data"]}
+    assert by_code["SGH"]["short_name"] == "Singapore General"
+    assert by_code["AH"]["facility_type"] == "UCC" and by_code["AH"]["short_name"] == "Alexandra"
+
+
 def test_a_release_from_before_the_places_still_starts(tmp_path):
     from fixture_snapshot import build
 
@@ -201,4 +208,4 @@ def test_a_release_from_before_the_places_still_starts(tmp_path):
         hospitals = c.get(f"{API}/hospitals")
     assert poly.status_code == 404 and poly.json()["error"]["code"] == "not_in_release"
     assert hospitals.status_code == 200
-    assert {(h["latitude"], h["longitude"]) for h in hospitals.json()["data"]} == {(None, None)}
+    assert {(h["latitude"], h["longitude"], h["short_name"]) for h in hospitals.json()["data"]} == {(None, None, None)}

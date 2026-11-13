@@ -35,7 +35,7 @@ INSIGHT_EXTRA_DDL = """, display STRUCT(value_text VARCHAR, unit_text VARCHAR, m
         trend_line STRUCT(first DOUBLE, last DOUBLE))"""
 
 DDL = {
-    "dim_hospital": """hospital_code VARCHAR, hospital_name VARCHAR, cluster VARCHAR, facility_type VARCHAR,
+    "dim_hospital": """hospital_code VARCHAR, hospital_name VARCHAR, short_name VARCHAR, cluster VARCHAR, facility_type VARCHAR,
         reported_from DATE, coverage_note VARCHAR, exclusions_note VARCHAR, postal_code VARCHAR, latitude DOUBLE,
         longitude DOUBLE, location_source_url VARCHAR, location_checked DATE, source_url VARCHAR, source_sha256 VARCHAR,
         as_of DATE, as_of_basis VARCHAR""",
@@ -168,13 +168,13 @@ POP_AS_OF = datetime(2026, 6, 30)
 
 ONEMAP, PIN_CHECKED = "https://www.onemap.gov.sg/api/common/elastic/search", date(2026, 11, 9)
 HOSPITALS = [
-    ("AH", "Alexandra Hospital (UCC)", "NUHS", "UCC", None, "Urgent Care Centre, not a full ED.",
+    ("AH", "Alexandra Hospital (UCC)", "Alexandra", "NUHS", "UCC", None, "Urgent Care Centre, not a full ED.",
      "Excludes KKH and NUH Children's Emergency.", "159964", 1.285481, 103.800181, ONEMAP, PIN_CHECKED,
      "https://www.moh.gov.sg/", H, date(2026, 11, 6), "reference_checked"),
-    ("NUH", "National University Hospital", "NUHS", "ED", None, "Adults only.",
+    ("NUH", "National University Hospital", "National University", "NUHS", "ED", None, "Adults only.",
      "Excludes KKH and NUH Children's Emergency.", "119074", 1.294420, 103.783687, ONEMAP, PIN_CHECKED,
      "https://www.moh.gov.sg/", H, date(2026, 11, 6), "reference_checked"),
-    ("SGH", "Singapore General Hospital", "SingHealth", "ED", None, None,
+    ("SGH", "Singapore General Hospital", "Singapore General", "SingHealth", "ED", None, None,
      "Excludes KKH and NUH Children's Emergency.", "169608", 1.278429, 103.834043, ONEMAP, PIN_CHECKED,
      "https://www.moh.gov.sg/", H, date(2026, 11, 6), "reference_checked"),
 ]
@@ -324,7 +324,7 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
     insights=False builds a release from before the insight engine (no fct_insight);
     insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer;
     live_qualifiers=False one from before NUHS bounds were kept (no *_qualifier columns);
-    places=False one from before 2026-11-09 (no dim_polyclinic, no hospital pins)."""
+    places=False one from before 2026-11-09 (no dim_polyclinic, no hospital pins or short names)."""
     marts = {m: cols for m, cols in DDL.items() if (insights or m != "fct_insight") and (places or m != "dim_polyclinic")}
     if not insight_charts:
         marts["fct_insight"] = marts["fct_insight"].replace(INSIGHT_EXTRA_DDL, "")
@@ -336,13 +336,13 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
         for mart, cols in marts.items():
             con.execute(f"CREATE TABLE marts.{mart} ({cols})")
         con.execute(f"CREATE TABLE main.dq_results ({DQ_DDL})")
-        con.executemany("INSERT INTO marts.dim_hospital VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", HOSPITALS)
+        con.executemany("INSERT INTO marts.dim_hospital VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", HOSPITALS)
         if places:
             con.executemany("INSERT INTO marts.dim_polyclinic VALUES (?,?,?,?,?,?,?,?,?,'source_updated')",
                             [(*pc, "https://data.gov.sg/polyclinics.geojson", H, datetime(2026, 11, 1, 16, 34),
                               POLY_AS_OF) for pc in POLYCLINICS])
         else:
-            for col in ("postal_code", "latitude", "longitude", "location_source_url", "location_checked"):
+            for col in ("short_name", "postal_code", "latitude", "longitude", "location_source_url", "location_checked"):
                 con.execute(f"ALTER TABLE marts.dim_hospital DROP COLUMN {col}")
         con.executemany("INSERT INTO marts.fct_ed_daily VALUES (?,?,?,?,?,?,?,NULL,?,?,?,?,?,?,?)", daily_rows())
         # is_complete_week: all 7 days of both metrics in the hospital's ISO week (as the mart does).

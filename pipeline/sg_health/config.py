@@ -142,6 +142,17 @@ HOSPITAL_REFERENCE: dict[str, tuple[str, date | None]] = {
     "TTSH":  ("ED", None),
     "WH":    ("ED", date(2024, 6, 23)),   # first value in MOH's workbooks
 }
+# The name used on cards and tables, beside the code ("Sengkang General (SKH)"); the full name
+# (HOSPITALS) is shown on hover or focus. Each is the full name without "Hospital" (and "(UCC)"),
+# which is how the sites are commonly referred to. Checked by reference.hospital (data_quality.md).
+HOSPITAL_SHORT_NAME: dict[str, str] = {
+    "AH": "Alexandra", "CGH": "Changi General", "KTPH": "Khoo Teck Puat", "NUH": "National University",
+    "NTFGH": "Ng Teng Fong General", "SKH": "Sengkang General", "SGH": "Singapore General",
+    "TTSH": "Tan Tock Seng", "WH": "Woodlands",
+}
+# The facility types a site can have. UCC (urgent care centre) is left out of every rank, count and
+# median across hospitals (docs/adr/0012-urgent-care-centre-out-of-aggregates.md).
+FACILITY_TYPES = ("ED", "UCC")
 # Public healthcare cluster of each site, and what MOH's figures for it cover.
 # Clusters: SingHealth (SGH, CGH, SKH); NHG Health (TTSH, KTPH, WH; "NHG" was renamed NHG Health
 # on 1 Jul 2025); NUHS (NUH, NTFGH, AH; AH has been run by NUHS since 1 Jun 2018). Membership has

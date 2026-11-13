@@ -122,6 +122,18 @@ Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_
   full ED, and NUH means its adult ED only. Woodlands (WH) is included: MOH's workbooks carry it
   from 2024-06-23, though MOH's page text doesn't list it yet.
 
+### `reference.hospital`: ERROR, dataset, blocks
+
+- **Guards against:** a site with a missing or misspelt facility type, or a missing or repeated
+  short name, in the hospital reference (`config.HOSPITAL_REFERENCE`, `config.HOSPITAL_SHORT_NAME`).
+- **Threshold:** every site's `facility_type` is `ED` or `UCC`; every site has a short name, and no
+  two sites share one.
+- **Why:** the site leaves the urgent care centre (`UCC`) out of every rank, count and median across
+  hospitals ([decision record 0012](adr/0012-urgent-care-centre-out-of-aggregates.md)). A wrong type
+  would put Alexandra Hospital back into those figures, or take a full ED out of them. Cards and
+  tables name hospitals by short name and code, so a repeat would make two sites look like one.
+- **Fixing it:** correct `config.py`; the reference is in code, so nothing needs re-downloading.
+
 ### `domain.report_date_not_future`: ERROR, row
 
 - **Guards against:** a mistyped year or a mis-parsed day-first date that lands in the future.

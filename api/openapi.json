@@ -1161,7 +1161,7 @@
             "title": "Exclusions Note"
           },
           "facility_type": {
-            "description": "AH is an Urgent Care Centre, not a full ED",
+            "description": "AH is an Urgent Care Centre, not a full ED. Leave UCC out of every rank, count and median across hospitals",
             "enum": [
               "ED",
               "UCC"
@@ -1225,6 +1225,18 @@
             ],
             "description": "First day MOH reports the site; null = from the series start",
             "title": "Reported From"
+          },
+          "short_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Name for cards and tables, e.g. \"Sengkang General\"; null in releases before 2026-11-14",
+            "title": "Short Name"
           },
           "source_url": {
             "title": "Source Url",

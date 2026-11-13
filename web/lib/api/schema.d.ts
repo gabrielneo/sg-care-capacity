@@ -663,7 +663,7 @@ export interface components {
             exclusions_note: string | null;
             /**
              * Facility Type
-             * @description AH is an Urgent Care Centre, not a full ED
+             * @description AH is an Urgent Care Centre, not a full ED. Leave UCC out of every rank, count and median across hospitals
              * @enum {string}
              */
             facility_type: "ED" | "UCC";
@@ -691,6 +691,11 @@ export interface components {
              * @description First day MOH reports the site; null = from the series start
              */
             reported_from: string | null;
+            /**
+             * Short Name
+             * @description Name for cards and tables, e.g. "Sengkang General"; null in releases before 2026-11-14
+             */
+            short_name?: string | null;
             /** Source Url */
             source_url: string;
         };

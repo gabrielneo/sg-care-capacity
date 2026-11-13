@@ -163,6 +163,7 @@ def reference_hospitals() -> pd.DataFrame:
         rows.append({
             "hospital_code": code,
             "hospital_name": config.HOSPITALS[code][0],
+            "short_name": config.HOSPITAL_SHORT_NAME.get(code),
             "cluster": config.HOSPITAL_CLUSTER[code],
             "facility_type": facility_type,
             "reported_from": valid_from,

@@ -152,6 +152,7 @@ def test_dim_hospital_matches_the_reference_in_code(wh):
         assert dim.loc[code, "facility_type"] == ftype and dim.loc[code, "cluster"] == HOSPITAL_CLUSTER[code]
     assert dim.loc["AH", "facility_type"] == "UCC" and "adult" in dim.loc["NUH", "coverage_note"].lower()
     assert dim.loc["WH", "reported_from"].date() == date(2024, 6, 23) and dim["source_sha256"].nunique() == 1
+    assert dim.loc["SKH", "short_name"] == "Sengkang General" and dim["short_name"].is_unique
 
 
 def test_dim_hospital_has_a_map_pin_for_every_site_inside_singapore(wh):

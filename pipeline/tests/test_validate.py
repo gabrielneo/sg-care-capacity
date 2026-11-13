@@ -248,3 +248,26 @@ def test_subzones_without_their_planning_area_fail_too(wh):
     r = result(dq.run_validation(wh, today=date(2026, 11, 6)), "population.area_equals_sum_of_subzones",
                "pop_65plus_by_area")
     assert (r.status, r.failing_rows) == ("fail", 1) and "Tuas 2026: area None/None" in r.details
+
+
+# --------------------------------------------------------------------------- #
+# reference.hospital
+# --------------------------------------------------------------------------- #
+
+def test_hospital_reference_in_config_passes(wh):
+    from sg_health.quality.validate import hospital_reference
+    [r] = hospital_reference(wh, date(2026, 11, 14))
+    assert r.status == "pass" and r.check.blocks_publish
+
+
+@pytest.mark.parametrize("reference, names, expected", [
+    ({"AH": ("UCC", None), "SGH": ("ED", None)}, {"AH": "Alexandra", "SGH": "Singapore General"}, []),
+    ({"AH": ("ucc", None)}, {"AH": "Alexandra"}, ["AH: facility_type 'ucc' is not one of ED, UCC"]),
+    ({"AH": ("UCC", None)}, {}, ["AH: no short name"]),
+    ({"AH": ("UCC", None)}, {"AH": "  "}, ["AH: no short name"]),
+    ({"CGH": ("ED", None), "SGH": ("ED", None)}, {"CGH": "General", "SGH": "General"},
+     ["SGH: short name 'General' is also CGH's"]),
+])
+def test_hospital_reference_problems(reference, names, expected):
+    from sg_health.quality.validate import hospital_reference_problems
+    assert hospital_reference_problems(reference, names) == expected

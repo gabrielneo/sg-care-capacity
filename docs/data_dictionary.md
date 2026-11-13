@@ -49,9 +49,10 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | Column | Definition | Unit | Source → transformation | Caveats |
 |---|---|---|---|---|
 | `hospital_code` | Short code MOH uses in its workbook headers | text | config | `NUH` is MOH's `NUH(A)`. |
-| `hospital_name` | Full site name | text | config | AH is named "Alexandra Hospital (UCC)" to make its type visible. |
+| `hospital_name` | Full site name | text | config | AH is named "Alexandra Hospital (UCC)" to make its type visible. Shown on hover or focus beside the short name. |
+| `short_name` | The name on cards and tables, shown with the code: "Sengkang General (SKH)" | text | config (`HOSPITAL_SHORT_NAME`) | The full name without "Hospital". Unique; checked by `reference.hospital`. |
 | `cluster` | Public healthcare cluster: `SingHealth`, `NHG Health` or `NUHS` | text | config | SingHealth: SGH, CGH, SKH. NHG Health: TTSH, KTPH, WH ("NHG" until 1 Jul 2025). NUHS: NUH, NTFGH, AH (since 1 Jun 2018). Unchanged over MOH's series (2023 onward). |
-| `facility_type` | `ED` (emergency department) or `UCC` (urgent care centre) | text | config | **AH is a UCC.** Don't rank it against EDs without saying so. |
+| `facility_type` | `ED` (emergency department) or `UCC` (urgent care centre) | text | config | **AH is a UCC.** It is shown in its own group and left out of every rank, count, median and "largest change" across hospitals ([decision record 0012](adr/0012-urgent-care-centre-out-of-aggregates.md)). Checked by `reference.hospital`. |
 | `reported_from` | First day MOH reports the site; NULL = from the start of the series (2023-01-01) | date | config | WH from 2024-06-23. Completeness checks don't expect a site before this date. |
 | `coverage_note` | What MOH's figures for this site cover, where it isn't obvious | text | config | Set for AH (UCC), NUH (adults only), WH (not yet on MOH's page text). |
 | `exclusions_note` | What MOH leaves out of these statistics altogether | text | config | KK Women's and Children's Hospital and NUH Children's Emergency. |

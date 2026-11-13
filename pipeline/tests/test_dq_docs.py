@@ -16,5 +16,5 @@ def test_every_check_has_a_section_with_its_severity():
 
 
 def test_no_documented_check_is_missing_from_code():
-    documented = set(re.findall(r"`((?:schema|domain|range|unit|completeness|freshness|clinic|reconcile)\.[a-z0-9_]+)`", DOC))
+    documented = set(re.findall(r"`((?:schema|domain|range|unit|completeness|freshness|clinic|reconcile|reference)\.[a-z0-9_]+)`", DOC))
     assert documented <= set(CHECKS), f"documented but not in code: {sorted(documented - set(CHECKS))}"

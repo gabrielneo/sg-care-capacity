@@ -127,6 +127,38 @@ def freshness(wh: Warehouse, today: date) -> list[Result]:
     return out
 
 
+HOSPITAL_REFERENCE_CHECK = register(
+    "reference.hospital", Severity.ERROR, Scope.DATASET,
+    "Every hospital has a facility type of ED or UCC and a unique short name", ("ref_hospital",))
+
+
+def hospital_reference_problems(reference: dict[str, tuple[str, date | None]],
+                                short_names: dict[str, str]) -> list[str]:
+    """What is wrong with the hospital reference in config, one line per problem (empty = fine).
+    The site leaves UCC sites out of every rank, count and median, so a wrong or missing type is an error."""
+    problems = []
+    for code, (facility_type, _) in sorted(reference.items()):
+        if facility_type not in config.FACILITY_TYPES:
+            problems.append(f"{code}: facility_type {facility_type!r} is not one of {', '.join(config.FACILITY_TYPES)}")
+        name = short_names.get(code)
+        if not isinstance(name, str) or not name.strip():
+            problems.append(f"{code}: no short name")
+    seen: dict[str, str] = {}
+    for code, name in sorted(short_names.items()):
+        if name in seen:
+            problems.append(f"{code}: short name {name!r} is also {seen[name]}'s")
+        seen.setdefault(name, code)
+    return problems
+
+
+@dataset_check
+def hospital_reference(wh: Warehouse, today: date) -> list[Result]:
+    problems = hospital_reference_problems(HOSPITAL_REFERENCE, config.HOSPITAL_SHORT_NAME)
+    if not problems:
+        return [Result(HOSPITAL_REFERENCE_CHECK, "ref_hospital", "pass", 0, f"{len(HOSPITAL_REFERENCE)} sites")]
+    return [Result(HOSPITAL_REFERENCE_CHECK, "ref_hospital", "fail", len(problems), "; ".join(problems[:DETAIL_SAMPLES]))]
+
+
 POP_FRESH_MONTHS = 15
 FRESH_POPULATION = register(
     "freshness.population_15_months", Severity.WARN, Scope.DATASET,
