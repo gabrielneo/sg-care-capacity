@@ -17,6 +17,8 @@
     "check:api-types": "npm run gen:api && git diff --exit-code -- lib/api/schema.d.ts",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
+    "visual:baseline": "playwright test -c playwright.visual.config.ts --project=baseline",
+    "ui:metrics": "playwright test -c playwright.visual.config.ts --project=metrics",
     "gen:glossary": "node scripts/gen-glossary.mjs",
     "check:glossary": "npm run gen:glossary && git diff --exit-code -- lib/glossary.generated.ts",
     "predev": "npm run gen:glossary",
