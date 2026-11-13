@@ -6,9 +6,9 @@ import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospit
 import { CaveatChip } from "../CaveatChip";
 import { DeltaNumber } from "../story/DeltaNumber";
 import { Glossed } from "../terms/Glossed";
-import { Term } from "../terms/Term";
 import { hours, signed } from "./format";
 import { USUAL_WEEKS } from "@/lib/windows";
+import { HospitalName } from "@/components/HospitalName";
 
 /**
  * Usual level (median of the 8 complete weeks before) against the latest complete week, one row per
@@ -39,7 +39,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
     return (
       <li key={code} data-testid="dumbbell-row" data-hospital={code} data-annotated={annotated ? "" : undefined}
           className={`grid gap-x-3 gap-y-1 sm:grid-cols-[8rem_minmax(0,1fr)_14rem] sm:items-center ${annotated ? "rounded-md bg-accent-soft p-2" : ""}`}>
-        <span className="text-sm font-medium text-ink"><Term id={code.toLowerCase()} /></span>
+        <span className="text-sm font-medium text-ink"><HospitalName hospital={h} /></span>
         <span className="relative block h-6" aria-hidden="true">
           {mode === "usual" ? <span className="absolute inset-y-0 left-1/2 w-px bg-ink" /> : null}
           <span className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-muted"

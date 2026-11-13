@@ -55,3 +55,17 @@ export function urgentCareFindings<T extends Pick<Insight, "entity"> & { scope?:
   insights: readonly T[], hospitals: readonly Typed[]): T[] {
   return insights.filter((i) => isUrgentCareFinding(i, hospitals));
 }
+
+type Named = Pick<Hospital, "hospital_code" | "hospital_name"> & { short_name?: string | null };
+
+/** The full name, without the "(UCC)" marker the reference adds: "Alexandra Hospital". */
+export const fullName = (h: Named): string => h.hospital_name.replace(/\s*\(UCC\)$/, "");
+
+/**
+ * The short name (dim_hospital.short_name, audit G4). A release from before it was written gets the
+ * same rule the reference uses: the full name without "Hospital".
+ */
+export const shortName = (h: Named): string => h.short_name || fullName(h).replace(/\s+Hospital$/, "");
+
+/** "Sengkang General (SKH)": how cards and tables name a hospital. The full name goes in its tooltip. */
+export const hospitalLabel = (h: Named): string => `${shortName(h)} (${h.hospital_code})`;

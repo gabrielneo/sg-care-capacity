@@ -1,10 +1,11 @@
 import { ImageResponse } from "next/og";
 
 import { colors } from "@/lib/palette";
+import { SITE } from "@/lib/site";
 
 // The picture shown when the site's link is shared (LinkedIn, Slack, messaging apps). No figures in
 // it: a shared image can't carry a date and source, so it states what the site does instead.
-export const alt = "Right-siting care: a public-data analytics project by Gabriel Neo on emergency department bed waits and clinic access for Singapore's seniors";
+export const alt = `${SITE.name}: a public-data analytics project by Gabriel Neo on emergency department bed waits and clinic access for Singapore's seniors`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

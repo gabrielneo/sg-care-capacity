@@ -59,3 +59,17 @@ def test_no_env_file_is_fine(tmp_path):
 def test_env_file_is_git_ignored_and_the_example_has_no_secret():
     assert ".env" in (config.REPO_ROOT / ".gitignore").read_text().splitlines()
     assert "DATAGOV_API_KEY=\n" in (config.REPO_ROOT / ".env.example").read_text()
+
+
+def test_glossary_hospital_names_match_the_hospital_reference():
+    """One naming convention (audit G4): the glossary's hospital entries say what dim_hospital says."""
+    import yaml
+
+    from sg_health import config as cfg
+    terms = {t["id"]: t for t in yaml.safe_load((cfg.REPO_ROOT / "docs" / "glossary.yml").read_text())["terms"]}
+    for code, (name, _) in cfg.HOSPITALS.items():
+        t = terms[code.lower()]
+        assert t["abbreviation"] == code
+        assert t["full_name"] == name.replace(" (UCC)", ""), code
+        # The short name is the full name without "Hospital" (cards say "Sengkang General (SKH)").
+        assert cfg.HOSPITAL_SHORT_NAME[code] == t["full_name"].removesuffix(" Hospital"), code

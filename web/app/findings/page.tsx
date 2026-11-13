@@ -8,11 +8,11 @@ import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
 import { docWords, renderDocList } from "@/lib/docs";
 import { EMPTY_STORY, emptyReason, readingMinutes, storySteps } from "@/lib/story";
+import { SITE_TITLE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Findings" };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
-const SITE_TITLE = "Right-siting care in a super-aged Singapore";
 const LIMITS_MARKER = "**What the data can't show**";
 
 /**

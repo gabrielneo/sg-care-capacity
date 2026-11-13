@@ -6,6 +6,12 @@ import { parseAsOf } from "./dates";
 
 export type Bound = "<" | ">" | null | undefined;
 
+/**
+ * Where a hospital has no NUHS reading (audit G5). Only NUHS's own page is read, so all the site knows
+ * is that NUHS gives no estimate for it; it doesn't say whether the hospital publishes one elsewhere.
+ */
+export const NO_DOCTOR_ESTIMATE = "No NUHS estimate for this hospital";
+
 export function estimateText(hours: number | null, bound: Bound = null): string {
   if (hours == null) return "Not stated";
   const n = Number.isInteger(hours) ? String(hours) : hours.toLocaleString("en-SG", { maximumFractionDigits: 1 });

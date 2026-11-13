@@ -16,7 +16,9 @@ import type { HospitalStatus } from "./status";
 export type Layout = "map" | "list";
 
 export interface CareRow extends Pick<HospitalStatus, "code" | "level" | "latest" | "usual" | "pct"> {
+  /** dim_hospital.hospital_name (the full name) and short_name (null in an older release). */
   name: string;
+  shortName?: string | null;
   /** dim_hospital.cluster. */
   cluster: string;
   /** dim_hospital pin; null when the release has none (the hospital is then in the list only). */

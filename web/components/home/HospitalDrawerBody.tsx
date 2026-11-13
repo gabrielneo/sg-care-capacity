@@ -7,7 +7,7 @@ import { Term } from "@/components/terms/Term";
 import type { Hospital, LiveReading, Meta } from "@/lib/api/types";
 import { BED_WAIT_LABEL } from "@/lib/copy";
 import { formatAsOf } from "@/lib/dates";
-import { estimateText, nuhsTimingNote } from "@/lib/estimates";
+import { estimateText, NO_DOCTOR_ESTIMATE, nuhsTimingNote } from "@/lib/estimates";
 import { shortNote } from "@/lib/hospitalNotes";
 import { formatDelta } from "@/lib/planner";
 import { type HospitalStatus, LEVELS, SPARK_WEEKS, usualBand } from "@/lib/status";
@@ -92,7 +92,9 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
             {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, meta.as_of)}</span>
           </span>
         </p>
-      ) : null}
+      ) : (
+        <p className="border-t border-line pt-3 text-sm text-muted" data-testid="drawer-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
+      )}
 
       {note || hospital.coverage_note || hospital.exclusions_note ? (
         <section aria-labelledby={`drawer-cover-${status.code}`} className="border-t border-line pt-3" data-testid="drawer-coverage">

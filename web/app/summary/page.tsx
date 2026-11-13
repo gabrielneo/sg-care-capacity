@@ -14,6 +14,7 @@ import { priorityAreas } from "@/lib/accessCharts";
 import { findingMeta } from "@/lib/provenance";
 import { monthYear, percentText, populationShare, storySteps } from "@/lib/story";
 import { SUMMARY_AREAS, summaryAreas } from "@/lib/summary";
+import { SITE, SITE_TITLE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "One-page summary" };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
@@ -53,9 +54,9 @@ export default async function SummaryPage() {
       <p className="text-xs font-medium text-accent" data-testid="summary-release">
         One-page summary{release ? ` · weekly data release ${release}` : null}
       </p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Right-siting care in a super-aged Singapore</h1>
+      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">{SITE_TITLE}</h1>
       <p className="mt-1 text-muted">
-        Right-siting care means <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
+        {SITE.name} means <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
     </header>
   );

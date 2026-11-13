@@ -91,7 +91,9 @@ terms:
     plain_definition: Singapore's time zone, 8 hours ahead of UTC.
     category: keep_abbreviation
 
-  # Rule 1: hospital codes (names and clusters from MOH's reference list)
+  # Rule 1: hospital codes (names and clusters from MOH's reference list). full_name and abbreviation match
+  # dim_hospital (config.HOSPITALS); a pipeline test keeps them equal. The short name ("Sengkang General")
+  # comes from dim_hospital.short_name only: as an alias it would also match inside the full name in prose.
   - id: ah
     abbreviation: AH
     full_name: Alexandra Hospital

@@ -35,6 +35,14 @@ test.describe("shell", () => {
     await expect(status.getByRole("link")).toHaveCount(0);
   });
 
+  test("one site name in the title and header, and the privacy note says page views (audit G3, G5)", async ({ page }) => {
+    await page.goto("/methodology");
+    await expect(page).toHaveTitle(/· Right-siting care$/);
+    await expect(page.locator("header").first()).toContainText("Right-siting care");
+    await expect(page.locator("footer").last()).toContainText("Page views are counted without cookies");
+    await expect(page.locator("footer").last()).not.toContainText("Visits are counted");
+  });
+
   test("/status.json gives the footer the release, and no figures", async ({ request }) => {
     const body = await (await request.get("/status.json")).json();
     expect(Object.keys(body).sort()).toEqual(["as_of", "ok", "release_url", "snapshot_id"]);

@@ -3,9 +3,10 @@ import { Term } from "@/components/terms/Term";
 import type { Hospital, LiveReading } from "@/lib/api/types";
 import { BED_WAIT_LABEL } from "@/lib/copy";
 import { formatAsOf } from "@/lib/dates";
-import { estimateText, nuhsTimingNote } from "@/lib/estimates";
+import { estimateText, NO_DOCTOR_ESTIMATE, nuhsTimingNote } from "@/lib/estimates";
 import { shortNote } from "@/lib/hospitalNotes";
 import { type HospitalStatus, LEVELS } from "@/lib/status";
+import { HospitalName } from "@/components/HospitalName";
 
 import { BedWaitHelp } from "./BedWaitHelp";
 import { StatusBadge } from "./StatusBadge";
@@ -26,7 +27,7 @@ export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
   return (
     <article className="h-full rounded-xl border border-line bg-surface p-4 shadow-sm" data-testid="ed-card"
              data-hospital={status.code} data-level={status.level}>
-      <h3 className="text-lg font-semibold leading-snug text-ink"><Term id={status.code.toLowerCase()} plain standalone /></h3>
+      <h3 className="text-lg font-semibold leading-snug text-ink"><HospitalName hospital={hospital} /></h3>
       {note ? <p className="mt-1"><CaveatChip large><span data-testid="ed-note">{note}</span></CaveatChip></p> : null}
       <p className="mt-3"><StatusBadge level={status.level} plain /></p>
       <div className="mt-3 flex items-start justify-between gap-2">
@@ -51,7 +52,9 @@ export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
             {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, weeklyAsOf)}</span>
           </span>
         </p>
-      ) : null}
+      ) : (
+        <p className="mt-3 border-t border-line pt-3 text-sm text-muted" data-testid="ed-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
+      )}
     </article>
   );
 }

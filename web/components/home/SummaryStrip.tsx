@@ -14,9 +14,14 @@ import type { WeekRange } from "@/lib/weeks";
 
 import { Sparkline } from "./Sparkline";
 import { formatWindow } from "@/lib/windows";
+import { HospitalName } from "@/components/HospitalName";
 
 const hours = (v: number) => v.toFixed(1);
-const name = (code: string) => <Term id={code.toLowerCase()} plain standalone />;
+/** "Singapore General (SGH)" (audit G4); inside a tooltip, with its full name as a title (no tooltip in a tooltip). */
+function hospitalName(hospitals: Hospital[], code: string, inControl = false) {
+  const h = hospitals.find((x) => x.hospital_code === code);
+  return h ? <HospitalName hospital={h} inControl={inControl} /> : <Term id={code.toLowerCase()} plain standalone />;
+}
 
 function Tile({ id, children }: { id: string; children: ReactNode }) {
   return <li data-testid="summary-tile" data-tile={id}>{children}</li>;
@@ -34,6 +39,8 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
   statuses: HospitalStatus[]; hospitals: Hospital[]; meta: Meta; latestWeek: WeekRange | null }) {
   if (!statuses.length) return null;
   const { rankable, urgentCare } = splitByCare(statuses, (s) => s.code, hospitals);
+  const name = (code: string) => hospitalName(hospitals, code);
+  const listName = (code: string) => hospitalName(hospitals, code, true);
   const above = aboveUsual(statuses, hospitals);
   const noComparison = levelCounts(rankable).unknown;
   const longest = longestWait(statuses, hospitals);
@@ -62,7 +69,7 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
                        {above.length ? (
                          <Tip label={above.length === 1 ? "See which hospital" : "See which hospitals"} data={{ "data-testid": "above-list" }}>
                            {above.map((s) => (
-                             <span key={s.code} className="block">{name(s.code)}: {formatDelta(s.pct)?.spoken} vs usual</span>
+                             <span key={s.code} className="block">{listName(s.code)}: {formatDelta(s.pct)?.spoken} vs usual</span>
                            ))}
                          </Tip>
                        ) : (

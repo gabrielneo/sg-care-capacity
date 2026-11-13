@@ -112,7 +112,8 @@ test.describe("Home views", () => {
     await expect(strip.getByTestId("summary-ucc-note")).toContainText("The urgent care centre is left out of these four figures.");
     await expect(tile("change")).toContainText("+25% vs usual");
     await expect(tile("change")).toContainText("Largest change vs usual (previous 8 complete weeks)");
-    await expect(tile("change")).toContainText("Singapore General Hospital (SGH)");
+    // Short name and code on the tile; the full name in its tooltip (audit G4).
+    await expect(tile("change").getByTestId("hospital-name")).toContainText("Singapore General (SGH)");
     await expect(tile("middle")).toContainText("Needs 3+ emergency departments");   // 2 full EDs here: no middle value, said so
   });
 

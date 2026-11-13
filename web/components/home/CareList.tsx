@@ -1,6 +1,7 @@
 "use client";
 
 import { CaveatChip } from "@/components/CaveatChip";
+import { HospitalName } from "@/components/HospitalName";
 import type { CareRow } from "@/lib/careMapState";
 import { URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { formatDelta, type Sort } from "@/lib/planner";
@@ -34,7 +35,8 @@ export function CareList({ rows, sort, onSort, onOpen }: {
         <th scope="row" className="p-3 text-left font-medium">
           <button type="button" onClick={() => onOpen(r.code)} data-hospital-trigger={r.code}
                   className="min-h-11 text-left font-semibold text-accent underline underline-offset-3">
-            {r.name}<span className="sr-only">: show details</span>
+            <HospitalName hospital={{ hospital_code: r.code, hospital_name: r.name, short_name: r.shortName }} inControl />
+        <span className="sr-only">: show details</span>
           </button>
           <span className="block text-xs font-normal text-muted" data-testid="row-cluster">{r.cluster}</span>
           {r.note ? <span className="mt-1 block"><CaveatChip><span data-testid="row-note">{r.note}</span></CaveatChip></span> : null}

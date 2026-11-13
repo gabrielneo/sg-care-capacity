@@ -14,8 +14,13 @@ import { SummaryStrip } from "./SummaryStrip";
 
 const status = (code: string, pct: number | null, latest: number | null = 5): HospitalStatus => ({
   code, level: levelFor(pct), latest, usual: pct == null ? null : 4, pct, spark: pct == null ? [] : [4, 4, null, 5] });
+const NAMES: Record<string, [string, string]> = {
+  SGH: ["Singapore General Hospital", "Singapore General"], CGH: ["Changi General Hospital", "Changi General"],
+  TTSH: ["Tan Tock Seng Hospital", "Tan Tock Seng"], NUH: ["National University Hospital", "National University"],
+  AH: ["Alexandra Hospital (UCC)", "Alexandra"],
+};
 const hospital = (code: string, over: Partial<Hospital> = {}): Hospital => ({
-  hospital_code: code, hospital_name: code, cluster: "NUHS", facility_type: "ED", reported_from: null, coverage_note: null,
+  hospital_code: code, hospital_name: NAMES[code]?.[0] ?? code, short_name: NAMES[code]?.[1] ?? null, cluster: "NUHS", facility_type: "ED", reported_from: null, coverage_note: null,
   exclusions_note: "MOH excludes KK Women's and Children's Hospital and NUH Children's Emergency from these statistics.",
   source_url: "https://www.moh.gov.sg/", as_of: "2026-11-06", as_of_basis: "reference_checked", ...over } as Hospital);
 const live = { hospital_code: "SGH", is_adult_ed: true, est_wait_to_see_doctor_hours: 1, est_wait_to_see_doctor_qualifier: "<",
@@ -26,6 +31,13 @@ beforeEach(() => setTestScope(createScope()));
 afterEach(() => setTestScope(null));
 
 describe("StatusCard densities", () => {
+  it("names the hospital by short name and code, and says when NUHS gives no estimate (audit G4, G5)", () => {
+    render(<ul><StatusCard status={status("SGH", 25)} hospital={hospital("SGH")} note={null} live={null} density="full" /></ul>);
+    expect(screen.getByTestId("hospital-name")).toHaveAttribute("title", "Singapore General Hospital");
+    expect(screen.getByTestId("hospital-name")).toHaveTextContent(/^Singapore General \(SGH\)/);
+    expect(screen.getByTestId("status-live-none")).toHaveTextContent("To see a doctor: No NUHS estimate for this hospital.");
+  });
+
   it("simple: badge, figure and sentence, without the line or the change", () => {
     render(<ul><StatusCard status={status("SGH", 25)} note={null} live={live} weeklyAsOf="2026-10-31" density="simple" /></ul>);
     const card = screen.getByTestId("status-card");
@@ -169,23 +181,24 @@ describe("SummaryStrip", () => {
     expect(tile("above")).toHaveTextContent("Emergency departments above usual, latest complete week2 of 4");
     const which = within(tile("above")).getByRole("button", { name: "See which hospitals" });
     expect(document.getElementById(which.getAttribute("aria-describedby")!)).toHaveTextContent(
-      "Singapore General Hospital (SGH): +31% vs usualChangi General Hospital (CGH): +16% vs usual");
+      // Short name and code; the full name is there for screen readers (audit G4).
+      "Singapore General (SGH)Singapore General Hospital (SGH): +31% vs usualChangi General (CGH)Changi General Hospital (CGH): +16% vs usual");
     expect(screen.getByTestId("summary-ucc-note")).toHaveTextContent(
       "The urgent care centre is left out of these four figures. Not compared with full emergency departments.");
     expect(within(tile("above")).queryByTestId("above-unknown")).toBeNull();
-    expect(tile("longest")).toHaveTextContent("Longest bed wait, latest complete week7.5 hNational University Hospital (NUH).");
+    expect(tile("longest")).toHaveTextContent(/^Longest bed wait, latest complete week7\.5 hNational University \(NUH\)National University Hospital\./);   // label, then its tooltip
     expect(tile("middle")).toHaveTextContent(/bed wait across emergency departments, latest complete week5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
     expect(tile("middle")).toHaveTextContent("Last 12 weeks; middle of 4 emergency departments.");
     expect(within(tile("middle")).getByTestId("sparkline")).toBeInTheDocument();
     // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; cut, not rounded.
-    expect(tile("change")).toHaveTextContent("Largest change vs usual (previous 8 complete weeks)+31% vs usualSingapore General Hospital (SGH). Usual is the median of those weeks.");
+    expect(tile("change")).toHaveTextContent(/^Largest change vs usual \(previous 8 complete weeks\)\+31% vs usualSingapore General \(SGH\)Singapore General Hospital\. Usual is the median of those weeks\./);
     expect(screen.getByTestId("summary-strip")).toHaveTextContent("At a glance: latest complete week (19–25 Oct 2026)");
     expect(screen.getByTestId("summary-strip")).toHaveTextContent("It is not the time to see a doctor.");
   });
 
   it("a fall can be the largest change, and it is signed", () => {
     render(<SummaryStrip statuses={[at("SGH", 16, 5), at("TTSH", -32.7, 4)]} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
-    expect(tile("change")).toHaveTextContent("−32% vs usualTan Tock Seng Hospital (TTSH). Usual is the median of those weeks.");
+    expect(tile("change")).toHaveTextContent(/−32% vs usualTan Tock Seng \(TTSH\)Tan Tock Seng Hospital\. Usual is the median of those weeks\./);
   });
 
   it("missing stays missing: no comparison is counted on its own, and nothing is shown as 0", () => {
@@ -193,7 +206,7 @@ describe("SummaryStrip", () => {
                          latestWeek={null} />);
     expect(tile("above")).toHaveTextContent("0 of 2None is 15% or more above its usual week.1 with no comparison.");
     expect(within(tile("above")).queryByRole("button")).toBeNull();
-    expect(tile("longest")).toHaveTextContent("5.0 hSingapore General Hospital (SGH).");
+    expect(tile("longest")).toHaveTextContent(/5\.0 hSingapore General \(SGH\)Singapore General Hospital\./);
     // One full ED with a complete week: no middle value, said so, not a number.
     expect(tile("middle")).toHaveTextContent("No dataNeeds 3+ emergency departments with a complete week.");
     expect(within(tile("middle")).queryByTestId("sparkline")).toBeNull();

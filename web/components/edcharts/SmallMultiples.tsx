@@ -2,10 +2,10 @@ import type { Hospital, Insight } from "@/lib/api/types";
 import type { BandPoint, DayValue, Mode } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
 import { colors } from "@/lib/palette";
+import { HospitalName } from "@/components/HospitalName";
 
 import { CaveatChip } from "../CaveatChip";
 import { Glossed } from "../terms/Glossed";
-import { Term } from "../terms/Term";
 import { hours, shortDay, signed } from "./format";
 
 export interface Panel {
@@ -65,7 +65,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
             <li key={code} data-testid="multiple" data-hospital={code} data-annotated={annotated ? "" : undefined}
                 className={`rounded-md border p-2 ${annotated ? "border-accent" : "border-line"}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm">
-                <span className="font-medium text-ink"><Term id={code.toLowerCase()} /></span>
+                <span className="font-medium text-ink"><HospitalName hospital={hospital} /></span>
                 {lastValue?.value != null ? (
                   <span className="text-xs tabular-nums text-muted">
                     {shortDay(lastValue.date)}: {fmt(lastValue.value)} {mode === "raw" ? "hours" : "hours vs usual"}

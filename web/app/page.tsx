@@ -101,7 +101,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const careRows: CareRow[] = hospitalsRes.ok && weeklyRes.ok
     ? hospitals.flatMap((h) => {
         const st = statusByCode.get(h.hospital_code);
-        return st ? [{ code: st.code, level: st.level, latest: st.latest, usual: st.usual, pct: st.pct, name: h.hospital_name, cluster: h.cluster,
+        return st ? [{ code: st.code, level: st.level, latest: st.latest, usual: st.usual, pct: st.pct, name: h.hospital_name, shortName: h.short_name ?? null, cluster: h.cluster,
           latitude: h.latitude ?? null, longitude: h.longitude ?? null, note: shortNote(h), urgentCare: isUrgentCare(h) }] : [];
       })
     : [];

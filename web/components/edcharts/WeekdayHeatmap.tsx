@@ -2,6 +2,7 @@ import type { Hospital, Insight } from "@/lib/api/types";
 import { classFor, type ColourClass, divergingClasses, findingWeekday, type Mode, type Profile, sequentialClasses, textOn } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
+import { HospitalName } from "@/components/HospitalName";
 
 import { CaveatChip } from "../CaveatChip";
 import { Glossed } from "../terms/Glossed";
@@ -33,7 +34,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
     return (
       <tr key={p.code} data-hospital={p.code}>
         <th scope="row" className="whitespace-nowrap pr-2 text-left font-medium text-ink">
-          <Term id={p.code.toLowerCase()} />
+          {h ? <HospitalName hospital={h} /> : <Term id={p.code.toLowerCase()} />}
           {mode === "raw" && note ? <span className="block font-normal" data-testid="pinned-caveat"><CaveatChip><Glossed text={note} /></CaveatChip></span> : null}
         </th>
         {p.values.map((v, d) => {

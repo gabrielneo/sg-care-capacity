@@ -27,6 +27,7 @@ import { CountUp } from "./CountUp";
 import { DeltaNumber, deltaFromDisplay } from "./DeltaNumber";
 import { HighlightPhrase } from "./HighlightPhrase";
 import { Scrolly } from "./Scrolly";
+import { SITE } from "@/lib/site";
 
 const NUMBER_WORDS = ["no", "one", "two", "three"];
 const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
@@ -73,7 +74,7 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
   return (
     <header className="pb-10 pt-2 sm:pt-6" data-testid="hero">
       <p className="max-w-3xl text-sm text-muted" data-testid="site-purpose">
-        <strong className="font-semibold text-ink">Right-siting care</strong> means{" "}
+        <strong className="font-semibold text-ink">{SITE.name}</strong> means{" "}
         <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
       <p className="mt-4 text-sm font-medium text-accent">The top finding in the latest weekly data release</p>
