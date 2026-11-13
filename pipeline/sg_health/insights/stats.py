@@ -108,3 +108,36 @@ def strength_label(rho: float, bounds: dict[str, float]) -> str:
     if a < bounds["moderate"]:
         return "moderate"
     return "strong"
+
+
+def bootstrap_ci(data: tuple[np.ndarray, ...], statistic, *, paired: bool = False, resamples: int = 2000,
+                 level: float = 0.95, seed: int = 20261114) -> tuple[float, float] | None:
+    """Percentile bootstrap confidence interval of `statistic` (scipy.stats.bootstrap), seeded so the
+    same data always gives the same interval. `paired` resamples rows together (a correlation);
+    otherwise each sample is resampled on its own (a difference of two means). None when a sample has
+    fewer than 2 values or the interval can't be computed."""
+    arrays = tuple(np.asarray(a, dtype=float) for a in data)
+    if not arrays or any(len(a) < 2 for a in arrays):
+        return None
+    r = stats.bootstrap(arrays, statistic, paired=paired, vectorized=False, n_resamples=resamples,
+                        confidence_level=level, method="percentile", random_state=np.random.default_rng(seed))
+    lo, hi = float(r.confidence_interval.low), float(r.confidence_interval.high)
+    return (lo, hi) if math.isfinite(lo) and math.isfinite(hi) else None
+
+
+def mean_ci(x: np.ndarray, **kw) -> tuple[float, float] | None:
+    return bootstrap_ci((x,), np.mean, **kw)
+
+
+def median_ci(x: np.ndarray, **kw) -> tuple[float, float] | None:
+    return bootstrap_ci((x,), np.median, **kw)
+
+
+def mean_difference_ci(a: np.ndarray, b: np.ndarray, **kw) -> tuple[float, float] | None:
+    """CI of mean(a) - mean(b), the two samples resampled independently."""
+    return bootstrap_ci((a, b), lambda x, y: np.mean(x) - np.mean(y), **kw)
+
+
+def spearman_ci(x: np.ndarray, y: np.ndarray, **kw) -> tuple[float, float] | None:
+    """CI of Spearman's rho, resampling (x, y) pairs together."""
+    return bootstrap_ci((x, y), lambda a, b: stats.spearmanr(a, b).statistic, paired=True, **kw)

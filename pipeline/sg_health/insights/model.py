@@ -54,6 +54,10 @@ class Candidate:
     chart: dict[str, Any] | None = None     # from chart(): the data the test ran on, for the site's chart
     display: dict[str, Any] = field(default_factory=dict)   # value_text, unit_text, change ("up" / "down" / None)
     period: tuple[date, date] | None = None   # first and last day of the data the finding uses (None: as_of only)
+    n_unit: str = "days"               # what n counts: days, weeks, readings, residents aged 65+ ...
+    ci: tuple[float, float] | None = None    # 95% CI of metric_value, where the method gives one
+    ci_null: float | None = None       # the metric_value that means "no difference" (0 slope, the weekly mean ...)
+    ci_fn: Any = None                  # computes `ci` later, only for a published finding (a bootstrap is slow)
     p_adjusted: float | None = None
     reason: str = ""                   # why it was not published (filled by the engine)
 

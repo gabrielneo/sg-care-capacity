@@ -449,6 +449,12 @@ class Insight(BaseModel):
     scope: Literal["system", "urgent_care"] | None = Field(None, description=(
         "urgent_care: a finding about the urgent care centre, compared only with itself and never a headline "
         "(ADR 0012). Null in releases from before it was written"))
+    evidence_level: Literal["observed", "tested", "robust", "association-only"] | None = Field(None, description=(
+        "observed: no test; tested: adjusted p < 0.05; robust: tested and the 95% CI excludes no difference; "
+        "association-only: a tested correlation. Null in releases from before it was written"))
+    n_unit: str | None = Field(None, description="What n counts (days, weeks, residents aged 65+). Null in older releases")
+    ci_low: float | None = Field(None, description="95% CI of metric_value, low end; null where the method gives none")
+    ci_high: float | None = Field(None, description="95% CI of metric_value, high end; null where the method gives none")
 
 
 class InsightsResponse(BaseModel):

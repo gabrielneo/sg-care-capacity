@@ -16,6 +16,9 @@ DISPLAY_FIELDS = ("metric_label", "comparison_label", "change_word", "callout") 
 REQUIRED_DISPLAY = ("metric_label", "callout")
 # Rule 5 (docs/language_rules.md): never causal words. Word forms included.
 CAUSAL = re.compile(r"\b(caus(e|es|ed|ing)|due to|driv(e|es|en|ing)|drove|lead(s|ing)? to|led to|because)\b", re.I)
+# Probability language (B1): only a finding with a p-value may use it, and then only as its adjusted odds.
+PROBABILITY = re.compile(r"\b(chance|odds|(un)?likely|probab\w*|significan\w*|random\w*|by luck)\b", re.I)
+EVIDENCE_LEVELS = ("observed", "tested", "robust", "association-only")
 
 
 class WordingError(ValueError):
@@ -93,10 +96,24 @@ def check(text: str, *, kind: str, forbidden: frozenset[str] = frozenset()) -> N
             raise WordingError(f"a label is a phrase, not a sentence: {text!r}")
 
 
-def render(detector: str, variant: str, values: dict[str, Any], forbidden: frozenset[str] = frozenset()) -> tuple[str, str]:
+def check_probability(text: str, *, tested: bool) -> None:
+    """Refuse probability words in a finding that has no p-value (B1)."""
+    if not tested and PROBABILITY.search(text):
+        raise WordingError(f"probability wording without a p-value: {text!r}")
+
+
+def render(detector: str, variant: str, values: dict[str, Any], forbidden: frozenset[str] = frozenset(),
+           evidence: str | None = None) -> tuple[str, str]:
+    """Headline and detail. With `evidence`, the detail ends with that level's sentence (templates.yml, evidence)."""
     t = templates()[detector][variant]
     headline = fill(t["headline"], values)
     detail = fill(t["detail"], values)
+    if evidence is not None:
+        if evidence not in EVIDENCE_LEVELS:
+            raise WordingError(f"unknown evidence level {evidence!r}")
+        detail = f"{detail} {fill(templates()['evidence'][evidence], values)}"
+        for text in (headline, detail):
+            check_probability(text, tested=evidence != "observed")
     check(headline, kind="headline", forbidden=forbidden)
     check(detail, kind="detail", forbidden=forbidden)
     return headline, detail

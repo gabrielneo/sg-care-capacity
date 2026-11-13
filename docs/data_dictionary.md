@@ -307,7 +307,7 @@ run, published or not, is in `insights.json` (`candidates`). Method per detector
 | `effect_size` | The detector's effect: Kendall's tau, robust z, epsilon-squared, Spearman rho, priority score, median gap | number | detector | Not comparable across detectors; `rank_score` is. |
 | `p_value` | The test's p-value | probability | scipy | NULL for descriptive detectors (anomaly, access_gap, regional). |
 | `p_adjusted` | Benjamini-Hochberg adjusted p-value, across every test in the run | probability | engine | Published only below `alpha` (0.05). |
-| `n` | Observations behind the insight (weeks, days, pairs, seniors) | count | detector | |
+| `n` | Observations behind the insight; what it counts is in `n_unit` | count | detector | Shown beside every figure on the Findings page, with `n_unit`. |
 | `method` | The method, in words | text | detector | |
 | `caveats` | What to keep in mind, including data checks that set records aside | list of text | engine | |
 | `who_acts`, `action` | Suggested owner and action, from `docs/insight_actions.yml` | text | engine | **NULL until the author marks the entry `reviewed: true`**; a caveat says so. |
@@ -321,6 +321,9 @@ run, published or not, is in `insights.json` (`candidates`). Method per detector
 | `display` | `{value_text, unit_text, metric_label, comparison_label, change, change_word}`: the key number as text, rounded as in the headline, and the labels the site shows around it | struct | detector (`value_text`, `unit_text`, `change`); `templates.yml` (labels) | `change` is `up`, `down` or NULL (the arrow); colour comes from `direction`. `comparison_label` is NULL where the comparison isn't in the same unit (trend, correlation). Labels pass the same word checks, at most 12 words. |
 | `chart` | `{kind, y_label, x_label, points[{key, label, value}], highlight, callout, reference{value, label}, trend_line{first, last}}`: the values the detector tested, for the site's chart | struct | detector; `callout` from `templates.yml` | A missing week is a point with a NULL value (a gap, never 0). `highlight` names the points the callout points at. For `volume_vs_wait` the bars are days in five equal groups by visits, each bar the group's **median** bed wait (so the y-label says "Median"), a description of the tested pairs, not a second test. |
 | `scope` | `system`, or `urgent_care` for a finding about the urgent care centre (an entity with `dim_hospital.facility_type` = `UCC`) | text | engine | An urgent-care finding is published and labelled as one (its first caveat says so), but never gets a headline rank, and the pooled weekday finding leaves the centre out ([decision record 0012](adr/0012-urgent-care-centre-out-of-aggregates.md)). |
+| `evidence_level` | How strong the evidence is: `observed` (no test), `tested` (adjusted p < 0.05), `robust` (tested, and the 95% confidence interval excludes no difference) or `association-only` (a correlation, tested, that says nothing of why) | text | engine (`evidence_level`) | Each level has one closing sentence in `templates.yml` (`evidence`). Only tested levels may mention chance; the engine refuses probability words in a finding without a p-value. |
+| `n_unit` | What `n` counts: `days`, `weeks`, `residents aged 65+` | text | detector | |
+| `ci_low`, `ci_high` | The 95% confidence interval of `metric_value`, where the method gives one | as `metric_value` | trend: Theil-Sen's own interval; weekday (peak day's average), visits vs waits (Spearman's ρ) and source gap (median gap): percentile bootstrap, 2,000 resamples, fixed seed | NULL for one-week comparisons (anomaly, usual gap) and the access gap, where there is no sample to resample. |
 
 ### `marts.dim_metric`
 

@@ -114,3 +114,13 @@ def test_a_release_from_before_scope_serves_it_as_null(tmp_path):
     with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
         body = c.get(API).json()
     assert body["data"] and {r["scope"] for r in body["data"]} == {None}
+
+
+def test_each_insight_carries_its_evidence_level_n_unit_and_interval(client):
+    data = {r["insight_id"]: r for r in client.get(API).json()["data"]}
+    assert (data["weekday-aaaaaaaaaa"]["evidence_level"], data["weekday-aaaaaaaaaa"]["n_unit"],
+                                               data["weekday-aaaaaaaaaa"]["ci_low"], data["weekday-aaaaaaaaaa"]["ci_high"]) == ("robust", "days", 4.6, 5.4)
+    for r in data.values():
+        assert r["evidence_level"] in ("observed", "tested", "robust", "association-only")
+        if r["p_adjusted"] is None:
+            assert r["evidence_level"] == "observed" and "chance" not in r["detail"]

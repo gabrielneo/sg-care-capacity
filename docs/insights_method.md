@@ -44,6 +44,21 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
    - The hospital's or area's full name is used, not its code.
    - Each sentence is checked: a headline is one sentence of at most 20 words, a detail is at most
      two sentences, and neither may contain a causal word or a database column name.
+   - **Evidence levels.** Every finding has one (`evidence_level`), and its detail ends with that
+     level's sentence from `templates.yml` (`evidence`):
+     - **observed**: no p-value (anomaly, usual gap, access gap). "An observed difference, not a
+       statistical test." It may not mention chance: the engine refuses words such as "chance",
+       "odds", "likely" or "significant" in a finding without a p-value, and stops the build.
+     - **tested**: adjusted p < 0.05; the odds are given.
+     - **robust**: tested, and the 95% confidence interval of the effect excludes "no difference"
+       (a zero slope, the weekly average, a zero gap).
+     - **association-only**: visits against waits, a correlation that passed its test but says
+       nothing about why.
+   - **n and intervals.** Every finding carries `n` with what it counts (`n_unit`), and a 95%
+     confidence interval of its key number where the method gives one (`ci_low`, `ci_high`): the
+     Theil-Sen interval for a trend; a percentile bootstrap (2,000 resamples, fixed seed, so a run is
+     reproducible) for the weekday peak's average, the correlation and the median gap. A one-week
+     comparison has no sample to resample, so it has no interval.
 8. **Actions:** `who_acts` and `action` come from [insight_actions.yml](insight_actions.yml), and
    only from entries marked `reviewed: true`. The engine never writes them. Until an entry is
    reviewed, the insight is published without an action, and a caveat says so.
@@ -179,6 +194,10 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - at least 12 complete weeks, and 80% completeness;
   - adjusted p < 0.05;
   - ε² ≥ 0.01 (a "small" effect).
+- **A shared peak:** when the next-highest day's average is within 0.3 hours of the peak's (per
+  hospital, `tie_hours`), or the 95% bootstrap interval of their difference includes 0, the finding
+  names both: "bed waits peak on Tuesday–Wednesday", with both percentages. Naming one of two days
+  that the data can't tell apart would overstate it.
 - **Why this method:** Kruskal-Wallis compares ranks, so a few extreme days don't dominate, and it
   makes no assumption of normal waits. ε² reports the size of the difference, not just whether
   one exists.
@@ -296,7 +315,7 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - only a rise is published; there is no p-value, so the finding is outside the Benjamini-Hochberg
     correction and is worded as a plain comparison, never as a significant result.
 - **Why this method:** it is the figure a planner already sees on the home page, so a finding and the badge
-  never disagree. A tested detector (`anomaly`) can say the same week is unusual; this one says how far above
+  never disagree. The `anomaly` detector (also untested: a robust z against the 8 weeks before) can say the same week is unusual; this one says how far above
   usual it is.
 - **Limitations:**
   - **Not a test:** with 9 hospitals checked weekly, a few weeks above the line are expected by chance.

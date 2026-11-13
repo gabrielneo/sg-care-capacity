@@ -50,7 +50,7 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
             continue
         x = np.array([(s - starts[0]).days / 7 for s in rows["week_start"]])
         y = rows["mean_of_daily_median_wait_hours"].to_numpy(dtype=float)
-        slope, intercept, _, _ = theil_sen(y, x)
+        slope, intercept, slope_lo, slope_hi = theil_sen(y, x)
         mk = mann_kendall(y, correct=cfg.get("autocorrelation_correction") == "yue_wang")
         start, end = intercept, intercept + slope * (len(starts) - 1)
         direction = "worse" if slope > 0 else "better"
@@ -73,6 +73,7 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
                       "query": SQL.format(code=code, start=starts[0].isoformat())},
             action_key=direction, action_values={"hospital": hospital_name(h), "cluster": h["cluster"]},
             chart=chart("line", WEEKLY_AXIS, points, [last_seen], trend_line=(start, end)),
+            n_unit="weeks", ci=(slope_lo, slope_hi), ci_null=0.0,
             period=(starts[0], rows["week_start"].iloc[-1] + pd.Timedelta(days=6)),
             display={"value_text": value_text, "unit_text": f"{unit_text} a week", "change": "up" if slope > 0 else "down"},
         ))

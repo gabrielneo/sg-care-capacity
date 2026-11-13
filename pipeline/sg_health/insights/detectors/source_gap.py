@@ -5,8 +5,8 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip, chart, point
-from ..stats import wilcoxon_median
+from ..model import Candidate, DetectorResult, Skip, chart, point, thresholds
+from ..stats import median_ci, wilcoxon_median
 from ..wording import hours
 from .common import hours_parts
 
@@ -52,5 +52,6 @@ def detect(live: pd.DataFrame, daily: pd.DataFrame, cfg: dict[str, Any], full_ef
         chart=chart("bar", "Hours, median of the days with both figures", points, ["nuhs"]),
         display={"value_text": value_text, "unit_text": unit_text, "change": "up" if med > 0 else "down" if med < 0 else None},
         period=(min(pair.index), max(pair.index)),
+        n_unit="days", ci_null=0.0, ci_fn=lambda d=diffs: median_ci(d, **thresholds()["engine"]["bootstrap"]),
     ))
     return out

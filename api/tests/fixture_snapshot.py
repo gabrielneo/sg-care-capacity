@@ -33,7 +33,7 @@ INSIGHT_EXTRA_DDL = """, display STRUCT(value_text VARCHAR, unit_text VARCHAR, m
     chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
         highlight VARCHAR[], callout VARCHAR, reference STRUCT(value DOUBLE, label VARCHAR),
         trend_line STRUCT(first DOUBLE, last DOUBLE)),
-    scope VARCHAR"""
+    scope VARCHAR, evidence_level VARCHAR, n_unit VARCHAR, ci_low DOUBLE, ci_high DOUBLE"""
 
 DDL = {
     "dim_hospital": """hospital_code VARCHAR, hospital_name VARCHAR, short_name VARCHAR, cluster VARCHAR, facility_type VARCHAR,
@@ -103,14 +103,14 @@ ANOMALY_WEEKS = [date(2026, 8, 24) + timedelta(weeks=k) for k in range(9)]
 # Five published insights. The headline findings are one per detector type (ranks 1-3); one more weekday, one access gap.
 INSIGHTS = [
     ("weekday-aaaaaaaaaa", "weekday", "SGH", "At Singapore General Hospital, bed waits are longest on Mondays, 25% above its weekly average.",
-     "Waits differ by day of the week over 6 complete weeks. This is unlikely to be chance: the odds are about 4 in 1,000, allowing for every test run.",
+     "Waits differ by day of the week over 6 complete weeks. A test says this is unlikely to be chance (odds about 4 in 1,000, allowing for every test run), and its 95% range excludes no difference.",
      5.0, "hours", 4.0, "neutral", 0.21, 0.001, 0.004, 42, "Kruskal-Wallis test across weekdays; epsilon-squared",
      ["The test shows that weekdays differ; the peak day is the one with the highest average."], None, None,
      {"endpoint": "/api/v1/ed/daily?hospital=SGH", "query": "SELECT 1"}, date(2026, 10, 25), "latest_data", 0.95, 1,
      _display("5.0", "hours", "Average of daily median bed waits on Mondays", "4.0 hours, its weekly average", "up", "higher than average"),
      _weekday_chart([5.0, 4.1, 3.9, 3.8, 3.9, 3.7, 3.6], "mon", 4.0, "Mondays: 25% above average")),
     ("anomaly-bbbbbbbbbb", "anomaly", "SGH", "Bed waits at Singapore General Hospital were unusually long in the week of 19–25 Oct 2026: 5.0 hours.",
-     "The usual level over the 8 weeks before was 4.0 hours. A week this far out happens rarely by chance.",
+     "The usual level over the 8 weeks before was 4.0 hours. An observed difference, not a statistical test.",
      5.0, "hours", 4.0, "worse", 4.2, None, None, 9, "Robust z-score (median and MAD of the 8 weeks before)",
      ["One unusual week is not a trend."], None, None,
      {"endpoint": "/api/v1/ed/weekly?hospital=SGH&weeks=9", "query": "SELECT 2"}, date(2026, 10, 25), "latest_data", 0.6, 2,
@@ -135,7 +135,7 @@ INSIGHTS = [
              ("q5", "Busiest", 0.5)], ["q5"], "After the busiest days: 1.1 hours longer than after the quietest",
             (0.0, "Usual for that weekday"), x_label="Days in five equal groups by ED visits vs usual")),
     ("weekday-cccccccccc", "weekday", "AH", "At Alexandra Hospital, bed waits are longest on Tuesdays, 10% above its weekly average.",
-     "Waits differ by day of the week over 5 complete weeks. This is unlikely to be chance: the odds are about 3 in 100, allowing for every test run.",
+     "Waits differ by day of the week over 5 complete weeks. A test says this is unlikely to be chance: the odds are about 3 in 100, allowing for every test run.",
      2.2, "hours", 2.0, "neutral", 0.05, 0.01, 0.03, 35, "Kruskal-Wallis test across weekdays; epsilon-squared",
      ["Alexandra Hospital runs an urgent care centre, not a full emergency department."], None, None,
      {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None,
@@ -161,6 +161,11 @@ _PERIOD = {"weekday": (date(2026, 4, 27), date(2026, 10, 25), "moderate"), "anom
 INSIGHTS = [(*r[:22], *_PERIOD[r[1]], *r[22:]) for r in INSIGHTS]
 # scope (ADR 0012): a finding about the urgent care centre is scoped urgent_care.
 INSIGHTS = [(*r, "urgent_care" if r[2] == "AH" else "system") for r in INSIGHTS]
+# evidence_level, n_unit, ci_low, ci_high (B1, B3): from each row's type and p-value, as the engine sets them.
+_EVIDENCE = {"weekday-aaaaaaaaaa": ("robust", "days", 4.6, 5.4)}
+INSIGHTS = [(*r, *_EVIDENCE.get(r[0], ("observed" if r[11] is None else "association-only" if r[1] == "volume_vs_wait"
+                                       else "tested", "weeks" if r[1] in ("trend", "anomaly", "usual_gap") else "days", None, None)))
+            for r in INSIGHTS]
 DQ_DDL = """check_id VARCHAR, "table" VARCHAR, severity VARCHAR, status VARCHAR, failing_rows INTEGER,
     details VARCHAR, run_id VARCHAR, checked_at TIMESTAMP, scope VARCHAR, blocks_publish BOOLEAN"""
 

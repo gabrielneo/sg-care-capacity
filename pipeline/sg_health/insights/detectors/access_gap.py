@@ -84,6 +84,7 @@ def detect(areas: pd.DataFrame, cfg: dict[str, Any], min_completeness: float) ->
             evidence={"endpoint": "/api/v1/areas/access", "query": SQL.format(area=str(r["planning_area"]).replace("'", "''"))},
             action_key=None, action_values={"area": r["planning_area"], "n_areas": max(min(top, len(inc)) - 1, 0)},
             chart=chart("bar", AXIS, points, ["area"]),
+            n_unit="residents aged 65+",
             display={"value_text": f"{rate:.2f}", "unit_text": "per 1,000 residents aged 65+",
                      "change": "down" if rate < national * 1000 else "up"},
         ))

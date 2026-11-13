@@ -70,5 +70,6 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
             chart=chart("line", WEEKLY_AXIS, points, [latest.isoformat()], reference=(usual, "Usual level")),
             display={"value_text": value_text, "unit_text": unit_text, "change": "up"},
             period=(latest, latest + timedelta(days=6)),
+            n_unit="weeks",
         ))
     return out

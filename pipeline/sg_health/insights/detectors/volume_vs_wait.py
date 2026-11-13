@@ -6,8 +6,8 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip, chart, point
-from ..stats import spearman, strength_label
+from ..model import Candidate, DetectorResult, Skip, chart, point, thresholds
+from ..stats import spearman, spearman_ci, strength_label
 from ..wording import hours
 from .common import (
     UNIT_CAVEAT,
@@ -84,6 +84,8 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             points, diff = _fifths(pair)
             after = AFTER_PHRASE[int(lag)]
             out.candidates.append(Candidate(
+                n_unit="days", ci_null=0.0,
+                ci_fn=lambda v=pair["v"].to_numpy(), w=pair["w"].to_numpy(): spearman_ci(v, w, **thresholds()["engine"]["bootstrap"]),
                 type="volume_vs_wait", entity=code, variant=variant,
                 method=f"Spearman correlation, visits on day t vs bed wait on day t+{lag}"
                        + (", after removing each weekday's median" if cfg.get("adjust_for_weekday", True) else ""),

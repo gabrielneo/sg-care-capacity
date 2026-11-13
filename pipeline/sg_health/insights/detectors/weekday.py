@@ -6,8 +6,8 @@ from typing import Any
 
 import pandas as pd
 
-from ..model import Candidate, DetectorResult, Skip, chart, point
-from ..stats import kruskal_epsilon2
+from ..model import Candidate, DetectorResult, Skip, chart, point, thresholds
+from ..stats import kruskal_epsilon2, mean_ci, mean_difference_ci
 from ..wording import hours, percent
 from .common import (
     UNIT_CAVEAT,
@@ -30,6 +30,28 @@ def _peak(values: pd.Series, weekday: pd.Series) -> tuple[int, float]:
     means = values.groupby(weekday).mean()
     day = int(means.idxmax())
     return day, (float(means[day]) / float(values.mean()) - 1) * 100
+
+
+def day_pair(a: int, b: int) -> str:
+    """Two weekdays in week order: "Tuesday–Wednesday" when next to each other (Sunday–Monday wraps), else "Monday and Friday"."""
+    first, second = sorted((a, b))
+    if second - first == 1:
+        return f"{WEEKDAYS[first]}–{WEEKDAYS[second]}"
+    if (first, second) == (0, 6):
+        return f"{WEEKDAYS[6]}–{WEEKDAYS[0]}"
+    return f"{WEEKDAYS[first]} and {WEEKDAYS[second]}"
+
+
+def shared_peak(values: pd.Series, weekday: pd.Series, day_means: list[float], day: int, tie_hours: float | None,
+                boot: dict[str, Any]) -> int | None:
+    """The next-highest day if the peak is shared with it, else None. Shared when the two averages differ by
+    less than `tie_hours` (per hospital; None for the pooled ratios) or the 95% CI of their difference includes 0."""
+    second = max((k for k in range(7) if k != day), key=lambda k: day_means[k])
+    diff = day_means[day] - day_means[second]
+    if tie_hours is not None and diff < tie_hours:
+        return second
+    ci = mean_difference_ci(values[weekday == day].to_numpy(), values[weekday == second].to_numpy(), **boot)
+    return second if ci is not None and ci[0] <= 0 else None
 
 
 def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any],
@@ -64,6 +86,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
         _, p, eps2 = kruskal_epsilon2(groups)
         day, pct = _peak(rows["median_wait_hours"], rows["weekday"])
         out.candidates.append(_candidate(
+            rows["median_wait_hours"], rows["weekday"],
             code, "hospital", eps2, p, pct, day, len(rows), n_weeks, completeness, first, last, cfg, full_effect,
             {"hospital": hospital_name(h)}, hospital_caveats(h), SQL.format(code=code, start=first, end=last),
             f"/api/v1/ed/daily?hospital={code}&from={first}&to={last}",
@@ -78,6 +101,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
         _, p, eps2 = kruskal_epsilon2(groups)
         day, pct = _peak(allrows["rel"], allrows["weekday"])
         out.candidates.append(_candidate(
+            allrows["rel"], allrows["weekday"],
             "All hospitals", "pooled", eps2, p, pct, day, len(allrows), weeks, 1.0, first, last, cfg, full_effect,
             {"n_hospitals": len(pooled)}, ["Each hospital's waits are compared with its own weekly average before pooling."],
             "-- each hospital's daily values divided by its own mean, then pooled by weekday",
@@ -91,12 +115,21 @@ def _day_means(values: pd.Series, weekday: pd.Series) -> list[float]:
     return [float(means[k]) for k in range(7)]
 
 
-def _candidate(entity, variant, eps2, p, pct, day, n, n_weeks, completeness, first, last, cfg, full_effect, values, caveats,
-               query, endpoint, day_means, mean, action_values) -> Candidate:
+def _candidate(raw, raw_weekday, entity, variant, eps2, p, pct, day, n, n_weeks, completeness, first, last, cfg, full_effect,
+               values, caveats, query, endpoint, day_means, mean, action_values) -> Candidate:
     hospital = variant == "hospital"
+    boot = thresholds()["engine"]["bootstrap"]
     peak = day_means[day]
     keys = [d[:3].lower() for d in WEEKDAYS]
     points = [point(k, d[:3], v) for k, d, v in zip(keys, WEEKDAYS, day_means, strict=True)]
+    # The peak day's average, with its 95% CI; and whether the next-highest day shares the peak (B2).
+    ci = mean_ci(raw[raw_weekday == day].to_numpy(), **boot)
+    second = shared_peak(raw, raw_weekday, day_means, day, float(cfg["tie_hours"]) if hospital else None, boot)
+    highlight = [keys[day]] if second is None else [keys[k] for k in sorted((day, second))]
+    tie_values = {} if second is None else {"days": day_pair(day, second),
+                                             "pct2": percent((day_means[second] / mean - 1) * 100), "weekday2": WEEKDAYS[second]}
+    if second is not None:
+        variant = f"{variant}_tie"
     if hospital:
         axis, reference, (value_text, unit_text) = WEEKDAY_AXIS, (mean, "Weekly average"), hours_parts(peak)
         mean_text = hours(mean)
@@ -110,11 +143,12 @@ def _candidate(entity, variant, eps2, p, pct, day, n, n_weeks, completeness, fir
         comparison_value=mean, direction="neutral", p_value=p, passes_effect=eps2 >= float(cfg["min_epsilon_squared"]),
         completeness=min(completeness, 1.0), as_of=last, source="moh_bed_waits",
         values={**values, "weekday": WEEKDAYS[day], "pct": percent(pct), "weeks": n_weeks, "window": str(last),
-                "mean": mean_text},
+                "mean": mean_text, **tie_values},
         caveats=[CAVEAT, UNIT_CAVEAT, *caveats],
         evidence={"endpoint": endpoint, "query": query},
         action_key=None, action_values={**action_values, "weekday": WEEKDAYS[day]},
-        chart=chart("bar", axis, points, [keys[day]], reference=reference),
+        chart=chart("bar", axis, points, highlight, reference=reference),
         display={"value_text": value_text, "unit_text": unit_text, "change": "up"},
         period=(first, last),
+        n_unit="days", ci=ci, ci_null=mean,
     )

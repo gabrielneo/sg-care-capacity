@@ -720,6 +720,16 @@ export interface components {
             caveats: string[];
             /** @description Null in data releases from before the engine wrote it */
             chart: components["schemas"]["InsightChart"] | null;
+            /**
+             * Ci High
+             * @description 95% CI of metric_value, high end; null where the method gives none
+             */
+            ci_high?: number | null;
+            /**
+             * Ci Low
+             * @description 95% CI of metric_value, low end; null where the method gives none
+             */
+            ci_low?: number | null;
             /** Comparison Value */
             comparison_value: number | null;
             /**
@@ -748,6 +758,11 @@ export interface components {
             entity: string;
             evidence: components["schemas"]["InsightEvidence"];
             /**
+             * Evidence Level
+             * @description observed: no test; tested: adjusted p < 0.05; robust: tested and the 95% CI excludes no difference; association-only: a tested correlation. Null in releases from before it was written
+             */
+            evidence_level?: ("observed" | "tested" | "robust" | "association-only") | null;
+            /**
              * Headline
              * @description One sentence, at most 20 words, plain language
              */
@@ -765,6 +780,11 @@ export interface components {
             metric_value: number | null;
             /** N */
             n: number;
+            /**
+             * N Unit
+             * @description What n counts (days, weeks, residents aged 65+). Null in older releases
+             */
+            n_unit?: string | null;
             /**
              * P Adjusted
              * @description Benjamini-Hochberg across every test in the run

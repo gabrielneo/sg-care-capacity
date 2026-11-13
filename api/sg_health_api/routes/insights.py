@@ -15,7 +15,8 @@ InsightType = Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wai
 
 INSIGHTS_SQL = "SELECT * FROM marts.fct_insight ORDER BY rank_score DESC, insight_id"
 # Columns added over time. A release from before one of them still serves its insights, with nulls there.
-LATER_COLUMNS = ("period_start", "period_end", "strength", "display", "chart", "scope")
+LATER_COLUMNS = ("period_start", "period_end", "strength", "display", "chart", "scope", "evidence_level", "n_unit",
+                 "ci_low", "ci_high")
 HAS_TABLE_SQL = "SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
 COLUMNS_SQL = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'marts' AND table_name = 'fct_insight'"
 SOURCES_BY_TYPE = {

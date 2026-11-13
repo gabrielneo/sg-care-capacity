@@ -15,13 +15,13 @@
 trend:
   worse:
     headline: "Bed waits at {hospital} have risen about {slope} a week over the last {weeks} weeks."
-    detail: "Its trend line moved from {start} to {end}: a steady rise, not one bad week. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
+    detail: "Its trend line moved from {start} to {end}: a steady rise, not one bad week."
     metric_label: "Average change in bed wait each week"
     change_word: "rising"
     callout: "About {slope} a week over {weeks} weeks"
   better:
     headline: "Bed waits at {hospital} have fallen about {slope} a week over the last {weeks} weeks."
-    detail: "Its trend line moved from {start} to {end}: a steady fall, not one good week. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
+    detail: "Its trend line moved from {start} to {end}: a steady fall, not one good week."
     metric_label: "Average change in bed wait each week"
     change_word: "falling"
     callout: "About {slope} a week over {weeks} weeks"
@@ -29,14 +29,14 @@ trend:
 anomaly:
   worse:
     headline: "Bed waits at {hospital} were unusually long in the week of {week}: {value}."
-    detail: "The usual level over the {trailing} weeks before was {usual}. A week this far out happens rarely by chance."
+    detail: "The usual level over the {trailing} weeks before was {usual}."
     metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "higher than usual"
     callout: "{week}: {value}"
   better:
     headline: "Bed waits at {hospital} were unusually short in the week of {week}: {value}."
-    detail: "The usual level over the {trailing} weeks before was {usual}. One good week is not yet a trend."
+    detail: "The usual level over the {trailing} weeks before was {usual}; one good week is not yet a trend."
     metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "lower than usual"
@@ -45,7 +45,7 @@ anomaly:
 usual_gap:
   worse:
     headline: "{hospital}: bed wait {value}, {pct} above its usual {usual} (week of {week})."
-    detail: "Usual is the median of the {trailing} weeks before. This is a plain comparison, not a statistical test."
+    detail: "Usual is the median of the {trailing} weeks before."
     metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "higher than usual"
@@ -54,29 +54,44 @@ usual_gap:
 weekday:
   hospital:
     headline: "At {hospital}, bed waits are longest on {weekday}s, {pct} above its weekly average."
-    detail: "Waits differ by day of the week over {weeks} complete weeks. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
+    detail: "Waits differ by day of the week over {weeks} complete weeks."
     metric_label: "Average of daily median bed waits on {weekday}s"
     comparison_label: "{mean}, its weekly average"
     change_word: "higher than average"
     callout: "{weekday}s: {pct} above average"
   pooled:
     headline: "Across all hospitals, bed waits are longest on {weekday}s, {pct} above each hospital's weekly average."
-    detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks. This is unlikely to be chance: the odds are {chance}, allowing for every test run."
+    detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks."
     metric_label: "Daily median bed waits on {weekday}s, compared with each hospital's average"
     comparison_label: "{mean}, each hospital's own average"
     change_word: "higher than average"
     callout: "{weekday}s: {pct} above average"
 
+  hospital_tie:
+    headline: "At {hospital}, bed waits peak on {days}, {pct} and {pct2} above its weekly average."
+    detail: "Waits differ by day of the week over {weeks} complete weeks; the two peak days are too close to tell apart."
+    metric_label: "Average of daily median bed waits on {weekday}s"
+    comparison_label: "{mean}, its weekly average"
+    change_word: "higher than average"
+    callout: "{days} peak: {pct} and {pct2} above average"
+  pooled_tie:
+    headline: "Across all hospitals, bed waits peak on {days}, {pct} and {pct2} above each hospital's weekly average."
+    detail: "Waits differ by day of the week at {n_hospitals} {n_hospitals|hospital|hospitals} over {weeks} complete weeks; the two peak days are too close to tell apart."
+    metric_label: "Daily median bed waits on {weekday}s, compared with each hospital's average"
+    comparison_label: "{mean}, each hospital's own average"
+    change_word: "higher than average"
+    callout: "{days} peak: {pct} and {pct2} above average"
+
 volume_vs_wait:
   positive:
     headline: "At {hospital}, bed waits move {strength} with ED visits {lag_phrase}."
-    detail: "Busier days come with longer bed waits, over {n} days after removing the usual weekday pattern. It is an association only."
+    detail: "Busier days come with longer bed waits, over {n} days after removing the usual weekday pattern."
     metric_label: "Correlation of ED visits with the bed wait {after_phrase}"
     change_word: "{strength_label} link"
     callout: "After the busiest days: {diff} {longer_shorter} than after the quietest"
   negative:
     headline: "At {hospital}, bed waits move {strength} against ED visits {lag_phrase}."
-    detail: "Busier days come with shorter bed waits, over {n} days after removing the usual weekday pattern. It is an association only."
+    detail: "Busier days come with shorter bed waits, over {n} days after removing the usual weekday pattern."
     metric_label: "Correlation of ED visits with the bed wait {after_phrase}"
     change_word: "{strength_label} link"
     callout: "After the busiest days: {diff} {longer_shorter} than after the quietest"
@@ -84,7 +99,7 @@ volume_vs_wait:
 access_gap:
   worse:
     headline: "{area} has about {shortfall} fewer CDMP GP {shortfall_n|clinic|clinics} than the national rate would give its seniors."
-    detail: "It has {actual} {actual_n|clinic|clinics} for {seniors} residents aged 65+, where the national rate suggests {expected}. Clinics are counted where they are, not where patients go."
+    detail: "It has {actual} {actual_n|clinic|clinics} for {seniors} residents aged 65+, where the national rate suggests {expected}; clinics are counted where they are, not where patients go."
     metric_label: "CDMP GP clinics per 1,000 residents aged 65+ in {area}"
     comparison_label: "{national}, the national rate"
     change_word: "lower than the national rate"
@@ -93,8 +108,17 @@ access_gap:
 source_gap:
   neutral:
     headline: "NUHS's live bed-wait estimate for NUH differs from MOH's daily figure by a median {gap}."
-    detail: "This compares {n} days with both figures. They measure different things: a moment's estimate against the day's median for admitted patients."
+    detail: "This compares {n} days with both figures, which measure different things: a moment's estimate against the day's median for admitted patients."
     metric_label: "Median daily gap, NUHS estimate minus MOH figure"
     comparison_label: "{moh}, MOH's median daily figure"
     change_word: "{above_below} MOH's figure"
     callout: "Median daily gap: {gap}"
+
+# One sentence per evidence level, added after every detail (docs/insights_method.md, "Evidence levels").
+# Only a tested finding may speak of chance, and only with its adjusted p-value as odds; the engine
+# refuses probability words in a finding without one.
+evidence:
+  observed: "An observed difference, not a statistical test."
+  tested: "A test says this is unlikely to be chance: the odds are {chance}, allowing for every test run."
+  robust: "A test says this is unlikely to be chance (odds {chance}, allowing for every test run), and its 95% range excludes no difference."
+  association-only: "An association only: unlikely to be chance (odds {chance}), but it does not show why bed waits move."

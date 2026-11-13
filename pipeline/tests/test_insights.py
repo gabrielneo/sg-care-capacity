@@ -283,8 +283,34 @@ def test_the_wording_check_rejects_causal_words(bad):
 def test_templates_contain_no_causal_words():
     for detector, variants in wording.templates().items():
         for variant, t in variants.items():
-            for text in t.values():
+            for text in (t.values() if isinstance(t, dict) else [t]):     # the evidence block is level -> sentence
                 assert not wording.CAUSAL.search(text), (detector, variant, text)
+
+
+def test_only_tested_evidence_sentences_and_details_speak_of_chance():
+    t = wording.templates()
+    assert set(t["evidence"]) == set(wording.EVIDENCE_LEVELS)
+    assert not wording.PROBABILITY.search(t["evidence"]["observed"])
+    for level in ("tested", "robust", "association-only"):
+        assert "{chance}" in t["evidence"][level], level
+    # Chance is said once, by the evidence sentence: never in a detector's own detail or headline.
+    for detector, variants in t.items():
+        if detector == "evidence":
+            continue
+        for variant, v in variants.items():
+            for key in ("headline", "detail"):
+                assert not wording.PROBABILITY.search(v[key]), (detector, variant, key)
+
+
+def test_probability_wording_without_a_p_value_is_refused():
+    with pytest.raises(wording.WordingError, match="probability"):
+        wording.check_probability("A week this far out happens rarely by chance.", tested=False)
+    wording.check_probability("Unlikely to be chance: the odds are less than 1 in 1,000.", tested=True)
+    row = {"insight_id": "x", "type": "anomaly", "entity": "SGH", "period_start": date(2026, 10, 19),
+           "period_end": date(2026, 10, 25), "as_of": date(2026, 10, 25), "strength": "strong", "evidence_level": "observed",
+           "p_adjusted": None, "headline": "Bed waits at SGH were unusually long.", "detail": "This happens rarely by chance."}
+    with pytest.raises(ValueError, match="probability"):
+        engine.check_rows([row])
 
 
 def test_the_wording_check_rejects_column_names_and_long_headlines():
@@ -509,6 +535,8 @@ def test_the_label_check_rejects_causal_long_and_sentence_labels(bad):
 
 def test_every_template_variant_has_a_metric_label_and_a_callout():
     for detector, variants in wording.templates().items():
+        if detector == "evidence":
+            continue
         for variant, t in variants.items():
             assert t.get("metric_label") and t.get("callout"), f"{detector}.{variant}"
             for key in wording.DISPLAY_FIELDS:
@@ -538,7 +566,9 @@ def test_the_p_value_is_written_as_plain_odds():
     d = daily(lambda rng, c, i, wd: (4 + (2.0 if wd == 0 else 0) + rng.normal(0, 0.4), 400), codes=("SGH", "CGH"), seed=2)
     result = engine.run(inputs(weekly_from(d), d, hospitals("SGH", "CGH")), NO_FAILS, TODAY)
     detail = next(r for r in published(result, "weekday") if r["entity"] == "SGH")["detail"]
-    assert detail.endswith("This is unlikely to be chance: the odds are less than 1 in 1,000, allowing for every test run.")
+    # A strong Monday peak: tested, and its 95% range excludes the weekly average, so robust.
+    assert detail.endswith("A test says this is unlikely to be chance (odds less than 1 in 1,000, allowing for every test run), "
+                           "and its 95% range excludes no difference.")
     assert "adjusted p" not in detail
 
 
@@ -684,3 +714,65 @@ def test_every_source_the_api_cites_has_a_freshness_rule():
     assert cited and cited <= set(freshness.datasets())
     for k, ds in freshness.datasets().items():
         assert ds.get("inherits") or {"due_after", "overdue_after"} <= set(ds), k
+
+
+# --------------------------------------------------------------------------- #
+# B1-B3: evidence levels, shared peaks, n and confidence intervals
+# --------------------------------------------------------------------------- #
+
+def _weekday_run(tue: float, wed: float, seed: int = 4):
+    d = daily(lambda rng, c, i, wd: (8 + (tue if wd == 1 else wed if wd == 2 else 0) + rng.normal(0, 0.4), 400),
+              codes=("SKH", "CGH"), seed=seed)
+    return engine.run(inputs(weekly_from(d), d, hospitals("SKH", "CGH")), NO_FAILS, TODAY)
+
+
+def test_a_peak_shared_by_two_close_days_is_worded_as_a_two_day_peak():
+    # Like SKH in the 9 Nov release: Tuesday 12.70 h, Wednesday 12.59 h (0.11 h apart, under the 0.3 h rule).
+    r = next(x for x in published(_weekday_run(4.6, 4.5), "weekday") if x["entity"] == "SKH")
+    assert "peak on Tuesday–Wednesday" in r["headline"]
+    assert r["chart"]["highlight"] == ["tue", "wed"]
+    assert r["chart"]["callout"].startswith("Tuesday–Wednesday peak:")
+
+
+def test_a_clear_single_peak_keeps_its_one_day_wording():
+    r = next(x for x in published(_weekday_run(4.6, 1.0), "weekday") if x["entity"] == "SKH")
+    assert "longest on Tuesdays" in r["headline"] and r["chart"]["highlight"] == ["tue"]
+
+
+def test_day_pairs_read_in_week_order_and_wrap_sunday_to_monday():
+    from sg_health.insights.detectors.weekday import day_pair
+    assert day_pair(2, 1) == "Tuesday–Wednesday"
+    assert day_pair(0, 6) == "Sunday–Monday"
+    assert day_pair(0, 4) == "Monday and Friday"
+
+
+def test_every_finding_carries_n_with_its_unit_and_a_ci_where_the_method_gives_one():
+    result = _weekday_run(4.6, 1.0)
+    for r in result.insights:
+        assert r["n"] > 0 and r["n_unit"]
+    wk = next(x for x in published(result, "weekday") if x["entity"] == "SKH")
+    assert wk["n_unit"] == "days" and wk["ci_low"] < wk["metric_value"] < wk["ci_high"]
+    assert wk["evidence_level"] == "robust"           # the peak's 95% range is far above the weekly average
+
+
+def test_evidence_levels_by_method():
+    d = daily(lambda rng, c, i, wd: (4 + 0.03 * i + rng.normal(0, 0.3), 400 + rng.normal(0, 20)), codes=("SGH",), seed=3)
+    for r in engine.run(inputs(weekly_from(d), d, hospitals("SGH")), NO_FAILS, TODAY).insights:
+        expected = {"anomaly": "observed", "usual_gap": "observed", "access_gap": "observed",
+                    "volume_vs_wait": "association-only"}.get(r["type"])
+        if expected:
+            assert r["evidence_level"] == expected, r["type"]
+        else:
+            assert r["evidence_level"] in ("tested", "robust"), r["type"]
+        if r["p_adjusted"] is None:
+            assert not wording.PROBABILITY.search(r["headline"] + " " + r["detail"]), r["insight_id"]
+
+
+def test_bootstrap_intervals_are_reproducible():
+    from sg_health.insights.stats import mean_ci, spearman_ci
+    x = np.arange(50, dtype=float)
+    assert mean_ci(x) == mean_ci(x)
+    lo, hi = mean_ci(x)
+    assert lo < 24.5 < hi
+    assert spearman_ci(x, x * 2)[0] == pytest.approx(1.0)
+    assert mean_ci(np.array([1.0])) is None

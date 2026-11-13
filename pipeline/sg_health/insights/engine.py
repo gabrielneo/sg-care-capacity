@@ -53,11 +53,11 @@ FCT_INSIGHT_DDL = """CREATE OR REPLACE TABLE marts.fct_insight (
     chart STRUCT(kind VARCHAR, y_label VARCHAR, x_label VARCHAR, points STRUCT("key" VARCHAR, label VARCHAR, value DOUBLE)[],
                  highlight VARCHAR[], callout VARCHAR, reference STRUCT(value DOUBLE, label VARCHAR),
                  trend_line STRUCT(first DOUBLE, last DOUBLE)),
-    scope VARCHAR)"""
+    scope VARCHAR, evidence_level VARCHAR, n_unit VARCHAR, ci_low DOUBLE, ci_high DOUBLE)"""
 COLUMNS = ["insight_id", "type", "entity", "headline", "detail", "metric_value", "unit", "comparison_value", "direction",
            "effect_size", "p_value", "p_adjusted", "n", "method", "caveats", "who_acts", "action", "evidence", "as_of",
            "as_of_basis", "rank_score", "headline_rank", "period_start", "period_end", "strength", "display", "chart",
-           "scope"]
+           "scope", "evidence_level", "n_unit", "ci_low", "ci_high"]
 
 
 @dataclass
@@ -235,6 +235,18 @@ def source_dates(inputs: dict[str, pd.DataFrame]) -> dict[str, date]:
     return out
 
 
+def evidence_level(c: Candidate) -> str:
+    """observed (no p-value) / association-only (a correlation) / robust (tested, and the 95% CI of the
+    effect excludes no difference) / tested (B1, docs/insights_method.md)."""
+    if c.p_adjusted is None:
+        return "observed"
+    if c.type == "volume_vs_wait":
+        return "association-only"
+    if c.ci is not None and c.ci_null is not None and (c.ci[0] > c.ci_null or c.ci[1] < c.ci_null):
+        return "robust"
+    return "tested"
+
+
 def urgent_care_codes(hospitals: pd.DataFrame) -> frozenset[str]:
     """The codes of the urgent care centres (dim_hospital.facility_type = 'UCC')."""
     if hospitals is None or not len(hospitals) or "facility_type" not in hospitals:
@@ -249,7 +261,10 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
          ucc: frozenset[str] = frozenset()) -> dict[str, Any]:
     values = {**c.values, "p": wording.p_text(c.p_adjusted) if c.p_adjusted is not None else "",
               "chance": wording.chance_text(c.p_adjusted) if c.p_adjusted is not None else ""}
-    headline, detail = wording.render(c.type, c.variant, values, forbidden)
+    if c.ci is None and c.ci_fn is not None:
+        c.ci = c.ci_fn()
+    level = evidence_level(c)
+    headline, detail = wording.render(c.type, c.variant, values, forbidden, evidence=level)
     who, act, note = actions.action_for(c.type, c.action_key, c.action_values)
     scope = ranking.URGENT_CARE if c.entity in ucc else "system"
     caveats = [*([SCOPE_CAVEAT] if scope == ranking.URGENT_CARE else []), *c.caveats, *([note] if note else [])]
@@ -280,6 +295,8 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
         "rank_score": ranking.rank_score(c.effect_norm, c.p_adjusted, c.completeness, recency), "headline_rank": None,
         "period_start": period_start, "period_end": period_end, "strength": strength_label(c.effect_norm),
         "display": display, "chart": chart, "scope": scope,
+        "evidence_level": level, "n_unit": c.n_unit,
+        "ci_low": _round(c.ci[0]) if c.ci else None, "ci_high": _round(c.ci[1]) if c.ci else None,
     }
 
 
@@ -297,6 +314,10 @@ def check_rows(rows: list[dict[str, Any]]) -> None:
             problems.append(f"period ends {r['period_end']}, after as_of {r['as_of']}")
         if r["strength"] not in STRENGTHS:
             problems.append(f"strength {r['strength']!r}")
+        if r["evidence_level"] not in wording.EVIDENCE_LEVELS:
+            problems.append(f"evidence level {r['evidence_level']!r}")
+        if r["p_adjusted"] is None and wording.PROBABILITY.search(f"{r['headline']} {r['detail']}"):
+            problems.append("probability wording without a p-value")
         if problems:
             raise ValueError(f"{r['type']} {r['entity']}: {'; '.join(problems)}")
 

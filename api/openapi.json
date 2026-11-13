@@ -1318,6 +1318,30 @@
             ],
             "description": "Null in data releases from before the engine wrote it"
           },
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "95% CI of metric_value, high end; null where the method gives none",
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "95% CI of metric_value, low end; null where the method gives none",
+            "title": "Ci Low"
+          },
           "comparison_value": {
             "anyOf": [
               {
@@ -1381,6 +1405,24 @@
           "evidence": {
             "$ref": "#/components/schemas/InsightEvidence"
           },
+          "evidence_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "observed",
+                  "tested",
+                  "robust",
+                  "association-only"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "observed: no test; tested: adjusted p < 0.05; robust: tested and the 95% CI excludes no difference; association-only: a tested correlation. Null in releases from before it was written",
+            "title": "Evidence Level"
+          },
           "headline": {
             "description": "One sentence, at most 20 words, plain language",
             "title": "Headline",
@@ -1420,6 +1462,18 @@
           "n": {
             "title": "N",
             "type": "integer"
+          },
+          "n_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What n counts (days, weeks, residents aged 65+). Null in older releases",
+            "title": "N Unit"
           },
           "p_adjusted": {
             "anyOf": [

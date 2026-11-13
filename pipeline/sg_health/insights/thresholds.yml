@@ -5,6 +5,8 @@ engine:
   alpha: 0.05                 # Benjamini-Hochberg across every p-value in one run
   min_completeness: 0.80      # skip a hospital or area below this share of expected data
   headline_count: 3           # top findings, at most one per detector
+  # 95% confidence intervals: percentile bootstrap, seeded so a run is reproducible (docs/insights_method.md).
+  bootstrap: {resamples: 2000, level: 0.95, seed: 20261114}
 
 ranking:
   # rank_score = normalised effect x (1 - p_adjusted) x completeness x recency
@@ -30,6 +32,9 @@ weekday:
   weeks: 26
   min_complete_weeks: 12
   min_epsilon_squared: 0.01   # "small" effect; below this a peak day is not worth a sentence
+  # The peak is shared with the next-highest day when they differ by less than this (hours, per
+  # hospital) or the 95% CI of their difference includes 0: "Tuesday–Wednesday peak".
+  tie_hours: 0.3
 
 volume_vs_wait:
   weeks: 26
