@@ -53,6 +53,20 @@ test.describe("Findings: the scroll story", () => {
     await expect(page.getByTestId("hero").locator("[data-level]")).toBeVisible();          // the freshness badge
   });
 
+  test("every finding says how strong its evidence is, with n and a 95% range where there is one (B1, B3)", async ({ page }) => {
+    await page.goto("/findings");
+    const lines = page.getByTestId("step-evidence");
+    expect(await lines.count()).toBeGreaterThan(0);
+    for (const line of await lines.all()) {
+      await expect(line).toHaveText(/^(Observed, not tested|Tested|Tested, with a 95% range that excludes no difference|An association only \(tested\)) · n = [\d,]+ \w/);
+    }
+    // The fixture's top finding is robust, with its interval in hours.
+    await expect(lines.first()).toContainText("95% range 4.6 to 5.4 hours");
+    for (const detail of await page.getByTestId("step-detail").all()) {
+      await expect(detail).not.toContainText("rarely by chance");
+    }
+  });
+
   test("a finding's warnings are only those on the data it uses (audit L-7)", async ({ page }) => {
     // The fixture has one MOH bed-wait warning and one clinic-list error; ED findings show only the first.
     await page.goto("/findings");

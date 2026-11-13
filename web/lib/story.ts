@@ -60,14 +60,23 @@ export function chartTitle(i: StoryInsight): string {
  * How the chart's direct labels are written. Hours to one decimal (as in the sentences), rates and
  * ratios to two. Values around a zero reference line (e.g. "vs usual for that weekday") get a sign.
  */
+/**
+ * How a finding's chart labels its values. One decimal for hours and gaps, two otherwise; and one more
+ * (up to 3, bar charts only) while two different values would still print the same, so bars that differ never carry
+ * identical labels (audit B5: visits vs waits had two bands both labelled −0.5).
+ */
 export function chartFormat(i: StoryInsight): (v: number) => string {
-  const digits = i.unit.startsWith("hours") || i.type === "volume_vs_wait" || i.type === "source_gap" ? 1 : 2;
   const signed = i.chart.reference?.value === 0;
-  return (v: number) => {
+  const fmt = (digits: number) => (v: number) => {
     const text = Math.abs(v).toLocaleString("en-SG", { minimumFractionDigits: digits, maximumFractionDigits: digits });
     if (!signed || Number(text) === 0) return text;
     return `${v > 0 ? "+" : "−"}${text}`;
   };
+  const values = [...new Set(i.chart.points.map((p) => p.value).filter((v): v is number => v != null))];
+  let digits = i.unit.startsWith("hours") || i.type === "volume_vs_wait" || i.type === "source_gap" ? 1 : 2;
+  // Bars are compared with each other by their labels; a line's neighbouring weeks are read by their shape.
+  while (i.chart.kind === "bar" && digits < 3 && new Set(values.map(fmt(digits))).size < values.length) digits += 1;
+  return fmt(digits);
 }
 
 /** The finding's own caveat: the engine puts it first. */

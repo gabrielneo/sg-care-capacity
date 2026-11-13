@@ -6,6 +6,7 @@ import type { Insight } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
 import { HIGHER_PCT, MUCH_HIGHER_PCT } from "@/lib/status";
 import { USUAL_WEEKS } from "@/lib/windows";
+import { EVIDENCE_LABEL, evidenceOf, safeDetail, sampleText } from "@/lib/evidence";
 
 const pText = (p: number | null | undefined) => (p == null ? "not tested" : p < 0.001 ? "below 0.001" : p.toFixed(3));
 
@@ -23,7 +24,7 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
         <div className="mt-4 space-y-5 text-sm text-ink">
           <div>
             <h3 className="font-semibold">The bed wait</h3>
-            <p className="mt-1 max-w-prose"><Glossed text={BED_WAIT_EXPLAINER} /> <Glossed text={CAVEAT.weeklyAverage} /></p>
+            <p className="mt-1 max-w-prose"><Glossed text={BED_WAIT_EXPLAINER} /></p>
           </div>
           <div>
             <h3 className="font-semibold">The badges</h3>
@@ -52,10 +53,11 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
                 {findings.map((f) => (
                   <li key={f.insight_id} className="rounded-lg border border-line p-3">
                     <p className="font-medium"><Glossed text={f.headline} /></p>
-                    <p className="mt-1 text-muted"><Glossed text={f.detail} /></p>
+                    <p className="mt-1 text-muted"><Glossed text={safeDetail(f)} /></p>
                     <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-muted">
                       <dt>Method</dt><dd><Glossed text={f.method} /></dd>
-                      <dt>Data points</dt><dd className="tabular-nums">{f.n ?? "not stated"}</dd>
+                      <dt>Evidence</dt><dd data-testid="methods-evidence">{EVIDENCE_LABEL[evidenceOf(f)]}</dd>
+                      <dt>Data points</dt><dd className="tabular-nums" data-testid="methods-sample">{sampleText(f)}</dd>
                       <dt>Chance of this by luck (adjusted p)</dt><dd className="tabular-nums">{pText(f.p_adjusted ?? f.p_value)}</dd>
                     </dl>
                   </li>

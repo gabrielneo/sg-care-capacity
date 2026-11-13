@@ -59,9 +59,11 @@ describe("chart wording", () => {
 
   it("writes hours to one decimal, rates to two, and signs values around a zero line", () => {
     expect(chartFormat(weekday)(12.6977)).toBe("12.7");
-    expect(chartFormat(volume)(0.465)).toBe("+0.5");
-    expect(chartFormat(volume)(-0.545)).toBe("−0.5");
-    expect(chartFormat(volume)(0.02)).toBe("0.0");
+    // Visits vs waits: the two quietest bands (−0.545, −0.4725) would both read −0.5, so one more decimal (audit B5).
+    expect(chartFormat(volume)(0.465)).toBe("+0.47");
+    expect(chartFormat(volume)(-0.545)).toBe("−0.55");
+    expect(chartFormat(volume)(-0.4725)).toBe("−0.47");
+    expect(chartFormat(volume)(0.004)).toBe("0.00");                  // rounds to zero: no sign
     const clinics = { ...weekday, type: "access_gap" as const, unit: "CDMP GP clinics per 1,000 residents aged 65+" };
     expect(chartFormat(clinics)(1.2657)).toBe("1.27");
   });

@@ -103,6 +103,16 @@ match the insight engine's, so a chart and its finding agree ([insights_method.m
 - **Raw values across hospitals** carry two caveats, pinned on the chart: Alexandra Hospital's urgent
   care centre (shorter waits by design), and NUH (adults only).
 
+**How sure each finding is.** Every finding on the site says how strong its evidence is, in one of
+four levels. *Observed* means no statistical test was run. *Tested* means it passed one, after
+correcting for every test in the run. *Robust* means it was tested and its 95% range excludes no
+difference. *Association only* means a correlation that passed its test but says nothing about why.
+Only tested findings mention chance. Each finding also states its *n*: how many days, weeks or
+residents it rests on. Where the method allows, it gives a 95% range. A trend uses the Theil-Sen
+interval. The weekday peak, the visits-and-waits correlation and the NUHS gap use a bootstrap.
+It resamples the data 2,000 times, with a fixed seed, so every run gives the same range. Details are in
+[how findings are tested](insights_method.md).
+
 ## Clinic access: what is measured
 
 For each of Singapore's 55 planning areas (URA Master Plan 2025):

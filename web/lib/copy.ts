@@ -6,10 +6,18 @@
 
 // Rule 4: the bed-wait metric, everywhere.
 export const BED_WAIT_LABEL = "Time waiting for a ward bed after the decision to admit";
+
+/**
+ * Why a week is an average of daily medians (audit B4): the one line, used wherever the definition is.
+ * A median of medians, or a weekly median, can't be rebuilt from MOH's daily figures.
+ */
+export const BED_WAIT_WEEKLY_WHY =
+  "A week's figure averages its daily medians, because MOH publishes only daily medians and a weekly median can't be rebuilt from them.";
 export const BED_WAIT_UNIT_DAILY = "hours, daily median";
 export const BED_WAIT_UNIT_WEEKLY = "hours, average of each day's median";
 export const BED_WAIT_EXPLAINER =
-  "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed.";
+  "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed. "
+  + BED_WAIT_WEEKLY_WHY;
 
 /**
  * Why a finding's hours can sit above the "typical" 2025 waits in the case study: those are each hospital's middle day for
@@ -29,7 +37,7 @@ export const CITIZENS_SUPER_AGED = "Among citizens alone, Singapore passed that 
 // Footer caveats, by measure.
 export const CAVEAT = {
   bedWaitUnit: "MOH doesn't state the unit. We read the values as hours, because a typical value is about 4.",
-  weeklyAverage: "MOH publishes one median per day. A week's figure is the average of each day's median.",
+  weeklyAverage: BED_WAIT_WEEKLY_WHY,
   edVisits: "ED visits include non-urgent cases. Alexandra Hospital runs a UCC, not a full ED.",
   clinics: "The clinic list dates from June 2024, and the resident count from June 2026. Clinics are counted where they are, not where their patients live.",
   live: "NUHS lists adult and children's emergency separately. These are estimates at one moment, up to 7 days old.",

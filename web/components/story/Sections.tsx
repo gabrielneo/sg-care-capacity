@@ -5,6 +5,7 @@ import type { Meta, PopulationYear } from "@/lib/api/types";
 import { AVERAGE_VS_TYPICAL, BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
 import { term } from "@/lib/glossary";
 import { formatAsOf } from "@/lib/dates";
+import { EVIDENCE_LABEL, evidenceOf, safeDetail, sampleText } from "@/lib/evidence";
 import { findingMeta, sourceDates } from "@/lib/provenance";
 import {
   chartFormat,
@@ -137,7 +138,11 @@ function StepText({ insight, index, total }: { insight: StoryInsight; index: num
         <Glossed text={insight.headline} />
       </h3>
       <DeltaNumber {...deltaFromDisplay(insight.display, insight.direction)} />
-      <p className="text-ink" data-testid="step-detail"><Glossed text={insight.detail} /></p>
+      <p className="text-ink" data-testid="step-detail"><Glossed text={safeDetail(insight)} /></p>
+      {/* How strong the evidence is, and the n (and 95% range) behind the number (audit B1, B3). */}
+      <p className="mt-2 text-sm text-muted" data-testid="step-evidence">
+        {EVIDENCE_LABEL[evidenceOf(insight)]} · {sampleText(insight)}
+      </p>
       {caveat ? (
         <div className="mt-3">
           <CaveatChip><Glossed text={caveat} /></CaveatChip>

@@ -16,13 +16,16 @@ const plain = (locator: Locator) => locator.evaluate((el) => {
 test.describe("ED Trends: difference-first charts", () => {
   test("four charts, each with Data as of and its source", async ({ page }) => {
     await page.goto("/ed-trends");
-    for (const title of ["Time waiting for a ward bed after the decision to admit", "The latest week against the usual level",
-                         "Bed wait by day of the week"]) {
+    // Each title states its window in words (audit A4).
+    for (const title of [/^Time waiting for a ward bed after the decision to admit, \d{1,2} \w{3} \d{4} to \d{1,2} \w{3} \d{4}$/,
+                         /^The latest complete week \(.+\) vs usual \(previous 8 complete weeks\)$/,
+                         /^Bed wait by day of the week, last 26 weeks$/]) {
       await expect(page.getByRole("heading", { level: 2, name: title })).toBeVisible();
     }
     await expect(page.getByRole("heading", { level: 2, name: /estimate and .*figure/ })).toBeVisible();
     expect(await seen(page.getByTestId("bed-wait-explainer"))).toBe(
-      "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed.");
+      "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed. "
+      + "A week's figure averages its daily medians, because MOH publishes only daily medians and a weekly median can't be rebuilt from them.");
     expect(await seen(page.getByTestId("gap-summary"))).toBe("Days with no figure in this range: AH 21, NUH 90, SGH 21.");
     await expectAsOfOnEveryCard(page, 4);
     await expectNoHorizontalScroll(page);
