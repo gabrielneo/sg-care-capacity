@@ -188,7 +188,7 @@ test.describe("The details drawer", () => {
     await page.goto("/?layout=list&hospital=SGH");
     await hydrated(page);
     const body = page.getByTestId("drawer-body");
-    await expect(body.getByTestId("status-badge")).toContainText("Busier than usual for this hospital");
+    await expect(body.getByTestId("status-badge")).toContainText("Higher than usual");
     await expect(body).toContainText("Time waiting for a ward bed after the decision to admit");
     await expect(body.getByTestId("drawer-hours")).toHaveText("5.0 h");
     await expect(body.getByTestId("drawer-usual")).toContainText("Usual: 4.0 h");

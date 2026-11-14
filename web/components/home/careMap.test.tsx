@@ -39,7 +39,7 @@ describe("sparkSummary", () => {
 describe("HospitalDrawerBody", () => {
   it("shows the badge, the labelled bed wait against usual, the 12-week line and a link to the trend page", () => {
     body(status("SGH", 25), hospital("SGH", { cluster: "SingHealth" }));
-    expect(screen.getByTestId("status-badge")).toHaveTextContent("▲Busier than usual for this hospital");
+    expect(screen.getByTestId("status-badge")).toHaveTextContent("▲Higher than usual");
     expect(screen.getByText("Time waiting for a ward bed after the decision to admit")).toBeInTheDocument();
     expect(screen.getByTestId("drawer-hours")).toHaveTextContent("5.0 h");
     expect(screen.getByTestId("drawer-usual")).toHaveTextContent("Usual: 4.0 h");

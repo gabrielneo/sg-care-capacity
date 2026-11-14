@@ -4,6 +4,7 @@ import type { Meta } from "@/lib/api/types";
 
 import { Provenance, provenanceProblems } from "./Provenance";
 import { ErrorState } from "./States";
+import { Glossed } from "./terms/Glossed";
 
 export interface ChartCardProps {
   /** The heading. Rich titles (with <Glossed>/<Term>) need a `slug` for the heading's id. */
@@ -30,6 +31,8 @@ export interface ChartCardProps {
   findingTo?: string | null;
   /** The date is the data release's, not a source's: labelled so, with no badge. See Provenance. */
   release?: boolean;
+  /** false: no date and source on this card, because the section around a group of cards states them once (the caller must render a <Provenance>). */
+  provenance?: boolean;
 }
 
 /**
@@ -37,12 +40,12 @@ export interface ChartCardProps {
  * is NOT rendered: a figure without a date and source is never shown.
  */
 export function ChartCard({ title, slug, meta, children, description, caveat, notes, detail, now, headingLevel = 2,
-                           download, bySource, findingTo, release }: ChartCardProps) {
+                           download, bySource, findingTo, release, provenance = true }: ChartCardProps) {
   const id = `chart-${(slug ?? (typeof title === "string" ? title : "card")).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const problems = provenanceProblems(meta);
   const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
-    <section aria-labelledby={id} data-testid="chart-card" className="rounded-lg border border-line bg-surface p-4">
+    <section aria-labelledby={id} data-testid="chart-card" data-provenance={provenance ? "card" : "section"} className="rounded-lg border border-line bg-surface p-4">
       <Heading id={id} className="text-base font-semibold text-ink">
         {title}
       </Heading>
@@ -54,8 +57,10 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
       ) : (
         <>
           <div className="mt-4">{children}</div>
-          <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} now={now}
-                      bySource={bySource} findingTo={findingTo} release={release} />
+          {provenance ? (
+            <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} now={now}
+                        bySource={bySource} findingTo={findingTo} release={release} />
+          ) : caveat ? <p className="mt-3 text-xs text-muted" data-testid="card-caveat"><Glossed text={caveat} /></p> : null}
           {download ? (
             <p className="mt-2 text-xs">
               <a href={download} download data-testid="csv-download">Download the figures (CSV)</a>

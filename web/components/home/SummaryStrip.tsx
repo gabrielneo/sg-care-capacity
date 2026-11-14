@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { Provenance } from "@/components/Provenance";
 import { FreshnessBadge } from "@/components/FreshnessBadge";
 import { KpiTile } from "@/components/KpiTile";
 import { Glossed } from "@/components/terms/Glossed";
@@ -63,7 +64,7 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
       </p>
       <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile id="above">
-          <KpiTile dense freshness={false} label="Emergency departments above usual, latest complete week" value={above.length} unit={`of ${rankable.length}`} meta={meta}
+          <KpiTile dense provenance={false} label="Emergency departments above usual, latest complete week" value={above.length} unit={`of ${rankable.length}`} meta={meta}
                    detail={
                      <>
                        {above.length ? (
@@ -80,16 +81,16 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
                    } />
         </Tile>
         <Tile id="longest">
-          <KpiTile dense freshness={false} label="Longest bed wait, latest complete week" value={longest?.latest ?? null} unit="h" format={hours} meta={meta}
+          <KpiTile dense provenance={false} label="Longest bed wait, latest complete week" value={longest?.latest ?? null} unit="h" format={hours} meta={meta}
                    detail={longest ? <>{name(longest.code)}.</> : "No emergency department has a complete week of figures."} />
         </Tile>
         <Tile id="change">
-          <KpiTile dense freshness={false} label={`Largest change ${formatWindow({ kind: "usual" })}`} value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
+          <KpiTile dense provenance={false} label={`Largest change ${formatWindow({ kind: "usual" })}`} value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
                    unit="vs usual" meta={meta}
                    detail={change ? <>{name(change.code)}. Usual is the median of those weeks.</> : "No emergency department has enough complete weeks to compare."} />
         </Tile>
         <Tile id="middle">
-          <KpiTile dense freshness={false} label={<><Term id="median">Median</Term> bed wait across emergency departments, latest complete week</>} value={middleNow} unit="h" format={hours}
+          <KpiTile dense provenance={false} label={<><Term id="median">Median</Term> bed wait across emergency departments, latest complete week</>} value={middleNow} unit="h" format={hours}
                    meta={meta}
                    detail={middleNow != null ? (
                      <span className="flex flex-wrap items-center gap-x-2">
@@ -99,6 +100,8 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
                    ) : `Needs ${MIN_HOSPITALS}+ emergency departments with a complete week.`} />
         </Tile>
       </ul>
+      {/* The date and source, once, for all four tiles. */}
+      <Provenance meta={meta} compact freshness={false} tight />
       {urgentCare.length ? (
         <p className="mt-2 text-xs text-muted" data-testid="summary-ucc-note">
           The {URGENT_CARE_HEADING.toLowerCase()} is left out of these four figures. {URGENT_CARE_NOTE}.

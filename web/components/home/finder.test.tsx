@@ -129,7 +129,7 @@ describe("EdNearbyCard: the words", () => {
   it("uses the plain badge and the full bed-wait label, and never 'wait time'", () => {
     render(<EdNearbyCard status={status("SGH", 25)} hospital={hospital("SGH")} live={null} />);
     const card = screen.getByTestId("ed-card");
-    expect(within(card).getByTestId("status-badge")).toHaveTextContent("▲Busier than usual for this hospital");
+    expect(within(card).getByTestId("status-badge")).toHaveTextContent("▲Higher than usual");
     expect(within(card).getByTestId("ed-label")).toHaveTextContent(BED_WAIT_LABEL);
     expect(within(card).getByTestId("ed-hours")).toHaveTextContent("5.0 hours");
     expect(within(card).getByTestId("ed-sentence")).toHaveTextContent("Bed waits were longer than usual in the latest complete week. Usual: 4.0 hours.");
@@ -149,7 +149,7 @@ describe("EdNearbyCard: the words", () => {
     expect(within(card).getByTestId("ed-live")).toHaveTextContent(/To see a doctor \((National University Health System \()?NUHS\)? estimate\): under 1 hour/);
     expect(within(card).getByTestId("ed-live")).toHaveTextContent(/As of 6 Nov 2026.* An estimate, not live\./);
     expect(within(card).getByTestId("ed-note")).toHaveTextContent("Urgent care centre");
-    expect(within(card).getByTestId("status-badge")).toHaveTextContent("No comparison with usual available");
+    expect(within(card).getByTestId("status-badge")).toHaveTextContent("No comparison");
   });
 
   it("no usual level or no complete week stays missing", () => {
@@ -167,7 +167,7 @@ describe("EdNearby", () => {
     render(<EdNearby cards={cards} notes={null} provenance={null} analystHref="/?view=analyst" />);
     expect(screen.getByTestId("ed-prompt")).toHaveTextContent("Search for a postcode or area above");
     expect(screen.queryByTestId("ed-item")).toBeNull();
-    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(/^How busy were EDs.* near you in the latest complete week\?$/);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(/^How long were bed waits at EDs.* near you in the latest complete week\?$/);
     expect(screen.getByRole("link", { name: /Analyst detail/ })).toHaveAttribute("href", "/?view=analyst");
   });
 

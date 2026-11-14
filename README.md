@@ -2,7 +2,7 @@
 
 **Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
 the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from
-public MOH, data.gov.sg and SingStat data. Its home page shows how busy each emergency department
+public MOH, data.gov.sg and SingStat data. Its home page shows how long bed waits were at each emergency department
 was last week and finds the nearest polyclinics and GP clinics for any postcode.**
 
 **Live site: [sg-care-capacity-web.vercel.app](https://sg-care-capacity-web.vercel.app/)** ·
@@ -10,7 +10,7 @@ was last week and finds the nearest polyclinics and GP clinics for any postcode.
 [One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
 [Independent audit](docs/audit_report.md)
 
-[![The home page: a search for Tampines lists the nearest polyclinics, CHAS GP clinics and hospital emergency departments with distances, above status cards showing how busy each emergency department was last week](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+[![The home page: a search for Tampines lists the nearest polyclinics, CHAS GP clinics and hospital emergency departments with distances, above status cards showing how long bed waits were at each emergency department was last week](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
 
 ## What the data shows
 

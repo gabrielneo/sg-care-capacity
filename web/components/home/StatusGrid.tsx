@@ -63,7 +63,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div>
           <h2 id="status-heading" className="text-xl font-semibold tracking-tight text-ink">
-            {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How busy were hospital emergency departments in the latest complete week?"}
+            {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How long were bed waits at hospital emergency departments in the latest complete week?"}
           </h2>
           {full ? null : (
             <p className="mt-1 max-w-prose text-sm text-muted">

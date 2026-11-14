@@ -11,7 +11,7 @@ const BADGE = {
 /**
  * A hospital's status against its usual level: a shape, the words and a colour, never colour alone (lib/status.ts).
  * `quiet` (the dense Planner and Analyst cards) leaves "about usual" and "lower" grey, so only the
- * hospitals above usual carry a colour. `plain` uses the public view's words ("Busier than usual for this hospital"). The shape and the words are the same either way.
+ * hospitals above usual carry a colour. `plain` is the larger public-view size; the shape and the words (the status scale's own labels) are the same everywhere.
  */
 export function StatusBadge({ level, quiet = false, plain = false }: { level: Level; quiet?: boolean; plain?: boolean }) {
   const info = LEVELS[level];
@@ -20,7 +20,7 @@ export function StatusBadge({ level, quiet = false, plain = false }: { level: Le
     <span className={`inline-flex items-center gap-1 rounded-full border ${plain ? "px-3 py-1 text-base" : "shrink-0 px-2 py-0.5 text-xs"} font-medium ${BADGE[tone]}`}
           data-testid="status-badge">
       <span aria-hidden="true">{info.icon}</span>
-      {plain ? info.plain : info.label}
+      {info.label}
     </span>
   );
 }

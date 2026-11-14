@@ -98,6 +98,8 @@ that uses it carries this explainer:
 - Direction words ("better", "worse") depend on the metric. More clinics is better;
   a longer bed wait is worse.
 - Colour never carries meaning alone; pair it with an arrow and a word.
+- The status scale has one set of words: Much higher, Higher, About usual, Lower (than usual). Never
+  "busy", "busier" or "quiet" for the bed wait: it is not crowding or attendance.
 
 ## Rule 6: Writing style
 
@@ -105,7 +107,7 @@ that uses it carries this explainer:
 - Reading level around Grade 8 to 9 (warn above Grade 10).
 - Every number has a unit.
 - No database table or column names in page text.
-- Every number shown carries "Data as of [date]" and its source.
+- Every section states "Data as of [date]" and its source once, in text, and every number in it is covered by that line.
 
 ## Maintaining this file
 

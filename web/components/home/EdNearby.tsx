@@ -8,7 +8,7 @@ import { useFinder } from "@/lib/finderStore";
 import { kmText, locate, NEAREST, nearest } from "@/lib/nearby";
 
 /**
- * "How busy were EDs near you last week?": the three nearest hospitals to the search, as plain
+ * "How long were bed waits at EDs near you?": the three nearest hospitals to the search, as plain
  * cards. The cards are made on the server for every hospital (`cards`, by hospital code); this
  * picks the nearest three in the browser. Before a search it asks for one: the page doesn't rank
  * every hospital for someone who is looking for a clinic.
@@ -23,7 +23,7 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
   );
   return (
     <section aria-labelledby="ed-heading" className="py-8" data-testid="ed-near">
-      <h2 id="ed-heading" className="text-2xl font-semibold tracking-tight text-ink">How busy were <ClientTerm id="ed" plural /> near you in the latest complete week?</h2>
+      <h2 id="ed-heading" className="text-2xl font-semibold tracking-tight text-ink">How long were bed waits at <ClientTerm id="ed" plural /> near you in the latest complete week?</h2>
       {eds.length ? (
         <>
           <p className="mt-1 max-w-prose text-base text-ink">

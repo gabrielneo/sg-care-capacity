@@ -10,9 +10,12 @@ export async function blockTiles(page: Page) {
 
 const AS_OF = /Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4}/;
 
-/** Every chart card and KPI tile on the page shows a visible "Data as of {date}" and a source. */
+/**
+ * Every chart card and KPI tile shows a visible "Data as of {date}" and a source: on itself, or, for a group
+ * that says so (data-provenance="section"), once in the section around it (see expectOneLinePerSection).
+ */
 export async function expectAsOfOnEveryCard(page: Page, minimum: number) {
-  const cards = page.locator('[data-testid="chart-card"], [data-testid="kpi-tile"]');
+  const cards = page.locator('[data-testid="chart-card"]:not([data-provenance="section"]), [data-testid="kpi-tile"]:not([data-provenance="section"])');
   await expect(cards.first()).toBeVisible();
   const n = await cards.count();
   expect(n).toBeGreaterThanOrEqual(minimum);

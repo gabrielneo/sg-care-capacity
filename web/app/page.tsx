@@ -38,9 +38,9 @@ const DAY = 86_400_000;
 const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 
 /**
- * The home page: how busy each ED was last week, and, depending on the view (?view=), clinics near
+ * The home page: how long each ED's bed waits were last week, and, depending on the view (?view=), clinics near
  * a postcode and a map (public), a summary and the top findings (planner), or those plus the
- * busiest weekdays and the statistics (analyst). Which sections a view shows, and how much of
+ * the weekdays with the longest bed waits and the statistics (analyst). Which sections a view shows, and how much of
  * each, is lib/homeViews.ts; this page builds each section once and renders the ones it is given.
  * Every number comes from the API, and a view never changes how one is computed.
  */

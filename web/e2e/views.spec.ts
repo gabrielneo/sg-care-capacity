@@ -98,12 +98,15 @@ test.describe("Home views", () => {
     }
   });
 
-  test("the summary strip: four tiles from the cards' figures, each dated and sourced", async ({ page }) => {
+  test("the summary strip: four tiles from the cards figures, dated and sourced once", async ({ page }) => {
     await page.goto("/?view=planner");
     const strip = page.getByTestId("summary-strip");
     const tiles = strip.getByTestId("summary-tile");
     expect(await tiles.evaluateAll((els) => els.map((e) => e.getAttribute("data-tile")))).toEqual(["above", "longest", "change", "middle"]);
-    for (const t of await tiles.all()) await expect(t.getByTestId("provenance-line")).toHaveText(AS_OF);
+    // The date and source are stated once for the four tiles, not on each (docs/design/redesign_brief.md, principle 1).
+    await expect(tiles.getByTestId("provenance-line")).toHaveCount(0);
+    await expect(strip.getByTestId("provenance-line")).toHaveCount(1);
+    await expect(strip.getByTestId("provenance-line")).toHaveText(AS_OF);
     // Fixture: SGH +25% (higher); NUH has no usual level; AH, the urgent care centre, is left out of all four.
     const tile = (id: string) => strip.locator(`[data-tile="${id}"]`);
     await expect(tile("above")).toContainText("Emergency departments above usual");

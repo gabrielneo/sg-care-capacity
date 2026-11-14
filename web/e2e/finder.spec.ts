@@ -5,7 +5,7 @@ import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./
 /*
  * The public finder on the API's fixture snapshot (api/tests/fixture_snapshot.py): clinics in Bedok
  * (postcodes 4600xx; Echo Clinic is inactive), one in Tuas, polyclinics in Bedok and Woodlands, and
- * 3 hospitals: SGH (+25%, "busier than usual"), AH (urgent care centre, NUHS estimate) and NUH (adults only, no MOH rows).
+ * 3 hospitals: SGH (+25%, "higher than usual"), AH (urgent care centre, NUHS estimate) and NUH (adults only, no MOH rows).
  */
 // The NUHS estimate's own line also has a time: "Data as of 1 Nov 2026, 12:01 pm SGT".
 const AS_OF = /^Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4}(, .+)? · Source: .+/;
@@ -73,17 +73,17 @@ test.describe("Public finder", () => {
     await page.goto("/#near=460002");
     const list = page.getByTestId("ed-list");
     await expect(page.getByTestId("ed-item")).toHaveCount(3);
-    await expect(page.getByRole("heading", { level: 2, name: /^How busy were (Emergency Departments \(EDs\)|EDs) near you in the latest complete week\?$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: /^How long were bed waits at (Emergency Departments \(EDs\)|EDs) near you in the latest complete week\?$/ })).toBeVisible();
     for (const km of await list.getByTestId("ed-km").allTextContents()) expect(km).toMatch(/km straight-line distance$/);
 
     const card = (code: string) => page.locator(`[data-testid=ed-card][data-hospital="${code}"]`);
-    await expect(card("SGH").getByTestId("status-badge")).toHaveText("▲Busier than usual for this hospital");
+    await expect(card("SGH").getByTestId("status-badge")).toHaveText("▲Higher than usual");
     await expect(card("SGH").getByTestId("ed-label")).toHaveText("Time waiting for a ward bed after the decision to admit");
     await expect(card("SGH").getByTestId("ed-hours")).toHaveText("5.0 hours");
     await expect(card("SGH").getByTestId("ed-live")).toHaveCount(0);                            // no NUHS estimate for SGH
 
     // Missing stays missing, and what MOH's figures cover stays on the card.
-    await expect(card("AH").getByTestId("status-badge")).toHaveText("–No comparison with usual available");
+    await expect(card("AH").getByTestId("status-badge")).toHaveText("–No comparison");
     await expect(card("AH").getByTestId("ed-note")).toHaveText("Urgent care centre");
     await expect(card("AH").getByTestId("ed-live")).toContainText(/To see a doctor \((National University Health System \()?NUHS\)? estimate\): under 1 hour/);
     await expect(card("AH").getByTestId("ed-live")).toContainText(/As of .*\d{4}.* An estimate, not live\./);

@@ -38,7 +38,7 @@ export interface StripData {
   total: number;
   /** Higher or much higher than usual. */
   above: number;
-  /** Hospitals with nothing to compare against: said separately, never counted as "not busier". */
+  /** Hospitals with nothing to compare against: said separately, never counted as "not above usual". */
   noComparison: number;
   /** "19–25 Oct 2026". */
   week: string | null;

@@ -31,11 +31,11 @@ stays in the browser.
   The first card says "Nearest"; the site never says "fastest".
 - **Filters only for fields that exist:** GP clinics or polyclinics. There is no "open now" (no opening
   hours in the data) and no CHAS filter (every clinic listed is on CHAS).
-- **The nearest three EDs follow the search**, as plain cards: "Busier than usual for this hospital" (the
-  badge's own level, in words), the bed wait under its full label with a "?" saying it is not the time to
+- **The nearest three EDs follow the search**, as plain cards: "Higher than usual" (the
+  status scale's own label; revised 2026-11-14, see below), the bed wait under its full label with a "?" saying it is not the time to
   see a doctor, coverage notes (urgent care centre, adults only) and, only where NUHS publishes one, "To
-  see a doctor (NUHS estimate)" with its own time. The section is called "How busy were EDs near you
-  last week?", because the figures are last week's. Before a search it asks for one rather than ranking
+  see a doctor (NUHS estimate)" with its own time. The section is called "How long were bed waits at EDs near you
+  in the latest complete week?", because the figures are the latest complete week's. Before a search it asks for one rather than ranking
   all nine hospitals. The full list and the statistics are on Planner and Analyst.
 - **Size and access:** body text is at least 16px and dates, sources and chips at least 14px; every
   control is at least 44px tall; results are announced through a polite live region.
@@ -47,7 +47,7 @@ stays in the browser.
 - **Search text in a cookie or local storage.** Not shareable, and storing it is what the page says it doesn't do.
 - **Always show the nine hospital cards.** Simple, but it leads with ED busyness for people who came to
   find a clinic, and ranks hospitals as if they were choices.
-- **"How busy are EDs near you?"** Reads as live. The figures are the latest complete week, up to 12 days old.
+- **"How busy are EDs near you?"** Reads as live, and "busy" is not what the measure is (bed wait, not crowding). The figures are the latest complete week, up to 12 days old.
 
 ## Consequences
 
@@ -55,7 +55,9 @@ stays in the browser.
   definitions are plain HTML.
 - Next.js may put the fragment back on the address when a view is changed and then returned to; it
   stays in the browser either way.
-- The `plain` words are a second wording for the same level, not a second scale.
+- The badge uses the status scale's one set of labels (Much higher, Higher, About usual, Lower). An earlier
+  second wording ("Busier than usual for this hospital") was removed on 2026-11-14: the measure is the bed
+  wait, not crowding, and one scale should have one set of words.
 
 ## How it is enforced
 

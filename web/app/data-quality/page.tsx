@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ChartCard } from "@/components/ChartCard";
+import { Provenance } from "@/components/Provenance";
 import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
 import { CheckResults } from "@/components/quality/CheckResults";
@@ -65,13 +66,14 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
       <PageHeader title="Data quality" intro={INTRO} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiTile label="Checks run on this data release" value={results.length} meta={quality.meta} format={String} release />
-        <KpiTile label="Failures that stop publishing" value={quality.data.blocking} meta={quality.meta} format={String} release
+        <KpiTile label="Checks run on this data release" value={results.length} meta={quality.meta} format={String} release provenance={false} />
+        <KpiTile label="Failures that stop publishing" value={quality.data.blocking} meta={quality.meta} format={String} release provenance={false}
                  caveat="Always 0 in a published release" />
-        <KpiTile label="Warnings raised" value={failed("WARN").length} meta={quality.meta} format={String} release />
-        <KpiTile label="Records set aside" value={quarantined} meta={quality.meta} release format={(v) => v.toLocaleString("en-SG")}
+        <KpiTile label="Warnings raised" value={failed("WARN").length} meta={quality.meta} format={String} release provenance={false} />
+        <KpiTile label="Records set aside" value={quarantined} meta={quality.meta} release provenance={false} format={(v) => v.toLocaleString("en-SG")}
                  caveat="Never corrected, never filled in" />
       </div>
+      <Provenance meta={quality.meta} compact release />
 
       <div className="mt-6 space-y-6">
         <ChartCard title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail release

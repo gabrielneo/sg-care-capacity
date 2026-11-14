@@ -33,6 +33,8 @@ export interface KpiTileProps {
   freshness?: boolean;
   /** A tighter tile, for dense strips. */
   dense?: boolean;
+  /** false: no date and source on the tile, because the section around a row of tiles states them once (the caller must render a <Provenance>). */
+  provenance?: boolean;
 }
 
 const defaultFormat = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 1 });
@@ -54,10 +56,10 @@ function ChangeLine({ change }: { change: KpiChange }) {
 }
 
 /** One headline number with its unit, change and provenance. Missing is shown as missing, never 0. */
-export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, now, release, detail, freshness = true, dense = false }: KpiTileProps) {
+export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, now, release, detail, freshness = true, dense = false, provenance = true }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
-    <div data-testid="kpi-tile" className={`h-full rounded-lg border border-line bg-surface ${dense ? "p-3" : "p-4"}`}>
+    <div data-testid="kpi-tile" data-provenance={provenance ? "tile" : "section"} className={`h-full rounded-lg border border-line bg-surface ${dense ? "p-3" : "p-4"}`}>
       <p className="text-sm font-medium text-muted">{label}</p>
       {problems.length ? (
         <div className="mt-2">
@@ -83,7 +85,7 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
               <CaveatChip><Glossed text={caveat} /></CaveatChip>
             </div>
           ) : null}
-          <Provenance meta={meta} now={now} compact release={release} freshness={freshness} tight={dense} />
+          {provenance ? <Provenance meta={meta} now={now} compact release={release} freshness={freshness} tight={dense} /> : null}
         </>
       )}
     </div>

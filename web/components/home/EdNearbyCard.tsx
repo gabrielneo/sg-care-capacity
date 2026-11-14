@@ -16,7 +16,7 @@ const hours = (v: number) => `${v.toFixed(1)} ${v === 1 ? "hour" : "hours"}`;
 /**
  * One hospital for the public view, in plain words. Rendered on the server for every hospital; the
  * page's script picks the three nearest the search (components/home/EdNearby.tsx).
- * - The badge is the status scale's own level, in words ("Busier than usual for this hospital").
+ * - The badge is the status scale's own level, in words ("Higher than usual").
  * - The bed wait always carries the full label (Rule 4) and a "?" saying it isn't the time to see a doctor.
  * - "To see a doctor" appears only where NUHS publishes an estimate, labelled so, with its own time.
  */

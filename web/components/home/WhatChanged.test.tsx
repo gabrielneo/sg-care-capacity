@@ -16,7 +16,7 @@ describe("WhatChanged", () => {
     render(<WhatChanged changes={{ ...base, moved: [{ code: "AH", from: "usual", to: "much_higher", step: 2 }] }} names={names} meta={meta} latestWeek={week} />);
     const item = screen.getByTestId("change-item");
     expect(item).toHaveTextContent("Alexandra Hospital: about usual → much higher than usual");
-    expect(item).toHaveAttribute("data-direction", "busier");
+    expect(item).toHaveAttribute("data-direction", "longer");
     expect(screen.getByTestId("what-changed")).toHaveTextContent("19–25 Oct 2026 compared with 12–18 Oct 2026");
   });
 

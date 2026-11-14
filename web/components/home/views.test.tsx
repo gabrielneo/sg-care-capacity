@@ -170,12 +170,13 @@ describe("SummaryStrip", () => {
   const statuses = [at("SGH", 31.9, 6.2), at("CGH", 16, 4.0), at("TTSH", 0, 5.0), at("NUH", -20, 7.5), at("AH", 45, 1.2)];
   const tile = (id: string) => screen.getAllByTestId("summary-tile").find((t) => t.getAttribute("data-tile") === id)!;
 
-  it("four tiles from the cards' own figures, each with its date and source", () => {
+  it("four tiles from the cards' own figures, with one date and source for all", () => {
     render(<SummaryStrip statuses={statuses} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
     expect(screen.getAllByTestId("summary-tile").map((t) => t.getAttribute("data-tile"))).toEqual(["above", "longest", "change", "middle"]);
-    for (const t of screen.getAllByTestId("summary-tile")) {
-      expect(within(t).getByTestId("provenance-line")).toHaveTextContent(/Data as of 31 Oct 2026 · Source: /);
-    }
+    // Stated once for the section, not on each tile.
+    expect(screen.getAllByTestId("provenance-line")).toHaveLength(1);
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/Data as of 31 Oct 2026 · Source: /);
+    for (const t of screen.getAllByTestId("summary-tile")) expect(within(t).queryByTestId("provenance-line")).toBeNull();
     // Above usual: the higher and much higher badges, with the list in a tooltip a keyboard can reach.
     // The urgent care centre (AH, +45%) is left out of all four (ADR 0012), and one line says so.
     expect(tile("above")).toHaveTextContent("Emergency departments above usual, latest complete week2 of 4");

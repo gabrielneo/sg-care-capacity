@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ChartCard } from "@/components/ChartCard";
+import { Provenance } from "@/components/Provenance";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
@@ -57,9 +58,12 @@ export default async function LivePage() {
         <EmptyState title={<Glossed text="No NUHS readings in this week's data release" />}
                     message={<Glossed text="The NUHS page couldn't be read when this week's data release was built." />} />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <>
+        {/* One date and source for every reading below; each reading has its own NUHS time. */}
+        <Provenance meta={meta} compact />
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           {data.map((r) => (
-            <ChartCard key={`${r.site_name}|${r.department}`} title={`${r.site_name}: ${r.department}`} meta={meta}
+            <ChartCard key={`${r.site_name}|${r.department}`} title={`${r.site_name}: ${r.department}`} meta={meta} provenance={false}
                        caveat={r.is_adult_ed === false ? CAVEAT.childrensEmergency : CAVEAT.live}
                        description={
                          <span data-testid="reading-label">
@@ -71,6 +75,7 @@ export default async function LivePage() {
             </ChartCard>
           ))}
         </div>
+        </>
       )}
     </>
   );

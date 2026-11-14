@@ -17,7 +17,7 @@ export interface Move {
   code: string;
   from: Level;
   to: Level;
-  /** Positive = busier than the week before (by badge scale), negative = quieter. */
+  /** Positive = a longer bed wait than the week before (by badge scale), negative = shorter. */
   step: number;
 }
 
@@ -33,7 +33,7 @@ export interface WeekChanges {
 
 const SCALE: Record<Level, number> = { lower: 0, usual: 1, higher: 2, much_higher: 3, unknown: -1 };
 
-/** The hospitals whose badge differs between the previous complete week and the latest, busiest-now first. */
+/** The hospitals whose badge differs between the previous complete week and the latest, largest rise first. */
 export function weekChanges(weekly: EdWeek[], codes: string[], latest: string | null, current: HospitalStatus[]): WeekChanges {
   if (!latest) return { previousWeek: null, moved: [], unchanged: 0, notCompared: codes.length };
   const previousWeek = addDays(latest, -7);

@@ -22,7 +22,10 @@ test.describe("Data Quality", () => {
     await warn.getByText(/Show 1 passed checks/).click();
     await expect(warn.locator('tr[data-status="pass"]')).toContainText("freshness.population_15_months");
 
-    await expectAsOfOnEveryCard(page, 7);
+    await expectAsOfOnEveryCard(page, 3);                                    // the three cards; the four tiles share the one line above
+    await expect(page.getByTestId("kpi-tile")).toHaveCount(4);
+    await expect(page.getByTestId("kpi-tile").getByTestId("provenance-line")).toHaveCount(0);
+    await expect(page.getByTestId("provenance-line").first()).toContainText("Data as of");
     await expectNoHorizontalScroll(page);
   });
 

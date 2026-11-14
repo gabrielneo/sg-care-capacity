@@ -16,7 +16,7 @@ import { SITE, SITE_TITLE } from "@/lib/site";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const DESCRIPTION = "A public-data analytics project by Gabriel Neo: where Singapore's emergency departments wait longest for ward beds, "
-  + "and where seniors have the fewest clinics. Also check how busy EDs were in the latest complete week and find a clinic near you.";
+  + "and where seniors have the fewest clinics. Also check how long ED bed waits were in the latest complete week and find a clinic near you.";
 
 // Absolute links for the share preview. Vercel sets VERCEL_PROJECT_PRODUCTION_URL on every deploy.
 const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL

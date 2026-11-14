@@ -38,4 +38,13 @@ describe("KpiTile", () => {
     const element = <KpiTile label="x" value={1} />;
     expect(element).toBeTruthy();
   });
+
+  it("provenance={false}: no date or source on the tile (the section states them once), but a bad meta still refuses the figure", () => {
+    const { unmount } = render(<KpiTile label="x" value={3} meta={edMeta} provenance={false} />);
+    expect(screen.queryByTestId("provenance-line")).toBeNull();
+    expect(screen.getByTestId("kpi-tile")).toHaveAttribute("data-provenance", "section");
+    unmount();
+    render(<KpiTile label="x" value={3} meta={{ ...edMeta, sources: [] }} provenance={false} />);
+    expect(screen.queryByText("3")).toBeNull();
+  });
 });

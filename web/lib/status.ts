@@ -30,16 +30,14 @@ export interface LevelInfo {
   icon: string;
   tone: "much" | "higher" | "usual" | "lower" | "none";
   sentence: string;
-  /** The public view's words for the badge: what a resident reads, on the same scale as `label`. */
-  plain: string;
 }
 
 export const LEVELS: Record<Level, LevelInfo> = {
-  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "much", sentence: "Bed waits were much longer than usual in the latest complete week.", plain: "Much busier than usual for this hospital" },
-  higher: { label: "Higher than usual", icon: "▲", tone: "higher", sentence: "Bed waits were longer than usual in the latest complete week.", plain: "Busier than usual for this hospital" },
-  usual: { label: "About usual", icon: "●", tone: "usual", sentence: "Bed waits were about usual in the latest complete week.", plain: "About as busy as usual for this hospital" },
-  lower: { label: "Lower than usual", icon: "▼", tone: "lower", sentence: "Bed waits were shorter than usual in the latest complete week.", plain: "Less busy than usual for this hospital" },
-  unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual.", plain: "No comparison with usual available" },
+  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "much", sentence: "Bed waits were much longer than usual in the latest complete week." },
+  higher: { label: "Higher than usual", icon: "▲", tone: "higher", sentence: "Bed waits were longer than usual in the latest complete week." },
+  usual: { label: "About usual", icon: "●", tone: "usual", sentence: "Bed waits were about usual in the latest complete week." },
+  lower: { label: "Lower than usual", icon: "▼", tone: "lower", sentence: "Bed waits were shorter than usual in the latest complete week." },
+  unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual." },
 };
 
 export function levelFor(pct: number | null | undefined): Level {
@@ -80,7 +78,7 @@ export function hospitalStatus(code: string, usual: Usual | undefined, weekly: E
   return { code, level: levelFor(pct), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct, spark };
 }
 
-/** Busiest first, so the hospitals to avoid lead; ties (and no comparison) by code. */
+/** Largest change against usual first; no comparison last; ties by code. */
 export function byPressure(a: HospitalStatus, b: HospitalStatus): number {
   const rank = (s: HospitalStatus) => (s.pct == null ? -Infinity : s.pct);
   return rank(b) - rank(a) || a.code.localeCompare(b.code);

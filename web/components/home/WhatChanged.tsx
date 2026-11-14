@@ -24,7 +24,7 @@ export function WhatChanged({ changes, names, meta, latestWeek }: {
       {moved.length ? (
         <ul className="mt-3 space-y-1 text-base text-ink" data-testid="changes-list">
           {moved.map((m) => (
-            <li key={m.code} data-testid="change-item" data-direction={m.step > 0 ? "busier" : "quieter"}>
+            <li key={m.code} data-testid="change-item" data-direction={m.step > 0 ? "longer" : "shorter"}>
               <span className="font-medium">{names[m.code] ?? m.code}</span>
               {`: ${LEVELS[m.from].label.toLowerCase()} → ${LEVELS[m.to].label.toLowerCase()}`}
             </li>

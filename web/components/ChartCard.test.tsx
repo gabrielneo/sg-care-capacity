@@ -103,4 +103,13 @@ describe("ChartCard", () => {
     const element = <ChartCard title="No meta">chart</ChartCard>;
     expect(element).toBeTruthy();
   });
+
+  it("provenance={false}: no date or source line, the caveat stays, and a bad meta still refuses the chart", () => {
+    const { unmount } = render(<ChartCard title="T" meta={edMeta} caveat="A caveat." provenance={false}><p>body</p></ChartCard>);
+    expect(screen.queryByTestId("provenance-line")).toBeNull();
+    expect(screen.getByTestId("card-caveat")).toHaveTextContent("A caveat.");
+    unmount();
+    render(<ChartCard title="T" meta={{ ...edMeta, sources: [] }} provenance={false}><p>body</p></ChartCard>);
+    expect(screen.queryByText("body")).toBeNull();
+  });
 });
