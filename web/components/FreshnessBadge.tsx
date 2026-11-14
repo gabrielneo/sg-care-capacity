@@ -1,11 +1,15 @@
 import type { Meta } from "@/lib/api/types";
 import { type Freshness, freshnessText, type Level, metaFreshness, ruleText } from "@/lib/freshness";
 
+/**
+ * Freshness is not status: it never uses the status colours (brick, amber, violet) and has its own square-cornered
+ * shape. The level shows as a symbol, words and the border: solid when up to date, dashed when due, heavy when overdue (audit L5).
+ */
 export const LEVEL_STYLE: Record<Level, string> = {
-  up_to_date: "bg-status-usual-soft text-status-usual border-status-usual/30",
-  due: "bg-status-higher-soft text-status-higher border-status-higher/30",
-  overdue: "bg-status-much-soft text-status-much border-status-much/30",
-  unknown: "bg-page text-muted border-line",
+  up_to_date: "rounded-sm border-control bg-sunken text-ink",
+  due: "rounded-sm border-dashed border-control bg-sunken text-ink",
+  overdue: "rounded-sm border-2 border-ink bg-sunken font-semibold text-ink",
+  unknown: "rounded-sm border-line bg-page text-muted",
 };
 
 /** The label for an old list that is still the newest published. */
@@ -30,12 +34,12 @@ export function FreshnessBadge({ meta, freshness, now, source }: {
   const text = latestOnly ? freshnessText({ ...f, label: LATEST_PUBLISHED }) : freshnessText(f);
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${LEVEL_STYLE[latestOnly ? "unknown" : f.level]}`}
+      className={`inline-flex items-center gap-1.5 border px-2 py-0.5 text-xs font-medium ${LEVEL_STYLE[latestOnly ? "unknown" : f.level]}`}
       title={`${f.age ? `${f.age} old. ` : ""}${ruleText(f.sourceId)}`}
       data-level={f.level}
       data-testid="freshness-badge"
     >
-      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />
+      <span aria-hidden="true" className="h-2 w-2 bg-current" />
       {source ? `${source}: ` : null}{text}
     </span>
   );

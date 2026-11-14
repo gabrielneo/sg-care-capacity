@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://127.0.0.1:3320/"],
+      "url": ["http://127.0.0.1:3320/", "http://127.0.0.1:3320/?view=planner"],
       "numberOfRuns": 3,
       "settings": {
         "onlyCategories": ["performance"],

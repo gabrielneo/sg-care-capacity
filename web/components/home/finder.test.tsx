@@ -121,6 +121,7 @@ describe("Finder", () => {
   it("promises only what is true: the search stays in the browser", () => {
     render(<Finder clinicAsOf={null} provenance={null} />);
     expect(screen.getByTestId("search-privacy")).toHaveTextContent("stays in this browser");
+    expect(screen.getByTestId("search-privacy")).toHaveTextContent("OneMap");   // the map tiles for the area are fetched from a third party (audit M5)
     expect(screen.getByTestId("near-form").querySelector("[name=near]")).toBeNull();      // nothing a form could submit to the server
   });
 });

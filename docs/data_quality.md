@@ -134,6 +134,16 @@ Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_
   tables name hospitals by short name and code, so a repeat would make two sites look like one.
 - **Fixing it:** correct `config.py`; the reference is in code, so nothing needs re-downloading.
 
+### `reference.hospital_cluster`: ERROR, dataset, blocks
+
+- **Guards against:** a site with no cluster, a misspelt or unknown cluster, or a cluster listed for a
+  site that is not in the hospital reference (`config.HOSPITAL_CLUSTER`).
+- **Threshold:** every site's cluster is one of `config.HOSPITAL_CLUSTERS` (SingHealth, NHG Health,
+  NUHS), and no cluster is listed for an unknown site.
+- **Why:** the home page's hospital map and list filter by cluster. A null or misspelt cluster would show
+  as a blank or stray filter chip, or leave a hospital out of every group.
+- **Fixing it:** correct `config.py`; the reference is in code, so nothing needs re-downloading.
+
 ### `domain.report_date_not_future`: ERROR, row
 
 - **Guards against:** a mistyped year or a mis-parsed day-first date that lands in the future.

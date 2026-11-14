@@ -169,4 +169,14 @@ Fixed in the "calm & clear" redesign. Each has a test.
 - **M7** Dark mode exists; axe runs in light and dark on five routes (`web/e2e/theme.spec.ts`).
 - **H2 and the as-of rule** Date and source are stated once per section (`CLAUDE.md` principle 4).
 
-Still open: M5, M6, L1 to L7, and a re-run of the probe on the real nine-hospital snapshot.
+- **M5** The search note says the typed text stays in the browser and that OneMap loads the map tiles for the area (`finder.test.tsx`).
+- **M6** The longest-bed-wait tile says "Adult emergency department only" when NUH is the longest, and one line under the tiles names every adults-only site (`views.test.tsx`).
+- **L1** New blocking check `reference.hospital_cluster` (`pipeline/tests/test_validate.py`, `docs/data_quality.md`).
+- **L2** The usual-weeks count comes from `USUAL_WEEKS` everywhere in the page text (the Dumbbell note was the last hand-typed "8"); the ED Trends band note counts the full EDs from the data.
+- **L3** The API serves `location_source_url` and `location_checked`; the ED-nearby and map provenance say where the pins come from and when they were checked.
+- **L4** A missing figure reads "no complete week" to a screen reader (`components/Missing.tsx`).
+- **L5** Freshness badges are square, neutral and use a solid, dashed or heavy border; the status colours are for status only. The pill is "Time-to-see-a-doctor estimates".
+- **L7** Lighthouse CI also measures `/?view=planner`.
+- **L6** Unchanged: acceptable, as the audit said.
+- **Real snapshot** The probe ran against the real nine-hospital snapshot at 375, 768 and 1280px on nine routes: axe (WCAG 2.2 AA), no overflow, no clipped text. It found two things the fixture hid, both fixed: the 20px "More findings" toggle, and the style guide's sample chart baked in as an error when a build had no API (the page is now rendered per request).
+- **Findings stories** Each story step keeps its own date and source line: a step is its own section and uses its own sources and data window.

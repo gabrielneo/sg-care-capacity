@@ -8,6 +8,7 @@ import { Finder } from "@/components/home/Finder";
 import { FinderMap } from "@/components/home/FinderMap";
 import { HospitalDrawerBody } from "@/components/home/HospitalDrawerBody";
 import { HomeNotice } from "@/components/home/HomeHero";
+import { LocationSource } from "@/components/home/LocationSource";
 import { MethodsDrawer } from "@/components/home/MethodsDrawer";
 import { StatusGrid } from "@/components/home/StatusGrid";
 import { SummaryStrip } from "@/components/home/SummaryStrip";
@@ -150,6 +151,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
                   provenance={<>
                     <Provenance meta={weeklyRes.value.meta} compact large />
                     {live.length && liveRes.ok ? <Provenance meta={liveRes.value.meta} compact large /> : null}
+                    <LocationSource hospitals={hospitals} />
                   </>} />
       );
     },
@@ -194,7 +196,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
           </p>
           <Suspense fallback={<Skeleton className="h-[380px] w-full rounded-xl sm:h-[460px]" label="Loading map" />}>
             <FinderMap rows={careRows} bodies={bodies} polyclinics={polyclinics}
-                       provenance={weeklyRes.ok ? <div className="mt-3"><Provenance meta={weeklyRes.value.meta} compact large /></div> : null} />
+                       provenance={weeklyRes.ok ? <div className="mt-3"><Provenance meta={weeklyRes.value.meta} compact large /><LocationSource hospitals={hospitals} /></div> : null} />
           </Suspense>
         </section>
       );

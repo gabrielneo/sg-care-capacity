@@ -95,9 +95,9 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
       </p>
       {missing.length ? (
         <p className="mt-1 text-xs text-muted" data-testid="dumbbell-missing">
-          <Glossed text={`Not shown, as the usual level needs all 8 weeks complete: ${missing.map((h) => {
+          <Glossed text={`Not shown, as the usual level needs all ${USUAL_WEEKS} weeks complete: ${missing.map((h) => {
             const u = usuals[h.hospital_code];
-            return `${h.hospital_code} (${u?.weeks ?? 0} of 8${u?.latest == null ? ", no complete latest week" : ""})`;
+            return `${h.hospital_code} (${u?.weeks ?? 0} of ${USUAL_WEEKS}${u?.latest == null ? ", no complete latest week" : ""})`;
           }).join(", ")}.`} />
         </p>
       ) : null}

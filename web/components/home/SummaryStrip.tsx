@@ -8,6 +8,7 @@ import { Term } from "@/components/terms/Term";
 import { Tip } from "@/components/terms/TermView";
 import type { Hospital, Meta } from "@/lib/api/types";
 import { BED_WAIT_SHORT } from "@/lib/copy";
+import { shortNote } from "@/lib/hospitalNotes";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { aboveUsual, acrossHospitals, formatDelta, largestChange, longestWait, MIN_HOSPITALS } from "@/lib/planner";
 import { HIGHER_PCT, type HospitalStatus, levelCounts, SPARK_WEEKS } from "@/lib/status";
@@ -48,6 +49,12 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
   const change = largestChange(statuses, hospitals);
   const middle = acrossHospitals(statuses, hospitals);
   const middleNow = middle.at(-1) ?? null;
+  // Sites whose figures cover adults only (NUH): said under the tiles, and on the tile when one is the longest wait (audit M6).
+  const adultsOnly = rankable.flatMap((s) => {
+    const h = hospitals.find((x) => x.hospital_code === s.code);
+    return h && shortNote(h) === "Adults only" ? [h] : [];
+  });
+  const longestAdultsOnly = longest ? adultsOnly.some((h) => h.hospital_code === longest.code) : false;
   const fullEds = rankable.filter((s) => s.latest != null).length;
 
   return (
@@ -82,7 +89,7 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
         </Tile>
         <Tile id="longest">
           <KpiTile dense provenance={false} label="Longest bed wait, latest complete week" value={longest?.latest ?? null} unit="h" format={hours} meta={meta}
-                   detail={longest ? <>{name(longest.code)}.</> : "No emergency department has a complete week of figures."} />
+                   detail={longest ? <>{name(longest.code)}.{longestAdultsOnly ? " Adult emergency department only." : ""}</> : "No emergency department has a complete week of figures."} />
         </Tile>
         <Tile id="change">
           <KpiTile dense provenance={false} label={`Largest change ${formatWindow({ kind: "usual" })}`} value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
@@ -102,6 +109,12 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
       </ul>
       {/* The date and source, once, for all four tiles. */}
       <Provenance meta={meta} compact freshness={false} tight />
+      {adultsOnly.length ? (
+        <p className="mt-1 text-xs text-muted" data-testid="summary-adults-note">
+          {adultsOnly.map((h, i) => <span key={h.hospital_code}>{i > 0 ? ", " : null}{name(h.hospital_code)}</span>)}
+          {" "}<Glossed text={`covers ${adultsOnly.length === 1 ? "its" : "their"} adult emergency ${adultsOnly.length === 1 ? "department" : "departments"} only: children's emergency is not in MOH's figures.`} />
+        </p>
+      ) : null}
       {urgentCare.length ? (
         <p className="mt-2 text-xs text-muted" data-testid="summary-ucc-note">
           The {URGENT_CARE_HEADING.toLowerCase()} is left out of these four figures. {URGENT_CARE_NOTE}.

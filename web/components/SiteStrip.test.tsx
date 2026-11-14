@@ -10,7 +10,7 @@ const strip: StripData = {
   bed: { source: "MOH", asOf: "2026-10-31" },
   pills: [
     { id: "bed", dataset: "Bed waits", source: "MOH", level: "due", label: "Due an update", detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" },
-    { id: "doctor", dataset: "Doctor-wait estimates", source: "NUHS", level: "up_to_date", label: "Up to date", detail: "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT", asOf: "2026-11-11T12:01:49" },
+    { id: "doctor", dataset: "Time-to-see-a-doctor estimates", source: "NUHS", level: "up_to_date", label: "Up to date", detail: "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT", asOf: "2026-11-11T12:01:49" },
   ],
 };
 
@@ -42,7 +42,7 @@ describe("SiteStrip", () => {
     expect(pills[0]).toHaveTextContent("! Due an update");
     expect(pills[0]).toHaveTextContent("Bed waits · MOH · weekly · as of 31 Oct 2026 · 12 days old");
     expect(pills[1]).toHaveTextContent("✓ Up to date");
-    expect(pills[1]).toHaveTextContent("Doctor-wait estimates · NUHS · some hospitals only · updated 11 Nov 2026, 12:01 pm SGT");
+    expect(pills[1]).toHaveTextContent("Time-to-see-a-doctor estimates · NUHS · some hospitals only · updated 11 Nov 2026, 12:01 pm SGT");
   });
 
   it("opens and closes the details with aria-expanded", async () => {

@@ -54,7 +54,7 @@ export function Callouts({ insights, types, codes, hospitals, meta, label }: {
       </ul>
       {more.length ? (
         <details className="mt-2" data-testid="callouts-more">
-          <summary className="cursor-pointer text-sm text-accent underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm text-accent underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
             More findings ({more.length})
           </summary>
           <ul className="mt-2 space-y-2">

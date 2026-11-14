@@ -164,6 +164,8 @@ HOSPITAL_CLUSTER: dict[str, str] = {
     "TTSH": "NHG Health", "KTPH": "NHG Health", "WH": "NHG Health",
     "NUH": "NUHS", "NTFGH": "NUHS", "AH": "NUHS",
 }
+# The clusters a site can belong to; the reference.hospital_cluster check fails on anything else.
+HOSPITAL_CLUSTERS = ("SingHealth", "NHG Health", "NUHS")
 HOSPITAL_COVERAGE_NOTE: dict[str, str] = {
     "AH": "Urgent Care Centre at Alexandra Hospital, not a full emergency department.",
     "NUH": "Adult emergency department only; NUH Children's Emergency is excluded by MOH.",

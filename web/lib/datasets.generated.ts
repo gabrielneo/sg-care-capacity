@@ -39,7 +39,7 @@ export const DATASETS: Record<string, DatasetRule> = {
     }
   },
   "nuhs_live": {
-    "label": "Doctor-wait estimates",
+    "label": "Time-to-see-a-doctor estimates",
     "publisher": "NUHS",
     "cadence": "moment",
     "due_after": {

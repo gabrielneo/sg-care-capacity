@@ -7,6 +7,7 @@ import { URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { formatDelta, type Sort } from "@/lib/planner";
 
 import { StatusBadge } from "./StatusBadge";
+import { Missing } from "@/components/Missing";
 
 const hrs = (v: number) => `${v.toFixed(1)} h`;
 
@@ -43,7 +44,7 @@ export function CareList({ rows, sort, onSort, onOpen }: {
         </th>
         <td className="p-3"><StatusBadge level={r.level} /></td>
         <td className="p-3 tabular-nums">
-          <span data-testid="row-hours">{r.latest == null ? "–" : hrs(r.latest)}</span>
+          <span data-testid="row-hours">{r.latest == null ? <Missing /> : hrs(r.latest)}</span>
           {/* Below 640px the change sits under the hours: a fourth column would not fit. */}
           {delta && r.usual != null ? (
             <span className="block text-xs text-muted sm:hidden">

@@ -162,7 +162,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
                        ? `Each hospital's daily median, in hours above or below its own usual level, ${range}. ${usualDef}`
                        : `Each hospital's daily median, hours, ${range}, all on the same scale.`} />
                      <span className="mt-1 block text-ink" data-testid="bed-wait-explainer"><Glossed text={BED_WAIT_EXPLAINER} /></span>
-                     <span className="mt-1 block"><Glossed text="The shaded band is the middle half of the 8 full EDs each day, with their median dashed. Alexandra Hospital's UCC is left out of the band. A break in a line is a day MOH didn't publish." /></span>
+                     <span className="mt-1 block"><Glossed text={`The shaded band is the middle half of the ${rankableHospitals(hospitals).length} full EDs each day, with their median dashed. Alexandra Hospital's UCC is left out of the band. A break in a line is a day MOH didn't publish.`} /></span>
                    </>}>
           {callouts(["trend", "volume_vs_wait"], "daily bed waits")}
           <SmallMultiples panels={panels} bandPoints={bandPoints} mode={mode} finding={findingFor(findings, "trend", hospitals)} />

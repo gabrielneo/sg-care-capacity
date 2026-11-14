@@ -10,6 +10,7 @@ import { HospitalName } from "@/components/HospitalName";
 
 import { BedWaitHelp } from "./BedWaitHelp";
 import { StatusBadge } from "./StatusBadge";
+import { Missing } from "@/components/Missing";
 
 const hours = (v: number) => `${v.toFixed(1)} ${v === 1 ? "hour" : "hours"}`;
 
@@ -36,7 +37,7 @@ export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
       </div>
       <p>
         <span className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="ed-hours">
-          {status.latest == null ? "–" : hours(status.latest)}
+          {status.latest == null ? <Missing /> : hours(status.latest)}
         </span>
         <span className="block text-sm text-muted">Average of each day&apos;s median, latest complete week</span>
       </p>

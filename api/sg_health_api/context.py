@@ -38,7 +38,7 @@ LATEST_RUN_SQL = """
 """
 METRICS_SQL = "SELECT metric_id, label, caveat FROM marts.dim_metric ORDER BY metric_id"
 # Columns added to dim_hospital over time. An older release still serves, with null in these.
-HOSPITAL_LATER_COLUMNS = ("short_name", "postal_code", "latitude", "longitude")
+HOSPITAL_LATER_COLUMNS = ("short_name", "postal_code", "latitude", "longitude", "location_source_url", "location_checked")
 HOSPITALS_SQL = "SELECT * FROM marts.dim_hospital ORDER BY hospital_code"
 
 

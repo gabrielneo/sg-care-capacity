@@ -100,6 +100,8 @@ class Hospital(BaseModel):
     postal_code: str | None = Field(None, description="6 digits; null in releases before 2026-11-09")
     latitude: float | None = Field(None, description="Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09")
     longitude: float | None = Field(None, description="Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09")
+    location_source_url: str | None = Field(None, description="Where the map pin comes from (SLA OneMap search); null in releases before 2026-11-09")
+    location_checked: date | None = Field(None, description="When the map pin was last checked against that source")
     source_url: str
     as_of: date
     as_of_basis: str

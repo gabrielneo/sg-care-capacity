@@ -12,7 +12,7 @@ type Loaded = { ok: true; strip: StripData } | { ok: false };
 
 function Pill({ pill }: { pill: StripPill }) {
   return (
-    <span className={`inline-flex min-w-0 flex-col rounded-md border px-2 py-0.5 text-xs leading-[15px] ${LEVEL_STYLE[pill.level]}`}
+    <span className={`inline-flex min-w-0 flex-col border px-2 py-0.5 text-xs leading-[15px] ${LEVEL_STYLE[pill.level]}`}
           data-testid="strip-pill" data-pill={pill.id} data-level={pill.level}>
       <span className="font-semibold"><span aria-hidden="true">{LEVEL_SYMBOL[pill.level]} </span>{pill.label}</span>
       <span>{pill.dataset} · {pill.source} · {pill.detail}</span>

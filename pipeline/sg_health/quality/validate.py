@@ -159,6 +159,33 @@ def hospital_reference(wh: Warehouse, today: date) -> list[Result]:
     return [Result(HOSPITAL_REFERENCE_CHECK, "ref_hospital", "fail", len(problems), "; ".join(problems[:DETAIL_SAMPLES]))]
 
 
+HOSPITAL_CLUSTER_CHECK = register(
+    "reference.hospital_cluster", Severity.ERROR, Scope.DATASET,
+    "Every hospital belongs to a known cluster (the site's cluster filter has no blank or unknown group)", ("ref_hospital",))
+
+
+def hospital_cluster_problems(reference: dict[str, object], clusters: dict[str, str]) -> list[str]:
+    """What is wrong with the cluster of each site in config, one line per problem (empty = fine)."""
+    problems = []
+    for code in sorted(reference):
+        cluster = clusters.get(code)
+        if not isinstance(cluster, str) or not cluster.strip():
+            problems.append(f"{code}: no cluster")
+        elif cluster not in config.HOSPITAL_CLUSTERS:
+            problems.append(f"{code}: cluster {cluster!r} is not one of {', '.join(config.HOSPITAL_CLUSTERS)}")
+    for code in sorted(set(clusters) - set(reference)):
+        problems.append(f"{code}: has a cluster but is not in the hospital reference")
+    return problems
+
+
+@dataset_check
+def hospital_cluster(wh: Warehouse, today: date) -> list[Result]:
+    problems = hospital_cluster_problems(HOSPITAL_REFERENCE, config.HOSPITAL_CLUSTER)
+    if not problems:
+        return [Result(HOSPITAL_CLUSTER_CHECK, "ref_hospital", "pass", 0, f"{len(HOSPITAL_REFERENCE)} sites")]
+    return [Result(HOSPITAL_CLUSTER_CHECK, "ref_hospital", "fail", len(problems), "; ".join(problems[:DETAIL_SAMPLES]))]
+
+
 POP_FRESH_MONTHS = 15
 FRESH_POPULATION = register(
     "freshness.population_15_months", Severity.WARN, Scope.DATASET,

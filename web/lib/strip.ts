@@ -20,7 +20,7 @@ const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00
 
 export interface StripPill {
   id: "bed" | "doctor";
-  /** "Bed waits", "Doctor-wait estimates". */
+  /** "Bed waits", "Time-to-see-a-doctor estimates". */
   dataset: string;
   /** Publisher, e.g. "MOH". */
   source: string;
@@ -79,7 +79,7 @@ export function buildStrip({ hospitals, weekly, weeklyMeta, live, liveMeta, now 
   const pills = [
     pillFor("bed", "Bed waits", weeklyMeta, now),
     // Only where NUHS publishes an estimate: no reading, no pill.
-    live.length ? pillFor("doctor", "Doctor-wait estimates", liveMeta, now) : null,
+    live.length ? pillFor("doctor", "Time-to-see-a-doctor estimates", liveMeta, now) : null,
   ].filter((p): p is StripPill => p != null);
   const bedPill = pills.find((p) => p.id === "bed");
   return {

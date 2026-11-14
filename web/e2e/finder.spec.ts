@@ -87,7 +87,7 @@ test.describe("Public finder", () => {
     await expect(card("AH").getByTestId("ed-note")).toHaveText("Urgent care centre");
     await expect(card("AH").getByTestId("ed-live")).toContainText(/To see a doctor \((National University Health System \()?NUHS\)? estimate\): under 1 hour/);
     await expect(card("AH").getByTestId("ed-live")).toContainText(/As of .*\d{4}.* An estimate, not live\./);
-    await expect(card("NUH").getByTestId("ed-hours")).toHaveText("–");
+    await expect(card("NUH").getByTestId("ed-hours")).toHaveText("–no complete week");
     await expect(card("NUH").getByTestId("ed-note")).toHaveText("Adults only");
 
     // "Wait time" never stands alone, anywhere on the page.

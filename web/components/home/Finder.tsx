@@ -89,7 +89,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
           </div>
         </fieldset>
         <p className="mt-2 text-sm text-muted" data-testid="search-privacy">
-          What you type stays in this browser. It isn&apos;t sent to any server or saved.
+          What you type stays in this browser: it isn&apos;t sent to our server or saved. The map then loads tiles for your area from OneMap, which can see roughly which 1 km square you looked at.
         </p>
         {/* React doesn't render a noscript's children, so the markup is given as a string. */}
         <noscript dangerouslySetInnerHTML={{ __html: '<p class="mt-2 text-base text-status-higher" data-testid="needs-js">The clinic finder needs JavaScript. Without it, use the CHAS clinic list on data.gov.sg.</p>' }} />

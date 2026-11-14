@@ -1189,6 +1189,31 @@
             "description": "Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09",
             "title": "Latitude"
           },
+          "location_checked": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the map pin was last checked against that source",
+            "title": "Location Checked"
+          },
+          "location_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the map pin comes from (SLA OneMap search); null in releases before 2026-11-09",
+            "title": "Location Source Url"
+          },
           "longitude": {
             "anyOf": [
               {

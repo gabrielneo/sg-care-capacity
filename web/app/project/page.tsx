@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { Missing } from "@/components/Missing";
 import { Section } from "@/components/Section";
 
 import { Provenance } from "@/components/Provenance";
@@ -77,7 +78,7 @@ export default async function ProjectPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="project-tiles">
         <Tile label="The problem" testId="project-context">
           <Eyebrow>1 · The problem</Eyebrow>
-          <BigNumber>{share ?? "–"}</BigNumber>
+          <BigNumber>{share ?? <Missing why="not available" />}</BigNumber>
           <p className="mt-1 flex-1 text-base text-ink">
             {share ? "of residents are 65 or over. This project asks where hospital and clinic capacity is under the most strain."
               : "The population figure can't be shown right now."}
@@ -118,7 +119,7 @@ export default async function ProjectPage() {
             <div>
               <dt className="text-sm text-muted">Data checks passed</dt>
               <dd className="text-3xl font-semibold tabular-nums text-ink" data-testid="project-checks">
-                {checks ? `${checks.passed}/${checks.total}` : "–"}
+                {checks ? `${checks.passed}/${checks.total}` : <Missing why="not available" />}
               </dd>
             </div>
             <div>

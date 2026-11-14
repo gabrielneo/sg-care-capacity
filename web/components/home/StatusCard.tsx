@@ -12,6 +12,7 @@ import { HospitalName } from "@/components/HospitalName";
 
 import { Sparkline } from "./Sparkline";
 import { StatusBadge } from "./StatusBadge";
+import { Missing } from "@/components/Missing";
 
 const hrs = (v: number) => `${v.toFixed(1)} h`;
 
@@ -63,7 +64,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
         </div>
         <p className="mt-3">
           <span className="block text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
-            {status.latest == null ? "–" : hrs(status.latest)}
+            {status.latest == null ? <Missing /> : hrs(status.latest)}
           </span>
           <span className="block text-xs text-muted">wait for a ward bed, latest complete week</span>
         </p>
@@ -86,7 +87,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
       <p className="mt-2 text-xs text-muted">Wait for a ward bed, latest complete week</p>
       <div className="flex items-end justify-between gap-2">
         <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
-          {status.latest == null ? "–" : hrs(status.latest)}
+          {status.latest == null ? <Missing /> : hrs(status.latest)}
         </p>
         <Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} />
       </div>

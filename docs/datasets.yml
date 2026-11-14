@@ -32,7 +32,7 @@ datasets:
     due_after: {days: 10}
     overdue_after: {days: 21}
   nuhs_live:
-    label: Doctor-wait estimates
+    label: Time-to-see-a-doctor estimates
     publisher: NUHS
     cadence: moment
     # NUHS updates its page continuously; the site reads it once a week, so a reading is up to 7 days old.

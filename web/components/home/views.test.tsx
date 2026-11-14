@@ -166,7 +166,7 @@ describe("SummaryStrip", () => {
   const spark = (v: number) => Array.from({ length: 12 }, () => v);
   const at = (code: string, pct: number | null, latest: number | null, line = spark(latest ?? 0)): HospitalStatus =>
     ({ ...status(code, pct, latest), spark: line });
-  const hospitals = [hospital("SGH"), hospital("CGH"), hospital("TTSH"), hospital("NUH"), hospital("AH", { facility_type: "UCC" })];
+  const hospitals = [hospital("SGH"), hospital("CGH"), hospital("TTSH"), hospital("NUH", { coverage_note: "Adult emergency department only; NUH Children's Emergency is excluded by MOH." }), hospital("AH", { facility_type: "UCC" })];
   const statuses = [at("SGH", 31.9, 6.2), at("CGH", 16, 4.0), at("TTSH", 0, 5.0), at("NUH", -20, 7.5), at("AH", 45, 1.2)];
   const tile = (id: string) => screen.getAllByTestId("summary-tile").find((t) => t.getAttribute("data-tile") === id)!;
 
@@ -186,6 +186,9 @@ describe("SummaryStrip", () => {
       "Singapore General (SGH)Singapore General Hospital (SGH): +31% vs usualChangi General (CGH)Changi General Hospital (CGH): +16% vs usual");
     expect(screen.getByTestId("summary-ucc-note")).toHaveTextContent(
       "The urgent care centre is left out of these four figures. Not compared with full emergency departments.");
+    // NUH covers adults only: said on the tile where it is the longest wait, and once under the tiles (audit M6).
+    expect(screen.getByTestId("summary-adults-note")).toHaveTextContent("covers its adult emergency department only");
+    expect(tile("longest")).toHaveTextContent("Adult emergency department only.");
     expect(within(tile("above")).queryByTestId("above-unknown")).toBeNull();
     expect(tile("longest")).toHaveTextContent(/^Longest bed wait, latest complete week7\.5 hNational University \(NUH\)National University Hospital\./);   // label, then its tooltip
     expect(tile("middle")).toHaveTextContent(/bed wait across emergency departments, latest complete week5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6

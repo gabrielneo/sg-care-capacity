@@ -11,6 +11,9 @@ import { rankableCodes } from "@/lib/hospitals";
 import { divergingScale, mapScale, TOKEN_VARS } from "@/lib/palette";
 import { type Level, LEVELS, hospitalStatus, SPARK_WEEKS, usualBand } from "@/lib/status";
 
+// The sample chart is real data, read per request (the API response is cached for an hour), so a build made while the API was down cannot freeze an error into the page.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Style guide",
   description: "The design tokens, type scale and components behind this site, in light and dark.",

@@ -72,7 +72,7 @@ test.describe("The project page", () => {
   test("says so when the API is down, without inventing figures", async ({ page }) => {
     await page.goto(`${DOWN}/project`);
     await expect(page.getByTestId("project-finding")).toHaveCount(0);
-    await expect(page.getByTestId("project-checks")).toHaveText("–");
+    await expect(page.getByTestId("project-checks")).toHaveText("–not available");
     await expectNoHorizontalScroll(page);
   });
 });

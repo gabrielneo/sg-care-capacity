@@ -271,3 +271,21 @@ def test_hospital_reference_in_config_passes(wh):
 def test_hospital_reference_problems(reference, names, expected):
     from sg_health.quality.validate import hospital_reference_problems
     assert hospital_reference_problems(reference, names) == expected
+
+
+def test_hospital_cluster_in_config_passes(wh):
+    from sg_health.quality.validate import hospital_cluster
+    [r] = hospital_cluster(wh, date(2026, 11, 14))
+    assert r.status == "pass"
+
+
+@pytest.mark.parametrize("reference, clusters, expected", [
+    ({"A": 1}, {"A": "NUHS"}, []),
+    ({"A": 1}, {}, ["A: no cluster"]),
+    ({"A": 1}, {"A": " "}, ["A: no cluster"]),
+    ({"A": 1}, {"A": "NUH"}, ["A: cluster 'NUH' is not one of SingHealth, NHG Health, NUHS"]),
+    ({"A": 1}, {"A": "NUHS", "B": "NUHS"}, ["B: has a cluster but is not in the hospital reference"]),
+])
+def test_hospital_cluster_problems(reference, clusters, expected):
+    from sg_health.quality.validate import hospital_cluster_problems
+    assert hospital_cluster_problems(reference, clusters) == expected

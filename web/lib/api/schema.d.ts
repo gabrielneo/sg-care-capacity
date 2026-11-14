@@ -677,6 +677,16 @@ export interface components {
              */
             latitude?: number | null;
             /**
+             * Location Checked
+             * @description When the map pin was last checked against that source
+             */
+            location_checked?: string | null;
+            /**
+             * Location Source Url
+             * @description Where the map pin comes from (SLA OneMap search); null in releases before 2026-11-09
+             */
+            location_source_url?: string | null;
+            /**
              * Longitude
              * @description Map pin (WGS84) from SLA OneMap; null in releases before 2026-11-09
              */

@@ -42,7 +42,7 @@ describe("buildStrip", () => {
   it("labels the estimates with their own time, not the bed-wait date", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [{} as LiveReading], liveMeta: nuhsMeta, now: NOW })!;
     const doctor = s.pills.find((p) => p.id === "doctor")!;
-    expect(doctor).toMatchObject({ dataset: "Doctor-wait estimates", source: "NUHS", level: "up_to_date", asOf: "2026-11-11T12:01:49" });
+    expect(doctor).toMatchObject({ dataset: "Time-to-see-a-doctor estimates", source: "NUHS", level: "up_to_date", asOf: "2026-11-11T12:01:49" });
     expect(doctor.detail).toBe("some hospitals only · updated 11 Nov 2026, 12:01 pm SGT");
     expect(doctor.detail).not.toContain("31 Oct");
   });

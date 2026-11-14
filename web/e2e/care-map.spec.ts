@@ -206,6 +206,9 @@ test.describe("The details drawer", () => {
   test("opening it moves nothing on the page and adds no sideways scroll", async ({ page }) => {
     await page.goto("/?layout=list");
     await hydrated(page);
+    // The footer's release line is loaded in the browser and is taller than the line reserved for it: let it arrive,
+    // so the page height is measured once, not while it is still growing.
+    await expect(page.getByTestId("data-status")).toBeVisible();
     const before = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, w: document.documentElement.scrollWidth,
       top: document.getElementById("map-heading")!.getBoundingClientRect().top + window.scrollY }));
     await page.locator('[data-hospital-trigger="SGH"]').click();

@@ -15,6 +15,7 @@ import { type HospitalStatus, LEVELS, SPARK_WEEKS, usualBand } from "@/lib/statu
 import { Sparkline } from "./Sparkline";
 import { StatusBadge } from "./StatusBadge";
 import { formatWindow, USUAL_WEEKS } from "@/lib/windows";
+import { Missing } from "@/components/Missing";
 
 const hours = (v: number) => `${v.toFixed(1)} h`;
 
@@ -52,7 +53,7 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
         <h3 id={`drawer-wait-${status.code}`} className="text-sm font-semibold text-ink">{BED_WAIT_LABEL}</h3>
         <p className="mt-1">
           <span className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="drawer-hours">
-            {status.latest == null ? "–" : hours(status.latest)}
+            {status.latest == null ? <Missing /> : hours(status.latest)}
           </span>
           <span className="block text-sm text-muted">
             Average of each day&apos;s median, {formatWindow({ kind: "latest_week", week: latestWeek ? { week_start: latestWeek, week_end: addDays(latestWeek, 6) } : null })}
