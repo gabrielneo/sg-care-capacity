@@ -24,15 +24,15 @@ describe("palette", () => {
   });
 
   it("matches the light tokens in styles/tokens.css exactly", () => {
-    expect(block(":root {")).toEqual(expected(colors));
+    expect(block(":root,\n[data-theme=\"light\"] {")).toEqual(expected(colors));
   });
 
   it("matches the dark tokens in styles/tokens.css exactly (the OS block and the manual block)", () => {
     const dark = expected(darkColors);
     const differing = Object.fromEntries(Object.entries(dark).filter(([k, v]) => expected(colors)[k] !== v));
     expect(block(':root:not([data-theme="light"])')).toMatchObject(differing);
-    expect(block(':root[data-theme="dark"]')).toMatchObject(differing);
-    expect(block(':root:not([data-theme="light"])')).toEqual(block(':root[data-theme="dark"]'));
+    expect(block(':root[data-theme="dark"],\n[data-theme="dark"] {')).toMatchObject(differing);
+    expect(block(':root:not([data-theme="light"])')).toEqual(block(':root[data-theme="dark"],\n[data-theme="dark"] {'));
   });
 
   it("the data scales are identical in both themes", () => {

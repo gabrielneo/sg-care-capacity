@@ -60,7 +60,7 @@ export function HospitalDrawer({ code, title, children, onClose }: {
 
   return (
     <dialog ref={ref} aria-labelledby="care-drawer-title" data-testid="hospital-drawer"
-            className="care-drawer m-0 flex flex-col overflow-hidden border border-line bg-surface p-0 text-ink shadow-xl"
+            className="care-drawer m-0 flex flex-col overflow-hidden border border-line bg-surface p-0 text-ink shadow-popover"
             onClick={(e) => { if (e.target === e.currentTarget) ref.current?.close(); }} onKeyDown={trap}>
       {code ? (
         <>

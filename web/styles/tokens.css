@@ -5,11 +5,13 @@
  * Rules:
  *  - Orange/brown family = longer bed waits, violet family = shorter, everywhere.
  *  - Ink blue (--accent) is interface only (links, selection, focus), never data meaning.
- *  - Dark applies from the OS setting, or from <html data-theme="dark|light"> (the footer toggle).
+ *  - Dark applies from the OS setting, or from <html data-theme="dark|light"> (the footer toggle). Any element can
+ *    carry data-theme too: /styleguide shows both themes side by side that way.
  *    The dark block appears twice because CSS cannot share one block between a media query and a selector;
  *    web/lib/tokens.test.ts checks the two copies are identical.
  */
-:root {
+:root,
+[data-theme="light"] {
   color-scheme: light;
 
   --bg-page: #F6F1E8;
@@ -65,7 +67,8 @@
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+[data-theme="dark"] {
   color-scheme: dark;
   --bg-page: #15171C; --bg-band: #1B1E24; --bg-surface: #20232A; --bg-sunken: #191C21;
   --border-subtle: #2E323A; --border-control: #7A766E;

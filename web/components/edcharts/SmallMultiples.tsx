@@ -102,10 +102,10 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
                                 data-testid="series" points={r.items.map((d, k) => `${x(r.start + k)},${y(d.value as number)}`).join(" ")} />
                     ))}
                   </svg>
-                  <span className="absolute left-0 top-0 text-[10px] tabular-nums text-muted">{fmt(hi)}</span>
-                  <span className="absolute bottom-0 left-0 text-[10px] tabular-nums text-muted">{fmt(lo)}</span>
+                  <span className="absolute left-0 top-0 text-xs tabular-nums text-muted">{fmt(hi)}</span>
+                  <span className="absolute bottom-0 left-0 text-xs tabular-nums text-muted">{fmt(lo)}</span>
                   {mode === "usual" ? (
-                    <span className="absolute right-0 text-[10px] text-ink" style={{ top: Math.max(y(0) - 12, 0) }}>usual</span>
+                    <span className="absolute right-0 text-xs text-ink" style={{ top: Math.max(y(0) - 12, 0) }}>usual</span>
                   ) : null}
                 </div>
               )}
@@ -113,7 +113,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
                 {hospital.hospital_name}: {lastValue?.value != null ? `latest ${fmt(lastValue.value)} hours${mode === "usual" ? " vs its usual level" : ""}` : "no figures"}
                 {gaps ? `, ${gaps} days missing` : ""}.
               </p>
-              <p className="mt-1 flex justify-between text-[10px] text-muted" aria-hidden="true">
+              <p className="mt-1 flex justify-between text-xs text-muted" aria-hidden="true">
                 <span>{first ? shortDay(first) : ""}</span>
                 {gaps ? <span data-testid="gap-count">{gaps} {gaps === 1 ? "day" : "days"} missing</span> : null}
                 <span>{last ? shortDay(last) : ""}</span>

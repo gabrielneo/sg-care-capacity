@@ -87,7 +87,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
         </table>
       </div>
       <div className="mt-3" data-testid="heat-legend" data-min={classes[0]?.min} data-max={classes.at(-1)?.max}>
-        <ul className="flex flex-wrap gap-1 text-[11px] text-muted" aria-label="Colour key">
+        <ul className="flex flex-wrap gap-1 text-xs text-muted" aria-label="Colour key">
           {classes.map((c, i) => (
             <li key={c.color} className="flex flex-col items-center" data-testid="heat-legend-class" data-min={c.min} data-max={c.max}>
               <span aria-hidden="true" className="h-3 w-12 rounded-sm border border-line" style={{ background: c.color }} />

@@ -57,7 +57,7 @@ function ChangeLine({ change }: { change: KpiChange }) {
 export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, now, release, detail, freshness = true, dense = false }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
-    <div data-testid="kpi-tile" className={`h-full rounded-lg border border-line bg-surface shadow-sm ${dense ? "p-3" : "p-4"}`}>
+    <div data-testid="kpi-tile" className={`h-full rounded-lg border border-line bg-surface ${dense ? "p-3" : "p-4"}`}>
       <p className="text-sm font-medium text-muted">{label}</p>
       {problems.length ? (
         <div className="mt-2">

@@ -49,6 +49,7 @@
   --shadow-*: initial;
   --shadow-popover: var(--shadow-float);
 
+  --container-prose: 68ch;   /* prose is never wider than 68 characters */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -99,6 +100,14 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* A band runs the full width of the window while its content stays in the page container. The huge spread
+   shadow paints the band colour sideways; clip-path stops it short of the window edge, so nothing scrolls. */
+.section-band {
+  background: var(--bg-band);
+  box-shadow: 0 0 0 100vmax var(--bg-band);
+  clip-path: inset(0 -100vmax);
 }
 
 /* Tailwind's base styles make images block-level; Leaflet's attribution logo must stay inline. */

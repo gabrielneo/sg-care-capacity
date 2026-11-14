@@ -7,11 +7,13 @@ import { type ReactNode, Suspense } from "react";
 import { AuthorByline } from "@/components/AuthorByline";
 import { DataStatus } from "@/components/DataStatus";
 import { Nav } from "@/components/Nav";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SiteStrip } from "@/components/SiteStrip";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { Glossed } from "@/components/terms/Glossed";
 import { colors, darkColors } from "@/lib/palette";
 import { SITE, SITE_TITLE } from "@/lib/site";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 const DESCRIPTION = "A public-data analytics project by Gabriel Neo: where Singapore's emergency departments wait longest for ward beds, "
   + "and where seniors have the fewest clinics. Also check how busy EDs were in the latest complete week and find a clinic near you.";
@@ -32,7 +34,8 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children, viewbar }: { children: ReactNode; viewbar: ReactNode }) {
   return (
-    <html lang="en-SG">
+    <html lang="en-SG" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} /></head>
       <body className="flex min-h-screen flex-col bg-page text-ink">
         <a
           href="#main"
@@ -65,9 +68,10 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
             <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
             Page views are counted without cookies, and searches aren&apos;t recorded.{" "}
             <span data-testid="footer-notice">This site shows public statistics. It isn&apos;t medical advice. In an emergency, call <a href="tel:995">995</a>.</span>{" "}
-            <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link>
+            <Link href="/methodology">How the figures are made</Link> · <Link href="/glossary">Glossary</Link> · <Link href="/styleguide">Style guide</Link>
             {/* Loaded in the browser (/status.json): building a page never waits on the API. */}
             <DataStatus />
+            <div className="mt-3"><ThemeToggle /></div>
             <AuthorByline className="mt-2 border-t border-line pt-2" />
           </div>
         </footer>

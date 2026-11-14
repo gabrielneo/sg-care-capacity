@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { Section } from "@/components/Section";
+
 import { Provenance } from "@/components/Provenance";
 import { CountUp } from "@/components/story/CountUp";
 import { Glossed } from "@/components/terms/Glossed";
@@ -71,6 +73,7 @@ export default async function ProjectPage() {
         </p>
       </header>
 
+      <Section tone="band">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="project-tiles">
         <Tile label="The problem" testId="project-context">
           <Eyebrow>1 · The problem</Eyebrow>
@@ -152,6 +155,7 @@ export default async function ProjectPage() {
           </ul>
         </Tile>
       </div>
+      </Section>
     </div>
   );
 }

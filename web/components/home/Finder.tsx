@@ -12,7 +12,7 @@ import { BASIS_NOTE, kmText, locate, NOT_FOUND } from "@/lib/nearby";
 function PlaceCard({ place, nearest }: { place: Result; nearest: boolean }) {
   const where = [place.address, place.postal_code ? `Singapore ${place.postal_code}` : null].filter(Boolean).join(", ");
   return (
-    <li className="rounded-xl border border-line bg-surface p-4 shadow-sm" data-testid="nearby-place" data-type={place.type}>
+    <li className="rounded-xl border border-line bg-surface p-4" data-testid="nearby-place" data-type={place.type}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="text-lg font-semibold leading-snug text-ink">{place.name}</h3>
         {nearest ? (

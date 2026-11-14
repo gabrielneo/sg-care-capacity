@@ -47,7 +47,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
   ) : (
     <p className="mt-2 border-t border-line pt-2 text-xs text-muted" data-testid="status-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
   );
-  const shell = "relative flex flex-col rounded-xl border border-line bg-surface shadow-sm hover:border-accent "
+  const shell = "relative flex flex-col rounded-xl border border-line bg-surface hover:border-accent "
     + "has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent";
   const attrs = { "data-testid": "status-card", "data-hospital": status.code, "data-level": status.level, "data-density": density };
 

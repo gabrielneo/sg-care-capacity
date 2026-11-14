@@ -15,7 +15,7 @@ export function Takeaways({ items, meta }: { items: Takeaway[]; meta: Meta }) {
       <p className="mt-1 max-w-prose text-sm text-muted">Patterns in the latest data that passed a fixed statistical check.</p>
       <ul className="mt-4 grid gap-3 md:grid-cols-3">
         {items.map((t) => (
-          <li key={t.id} className="rounded-xl border border-line bg-surface p-4 shadow-sm" data-testid="takeaway" data-insight={t.id}>
+          <li key={t.id} className="rounded-xl border border-line bg-surface p-4" data-testid="takeaway" data-insight={t.id}>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">
               {t.isHospital ? <Term id={t.entity.toLowerCase()} plain /> : <Glossed text={t.entity} plain />}
             </p>
