@@ -115,7 +115,8 @@ change that depends on it.
 3. **Status words.** The public view's "busier than usual" words (`LEVELS[].plain`, ADR 0011,
    data dictionary "Plain status words") are a second set of names for the same scale. Principle 6
    points to one set: Much higher, Higher, About usual, Lower.
-4. **The colour for "lower".** Today "about usual" and "lower" share green (`--color-ok`). Under
-   principle 3, "about usual" becomes neutral, and "lower" needs a status colour that is neither
-   green nor confusable with the ink-blue accent.
-5. **Dark mode.** Not in the brief; the old audit (`docs/ux_audit.md`, M7) asked for a decision.
+4. **The colour for "lower".** Settled 2026-11-14: muted violet (`--status-lower`, #5B4A8B light, #B3A3E6
+   dark), matching the heatmap's "shorter". "About usual" is neutral slate (`--status-usual`). The tokens
+   are in `web/styles/tokens.css`; `web/lib/tokens.contrast.test.ts` checks every pair in both themes.
+   Orange and brown mean longer waits, violet shorter; ink blue is interface only. The access maps keep
+   their Viridis data scale (it passes through green): it is data, never interface.

@@ -159,7 +159,7 @@ export default function ComponentsPage() {
       <Section title="DeltaNumber">
         <p className="mb-3 text-sm text-muted">
           Value, unit, comparison, and the change as an arrow and a word. Colour comes from the insight&apos;s direction, never
-          from the arrow: the same ▲ is red for a longer wait and green for more clinics. Neutral findings have no colour.
+          from the arrow: the same ▲ is brick red for a longer wait and violet for more clinics. Neutral findings have no colour.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {storySample.map((i) => (
