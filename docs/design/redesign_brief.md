@@ -109,9 +109,9 @@ change that depends on it.
    hospitals "out of all hospitals the API lists" and keeps AH in the change tile, and today only
    `longestWait` leaves AH out. The brief leaves AH out of all of them; the data dictionary changes
    with the code.
-2. **As-of once per section.** `CLAUDE.md` (data principle 4) and `docs/data_dictionary.md` ("Show
-   `as_of` next to every number") ask for it on every number. Principle 1 asks for it once per
-   section; both docs need rewording to match.
+2. **As-of once per section.** Settled 2026-11-14: `CLAUDE.md` (data principle 4) and
+   `docs/data_dictionary.md` ("Show `as_of`...") now say once per section, with every figure covered by
+   that line. The per-tile lines on the pages are removed in a later change.
 3. **Status words.** The public view's "busier than usual" words (`LEVELS[].plain`, ADR 0011,
    data dictionary "Plain status words") are a second set of names for the same scale. Principle 6
    points to one set: Much higher, Higher, About usual, Lower.

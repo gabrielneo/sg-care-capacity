@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Fragment, type ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 
 import { ErrorState, Skeleton } from "@/components/States";
 import { EdNearby } from "@/components/home/EdNearby";
@@ -227,7 +227,9 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   return (
     <div data-testid="home" data-view={view}>
-      {sectionsFor(view).map(({ id, density }) => <Fragment key={id}>{render[id](density)}</Fragment>)}
+      {/* Chapters: every second section that renders sits on the band colour (full width, content in the container). */}
+      {sectionsFor(view).flatMap(({ id, density }) => { const el = render[id](density); return el ? [{ id, el }] : []; })
+        .map(({ id, el }, i) => <div key={id} data-tone={i % 2 ? "band" : "page"} className={i % 2 ? "section-band" : undefined}>{el}</div>)}
     </div>
   );
 }

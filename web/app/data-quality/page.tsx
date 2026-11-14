@@ -86,7 +86,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
                        <span className="inline-flex flex-wrap gap-2 align-middle" aria-label="Window">
                          {COVERAGE_WINDOWS.map((w) => (
                            <Link key={w} href={w === 13 ? "/data-quality" : `/data-quality?weeks=${w}`} aria-current={w === weeks ? "page" : undefined}
-                                 className={`rounded px-2 py-0.5 text-xs no-underline ${w === weeks ? "bg-accent-soft font-semibold text-accent-strong" : "text-accent hover:underline"}`}>
+                                 className={`inline-flex min-h-11 items-center rounded-md px-3 text-sm no-underline ${w === weeks ? "bg-accent-soft font-semibold text-accent-strong" : "text-accent hover:underline"}`}>
                              {w} weeks
                            </Link>
                          ))}

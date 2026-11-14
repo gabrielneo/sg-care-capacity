@@ -30,7 +30,7 @@ evidence available. `as_of_basis` says which evidence:
 | `reference_checked` | When the reference list in code was last verified | `dim_hospital` |
 | `reference_period` | The date the statistic describes, set by the publisher | `fct_planning_area_population` (end of June) |
 
-Show `as_of` next to every number. For CHAS it is **2024-06-06** even though the file was
+Show `as_of` and the source once per section, so that every number sits under a line that states them (not on every tile). For CHAS it is **2024-06-06** even though the file was
 downloaded in November 2026: the clinic list itself is that old.
 
 **What the site shows as "Data as of".** The site and its CSV downloads show each **source's** as_of

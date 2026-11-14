@@ -16,10 +16,7 @@ for (const scheme of ["light", "dark"] as const) {
         await page.waitForTimeout(400);       // a drawer or story step still fading in would be read half transparent
         const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
         expect(bg).toBe(scheme === "light" ? "rgb(246, 241, 232)" : "rgb(21, 23, 28)");
-        // TODO(me): the 24px target-size rule (WCAG 2.2) still fails on /data-quality's current-page nav link at 375px
-        // (docs/ux_audit.md, M3: tap targets). It is checked at 2.1 AA there until M3 is fixed.
-        const known = route === "/data-quality" && (page.viewportSize()?.width ?? 1280) < 400;
-        await expectNoA11yViolations(page, { wcag22: !known });
+        await expectNoA11yViolations(page, { wcag22: true });
         await expectNoHorizontalScroll(page);
       });
     }

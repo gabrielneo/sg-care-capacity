@@ -35,7 +35,7 @@ data/build/   DuckDB warehouse and published snapshots (gitignored)
 1. **No personal or patient-level data, ever.**
 2. **Never fabricate, impute or interpolate values silently.** Missing means missing, shown as missing.
 3. **Every metric has a written definition, unit, source and known caveats** in `docs/data_dictionary.md`.
-4. **Every number shown to users carries `as_of` and `source`.**
+4. **Every number shown to users has its `as_of` and `source` in view, once per section.** A section (a chart, a tile group, a table) states them once, in text and on every width, and every figure in it is covered by that line. A figure outside any section carries its own.
 5. **Failed error-level data checks block publishing;** the site keeps the last good snapshot.
 6. **Every warehouse row keeps lineage:** `source_url`, `source_sha256`, `ingested_at`.
 

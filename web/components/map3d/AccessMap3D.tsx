@@ -33,6 +33,7 @@ import {
   styleAreas,
 } from "@/lib/map3d";
 import { colors } from "@/lib/palette";
+import { useTokenColor } from "@/lib/useTokenColor";
 
 export interface AccessMap3DProps {
   layer: Svy21Collection;
@@ -120,6 +121,8 @@ export default function AccessMap3D({ layer, labels, selected, onSelect, intro, 
   const geometries = useMemo(() => areas.map((a, i) => geometryFor(a, layer.features[i]!)), [areas, layer]);
   useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
   const [hover, setHover] = useState<Hover | null>(null);
+  const surface = useTokenColor("surface");   // the scene follows the light/dark theme
+  const ink = useTokenColor("ink");
   const overlay = useRef<HTMLDivElement>(null);
   const byName = useMemo(() => new Map(areas.map((a) => [a.name, a])), [areas]);
   const labelled = labels.map((name, i) => ({ rank: i + 1, area: byName.get(name) })).filter((l) => l.area);
@@ -137,7 +140,7 @@ export default function AccessMap3D({ layer, labels, selected, onSelect, intro, 
         <Canvas frameloop="demand" dpr={[1, 2]} gl={{ antialias: true }}
                 camera={{ position: cameraEnd(fitDistance(1.4)), fov: FOV, near: 500, far: 600_000 }}
                 onPointerMissed={() => setHover(null)}>
-          <color attach="background" args={[colors.surface]} />
+          <color attach="background" args={[surface]} />
           <hemisphereLight args={[colors["on-data-light"], colors.control, 1.2]} />
           <directionalLight position={[-25_000, 40_000, 30_000]} intensity={1.6} />
           {/* SVY21 x east, y north -> world x east, z south, y up. */}
@@ -156,7 +159,7 @@ export default function AccessMap3D({ layer, labels, selected, onSelect, intro, 
                       }}>
                   <meshBasicMaterial attach="material-0" color={hot ? lighten(a.color, 0.35) : a.color} />
                   <meshLambertMaterial attach="material-1" color={a.color} />
-                  {hot || chosen ? <Edges color={colors.ink} threshold={20} /> : null}
+                  {hot || chosen ? <Edges color={ink} threshold={20} /> : null}
                 </mesh>
               );
             })}
