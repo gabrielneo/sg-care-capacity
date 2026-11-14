@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ChartCard } from "@/components/ChartCard";
+import { Chapters } from "@/components/Section";
 import { Provenance } from "@/components/Provenance";
 import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
@@ -75,7 +76,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
       </div>
       <Provenance meta={quality.meta} compact release />
 
-      <div className="mt-6 space-y-6">
+      <Chapters first="band">
         <ChartCard title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail release
                    description={`The checks that published data release ${snapshot.data.snapshot_id}, grouped by what a failure does.`}>
           <CheckResults report={quality.data} />
@@ -135,7 +136,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
                    description="How current each source is, judged against how often it is published. An old source is flagged, not hidden.">
           <FreshnessTable sources={snapshot.meta.sources} />
         </ChartCard>
-      </div>
+      </Chapters>
     </>
   );
 }

@@ -4,7 +4,7 @@ import type { Layout } from "@/lib/careMapState";
 
 const BUTTON = "min-h-11 rounded-full border px-4 text-sm font-medium";
 const ON = "border-accent bg-accent text-surface";
-const OFF = "border-line bg-surface text-ink hover:border-accent";
+const OFF = "border-control bg-surface text-ink hover:border-accent";
 
 /**
  * Filter by healthcare cluster. The chips are the clusters in the data (dim_hospital.cluster), plus
@@ -37,7 +37,7 @@ export function ClusterChips({ clusters, counts, selected, onSelect }: {
 export function LayoutToggle({ value, fallback, onSelect }: { value: Layout | null; fallback: Layout; onSelect: (layout: Layout) => void }) {
   const current = value ?? fallback;
   return (
-    <div role="group" aria-label="Show hospitals as" className="inline-flex overflow-hidden rounded-full border border-line" data-testid="layout-toggle">
+    <div role="group" aria-label="Show hospitals as" className="inline-flex overflow-hidden rounded-full border border-control" data-testid="layout-toggle">
       {(["map", "list"] as const).map((l) => (
         <button key={l} type="button" aria-pressed={current === l} onClick={() => onSelect(l)} data-layout={l}
                 className={`min-h-11 px-4 text-sm font-medium ${current === l ? ON : "bg-surface text-ink"}`}>

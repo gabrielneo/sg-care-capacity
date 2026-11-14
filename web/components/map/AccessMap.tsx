@@ -54,7 +54,7 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
         <label htmlFor={ids.metric} className="w-full min-w-0 text-sm sm:w-auto">
           <span className="block font-semibold">Measure</span>
           <select id={ids.metric} value={metricKey} onChange={(e) => setMetricKey(e.target.value as MetricKey)}
-                  className="mt-1 min-h-11 w-full rounded-md border border-line bg-surface px-2 sm:w-auto">
+                  className="mt-1 min-h-11 w-full rounded-md border border-control bg-surface px-2 sm:w-auto">
             {AREA_METRICS.map((m) => (
               <option key={m.key} value={m.key}>{m.label}</option>
             ))}

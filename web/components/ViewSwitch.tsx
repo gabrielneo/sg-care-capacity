@@ -37,7 +37,7 @@ export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: s
 
   const submit = (
     <noscript>
-      <button type="submit" className="ml-2 min-h-11 rounded-md border border-line bg-surface px-3 text-sm font-medium text-ink">
+      <button type="submit" className="ml-2 min-h-11 rounded-md border border-control bg-surface px-3 text-sm font-medium text-ink">
         Change view
       </button>
     </noscript>
@@ -46,7 +46,7 @@ export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: s
   return (
     <div data-testid="view-switch" data-view={view}>
       <form action="/" method="get" className="hidden items-center sm:flex">
-        <div role="radiogroup" aria-label="View" className="inline-flex rounded-md border border-line bg-surface p-1"
+        <div role="radiogroup" aria-label="View" className="inline-flex rounded-md border border-control bg-surface p-1"
              data-testid="view-radios">
           {VIEWS.map((v) => (
             <label key={v.id}
@@ -64,7 +64,7 @@ export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: s
       <form action="/" method="get" className="flex items-center sm:hidden">
         <label htmlFor="view-select" className="mr-2 text-sm font-medium text-muted">View</label>
         <select id="view-select" name="view" value={view} onChange={(e) => go(parseView(e.target.value))}
-                className="min-h-11 rounded-md border border-line bg-surface px-2 text-base font-medium text-ink"
+                className="min-h-11 rounded-md border border-control bg-surface px-2 text-base font-medium text-ink"
                 data-testid="view-select">
           {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
         </select>

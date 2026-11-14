@@ -84,7 +84,7 @@ function Specimen({ theme, chart }: { theme: (typeof THEMES)[number]; chart: Awa
           <button type="button" className="inline-flex min-h-11 items-center rounded-md bg-accent px-4 text-sm font-semibold text-page hover:bg-accent-strong">Primary action</button>
           <button type="button" className="inline-flex min-h-11 items-center rounded-md border border-control bg-surface px-4 text-sm font-semibold text-ink hover:border-accent">Secondary</button>
           <button type="button" aria-pressed="true" className="inline-flex min-h-11 items-center rounded-md border border-accent bg-accent-soft px-4 text-sm font-semibold text-accent">Selected</button>
-          <a href="#main" className="text-sm">A link</a>
+          <a href="#main" className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm">A link</a>
         </div>
       </div>
 

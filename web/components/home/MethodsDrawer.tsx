@@ -20,7 +20,7 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
     <section aria-labelledby="methods-heading" className="border-t border-line py-8" data-testid="methods">
       <h2 id="methods-heading" className="text-xl font-semibold tracking-tight text-ink">How these figures are made</h2>
       <details open={open} className="mt-3 rounded-xl border border-line bg-surface p-4" data-testid="methods-drawer">
-        <summary className="cursor-pointer select-none font-semibold text-accent">Show the data and methods</summary>
+        <summary className="block cursor-pointer select-none py-3 font-semibold text-accent">Show the data and methods</summary>
         <div className="mt-4 space-y-5 text-sm text-ink">
           <div>
             <h3 className="font-semibold">The bed wait</h3>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { QuadrantChart } from "@/components/access/QuadrantChart";
 import { ShortfallBars } from "@/components/access/ShortfallBars";
+import { Section } from "@/components/Section";
 import { ChartCard } from "@/components/ChartCard";
 import { AccessViews } from "@/components/map3d/AccessViews";
 import { AreaTable } from "@/components/map/AreaTable";
@@ -97,6 +98,7 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
           </ChartCard>
         </>
       ) : (
+        <Section tone="band">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <ChartCard title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics} download="/export/areas.csv"
                      description="Counts where clinics are, not where their patients live: residents use clinics in neighbouring areas too.">
@@ -107,6 +109,7 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
           </ChartCard>
           {side}
         </div>
+        </Section>
       )}
     </>
   );

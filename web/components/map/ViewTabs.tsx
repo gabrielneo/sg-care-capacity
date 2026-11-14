@@ -11,7 +11,7 @@ const TABS: { view: AccessView; label: string; href: string }[] = [
 /** The Access Map's views. Plain links, so they work without JavaScript and can be shared. */
 export function ViewTabs({ active }: { active: AccessView | null }) {
   return (
-    <nav aria-label="View" className="mb-4 inline-flex rounded-md border border-line bg-surface p-1" data-testid="view-tabs">
+    <nav aria-label="View" className="mb-4 inline-flex rounded-md border border-control bg-surface p-1" data-testid="view-tabs">
       {TABS.map((t) => (
         <Link key={t.view} href={t.href} aria-current={active === t.view ? "page" : undefined}
               className={`flex min-h-11 items-center rounded px-4 text-sm font-medium no-underline ${

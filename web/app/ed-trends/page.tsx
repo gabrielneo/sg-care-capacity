@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { CaveatChip } from "@/components/CaveatChip";
 import { ChartCard } from "@/components/ChartCard";
+import { Chapters } from "@/components/Section";
 import { Callouts } from "@/components/edcharts/Callouts";
 import { Dumbbell } from "@/components/edcharts/Dumbbell";
 import { ModeToggle } from "@/components/edcharts/ModeToggle";
@@ -154,7 +155,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   return (
     <>
       {header(from, to)}
-      <div className="space-y-6">
+      <Chapters first="band">
         <ChartCard title={`${BED_WAIT_LABEL}, ${formatWindow({ kind: "days", from, to })}`} meta={meta} caveat={CAVEAT.bedWaitUnit} download={csv("/export/ed-daily.csv", { from, to })}
                    description={<>
                      <Glossed text={mode === "usual"
@@ -195,7 +196,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
             <SlopeChart pairs={pairs} finding={findingFor(findings, "source_gap", hospitals)} />
           </ChartCard>
         ) : null}
-      </div>
+      </Chapters>
     </>
   );
 }

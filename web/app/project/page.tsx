@@ -66,7 +66,7 @@ export default async function ProjectPage() {
           ) : null}
           {linkedin ? (
             <a href={linkedin.href} target="_blank" rel="noopener noreferrer"
-               className="inline-flex min-h-11 items-center rounded-md border border-line bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-page">
+               className="inline-flex min-h-11 items-center rounded-md border border-control bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-page">
               Connect on LinkedIn<span className="sr-only"> (opens in a new tab)</span>
             </a>
           ) : null}

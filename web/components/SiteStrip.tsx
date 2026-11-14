@@ -59,7 +59,7 @@ export function SiteStrip() {
     <div className="sticky top-0 z-30 border-b border-line bg-surface" data-testid="site-strip" role="region" aria-label="Data overview">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4">
         <div className="flex min-h-11 shrink-0 items-center justify-between gap-3">
-          <Link href={viewHref("planner")} className="min-w-0 py-1 text-xs leading-[15px] text-ink" data-testid="strip-summary">
+          <Link href={viewHref("planner")} className="flex min-h-11 min-w-0 flex-col justify-center py-1 text-xs leading-[15px] text-ink" data-testid="strip-summary">
             <span className="block font-semibold">{lead}</span>
             {/* One line, so the bar is the same height before and after it loads (no layout shift). The week joins it where there is room. */}
             {basis ? (

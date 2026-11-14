@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, isValidElement, type ReactNode } from "react";
 
 /**
  * A page section. "band" sits on the band colour and runs the full width of the window; the content stays
@@ -16,4 +16,11 @@ export function Section({ tone = "page", heading, id, children, className = "" }
       {children}
     </section>
   );
+}
+
+/** A run of sections that alternate between band and page, however many of them actually render (null children are skipped). */
+export function Chapters({ first = "band", children }: { first?: "page" | "band"; children: ReactNode }) {
+  const items = Children.toArray(children);
+  const other = first === "band" ? "page" : "band";
+  return <>{items.map((child, i) => <Section key={isValidElement(child) && child.key != null ? child.key : i} tone={i % 2 === 0 ? first : other}>{child}</Section>)}</>;
 }

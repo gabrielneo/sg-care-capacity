@@ -31,7 +31,7 @@ export function GlossaryList({ terms }: { terms: readonly GlossaryEntry[] }) {
       <div className="mb-6 max-w-md">
         <label htmlFor={inputId} className="block text-sm font-semibold">Search the glossary</label>
         <input id={inputId} type="search" value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off"
-               className="mt-1 min-h-11 w-full rounded-md border border-line bg-surface px-3" placeholder="e.g. CHAS, median, bed wait" />
+               className="mt-1 min-h-11 w-full rounded-md border border-control bg-surface px-3" placeholder="e.g. CHAS, median, bed wait" />
         <p role="status" aria-live="polite" className="mt-1 text-sm text-muted" data-testid="glossary-count">
           {query.trim() ? `${shown.length} of ${terms.length} terms match` : `${terms.length} terms`}
         </p>

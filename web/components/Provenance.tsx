@@ -121,7 +121,7 @@ export function Provenance({
       </div>
       {!compact && count > 0 ? (
         <details className="mt-2">
-          <summary className="cursor-pointer select-none py-1 text-accent">More about these figures ({count})</summary>
+          <summary className="min-h-11 cursor-pointer select-none py-3 text-accent">More about these figures ({count})</summary>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {extra.map((n) => (
               <li key={n}>{detail ? n : <Glossed text={n} />}</li>

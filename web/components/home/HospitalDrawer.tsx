@@ -67,7 +67,7 @@ export function HospitalDrawer({ code, title, children, onClose }: {
           <div className="flex items-start justify-between gap-3 border-b border-line p-4">
             <h2 id="care-drawer-title" className="text-xl font-semibold leading-snug tracking-tight">{title}</h2>
             <button type="button" onClick={() => ref.current?.close()} data-testid="drawer-close"
-                    className="min-h-11 shrink-0 rounded-md border border-line px-3 text-sm font-medium">Close</button>
+                    className="min-h-11 shrink-0 rounded-md border border-control px-3 text-sm font-medium">Close</button>
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain p-4">{children}</div>
         </>

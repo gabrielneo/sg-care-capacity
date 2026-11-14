@@ -20,9 +20,13 @@ test.describe("Live", () => {
     expect(await seen(card(/^National University Hospital: Adult Emergency$/))).not.toContain("not part of MOH's NUH figures");
     // NUHS published "< 1 hour(s)" for Alexandra: shown as a bound, never as "1 hour" (audit C-1).
     const ah = card(/^Alexandra Hospital/);
-    expect(await seen(ah)).toContain("Estimated wait to see a doctor Under 1 hour Estimated wait for a ward bed (NUHS estimate) 1 hour Data");
-    expect(await seen(card(/Children's Emergency$/))).toContain("ward bed (NUHS estimate) Under 1 hour Data");
-    await expectAsOfOnEveryCard(page, 4);
+    expect(await seen(ah)).toContain("Estimated wait to see a doctor Under 1 hour Estimated wait for a ward bed (NUHS estimate) 1 hour NUHS lists");
+    expect(await seen(card(/Children's Emergency$/))).toContain("ward bed (NUHS estimate) Under 1 hour");
+    // One date and source for all the readings (each has its own NUHS time above), not one per card.
+    await expect(page.getByTestId("chart-card")).toHaveCount(4);
+    await expect(page.getByTestId("chart-card").getByTestId("provenance-line")).toHaveCount(0);
+    await expect(page.getByTestId("provenance-line")).toHaveCount(1);
+    await expect(page.getByTestId("provenance-line")).toContainText("Data as of");
     await expectNoHorizontalScroll(page);
   });
 

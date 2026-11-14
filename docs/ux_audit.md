@@ -157,3 +157,16 @@ At 375px the emergency band fills most of the first screen on the public view, w
 - [ ] **L5** Give freshness pills a distinct style from status; rename the doctor estimates pill.
 - [ ] **L7** Add `?view=planner` to Lighthouse CI.
 - [ ] Re-run this audit's probe against the real 9-hospital snapshot after the above.
+
+## Resolution (2026-11-14)
+
+Fixed in the "calm & clear" redesign. Each has a test.
+
+- **M1** One set of status words: the scale's own labels everywhere; "busy/busier" is gone (`web/test/wording.test.ts`, `docs/language_rules.md`, ADR 0011).
+- **M2** Control borders use `--border-control` (3:1 or more in both themes); `web/lib/tokens.contrast.test.ts`.
+- **M3** Primary controls are at least 44px at 375px; `web/e2e/targets.spec.ts` checks 13 routes. Glossary terms and links in running text are exempt.
+- **M4** The strip's cluster chips are gone; the filter lives with the map.
+- **M7** Dark mode exists; axe runs in light and dark on five routes (`web/e2e/theme.spec.ts`).
+- **H2 and the as-of rule** Date and source are stated once per section (`CLAUDE.md` principle 4).
+
+Still open: M5, M6, L1 to L7, and a re-run of the probe on the real nine-hospital snapshot.

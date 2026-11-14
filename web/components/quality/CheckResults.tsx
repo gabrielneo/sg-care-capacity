@@ -89,7 +89,7 @@ export function CheckResults({ report }: { report: QualityReport }) {
             )}
             {passed.length ? (
               <details className="mt-2">
-                <summary className="cursor-pointer py-1 text-sm text-accent">Show {passed.length} passed checks</summary>
+                <summary className="cursor-pointer py-3 text-sm text-accent">Show {passed.length} passed checks</summary>
                 <ResultTable rows={passed} label={`${g.title}: passed`} />
               </details>
             ) : null}

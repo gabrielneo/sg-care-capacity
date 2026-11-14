@@ -69,7 +69,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
         <div className="mt-1 flex gap-2">
           <input id="near" type="text" value={text} onChange={(e) => setDraft(e.target.value)} onFocus={ensurePlaces}
                  placeholder="e.g. 460123 or Bedok" autoComplete="postal-code" enterKeyHint="search" maxLength={60}
-                 className="min-h-12 w-full min-w-0 rounded-lg border border-ink/60 bg-surface px-3 text-base text-ink placeholder:text-muted" />
+                 className="min-h-12 w-full min-w-0 rounded-lg border border-control bg-surface px-3 text-base text-ink placeholder:text-muted" />
           <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-accent px-5 text-base font-semibold text-surface hover:bg-accent-strong">
             Find clinics
           </button>
@@ -79,7 +79,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
           <div role="radiogroup" aria-label="Kind of place" className="mt-1 inline-flex flex-wrap gap-2" data-testid="type-filter">
             {TYPE_FILTERS.map((t) => (
               <label key={t.id}
-                     className={"flex min-h-11 cursor-pointer items-center rounded-lg border border-line bg-surface px-4 text-base font-medium text-ink "
+                     className={"flex min-h-11 cursor-pointer items-center rounded-lg border border-control bg-surface px-4 text-base font-medium text-ink "
                        + "has-checked:border-accent has-checked:bg-accent-soft has-checked:text-accent-strong "
                        + "has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent"}>
                 <input type="radio" name="type" value={t.id} checked={f.type === t.id} onChange={() => setType(t.id)} className="sr-only" />

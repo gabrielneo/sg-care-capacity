@@ -22,11 +22,11 @@ function SortLinks({ sort, query }: { sort: Sort; query: string }) {
   return (
     <nav aria-label="Order of the hospitals" className="flex items-center gap-2 text-sm" data-testid="sort-links">
       <span className="text-muted" aria-hidden="true">Order by</span>
-      <ul className="inline-flex rounded-md border border-line bg-surface p-1">
+      <ul className="inline-flex rounded-md border border-control bg-surface p-1">
         {SORTS.map((s) => (
           <li key={s.id}>
             <Link href={sortHref(s.id, query)} scroll={false} aria-current={s.id === sort ? "true" : undefined}
-                  className={"flex min-h-9 items-center rounded border px-3 font-medium no-underline "
+                  className={"flex min-h-11 items-center rounded border px-3 font-medium no-underline "
                     + (s.id === sort ? "border-accent bg-accent-soft text-accent-strong" : "border-transparent text-muted hover:text-ink")}>
               {s.label}
             </Link>
