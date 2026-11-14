@@ -152,7 +152,7 @@ test.describe("Findings: the scroll story", () => {
     const step = page.getByTestId("story-step").nth(1);
     await expect(step.getByTestId("delta-number")).toContainText(steps[1]!.display.value_text);
     await expect(step.getByTestId("delta-change")).toContainText("▲ higher than usual");
-    await expect(step.getByTestId("delta-change")).toHaveClass(/text-bad/);                // a longer wait is worse
+    await expect(step.getByTestId("delta-change")).toHaveClass(/text-status-much/);                // a longer wait is worse
     await expect(step.locator("[data-testid=step-detail]")).not.toBeEmpty();
     await expect(step.getByText("One unusual week is not a trend.")).toBeVisible();
     await expect(step.getByTestId("who-acts")).toHaveCount(0);                              // the site analyses; planners decide (W3)

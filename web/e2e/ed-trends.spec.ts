@@ -51,7 +51,7 @@ test.describe("ED Trends: difference-first charts", () => {
     await expect(sgh).toHaveAttribute("data-annotated", "");
     await expect(sgh.getByTestId("delta-number")).toContainText("+25%");
     await expect(sgh.getByTestId("delta-change")).toContainText("▲ higher than usual");
-    await expect(sgh.getByTestId("delta-change")).toHaveClass(/text-bad/);                      // a longer wait is worse
+    await expect(sgh.getByTestId("delta-change")).toHaveClass(/text-status-much/);                      // a longer wait is worse
     await expect(sgh.getByTestId("chart-callout")).toContainText("19–25 Oct 2026: 5.0 hours");
     expect(await plain(page.getByTestId("dumbbell-missing"))).toContain("(7 of 8)");
   });
