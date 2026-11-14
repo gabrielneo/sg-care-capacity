@@ -7,7 +7,7 @@ import { Glossed } from "../terms/Glossed";
 export type Direction = "better" | "worse" | "neutral";
 
 /** Colour comes from direction only (more clinics is better, a longer wait is worse); neutral has none. */
-const TONE: Record<Direction, string> = { better: "text-ok", worse: "text-bad", neutral: "text-ink" };
+const TONE: Record<Direction, string> = { better: "text-status-lower", worse: "text-status-much", neutral: "text-ink" };
 const ARROW = { up: "▲", down: "▼" } as const;
 
 export interface DeltaNumberProps {

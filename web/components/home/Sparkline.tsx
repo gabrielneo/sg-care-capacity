@@ -11,12 +11,12 @@ const PAD = 3;
  * usualBand) on the line's own scale. Only a line above usual is coloured; the rest are grey.
  */
 export function Sparkline({ values, tone, band = null }: {
-  values: (number | null)[]; tone: "bad" | "warn" | "ok" | "none"; band?: [number, number] | null }) {
+  values: (number | null)[]; tone: "much" | "higher" | "usual" | "lower" | "none"; band?: [number, number] | null }) {
   const domain = sparkDomain(values, band ?? []);
   const d = sparkPath(values, W, H, PAD, domain);
   if (!d || !domain) return <div className="h-8 w-[120px] shrink-0" aria-hidden="true" />;
   const last = d.split(/[ML]/).filter(Boolean).at(-1)?.split(" ").map(Number);
-  const colour = { bad: "text-bad", warn: "text-warn", ok: "text-muted", none: "text-muted" }[tone];
+  const colour = { much: "text-status-much", higher: "text-status-higher", usual: "text-muted", lower: "text-muted", none: "text-muted" }[tone];
   const top = band ? sparkY(band[1], domain, H, PAD) : 0;
   const bottom = band ? sparkY(band[0], domain, H, PAD) : 0;
   return (

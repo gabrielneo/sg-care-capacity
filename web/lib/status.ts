@@ -28,17 +28,17 @@ export interface LevelInfo {
   label: string;
   /** A shape as well as a colour, so the badge never depends on colour alone. */
   icon: string;
-  tone: "bad" | "warn" | "ok" | "none";
+  tone: "much" | "higher" | "usual" | "lower" | "none";
   sentence: string;
   /** The public view's words for the badge: what a resident reads, on the same scale as `label`. */
   plain: string;
 }
 
 export const LEVELS: Record<Level, LevelInfo> = {
-  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "bad", sentence: "Bed waits were much longer than usual in the latest complete week.", plain: "Much busier than usual for this hospital" },
-  higher: { label: "Higher than usual", icon: "▲", tone: "warn", sentence: "Bed waits were longer than usual in the latest complete week.", plain: "Busier than usual for this hospital" },
-  usual: { label: "About usual", icon: "●", tone: "ok", sentence: "Bed waits were about usual in the latest complete week.", plain: "About as busy as usual for this hospital" },
-  lower: { label: "Lower than usual", icon: "▼", tone: "ok", sentence: "Bed waits were shorter than usual in the latest complete week.", plain: "Less busy than usual for this hospital" },
+  much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "much", sentence: "Bed waits were much longer than usual in the latest complete week.", plain: "Much busier than usual for this hospital" },
+  higher: { label: "Higher than usual", icon: "▲", tone: "higher", sentence: "Bed waits were longer than usual in the latest complete week.", plain: "Busier than usual for this hospital" },
+  usual: { label: "About usual", icon: "●", tone: "usual", sentence: "Bed waits were about usual in the latest complete week.", plain: "About as busy as usual for this hospital" },
+  lower: { label: "Lower than usual", icon: "▼", tone: "lower", sentence: "Bed waits were shorter than usual in the latest complete week.", plain: "Less busy than usual for this hospital" },
   unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual.", plain: "No comparison with usual available" },
 };
 

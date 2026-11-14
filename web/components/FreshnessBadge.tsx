@@ -2,9 +2,9 @@ import type { Meta } from "@/lib/api/types";
 import { type Freshness, freshnessText, type Level, metaFreshness, ruleText } from "@/lib/freshness";
 
 export const LEVEL_STYLE: Record<Level, string> = {
-  up_to_date: "bg-ok-soft text-ok border-ok/30",
-  due: "bg-warn-soft text-warn border-warn/30",
-  overdue: "bg-bad-soft text-bad border-bad/30",
+  up_to_date: "bg-status-usual-soft text-status-usual border-status-usual/30",
+  due: "bg-status-higher-soft text-status-higher border-status-higher/30",
+  overdue: "bg-status-much-soft text-status-much border-status-much/30",
   unknown: "bg-page text-muted border-line",
 };
 

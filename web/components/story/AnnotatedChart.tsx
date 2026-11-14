@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import type { InsightChart, Meta } from "@/lib/api/types";
 import { sortByDate } from "@/lib/dates";
-import { colors } from "@/lib/palette";
+import { cssColors as colors } from "@/lib/palette";
 
 import { ChartCard } from "../ChartCard";
 
@@ -51,7 +51,7 @@ export interface AnnotatedChartProps {
 }
 
 export const LEGEND_ABOVE = 3;
-const SERIES_COLOURS = [colors.accent, colors["map-4"], colors["map-5"], colors.warn, colors.muted];
+const SERIES_COLOURS = [colors.accent, colors["map-4"], colors["map-5"], colors["status-higher"], colors.muted];
 const colourAt = (i: number): string => SERIES_COLOURS[i % SERIES_COLOURS.length] ?? colors.ink;
 const X0 = 6;            // plot area, % of width
 const X1 = 94;

@@ -1,7 +1,7 @@
 import type { Hospital, Insight } from "@/lib/api/types";
 import type { BandPoint, DayValue, Mode } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
-import { colors } from "@/lib/palette";
+import { cssColors as colors } from "@/lib/palette";
 import { HospitalName } from "@/components/HospitalName";
 
 import { CaveatChip } from "../CaveatChip";

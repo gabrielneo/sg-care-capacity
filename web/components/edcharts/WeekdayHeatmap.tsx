@@ -44,7 +44,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
             <td key={d} data-testid="heat-cell" data-value={v == null ? "" : v.toFixed(2)} data-color={c?.color ?? ""}
                 data-annotated={marked ? "" : undefined}
                 className={`h-9 rounded-sm text-center tabular-nums ${marked ? "outline outline-2 outline-offset-1 outline-ink" : ""}`}
-                style={{ background: c?.color ?? "transparent", color: c && textOn(c.color) === "light" ? "#FFFFFF" : "#0F172A" }}>
+                style={{ background: c?.color ?? "transparent", color: c && textOn(c.color) === "light" ? "var(--on-data-light)" : "var(--on-data-dark)" }}>
               {v == null ? <span className="text-muted">no data</span> : fmt(v)}
             </td>
           );

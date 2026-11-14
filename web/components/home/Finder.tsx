@@ -92,20 +92,20 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
           What you type stays in this browser. It isn&apos;t sent to any server or saved.
         </p>
         {/* React doesn't render a noscript's children, so the markup is given as a string. */}
-        <noscript dangerouslySetInnerHTML={{ __html: '<p class="mt-2 text-base text-warn" data-testid="needs-js">The clinic finder needs JavaScript. Without it, use the CHAS clinic list on data.gov.sg.</p>' }} />
+        <noscript dangerouslySetInnerHTML={{ __html: '<p class="mt-2 text-base text-status-higher" data-testid="needs-js">The clinic finder needs JavaScript. Without it, use the CHAS clinic list on data.gov.sg.</p>' }} />
       </form>
 
       {/* Always in the page, so a change in its text is announced. */}
       <p role="status" aria-live="polite" className="sr-only" data-testid="live-region">{announce}</p>
 
       {failed ? (
-        <p className="mt-4 max-w-prose rounded-lg border border-warn/40 bg-warn-soft p-3 text-base text-warn" data-testid="nearby-message">
+        <p className="mt-4 max-w-prose rounded-lg border border-status-higher/40 bg-status-higher-soft p-3 text-base text-status-higher" data-testid="nearby-message">
           The clinic lists can&apos;t be loaded right now. Please try again in a few minutes.
         </p>
       ) : waiting ? (
         <p className="mt-4 text-base text-muted" data-testid="nearby-loading">Finding places near {f.query.trim()}…</p>
       ) : located && !located.ok ? (
-        <p className="mt-4 max-w-prose rounded-lg border border-warn/40 bg-warn-soft p-3 text-base text-warn" data-testid="nearby-message">
+        <p className="mt-4 max-w-prose rounded-lg border border-status-higher/40 bg-status-higher-soft p-3 text-base text-status-higher" data-testid="nearby-message">
           {NOT_FOUND[located.reason]}
         </p>
       ) : located?.ok ? (

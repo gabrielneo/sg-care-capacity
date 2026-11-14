@@ -32,7 +32,7 @@ describe("Dumbbell", () => {
     expect(within(screen.getByTestId("dumbbell-ucc")).getByTestId("dumbbell-row")).toHaveAttribute("data-hospital", "AH");
     expect(screen.getByTestId("dumbbell-ucc")).toHaveTextContent("Urgent care centre · Not compared with full emergency departments");
     expect(within(rows[2]!).getByTestId("delta-number")).toHaveTextContent("+56%▲ higher than usual (worse)");
-    expect(within(rows[0]!).getByTestId("delta-change")).toHaveClass("text-ok");            // a shorter wait is better
+    expect(within(rows[0]!).getByTestId("delta-change")).toHaveClass("text-status-lower");            // a shorter wait is better
     expect(screen.getByTestId("dumbbell-missing")).toHaveTextContent("Sengkang General Hospital (SKH) (7 of 8)");
   });
 

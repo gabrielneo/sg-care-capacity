@@ -57,7 +57,7 @@ function geometryFor(area: AreaStyle, layer: Svy21Collection["features"][number]
 }
 
 function lighten(hex: string, k: number): string {
-  return `#${new Color(hex).lerp(new Color("#FFFFFF"), k).getHexString()}`;
+  return `#${new Color(hex).lerp(new Color(colors["on-data-light"]), k).getHexString()}`;
 }
 
 function Rig({ intro, onIntroDone }: { intro: boolean; onIntroDone?: () => void }) {
@@ -138,7 +138,7 @@ export default function AccessMap3D({ layer, labels, selected, onSelect, intro, 
                 camera={{ position: cameraEnd(fitDistance(1.4)), fov: FOV, near: 500, far: 600_000 }}
                 onPointerMissed={() => setHover(null)}>
           <color attach="background" args={[colors.surface]} />
-          <hemisphereLight args={["#FFFFFF", "#94A3B8", 1.2]} />
+          <hemisphereLight args={[colors["on-data-light"], colors.control, 1.2]} />
           <directionalLight position={[-25_000, 40_000, 30_000]} intensity={1.6} />
           {/* SVY21 x east, y north -> world x east, z south, y up. */}
           <group rotation-x={-Math.PI / 2}>

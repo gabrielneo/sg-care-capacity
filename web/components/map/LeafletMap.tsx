@@ -44,9 +44,9 @@ export default function LeafletMap({ areas, clinics, metric, breaks, colors, sho
     const cls = classify(p?.[metric.key], breaks);
     const isSelected = p?.planning_area_code === selected;
     return {
-      fillColor: cls === -1 ? "url(#nodata-hatch)" : (colors[cls] ?? "#E2E8F0"),
+      fillColor: cls === -1 ? "url(#nodata-hatch)" : (colors[cls] ?? "var(--map-none)"),
       fillOpacity: 0.85,
-      color: isSelected ? "#0F172A" : "#475569",
+      color: isSelected ? "var(--text-primary)" : "var(--text-secondary)",
       weight: isSelected ? 3 : 0.8,
     };
   }, [metric.key, breaks, colors, selected]);
@@ -80,8 +80,8 @@ export default function LeafletMap({ areas, clinics, metric, breaks, colors, sho
       <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
         <defs>
           <pattern id="nodata-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <rect width="6" height="6" fill="#FFFFFF" />
-            <line x1="0" y1="0" x2="0" y2="6" stroke="#94A3B8" strokeWidth="3" />
+            <rect width="6" height="6" fill="var(--bg-surface)" />
+            <line x1="0" y1="0" x2="0" y2="6" stroke="var(--border-control)" strokeWidth="3" />
           </pattern>
         </defs>
       </svg>
@@ -95,7 +95,7 @@ export default function LeafletMap({ areas, clinics, metric, breaks, colors, sho
           <Pane name="clinics" style={{ zIndex: 450, pointerEvents: "none" }}>
             {shown.map((c) => (
               <CircleMarker key={c.clinic_key} center={[c.latitude as number, c.longitude as number]} radius={2.5} interactive={false}
-                            pathOptions={{ color: "#0F172A", weight: 1, fillColor: "#FFFFFF", fillOpacity: 1 }} />
+                            pathOptions={{ color: "var(--text-primary)", weight: 1, fillColor: "var(--bg-surface)", fillOpacity: 1 }} />
             ))}
           </Pane>
         ) : null}

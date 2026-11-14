@@ -27,7 +27,7 @@ export function ErrorState({
 }) {
   const info = typeof error === "string" ? { message: error } : error;
   return (
-    <div role="alert" className="rounded-lg border border-bad/30 bg-bad-soft px-4 py-4 text-bad">
+    <div role="alert" className="rounded-lg border border-danger/30 bg-danger-soft px-4 py-4 text-danger">
       <p className="font-medium">{title}</p>
       <p className="mt-1 text-sm">
         {info.message}

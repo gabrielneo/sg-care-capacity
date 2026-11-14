@@ -95,9 +95,9 @@ describe("StatusCard densities", () => {
       <StatusCard status={status("SKH", -20)} note={null} live={null} />
       <StatusCard status={status("WH", 0)} note={null} live={null} density="simple" />
     </ul>);
-    const badge = screen.getAllByTestId("status-badge").map((b) => [b.textContent, /text-(bad|warn|ok|muted)/.exec(b.className)?.[1]]);
-    expect(badge).toEqual([["▲▲Much higher than usual", "bad"], ["▲Higher than usual", "warn"], ["●About usual", "muted"],
-      ["▼Lower than usual", "muted"], ["●About usual", "ok"]]);
+    const badge = screen.getAllByTestId("status-badge").map((b) => [b.textContent, /text-(status-much|status-higher|status-usual|muted)/.exec(b.className)?.[1]]);
+    expect(badge).toEqual([["▲▲Much higher than usual", "status-much"], ["▲Higher than usual", "status-higher"], ["●About usual", "muted"],
+      ["▼Lower than usual", "muted"], ["●About usual", "status-usual"]]);
   });
 
   it("full: the change never disagrees with the badge at a threshold", () => {

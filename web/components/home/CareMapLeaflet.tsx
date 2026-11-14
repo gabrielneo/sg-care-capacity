@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from "react-leaflet";
 
 import { MAX_BOUNDS, ONEMAP_ATTRIBUTION, ONEMAP_TILES } from "@/lib/onemap";
-import { colors } from "@/lib/palette";
+import { cssColors as colors } from "@/lib/palette";
 import { type Level, LEVELS } from "@/lib/status";
 
 export interface MapPoint {
@@ -31,10 +31,10 @@ export interface CareMapProps {
 }
 
 export const LEVEL_FILL: Record<Level, string> = {
-  much_higher: colors.bad,
-  higher: colors.warn,
-  usual: colors.ok,
-  lower: colors.ok,
+  much_higher: colors["status-much"],
+  higher: colors["status-higher"],
+  usual: colors["status-usual"],
+  lower: colors["status-lower"],
   unknown: colors.muted,
 };
 

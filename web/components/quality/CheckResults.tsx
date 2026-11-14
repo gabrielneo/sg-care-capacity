@@ -6,8 +6,8 @@ import { checkHref } from "@/lib/checkAnchors";
 type Result = QualityReport["results"][number];
 
 const STATUS: Record<Result["status"], { label: string; icon: string; cls: string }> = {
-  pass: { label: "Passed", icon: "✓", cls: "text-ok" },
-  fail: { label: "Failed", icon: "✕", cls: "text-bad" },
+  pass: { label: "Passed", icon: "✓", cls: "text-status-usual" },
+  fail: { label: "Failed", icon: "✕", cls: "text-status-much" },
   skipped: { label: "Skipped", icon: "–", cls: "text-muted" },
 };
 
@@ -85,7 +85,7 @@ export function CheckResults({ report }: { report: QualityReport }) {
             {attention.length ? (
               <ResultTable rows={attention} label={`${g.title}: failed or skipped`} />
             ) : (
-              <p className="text-sm text-ok"><span aria-hidden="true">✓ </span>Every check in this group passed.</p>
+              <p className="text-sm text-status-usual"><span aria-hidden="true">✓ </span>Every check in this group passed.</p>
             )}
             {passed.length ? (
               <details className="mt-2">

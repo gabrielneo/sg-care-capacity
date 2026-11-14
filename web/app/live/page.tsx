@@ -45,7 +45,7 @@ export default async function LivePage() {
   return (
     <>
       <PageHeader title={TITLE} intro={INTRO} />
-      <div role="note" className="mb-6 max-w-prose rounded-lg border border-warn/40 bg-warn-soft p-4 text-sm text-warn">
+      <div role="note" className="mb-6 max-w-prose rounded-lg border border-status-higher/40 bg-status-higher-soft p-4 text-sm text-status-higher">
         <p className="font-semibold"><Glossed text="Estimates from the NUHS public page, not live and not MOH statistics" /></p>
         <p className="mt-1">
           <Glossed text="They are read from the NUHS page when each weekly data release is built, so each one can be up to 7 days old: check its time." />{" "}

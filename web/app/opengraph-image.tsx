@@ -29,9 +29,9 @@ export default function OpengraphImage() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 16 }}>
-          {badge("▲▲ Much higher than usual", colors.bad, colors["bad-soft"])}
-          {badge("▲ Higher than usual", colors.warn, colors["warn-soft"])}
-          {badge("● About usual", colors.ok, colors["ok-soft"])}
+          {badge("▲▲ Much higher than usual", colors["status-much"], colors["status-much-soft"])}
+          {badge("▲ Higher than usual", colors["status-higher"], colors["status-higher-soft"])}
+          {badge("● About usual", colors["status-usual"], colors["status-usual-soft"])}
         </div>
       </div>
     ),

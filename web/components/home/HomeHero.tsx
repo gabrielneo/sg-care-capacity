@@ -29,11 +29,11 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
   if (full) {
     return (
       <section aria-labelledby="home-title" className="pb-2" data-testid="home-hero" data-density={density}>
-        <div role="note" aria-label="Emergency" className="rounded-xl bg-bad px-4 py-3 text-surface sm:px-6 sm:py-4" data-testid="emergency-note">
+        <div role="note" aria-label="Emergency" className="rounded-xl bg-danger px-4 py-3 text-surface sm:px-6 sm:py-4" data-testid="emergency-note">
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-bold leading-tight sm:text-2xl">
             <span aria-hidden="true">✚</span>
             <span data-testid="triage-emergency">{TRIAGE_EMERGENCY}</span>
-            <a href="tel:995" className="inline-flex min-h-11 items-center rounded-lg bg-surface px-4 text-lg font-bold text-bad no-underline hover:bg-bad-soft">
+            <a href="tel:995" className="inline-flex min-h-11 items-center rounded-lg bg-surface px-4 text-lg font-bold text-danger no-underline hover:bg-danger-soft">
               Call 995
             </a>
           </p>
@@ -62,7 +62,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
         Hospital emergency departments: the latest complete week against a usual week
       </h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p role="note" className="inline-flex max-w-prose items-center gap-2 rounded-lg border border-bad/30 bg-bad-soft px-3 py-1.5 text-sm font-medium text-bad"
+        <p role="note" className="inline-flex max-w-prose items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-1.5 text-sm font-medium text-danger"
            data-testid="emergency-note">
           <span aria-hidden="true">✚</span>
           In an emergency, call 995 or go to the nearest emergency department.

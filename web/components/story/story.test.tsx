@@ -28,13 +28,13 @@ describe("DeltaNumber", () => {
 
   it("colours by direction, never by the arrow: a rise in bed waits is worse, a rise in clinics is better", () => {
     const { rerender } = render(<DeltaNumber value="2.1" unit="hours" change="up" word="higher than usual" direction="worse" />);
-    expect(screen.getByTestId("delta-change")).toHaveClass("text-bad");
+    expect(screen.getByTestId("delta-change")).toHaveClass("text-status-much");
     expect(screen.getByTestId("delta-change")).toHaveTextContent("(worse)");
     rerender(<DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" change="up" word="higher than the national rate" direction="better" />);
-    expect(screen.getByTestId("delta-change")).toHaveClass("text-ok");
+    expect(screen.getByTestId("delta-change")).toHaveClass("text-status-lower");
     expect(screen.getByTestId("delta-change")).toHaveTextContent("▲ higher than the national rate (better)");
     rerender(<DeltaNumber value="1.00" unit="per 1,000 residents aged 65+" change="down" word="lower than the national rate" direction="worse" />);
-    expect(screen.getByTestId("delta-change")).toHaveClass("text-bad");
+    expect(screen.getByTestId("delta-change")).toHaveClass("text-status-much");
     expect(screen.getByTestId("delta-change")).toHaveTextContent("▼ lower than the national rate");
   });
 

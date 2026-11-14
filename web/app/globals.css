@@ -1,41 +1,65 @@
 @import "tailwindcss";
 
+@import "../styles/tokens.css";
+
 /*
- * Design tokens. Mirrors lib/palette.ts exactly (a test compares them). Tailwind's default colour
- * palette is switched off, so only these colours exist: neutral greys, one accent, status
- * colours (always paired with a text label) and the map's Viridis scale.
+ * Tailwind theme: every utility reads a CSS variable from styles/tokens.css, so light and dark switch
+ * without a rebuild. Tailwind's default colours, radii and shadows are switched off: only tokens exist.
  */
-@theme {
+@theme inline {
   --color-*: initial;
-  --color-page: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-ink: #0F172A;
-  --color-muted: #475569;
-  --color-line: #CBD5E1;
-  --color-accent: #0F766E;
-  --color-accent-strong: #115E59;
-  --color-accent-soft: #F0FDFA;
-  --color-ok: #166534;
-  --color-ok-soft: #F0FDF4;
-  --color-warn: #92400E;
-  --color-warn-soft: #FFFBEB;
-  --color-bad: #991B1B;
-  --color-bad-soft: #FEF2F2;
-  --color-map-1: #FDE725;
-  --color-map-2: #5EC962;
-  --color-map-3: #21918C;
-  --color-map-4: #3B528B;
-  --color-map-5: #440154;
-  --color-map-none: #E2E8F0;
-  --color-div-1: #542788;
-  --color-div-2: #998EC3;
-  --color-div-3: #D8DAEB;
-  --color-div-4: #F7F7F7;
-  --color-div-5: #FEE0B6;
-  --color-div-6: #F1A340;
-  --color-div-7: #B35806;
+  --color-page: var(--bg-page);
+  --color-band: var(--bg-band);
+  --color-surface: var(--bg-surface);
+  --color-sunken: var(--bg-sunken);
+  --color-line: var(--border-subtle);
+  --color-control: var(--border-control);
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-status-much: var(--status-much);
+  --color-status-much-soft: var(--status-much-fill);
+  --color-status-higher: var(--status-higher);
+  --color-status-higher-soft: var(--status-higher-fill);
+  --color-status-usual: var(--status-usual);
+  --color-status-usual-soft: var(--status-usual-fill);
+  --color-status-lower: var(--status-lower);
+  --color-status-lower-soft: var(--status-lower-fill);
+  --color-danger: var(--danger-notice);
+  --color-danger-soft: var(--danger-notice-fill);
+  --color-map-1: var(--map-1);
+  --color-map-2: var(--map-2);
+  --color-map-3: var(--map-3);
+  --color-map-4: var(--map-4);
+  --color-map-5: var(--map-5);
+  --color-map-none: var(--map-none);
+  --color-div-1: var(--div-1);
+  --color-div-2: var(--div-2);
+  --color-div-3: var(--div-3);
+  --color-div-4: var(--div-4);
+  --color-div-5: var(--div-5);
+  --color-div-6: var(--div-6);
+  --color-div-7: var(--div-7);
+  --color-on-data-dark: var(--on-data-dark);
+  --color-on-data-light: var(--on-data-light);
+
+  --shadow-*: initial;
+  --shadow-popover: var(--shadow-float);
 
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Radii are literal here (static: emitted even when only plain CSS uses them), so there is one definition. */
+@theme static {
+  --radius-*: initial;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 14px;
+  --radius-full: 9999px;
 }
 
 @layer base {
@@ -118,7 +142,7 @@
 .doc-diagram svg { max-width: 100%; height: auto; }
 
 /* TODO(me): what the author still has to write. Visible on purpose, never hidden in production. */
-.todo-me { background: var(--color-warn-soft); border-left: 4px solid var(--color-warn); padding: 0.35rem 0.6rem;
+.todo-me { background: var(--color-status-higher-soft); border-left: 4px solid var(--color-status-higher); padding: 0.35rem 0.6rem;
            border-radius: 2px; }
 td.todo-me, th.todo-me { border-left-width: 3px; }
 
@@ -135,7 +159,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   background: var(--color-ink); color: var(--color-surface); border-radius: 6px;
   padding: 0.5rem 0.7rem; font-size: 1rem; line-height: 1.45; font-weight: 400;
   text-align: left; white-space: normal; letter-spacing: normal; text-transform: none;
-  box-shadow: 0 4px 12px rgb(15 23 42 / 0.2);
+  box-shadow: var(--shadow-float);
 }
 .term-tip[data-open="true"] { display: block; }
 .term-tip strong { font-weight: 600; }
@@ -191,7 +215,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 .map3d-label {
   display: inline-block; white-space: nowrap; padding: 0.1rem 0.4rem; border-radius: 4px;
   background: var(--color-ink); color: var(--color-surface); font-size: 0.75rem; font-weight: 600;
-  box-shadow: 0 1px 4px rgb(15 23 42 / 0.25);
+  box-shadow: var(--shadow-float);
 }
 
 /* The one-page summary (/summary, requirement S4). */
@@ -202,7 +226,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 @page { size: A4; margin: 12mm 14mm; }
 @media print {
   body > header, body > footer, body > a[href="#main"], .print-hide { display: none !important; }
-  body { background: #fff; }
+  body { background: white; }
   main { max-width: none; padding: 0 !important; }
   a { color: inherit; text-decoration: none; }
   .summary { max-width: none; font-size: 10pt; }
@@ -225,7 +249,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   width: min(26rem, 100vw);
 }
 .care-drawer:not([open]) { display: none; }
-.care-drawer::backdrop { background: rgb(0 0 0 / 0.4); }
+.care-drawer::backdrop { background: var(--scrim); }
 @media (max-width: 639.98px) {
   .care-drawer {
     inset: auto 0 0 0;

@@ -1,0 +1,81 @@
+/*
+ * Design tokens: "Paper & Ink" (docs/design/redesign_brief.md). The ONE place colours are written as hex
+ * (besides lib/palette.ts, which a test keeps identical to this file).
+ *
+ * Rules:
+ *  - Orange/brown family = longer bed waits, violet family = shorter, everywhere.
+ *  - Ink blue (--accent) is interface only (links, selection, focus), never data meaning.
+ *  - Dark applies from the OS setting, or from <html data-theme="dark|light"> (the footer toggle).
+ *    The dark block appears twice because CSS cannot share one block between a media query and a selector;
+ *    web/lib/tokens.test.ts checks the two copies are identical.
+ */
+:root {
+  color-scheme: light;
+
+  --bg-page: #F6F1E8;
+  --bg-band: #EEE7DA;
+  --bg-surface: #FFFCF7;
+  --bg-sunken: #F1EBE0;
+  --border-subtle: #DDD3C2;
+  --border-control: #857A69;
+  --text-primary: #1F2330;
+  --text-secondary: #4F5563;
+  --text-tertiary: #5F636D;
+  --accent: #2E4A7D;
+  --accent-hover: #22385F;
+  --accent-soft: #E3E8F2;
+  --status-much: #A8322A;
+  --status-much-fill: #F7E1DC;
+  --status-higher: #8F5A12;
+  --status-higher-fill: #F5E7CF;
+  --status-usual: #4F5563;
+  --status-usual-fill: #ECE7DE;
+  --status-lower: #5B4A8B;
+  --status-lower-fill: #E7E2F2;
+  --danger-notice: #A8322A;
+  --danger-notice-fill: #F9E6E2;
+
+  /* Data palettes: the same in both themes (each cell carries its own label colour, below). */
+  --map-1: #FDE725; --map-2: #5EC962; --map-3: #21918C; --map-4: #3B528B; --map-5: #440154;
+  --map-none: #E2E8F0;
+  --div-1: #542788; --div-2: #998EC3; --div-3: #D8DAEB; --div-4: #F7F7F7;
+  --div-5: #FEE0B6; --div-6: #F1A340; --div-7: #B35806;
+  --on-data-dark: #12141B;   /* label on a light data cell */
+  --on-data-light: #FFFCF7;  /* label on a dark data cell */
+
+  /* Radii (6 / 10 / 14px) are defined once, in app/globals.css (@theme static). */
+  --shadow-float: 0 8px 24px rgba(31, 35, 48, 0.10);
+  --scrim: rgba(31, 35, 48, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg-page: #15171C; --bg-band: #1B1E24; --bg-surface: #20232A; --bg-sunken: #191C21;
+    --border-subtle: #2E323A; --border-control: #7A766E;
+    --text-primary: #EDE7DC; --text-secondary: #B8B2A7; --text-tertiary: #9A958C;
+    --accent: #8FB0E8; --accent-hover: #B0C8F0; --accent-soft: #243149;
+    --status-much: #F08A7E; --status-much-fill: #413337;
+    --status-higher: #E0A955; --status-higher-fill: #3F3831;
+    --status-usual: #B8B2A7; --status-usual-fill: #383A3E;
+    --status-lower: #B3A3E6; --status-lower-fill: #383748;
+    --danger-notice: #F08A7E; --danger-notice-fill: #413337;
+    --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --scrim: rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-page: #15171C; --bg-band: #1B1E24; --bg-surface: #20232A; --bg-sunken: #191C21;
+  --border-subtle: #2E323A; --border-control: #7A766E;
+  --text-primary: #EDE7DC; --text-secondary: #B8B2A7; --text-tertiary: #9A958C;
+  --accent: #8FB0E8; --accent-hover: #B0C8F0; --accent-soft: #243149;
+  --status-much: #F08A7E; --status-much-fill: #413337;
+  --status-higher: #E0A955; --status-higher-fill: #3F3831;
+  --status-usual: #B8B2A7; --status-usual-fill: #383A3E;
+  --status-lower: #B3A3E6; --status-lower-fill: #383748;
+  --danger-notice: #F08A7E; --danger-notice-fill: #413337;
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --scrim: rgba(0, 0, 0, 0.6);
+}

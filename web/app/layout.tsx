@@ -10,6 +10,7 @@ import { Nav } from "@/components/Nav";
 import { SiteStrip } from "@/components/SiteStrip";
 import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { Glossed } from "@/components/terms/Glossed";
+import { colors, darkColors } from "@/lib/palette";
 import { SITE, SITE_TITLE } from "@/lib/site";
 
 const DESCRIPTION = "A public-data analytics project by Gabriel Neo: where Singapore's emergency departments wait longest for ward beds, "
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: DESCRIPTION },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#F8FAFC" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: [{ media: "(prefers-color-scheme: light)", color: colors.page }, { media: "(prefers-color-scheme: dark)", color: darkColors.page }] };
 
 export default function RootLayout({ children, viewbar }: { children: ReactNode; viewbar: ReactNode }) {
   return (

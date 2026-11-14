@@ -2,7 +2,7 @@ import type { Insight } from "@/lib/api/types";
 import type { SlopePair } from "@/lib/edCompare";
 import { formatAsOf } from "@/lib/dates";
 import { estimateText } from "@/lib/estimates";
-import { colors } from "@/lib/palette";
+import { cssColors as colors } from "@/lib/palette";
 
 import { Glossed } from "../terms/Glossed";
 import { hours, shortDay } from "./format";

@@ -1,6 +1,6 @@
 import type { Meta } from "@/lib/api/types";
 import type { QuadrantPoint } from "@/lib/accessCharts";
-import { colors } from "@/lib/palette";
+import { cssColors as colors } from "@/lib/palette";
 
 import { ChartCard } from "../ChartCard";
 import { Glossed } from "../terms/Glossed";
@@ -42,8 +42,8 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
       <svg width="100%" height={H} role="img" aria-label={summary} className="block overflow-visible" data-testid="quadrant-chart">
         {/* the corner that needs attention first: many seniors (right), few clinics (bottom) */}
         <rect x={pct(x(medianSeniors))} width={pct(X1 - x(medianSeniors))} y={y(medianRate)} height={H - BOTTOM - y(medianRate)}
-              fill={colors["warn-soft"]} />
-        <text x={pct(X1)} y={H - BOTTOM - 6} textAnchor="end" fontSize="11" fill={colors.warn} fontWeight={600}>Many seniors, few clinics</text>
+              fill={colors["status-higher-soft"]} />
+        <text x={pct(X1)} y={H - BOTTOM - 6} textAnchor="end" fontSize="11" fill={colors["status-higher"]} fontWeight={600}>Many seniors, few clinics</text>
         <line x1={pct(x(medianSeniors))} x2={pct(x(medianSeniors))} y1={TOP} y2={H - BOTTOM} stroke={colors.muted} strokeDasharray="4 4" />
         <line x1={pct(X0)} x2={pct(X1)} y1={y(medianRate)} y2={y(medianRate)} stroke={colors.muted} strokeDasharray="4 4" />
         <line x1={pct(X0)} x2={pct(X1)} y1={H - BOTTOM} y2={H - BOTTOM} stroke={colors.line} />
