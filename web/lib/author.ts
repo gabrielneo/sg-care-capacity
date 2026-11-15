@@ -33,3 +33,10 @@ export const BUILD_FACTS = {
   cadence: "Weekly",
   auditSampled: 20,
 } as const;
+
+/** What the author did, in three lines: the project page and the About page's overview both show them. */
+export const WHAT_I_DID = [
+  "Built a weekly pipeline from MOH, data.gov.sg, SingStat and NUHS data.",
+  "Wrote checks that block a bad release, and a statistical test every finding must pass.",
+  "Designed one site for three readers: the public, planners and analysts.",
+] as const;

@@ -9,7 +9,7 @@ import { Provenance } from "@/components/Provenance";
 import { CountUp } from "@/components/story/CountUp";
 import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
-import { AUTHOR, AUTHOR_LINKS, BUILD_FACTS } from "@/lib/author";
+import { AUTHOR, AUTHOR_LINKS, BUILD_FACTS, WHAT_I_DID } from "@/lib/author";
 import { checksSummary, findingTiles, shareText } from "@/lib/project";
 
 export const metadata: Metadata = {
@@ -136,9 +136,7 @@ export default async function ProjectPage() {
             </div>
           </dl>
           <ul className="mt-4 grid max-w-4xl list-disc gap-1 pl-6 text-body text-ink sm:grid-cols-3 sm:gap-x-8" data-testid="project-what-i-did">
-            <li><Glossed text="Built a weekly pipeline from MOH, data.gov.sg, SingStat and NUHS data." /></li>
-            <li>Wrote checks that block a bad release, and a statistical test every finding must pass.</li>
-            <li>Designed one site for three readers: the public, planners and analysts.</li>
+            {WHAT_I_DID.map((line) => <li key={line}><Glossed text={line} /></li>)}
           </ul>
           <p className="mt-3 text-small">
             <Link href="/how-its-built">See how it&apos;s built</Link>

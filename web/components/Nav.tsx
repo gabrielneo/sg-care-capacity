@@ -5,24 +5,34 @@ import { usePathname } from "next/navigation";
 
 import { isCurrent, NAV_ITEMS } from "@/lib/nav";
 
-/** Top navigation. On narrow screens it wraps onto a second row: every section stays visible, with no menu button, script or sideways scroll. */
-export function Nav() {
+/**
+ * The site's navigation, in one component with two layouts:
+ * - "bar": the header's row from 768px. The current page is accent text with a 2px accent underline (no filled pill),
+ *   and the link fills the header's height, so the underline sits on the header's bottom border.
+ * - "sheet": a column of full-width rows inside the phone's menu sheet (components/MenuSheet.tsx).
+ * `onNavigate` lets the sheet close itself when a link is followed.
+ */
+export function Nav({ variant = "bar", onNavigate }: { variant?: "bar" | "sheet"; onNavigate?: () => void }) {
   const pathname = usePathname() ?? "/";
+  const bar = variant === "bar";
   return (
-    <nav aria-label="Main" className="-mx-2 sm:-mx-3">
-      <ul className="flex flex-wrap gap-x-1 sm:gap-1 sm:py-1">
+    <nav aria-label={bar ? "Main" : "Menu"} className={bar ? "hidden h-full md:block" : ""} data-testid={bar ? "nav-bar" : "nav-sheet"}>
+      <ul className={bar ? "flex h-full items-stretch gap-1 lg:gap-4" : "flex flex-col"}>
         {NAV_ITEMS.map((item) => {
           const current = isCurrent(pathname, item.href, item.children);
           return (
-            <li key={item.href}>
+            <li key={item.href} className={bar ? "flex" : "border-b border-line"}>
               <Link
                 href={item.href}
                 aria-current={current ? "page" : undefined}
-                className={`flex min-h-11 items-center rounded-md px-2 text-small sm:px-3 font-semibold link-quiet ${
-                  current ? "bg-accent-soft text-accent-strong" : "text-muted hover:bg-page hover:text-ink"
-                }`}
+                onClick={onNavigate}
+                className={bar
+                  ? `flex items-center border-b-2 px-2 text-small font-semibold link-quiet lg:px-3 ${
+                      current ? "border-accent text-accent" : "border-transparent text-muted hover:text-ink"}`
+                  : `flex min-h-11 items-center text-body font-semibold link-quiet ${current ? "text-accent" : "text-ink"}`}
               >
                 {item.label}
+                {!bar && current ? <span className="sr-only"> (current page)</span> : null}
               </Link>
             </li>
           );
