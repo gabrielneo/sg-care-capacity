@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { EdWeek } from "./api/types";
 import { usualLevels } from "./edCompare";
-import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkDomain, sparkPath, sparkWeeks, sparkY, usualBand } from "./status";
+import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkDomain, sparkPath, sparkWeeks, sparkY, usualBand, trendOf, trendPhrase,
+} from "./status";
 
 const week = (code: string, start: string, v: number | null, complete = true): EdWeek => ({
   hospital_code: code, hospital_name: code, iso_year: 2026, iso_week: 0, week_start: start, week_end: start,
@@ -118,5 +119,23 @@ describe("levelCounts", () => {
     expect([...LEVEL_ORDER].sort()).toEqual(Object.keys(LEVELS).sort());
     expect(LEVEL_ORDER[0]).toBe("much_higher");
     expect(LEVEL_ORDER.at(-1)).toBe("unknown");
+  });
+});
+
+describe("trendOf", () => {
+  const flat = (n: number, v: number) => Array<number | null>(n).fill(v);
+  it("rising: the last 4 weeks are 15% or more above the first 4", () => {
+    expect(trendOf([...flat(4, 10), ...flat(4, 10), ...flat(4, 11.5)])).toBe("rising");
+    expect(trendPhrase([...flat(4, 10), ...flat(4, 10), ...flat(4, 12)])).toBe("rising over 12 weeks");
+  });
+  it("falling at 15% or more down, steady in between", () => {
+    expect(trendOf([...flat(4, 10), ...flat(4, 10), ...flat(4, 8.5)])).toBe("falling");
+    expect(trendOf([...flat(4, 10), ...flat(4, 10), ...flat(4, 11.4)])).toBe("steady");
+  });
+  it("gaps are skipped, not filled; under 8 known weeks says so instead of guessing", () => {
+    expect(trendOf([null, null, null, null, ...flat(4, 10), ...flat(4, 12)])).toBe("rising");
+    expect(trendOf([null, null, null, null, null, ...flat(7, 10)])).toBeNull();
+    expect(trendPhrase([])).toBe("too few weeks to describe a trend");
+    expect(trendOf(flat(12, 0))).toBeNull();
   });
 });

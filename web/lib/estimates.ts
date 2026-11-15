@@ -39,3 +39,10 @@ export function nuhsTimingNote(snapshotAt: string, weeklyAsOf: string | null | u
     ? "Published separately by NUHS, so newer than the weekly data."
     : "Published separately by NUHS, with its own time.";
 }
+
+/** A card's short form: "2 h", "under 1 h", "over 4 h"; "not stated" without a figure. */
+export function estimateShort(hours: number | null, bound: Bound = null): string {
+  if (hours == null) return "not stated";
+  const n = Number.isInteger(hours) ? String(hours) : hours.toLocaleString("en-SG", { maximumFractionDigits: 1 });
+  return bound === "<" ? `under ${n} h` : bound === ">" ? `over ${n} h` : `${n} h`;
+}

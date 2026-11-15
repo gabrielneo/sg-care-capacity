@@ -15,7 +15,7 @@ export type Sort = "usual" | "hours" | "name";
 export const DEFAULT_SORT: Sort = "usual";
 
 export const SORTS: readonly { id: Sort; label: string }[] = [
-  { id: "usual", label: "Against usual" },
+  { id: "usual", label: "Change vs usual" },
   { id: "hours", label: "Hours" },
   { id: "name", label: "A–Z" },
 ];

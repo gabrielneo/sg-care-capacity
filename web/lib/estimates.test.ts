@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { estimateCell, estimateText, nuhsTimingNote } from "./estimates";
+import { estimateCell, estimateShort, estimateText, nuhsTimingNote } from "./estimates";
 
 describe("estimateText", () => {
   it.each([
@@ -22,4 +22,9 @@ describe("nuhsTimingNote", () => {
     expect(nuhsTimingNote("2026-10-20T10:00:00", "2026-10-31")).toBe("Published separately by NUHS, with its own time.");
     expect(nuhsTimingNote("2026-11-08T22:00:44", null)).toBe("Published separately by NUHS, with its own time.");
   });
+});
+
+describe("estimateShort", () => {
+  it.each([[2, null, "2 h"], [1, "<", "under 1 h"], [4, ">", "over 4 h"], [1.5, null, "1.5 h"], [null, null, "not stated"]] as const)(
+    "%s %s -> %s", (h, b, t) => expect(estimateShort(h, b)).toBe(t));
 });

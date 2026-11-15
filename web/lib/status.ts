@@ -140,3 +140,27 @@ export function usualBand(usual: number | null | undefined): [number, number] | 
   if (usual == null || !Number.isFinite(usual)) return null;
   return [usual * (1 - HIGHER_PCT / 100), usual * (1 + HIGHER_PCT / 100)];
 }
+
+export type Trend = "rising" | "falling" | "steady";
+
+/**
+ * How the 12-week line moved, in a word, for the card's accessible name (docs/data_dictionary.md, "Computed by the site").
+ * The mean of the last 4 known weeks against the mean of the first 4: HIGHER_PCT or more up is rising, that much down is
+ * falling, otherwise steady. Fewer than 8 known weeks, or a first mean of 0: null, never a guess.
+ */
+export function trendOf(spark: (number | null)[]): Trend | null {
+  const known = spark.filter((v): v is number => v != null);
+  if (known.length < 8) return null;
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const first = mean(known.slice(0, 4));
+  const last = mean(known.slice(-4));
+  if (!(first > 0)) return null;
+  const pct = ((last - first) / first) * 100;
+  return pct >= HIGHER_PCT ? "rising" : pct <= -HIGHER_PCT ? "falling" : "steady";
+}
+
+/** "rising over 12 weeks", or why there is no word. */
+export function trendPhrase(spark: (number | null)[]): string {
+  const t = trendOf(spark);
+  return t ? `${t} over ${SPARK_WEEKS} weeks` : `too few weeks to describe a trend`;
+}

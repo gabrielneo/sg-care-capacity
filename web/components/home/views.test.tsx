@@ -156,7 +156,7 @@ describe("StatusGrid", () => {
                                            sort="hours" query="view=planner" />);
     const links = within(screen.getByRole("navigation", { name: "Order of the hospitals" })).getAllByRole("link");
     expect(links.map((l) => [l.textContent, l.getAttribute("href"), l.getAttribute("aria-current")])).toEqual([
-      ["Against usual", "/?view=planner", null], ["Hours", "/?view=planner&sort=hours", "true"], ["A–Z", "/?view=planner&sort=name", null]]);
+      ["Change vs usual", "/?view=planner", null], ["Hours", "/?view=planner&sort=hours", "true"], ["A–Z", "/?view=planner&sort=name", null]]);
     // The bed-wait definition is in the page intro, not repeated under the cards (E3); the badge legend is a popover in the header.
     expect(screen.queryByTestId("status-definition")).toBeNull();
     expect(screen.getByRole("button", { name: "What the badges mean" })).toBeInTheDocument();
