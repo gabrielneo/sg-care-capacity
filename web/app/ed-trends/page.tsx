@@ -11,6 +11,7 @@ import { type Panel, SmallMultiples } from "@/components/edcharts/SmallMultiples
 import { SlopeChart } from "@/components/edcharts/SlopeChart";
 import { WeekdayHeatmap } from "@/components/edcharts/WeekdayHeatmap";
 import { EdFilterForm } from "@/components/EdFilterForm";
+import { Lede } from "@/components/Lede";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { Glossed } from "@/components/terms/Glossed";
@@ -35,6 +36,8 @@ import {
 import { parseEdFilters } from "@/lib/edParams";
 import { rankableHospitals, urgentCareHospitals } from "@/lib/hospitals";
 import { eachDay, missingDays } from "@/lib/series";
+import { levelSplitLede } from "@/lib/ledes";
+import { hospitalStatus, levelCounts } from "@/lib/status";
 import { formatWeek } from "@/lib/weeks";
 import { formatWindow, PROFILE_WEEKS, USUAL_WEEKS } from "@/lib/windows";
 
@@ -174,7 +177,10 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         {weeklyRes.ok ? (
           <ChartCard title={`The ${formatWindow({ kind: "latest_week", week: latestRange })} ${formatWindow({ kind: "usual" })}`} slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      download="/export/ed-weekly.csv?weeks=10"
-                     description={<Glossed text={`${latestText} for each hospital, against its usual level. ${usualDef} Largest difference first.`} />}>
+                     description={<>
+                       <Lede text={levelSplitLede(levelCounts(rankableHospitals(chosen).map((h) => hospitalStatus(h.hospital_code, usuals[h.hospital_code], weekly, latest))))} testId="usual-lede" />
+                       <Glossed text={`${latestText} for each hospital, against its usual level. ${usualDef} Largest difference first.`} />
+                     </>}>
             {callouts(["usual_gap", "anomaly"], "latest week against usual")}
             <Dumbbell usuals={usuals} hospitals={chosen} mode={mode} finding={findingFor(findings, "anomaly", hospitals)} />
           </ChartCard>

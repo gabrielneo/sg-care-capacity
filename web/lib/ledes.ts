@@ -38,3 +38,20 @@ export function takeawaysLede(n: number): string | null {
   if (n <= 0) return null;
   return `${n} ${count(n, "pattern", "patterns")} in the latest data passed a fixed statistical check.`;
 }
+
+/** What the data-quality checks found. `warnings` are failed warning-level checks; `blocking` failures stop publishing. */
+export function checksLede(total: number, blocking: number, warnings: number): string | null {
+  if (total <= 0) return null;
+  if (blocking > 0) return `${blocking} of ${total} checks failed and block publishing.`;
+  if (warnings === 0) return `All ${total} checks passed.`;
+  return `${total} checks ran; none stops publishing and ${warnings} raised a warning.`;
+}
+
+/** How many sources are within their own publishing schedule. `levels` are datasetFreshness levels; "unknown" ones are not counted either way. */
+export function freshnessLede(levels: string[]): string | null {
+  const known = levels.filter((l) => l === "up_to_date" || l === "due" || l === "overdue");
+  if (known.length === 0) return null;
+  const late = known.filter((l) => l !== "up_to_date").length;
+  if (late === 0) return known.length === 1 ? "The source is up to date." : `All ${known.length} sources are up to date.`;
+  return `${late} of ${known.length} ${count(known.length, "source is", "sources are")} past ${count(late, "its", "their")} publishing schedule.`;
+}

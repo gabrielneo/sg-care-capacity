@@ -12,7 +12,10 @@ import { FreshnessTable } from "@/components/quality/FreshnessTable";
 import { ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
 import { CAVEAT, plainError } from "@/lib/copy";
+import { datasetFreshness } from "@/lib/freshness";
+import { checksLede, freshnessLede } from "@/lib/ledes";
 import { COVERAGE_WINDOWS, coverageGrid, parseWindow, windowStart } from "@/lib/coverage";
+import { Lede } from "@/components/Lede";
 import { Glossed } from "@/components/terms/Glossed";
 import { Term } from "@/components/terms/Term";
 
@@ -78,7 +81,10 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
 
       <Chapters first="band">
         <ChartCard title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail release
-                   description={`The checks that published data release ${snapshot.data.snapshot_id}, grouped by what a failure does.`}>
+                   description={<>
+                     <Lede text={checksLede(results.length, quality.data.blocking, failed("WARN").length)} testId="checks-lede" />
+                     {`The checks that published data release ${snapshot.data.snapshot_id}, grouped by what a failure does.`}
+                   </>}>
           <CheckResults report={quality.data} />
         </ChartCard>
 
@@ -133,7 +139,10 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
         </ChartCard>
 
         <ChartCard title="Freshness by source" meta={snapshot.meta} caveat={null} release
-                   description="How current each source is, judged against how often it is published. An old source is flagged, not hidden.">
+                   description={<>
+                     <Lede text={freshnessLede(snapshot.meta.sources.map((s) => (s.as_of ? datasetFreshness(s.id, s.as_of).level : "unknown")))} testId="freshness-lede" />
+                     How current each source is, judged against how often it is published. An old source is flagged, not hidden.
+                   </>}>
           <FreshnessTable sources={snapshot.meta.sources} />
         </ChartCard>
       </Chapters>
