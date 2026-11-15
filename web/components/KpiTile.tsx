@@ -33,8 +33,14 @@ export interface KpiTileProps {
   freshness?: boolean;
   /** A tighter tile, for dense strips. */
   dense?: boolean;
-  /** false: no date and source on the tile, because the section around a row of tiles states them once (the caller must render a <Provenance>). */
+  /** false: no date and source on the tile, because the section around a row of tiles states them once (the section's header, components/SectionHeader.tsx). */
   provenance?: boolean;
+  /** Makes the whole tile a link (the label is the link, stretched over the tile): to the hospital card the number is about. */
+  href?: string;
+  /** What the tile's link does, for a screen reader: "Show on the hospital cards". */
+  hrefHint?: string;
+  /** Reserve the 32px row for a micro-visual. All the tiles in a row have one or none do: it is false by default, so they line up. */
+  visualRow?: ReactNode;
 }
 
 const defaultFormat = (v: number) => v.toLocaleString("en-SG", { maximumFractionDigits: 1 });
@@ -56,11 +62,13 @@ function ChangeLine({ change }: { change: KpiChange }) {
 }
 
 /** One headline number with its unit, change and provenance. Missing is shown as missing, never 0. */
-export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, now, release, detail, freshness = true, dense = false, provenance = true }: KpiTileProps) {
+export function KpiTile({ label, value, unit, meta, format = defaultFormat, change, caveat, now, release, detail, freshness = true, dense = false, provenance = true, href, hrefHint, visualRow }: KpiTileProps) {
   const problems = provenanceProblems(meta);
   return (
-    <div data-testid="kpi-tile" data-provenance={provenance ? "tile" : "section"} className={`h-full rounded-lg border border-line bg-surface ${dense ? "p-3" : "p-4"}`}>
-      <p className="text-small font-semibold text-muted">{label}</p>
+    <div data-testid="kpi-tile" data-provenance={provenance ? "tile" : "section"} className={`kpi relative flex h-full flex-col rounded-lg border border-line bg-surface ${dense ? "p-3" : "p-4"} ${href ? "kpi-linked hover:border-accent" : ""}`}>
+      <p className="kpi-label text-small font-semibold text-muted">
+        {href ? <a href={href} className="kpi-link link-quiet">{label}{hrefHint ? <span className="sr-only">. {hrefHint}</span> : null}</a> : label}
+      </p>
       {problems.length ? (
         <div className="mt-2">
           <ErrorState title="Can't be shown" error={{ message: `The figure can't be shown because ${problems.join(" and ")}.` }} />
@@ -76,7 +84,7 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
             ) : (
               format(value)
             )}
-            {value !== null && unit ? <>{" "}<span className="text-body font-normal text-muted">{unit}</span></> : null}
+            {value !== null && unit ? <>{" "}<span className="text-small font-normal text-muted">{unit}</span></> : null}
           </p>
           {detail ? <div className="mt-1 text-small text-muted" data-testid="kpi-detail">{detail}</div> : null}
           {change ? <ChangeLine change={change} /> : null}
@@ -85,6 +93,7 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
               <CaveatChip><Glossed text={caveat} /></CaveatChip>
             </div>
           ) : null}
+          {visualRow !== undefined ? <div className="kpi-visual mt-2" data-testid="kpi-visual">{visualRow}</div> : null}
           {provenance ? <Provenance meta={meta} now={now} compact release={release} freshness={freshness} tight={dense} /> : null}
         </>
       )}

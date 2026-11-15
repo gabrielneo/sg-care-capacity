@@ -47,4 +47,19 @@ describe("KpiTile", () => {
     render(<KpiTile label="x" value={3} meta={{ ...edMeta, sources: [] }} provenance={false} />);
     expect(screen.queryByText("3")).toBeNull();
   });
+
+  it("href: the label is the link, stretched over the tile, with a hint for a screen reader", () => {
+    render(<KpiTile label="Longest bed wait" value={7.8} unit="h" meta={edMeta} provenance={false} href="#hospital-SGH" hrefHint="Show its hospital card" />);
+    const link = screen.getByRole("link", { name: "Longest bed wait. Show its hospital card" });
+    expect(link).toHaveAttribute("href", "#hospital-SGH");
+    expect(screen.getByTestId("kpi-tile")).toHaveClass("kpi-linked");
+  });
+
+  it("reserves the micro-visual row only when asked, so tiles in a row are all the same shape", () => {
+    const { unmount } = render(<KpiTile label="x" value={3} meta={edMeta} provenance={false} />);
+    expect(screen.queryByTestId("kpi-visual")).toBeNull();
+    unmount();
+    render(<KpiTile label="x" value={3} meta={edMeta} provenance={false} visualRow={<svg />} />);
+    expect(screen.getByTestId("kpi-visual")).toBeInTheDocument();
+  });
 });

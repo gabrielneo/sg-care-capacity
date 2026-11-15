@@ -29,6 +29,7 @@
   --card-gap: var(--space-4);           /* between cards in a grid: 16px, 20px on desktop */
   --row-gap: var(--space-3);            /* between rows inside a card: 12px */
   --heading-lede: var(--space-2);       /* section heading to its lede: 8px */
+  --kpi-visual-row: var(--space-6);     /* a KPI tile's reserved micro-visual row: 32px */
   --lede-content: var(--space-5);       /* lede (or heading) to the content: 24px */
 }
 @media (min-width: 40rem) {

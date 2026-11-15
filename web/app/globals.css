@@ -152,7 +152,19 @@
 
 /* A section's heading, its lede, then the content: 8px, then 24px. */
 .section-head { margin-bottom: var(--lede-content); }
-.section-head .lede { margin-top: var(--heading-lede); }
+.section-head .lede-row { margin-top: var(--heading-lede); }
+.section-head .lede-row .lede { margin-top: 0; }
+
+/* A KPI tile that links to a hospital card: the label is the link, stretched over the tile. Glossary terms and tips inside stay clickable above it. */
+.kpi-linked:has(.kpi-link:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.kpi-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.kpi-linked .term-wrap { position: relative; z-index: 1; }
+/* Two lines for the label from 640px, where the tiles sit side by side, so the four numbers start on one line. */
+@media (min-width: 40rem) { .kpi-label { min-height: calc(2 * var(--lh-small)); } }
+.kpi-visual { height: var(--kpi-visual-row); }   /* the reserved micro-visual row: 32px */
+/* The card a tile or a link points at (its #hospital-CODE address): a solid ink-blue outline, no motion. */
+.target-card { scroll-margin-top: var(--space-9); }
+.target-card:target { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* A band runs the full width of the window while its content stays in the page container. The huge spread
    shadow paints the band colour sideways; clip-path stops it short of the window edge, so nothing scrolls. */
