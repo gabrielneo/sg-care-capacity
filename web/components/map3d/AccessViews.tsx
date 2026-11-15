@@ -16,7 +16,7 @@ import { Map3DLegend } from "./Map3DLegend";
 // three.js and the scene load only when the 3D view is shown, after the page has painted.
 const AccessMap3D = dynamic(() => import("./AccessMap3D"), {
   ssr: false,
-  loading: () => <Skeleton className="h-[420px] w-full sm:h-[520px]" label="Loading the 3D map" />,
+  loading: () => <Skeleton className="h-map-tall w-full" label="Loading the 3D map" />,
 });
 
 const INTRO_KEY = "access-map-3d-intro-seen";
@@ -91,7 +91,7 @@ export function AccessViews({ requested, areas, clinics, caveats, labels }: Acce
         </p>
       ) : null}
       {choice === null ? (
-        <Skeleton className="h-[420px] w-full sm:h-[520px]" label="Loading the map" />
+        <Skeleton className="h-map-tall w-full" label="Loading the map" />
       ) : show3d ? (
         <div>
           <p className="mb-3 text-small font-semibold text-ink" data-testid="reading-guide">{READING_GUIDE}</p>
@@ -100,7 +100,7 @@ export function AccessViews({ requested, areas, clinics, caveats, labels }: Acce
                          intro={intro && !choice.reducedMotion}
                          onIntroDone={() => { try { sessionStorage.setItem(INTRO_KEY, "1"); } catch { /* private mode */ } }} />
           ) : (
-            <Skeleton className="h-[420px] w-full sm:h-[520px]" label="Loading the 3D map" />
+            <Skeleton className="h-map-tall w-full" label="Loading the 3D map" />
           )}
           {labels.length ? (
             <p className="mt-2 text-small text-ink" data-testid="map3d-key">

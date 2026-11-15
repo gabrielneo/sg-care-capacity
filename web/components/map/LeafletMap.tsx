@@ -86,7 +86,7 @@ export default function LeafletMap({ areas, clinics, metric, breaks, colors, sho
         </defs>
       </svg>
       <MapContainer center={[1.3521, 103.8198]} zoom={11} minZoom={10} maxZoom={19} maxBounds={MAX_BOUNDS}
-                    scrollWheelZoom={false} className="h-[420px] w-full rounded-md sm:h-[520px]" attributionControl>
+                    scrollWheelZoom={false} className="h-map-tall w-full rounded-md" attributionControl>
         <TileLayer url={ONEMAP_TILES} attribution={ONEMAP_ATTRIBUTION} detectRetina maxZoom={19} minZoom={11} />
         <FitToAreas areas={areas} />
         <GeoJSON key={`${metric.key}|${selected}`} data={areas as unknown as GeoJSON.FeatureCollection}

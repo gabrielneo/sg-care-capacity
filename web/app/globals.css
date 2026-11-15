@@ -138,6 +138,13 @@
   &:hover, &:focus-visible { text-decoration-line: underline; }
 }
 
+/* The frame's heights (styles/tokens.css) and the map panels. */
+@utility header-h { height: var(--h-header); }
+@utility strip-h { height: var(--h-strip); }
+@utility control-h { height: var(--h-control); }
+@utility h-map { height: var(--h-map); }
+@utility h-map-tall { height: var(--h-map-tall); }
+
 /* Cards and card grids take their padding and gaps from the spacing tokens (16px on a phone, 20px from 640px). */
 @utility card { padding: var(--card-pad); }
 @utility card-grid { display: grid; gap: var(--card-gap); }
@@ -301,6 +308,12 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+
+/* The phone's menu (components/MenuSheet.tsx): a modal <dialog> over the whole screen. The browser traps focus and closes it on Esc.
+   No slide: it appears at once, so there is nothing to turn off for prefers-reduced-motion. */
+.menu-sheet { position: fixed; inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; overflow-y: auto; }
+.menu-sheet:not([open]) { display: none; }
+.menu-sheet::backdrop { background: var(--scrim); }
 
 /* The hospital details drawer (components/home/HospitalDrawer.tsx): a fixed overlay, so opening it moves nothing.
    A panel at the right from 640px, a sheet from the bottom below. The slide is off for prefers-reduced-motion. */

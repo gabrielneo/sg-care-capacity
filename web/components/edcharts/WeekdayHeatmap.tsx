@@ -61,7 +61,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
         </p>
       ) : null}
       <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Weekday pattern by hospital (scrolls sideways)">
-        <table className="w-full min-w-[30rem] border-separate border-spacing-0.5 text-meta" data-testid="heatmap">
+        <table className="w-full min-w-120 border-separate border-spacing-0.5 text-meta" data-testid="heatmap">
           <caption className="sr-only">
             {mode === "raw" ? "Average of daily median bed waits for each weekday, hours" : "Each weekday's bed wait, % above or below the hospital's own average"}
           </caption>

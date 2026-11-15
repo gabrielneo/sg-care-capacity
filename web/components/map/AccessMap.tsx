@@ -14,7 +14,7 @@ import { MapLegend } from "./MapLegend";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
-  loading: () => <Skeleton className="h-[420px] w-full sm:h-[520px]" label="Loading map" />,
+  loading: () => <Skeleton className="h-map-tall w-full" label="Loading map" />,
 });
 
 export interface AccessMapProps {

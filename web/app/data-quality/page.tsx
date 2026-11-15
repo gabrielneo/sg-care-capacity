@@ -111,7 +111,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
             <>
               <h3 className="mt-6 font-semibold text-h3">Whole series</h3>
               <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Coverage over the whole series (scrolls sideways)">
-                <table className="mt-1 w-full min-w-[560px] border-collapse text-small" data-testid="coverage-history">
+                <table className="mt-1 w-full min-w-140 border-collapse text-small" data-testid="coverage-history">
                   <thead>
                     <tr className="border-b border-line text-left">
                       <th scope="col" className="py-2 pr-3 font-semibold">Hospital</th>

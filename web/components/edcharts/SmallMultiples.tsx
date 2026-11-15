@@ -81,7 +81,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
                 </p>
               ) : null}
               {missingUsual ? (
-                <p className="mt-2 flex h-[110px] items-center justify-center rounded bg-page px-2 text-center text-meta text-muted">{missingUsual}</p>
+                <p className="mt-2 flex h-28 items-center justify-center rounded bg-page px-2 text-center text-meta text-muted">{missingUsual}</p>
               ) : (
                 <div className="relative mt-1">
                   <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" width="100%" height={H} aria-hidden="true" className="block">

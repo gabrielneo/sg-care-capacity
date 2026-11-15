@@ -13,7 +13,7 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
   };
   return (
     <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Area table (scrolls sideways)">
-      <table className="w-full min-w-[880px] border-collapse text-small" data-testid="area-table">
+      <table className="w-full min-w-220 border-collapse text-small" data-testid="area-table">
         <caption className="mb-2 text-left text-meta text-muted">
           Clinic access for residents aged 65+, {areas.length} areas. Sorted by{" "}
           {TABLE_COLUMNS.find((c) => c.key === s.key)?.label} ({s.dir === "asc" ? "ascending" : "descending"}); areas with no data are listed last.

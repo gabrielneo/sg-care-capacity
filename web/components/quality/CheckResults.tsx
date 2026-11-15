@@ -25,7 +25,7 @@ const order = (r: Result) => (r.status === "fail" ? 0 : r.status === "skipped" ?
 function ResultTable({ rows, label }: { rows: Result[]; label: string }) {
   return (
     <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`${label} (scrolls sideways)`}>
-      <table className="w-full min-w-[640px] border-collapse text-small">
+      <table className="w-full min-w-160 border-collapse text-small">
         <thead>
           <tr className="border-b border-line text-left">
             <th scope="col" className="py-2 pr-3 font-semibold">Check</th>

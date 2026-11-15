@@ -133,7 +133,7 @@ export default function AccessMap3D({ layer, labels, selected, onSelect, intro, 
   };
 
   return (
-    <div className="relative h-[420px] w-full overflow-hidden rounded-md border border-line sm:h-[520px]" data-testid="map3d">
+    <div className="relative h-map-tall w-full overflow-hidden rounded-md border border-line" data-testid="map3d">
       <div role="img" className="h-full w-full"
            aria-label={`3D map of the ${areas.length} areas: height shows residents aged 65+, colour shows chronic-care clinics per senior. `
              + "The 2D map and the table show the same figures and work with a keyboard."}>

@@ -9,7 +9,7 @@ import { Glossed } from "../terms/Glossed";
 export function FreshnessTable({ sources }: { sources: Source[] }) {
   return (
     <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Freshness by source (scrolls sideways)">
-      <table className="w-full min-w-[720px] border-collapse text-small" data-testid="freshness-table">
+      <table className="w-full min-w-180 border-collapse text-small" data-testid="freshness-table">
         <thead>
           <tr className="border-b border-line text-left">
             <th scope="col" className="py-2 pr-3 font-semibold">Source</th>

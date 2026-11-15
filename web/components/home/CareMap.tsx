@@ -11,7 +11,7 @@ import type { CareMapProps } from "./CareMapLeaflet";
 
 const CareMapLeaflet = dynamic(() => import("./CareMapLeaflet"), {
   ssr: false,
-  loading: () => <Skeleton className="h-[380px] w-full rounded-xl sm:h-[460px]" label="Loading map" />,
+  loading: () => <Skeleton className="h-map w-full rounded-xl" label="Loading map" />,
 });
 
 /**
@@ -33,7 +33,7 @@ export function CareMap(props: CareMapProps) {
   return (
     <div>
       <div ref={box} role="region" aria-label="Map of hospital emergency departments and polyclinics. The same hospitals are in the list view."
-           className="h-[380px] w-full overflow-hidden rounded-xl border border-line bg-page sm:h-[460px]" data-testid="care-map">
+           className="h-map w-full overflow-hidden rounded-xl border border-line bg-page" data-testid="care-map">
         {show ? <CareMapLeaflet {...props} /> : null}
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-meta text-muted" aria-label="Map key" data-testid="map-key">
