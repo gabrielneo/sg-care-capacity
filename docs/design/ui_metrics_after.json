@@ -1,0 +1,1194 @@
+{
+  "label": "after",
+  "data": "API fixture snapshot (api/tests/fixture_snapshot.py), production build",
+  "definitions": "web/scripts/ui-metrics.ts",
+  "routes": {
+    "home": {
+      "path": "/",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 9,
+          "pageHeight": 3400,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 11,
+          "pageHeight": 2681,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 11,
+          "pageHeight": 2611,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "home-public": {
+      "path": "/?view=public",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 9,
+          "pageHeight": 3400,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 11,
+          "pageHeight": 2681,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 11,
+          "pageHeight": 2611,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "home-planner": {
+      "path": "/?view=planner",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 8,
+          "pageHeight": 4538,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 8,
+          "pageHeight": 3219,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 8,
+          "pageHeight": 2905,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "home-analyst": {
+      "path": "/?view=analyst",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 15,
+          "pageHeight": 8201,
+          "dataAsOf": 5,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 15,
+          "pageHeight": 5315,
+          "dataAsOf": 5,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 15,
+          "pageHeight": 4695,
+          "dataAsOf": 5,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "project": {
+      "path": "/project",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 6,
+          "pageHeight": 2784,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 6,
+          "pageHeight": 1943,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 6,
+          "pageHeight": 1668,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "findings": {
+      "path": "/findings",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 6501,
+          "dataAsOf": 6,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 5158,
+          "dataAsOf": 6,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 4014,
+          "dataAsOf": 6,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "explore": {
+      "path": "/explore",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 1201,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 1024,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 800,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "ed-trends": {
+      "path": "/ed-trends",
+      "viewports": {
+        "375": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 16,
+          "pageHeight": 5972,
+          "dataAsOf": 8,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 16,
+          "pageHeight": 4342,
+          "dataAsOf": 8,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 16,
+          "pageHeight": 3772,
+          "dataAsOf": 8,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "access-map": {
+      "path": "/access-map",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 8,
+          "backgroundColours": 11,
+          "pageHeight": 3610,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            22,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 10,
+          "pageHeight": 3139,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            22,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 10,
+          "pageHeight": 2109,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "live": {
+      "path": "/live",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 2615,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 1642,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 1355,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "data-quality": {
+      "path": "/data-quality",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 7,
+          "pageHeight": 4775,
+          "dataAsOf": 6,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 7,
+          "pageHeight": 3976,
+          "dataAsOf": 6,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 7,
+          "pageHeight": 3485,
+          "dataAsOf": 6,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "methodology": {
+      "path": "/methodology",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 3,
+          "pageHeight": 57628,
+          "dataAsOf": 3,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 3,
+          "pageHeight": 31745,
+          "dataAsOf": 3,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 3,
+          "pageHeight": 28800,
+          "dataAsOf": 3,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "glossary": {
+      "path": "/glossary",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 5694,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 3789,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 3507,
+          "dataAsOf": 2,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "how-its-built": {
+      "path": "/how-its-built",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 1421,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 1024,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 2,
+          "pageHeight": 817,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "case-study": {
+      "path": "/case-study",
+      "viewports": {
+        "375": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 25693,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 18703,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 6,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            18,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 5,
+          "pageHeight": 18706,
+          "dataAsOf": 4,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "docs-insights-method": {
+      "path": "/docs/insights-method",
+      "viewports": {
+        "375": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            22,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 3,
+          "pageHeight": 17565,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 3,
+          "pageHeight": 10650,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 5,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            24,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 4,
+          "backgroundColours": 3,
+          "pageHeight": 10640,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "ed-trends-hospital-ah": {
+      "path": "/ed-trends?hospital=AH",
+      "viewports": {
+        "375": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 15,
+          "pageHeight": 4548,
+          "dataAsOf": 5,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 15,
+          "pageHeight": 3494,
+          "dataAsOf": 5,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 6,
+          "backgroundColours": 15,
+          "pageHeight": 3164,
+          "dataAsOf": 5,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "ed-trends-hospital-nuh": {
+      "path": "/ed-trends?hospital=NUH",
+      "viewports": {
+        "375": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 3,
+          "pageHeight": 1556,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 3,
+          "pageHeight": 1152,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 5,
+          "backgroundColours": 3,
+          "pageHeight": 1069,
+          "dataAsOf": 1,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    },
+    "ed-trends-hospital-sgh": {
+      "path": "/ed-trends?hospital=SGH",
+      "viewports": {
+        "375": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            28
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 16,
+          "pageHeight": 4829,
+          "dataAsOf": 7,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "768": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            16,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 16,
+          "pageHeight": 3605,
+          "dataAsOf": 7,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        },
+        "1280": {
+          "fontSizes": 4,
+          "fontSizeList": [
+            13,
+            14,
+            17,
+            36
+          ],
+          "smallText": 0,
+          "textColours": 7,
+          "backgroundColours": 16,
+          "pageHeight": 3274,
+          "dataAsOf": 7,
+          "overflow": {
+            "page": 0,
+            "element": 0
+          }
+        }
+      }
+    }
+  }
+}

@@ -18,6 +18,10 @@ for (const route of ROUTES) {
     await page.goto(route);
     await page.waitForLoadState("networkidle");
     await page.evaluate(async () => { await document.fonts.ready; });
+    // The map's controls (zoom, attribution) only exist once it has loaded: a route with a map is measured with it.
+    if (await page.locator("[data-testid=\"map-section\"], [data-testid=\"care-map\"], .leaflet-container").count()) {
+      await page.locator(".leaflet-container").first().waitFor({ timeout: 10_000 }).catch(() => undefined);
+    }
     const width = page.viewportSize()?.width ?? 1280;
     const metrics = summarise(await page.evaluate(collectRaw), width);
     expect(typeBudgetProblems(metrics), `${route} at ${width}px`).toEqual([]);

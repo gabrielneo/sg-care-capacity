@@ -180,3 +180,20 @@ Fixed in the "calm & clear" redesign. Each has a test.
 - **L6** Unchanged: acceptable, as the audit said.
 - **Real snapshot** The probe ran against the real nine-hospital snapshot at 375, 768 and 1280px on nine routes: axe (WCAG 2.2 AA), no overflow, no clipped text. It found two things the fixture hid, both fixed: the 20px "More findings" toggle, and the style guide's sample chart baked in as an error when a build had no API (the page is now rendered per request).
 - **Findings stories** Each story step keeps its own date and source line: a step is its own section and uses its own sources and data window.
+
+## Resolution (2026-11-15): type, rhythm, reading measure, links
+
+Brief: "make the site pleasant to read and scroll". The audit IDs below come from that brief; the original list (C1-C4, D6, D7) is not in this
+repository, so each is named by what the brief says it fixes. `docs/design/redesign_brief.md` ("Fonts and type scale") records the decisions.
+
+- **D6** The note under the hospital cards was ragged and as wide as the page. Notes now use `<Prose>` (68ch); `web/e2e/reading.spec.ts`.
+- **D7** The methods drawer left half the width empty. Its four definitions sit in two columns from 1024px; `web/e2e/reading.spec.ts`.
+- **C4** Links and glossary terms looked alike. Links are accent (underlined in running text, on hover and focus only in navigation, tabs, cards and the
+  site strip); a term is ink with a dotted tertiary underline, never accent; `web/e2e/links-terms.spec.ts`.
+- **Type scale** Seven sizes (13, 14, 16/17, 18, 22/24, 28/36, KPI at the h1 size), weights 400 and 600. At most 6 font sizes per route and no text under
+  13px, checked by `web/e2e/type-scale.spec.ts` (in CI with the e2e suite) and reported by `npm run ui:metrics` (`docs/design/ui_metrics_after.json`).
+- **Spacing** The 4/8 steps are tokens; sections, cards and card grids take their gaps from them (`web/test/scale-tokens.test.ts`, `web/test/design-tokens.test.ts`).
+- **Ledes** Each Overview heading has a one-sentence lede. Where it states a fact it is built from the data (`web/lib/ledes.ts`); with no data there is no sentence.
+
+**TODO(me):** C1, C2 and C3 are not in the repository, so they are not closed. Send the audit file (the brief names `docs/ux_audit_2026-11-14.md`) and I will map them.
+The ledes cover the Overview only; the other pages' headings (ED Trends, Access Map, Live, Data Quality) have none yet.
