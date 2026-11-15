@@ -13,7 +13,7 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
   useEffect(() => heading.current?.focus(), [area.planning_area_code]);
   const count = (v: number | null | undefined) => (v == null ? "No data" : v.toLocaleString("en-SG"));
   return (
-    <aside aria-labelledby="area-panel-title" className="rounded-lg border border-line bg-surface p-4" data-testid="area-panel">
+    <aside aria-labelledby="area-panel-title" className="rounded-lg border border-line bg-surface card" data-testid="area-panel">
       <div className="flex items-start justify-between gap-2">
         <h3 id="area-panel-title" ref={heading} tabIndex={-1} className="font-semibold text-h3">
           {area.planning_area}
@@ -23,7 +23,7 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
           Close<span className="sr-only"> {area.planning_area} details</span>
         </button>
       </div>
-      <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-small">
+      <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-2 text-small">
         <dt className="text-muted">Residents aged 65+</dt>
         <dd className="text-right tabular-nums">{count(area.residents_65plus)}</dd>
         <dt className="text-muted">All residents</dt>
@@ -44,7 +44,7 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
       </dl>
       <div className="mt-3 rounded-md bg-page p-2 text-meta">
         <p className="font-semibold">Data note</p>
-        <p className="mt-0.5">{area.dq_note ? area.dq_note.split(";").map((s) => s.trim()).join(". ") + "." : "No area-specific notes."}</p>
+        <p className="mt-1">{area.dq_note ? area.dq_note.split(";").map((s) => s.trim()).join(". ") + "." : "No area-specific notes."}</p>
         <p className="mt-1 text-muted">
           As of {area.as_of ? formatAsOf(area.as_of) : "unknown"} (the older of the clinic list and the population count).{" "}
           <Glossed text={caveats["fct_area_access.cdmp_clinics_per_1k_seniors"] ?? ""} />

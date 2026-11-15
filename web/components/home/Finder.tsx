@@ -12,7 +12,7 @@ import { BASIS_NOTE, kmText, locate, NOT_FOUND } from "@/lib/nearby";
 function PlaceCard({ place, nearest }: { place: Result; nearest: boolean }) {
   const where = [place.address, place.postal_code ? `Singapore ${place.postal_code}` : null].filter(Boolean).join(", ");
   return (
-    <li className="rounded-xl border border-line bg-surface p-4" data-testid="nearby-place" data-type={place.type}>
+    <li className="rounded-xl border border-line bg-surface card" data-testid="nearby-place" data-type={place.type}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="font-semibold leading-snug text-ink text-h3">{place.name}</h3>
         {nearest ? (
@@ -70,7 +70,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
           <input id="near" type="text" value={text} onChange={(e) => setDraft(e.target.value)} onFocus={ensurePlaces}
                  placeholder="e.g. 460123 or Bedok" autoComplete="postal-code" enterKeyHint="search" maxLength={60}
                  className="min-h-12 w-full min-w-0 rounded-lg border border-control bg-surface px-3 text-body text-ink placeholder:text-muted" />
-          <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-accent px-5 text-body font-semibold text-surface hover:bg-accent-strong">
+          <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-accent px-6 text-body font-semibold text-surface hover:bg-accent-strong">
             Find clinics
           </button>
         </div>
@@ -120,7 +120,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
             ) : "."}
           </p>
           {results.length ? (
-            <ol className="mt-4 grid gap-3 md:grid-cols-2" data-testid="results">
+            <ol className="mt-4 card-grid md:grid-cols-2" data-testid="results">
               {results.map((r, i) => <PlaceCard key={r.key} place={r} nearest={i === 0} />)}
             </ol>
           ) : (

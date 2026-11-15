@@ -13,7 +13,7 @@ export function WeekPattern({ profiles, hospitals, finding, meta }: { profiles: 
       <p className="mb-3 mt-1 max-w-prose text-small text-muted">
         Each day&apos;s bed wait over the {formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}, compared with that hospital&apos;s own average. Orange is longer, purple is shorter.
       </p>
-      <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="rounded-xl border border-line bg-surface card">
         <WeekdayHeatmap profiles={profiles} hospitals={shown} mode="usual" finding={finding} />
       </div>
       <Provenance meta={meta} compact />

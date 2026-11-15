@@ -37,7 +37,7 @@ export function GlossaryList({ terms }: { terms: readonly GlossaryEntry[] }) {
         </p>
       </div>
       {shown.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-line bg-surface p-4 text-small">No term matches &ldquo;{query}&rdquo;.</p>
+        <p className="rounded-lg border border-dashed border-line bg-surface card text-small">No term matches &ldquo;{query}&rdquo;.</p>
       ) : null}
       {GROUPS.map((g) => {
         const items = shown.filter((t) => t.category === g.category);

@@ -69,7 +69,7 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
       <p className="mt-1 text-small text-muted">
         <Glossed text={BED_WAIT_SHORT} />
       </p>
-      <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="mt-2 card-grid sm:grid-cols-2 lg:grid-cols-4">
         <Tile id="above">
           <KpiTile dense provenance={false} label="Emergency departments above usual, latest complete week" value={above.length} unit={`of ${rankable.length}`} meta={meta}
                    detail={

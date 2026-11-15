@@ -132,9 +132,18 @@
   }
 }
 
+/* Cards and card grids take their padding and gaps from the spacing tokens (16px on a phone, 20px from 640px). */
+@utility card { padding: var(--card-pad); }
+@utility card-grid { display: grid; gap: var(--card-gap); }
+@utility rows { display: flex; flex-direction: column; gap: var(--row-gap); }
+
 /* A band runs the full width of the window while its content stays in the page container. The huge spread
    shadow paints the band colour sideways; clip-path stops it short of the window edge, so nothing scrolls. */
+.section { padding-block: calc(var(--section-gap) / 2); }   /* two page sections side by side are one section-gap apart */
+.section-first { padding-top: 0; }                                  /* the page's first section sits right under the strip */
+.section-compact { --section-gap: var(--space-4); }              /* Planner, Analyst and the public first screen: dense, so the answer stays above the fold */
 .section-band {
+  padding-block: var(--section-gap);                          /* inside a band: the full gap above and below */
   background: var(--bg-band);
   box-shadow: 0 0 0 100vmax var(--bg-band);
   clip-path: inset(0 -100vmax);

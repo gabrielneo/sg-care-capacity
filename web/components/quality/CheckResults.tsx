@@ -28,11 +28,11 @@ function ResultTable({ rows, label }: { rows: Result[]; label: string }) {
       <table className="w-full min-w-[640px] border-collapse text-small">
         <thead>
           <tr className="border-b border-line text-left">
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Check</th>
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Table</th>
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Result</th>
-            <th scope="col" className="py-1.5 pr-3 text-right font-semibold">Rows</th>
-            <th scope="col" className="py-1.5 font-semibold">Details</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Check</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Table</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Result</th>
+            <th scope="col" className="py-2 pr-3 text-right font-semibold">Rows</th>
+            <th scope="col" className="py-2 font-semibold">Details</th>
           </tr>
         </thead>
         <tbody>
@@ -40,15 +40,15 @@ function ResultTable({ rows, label }: { rows: Result[]; label: string }) {
             const s = STATUS[r.status];
             return (
               <tr key={`${r.check_id}|${r.table}`} className="border-b border-line align-top" data-status={r.status}>
-                <th scope="row" className="py-1.5 pr-3 text-left font-normal">
+                <th scope="row" className="py-2 pr-3 text-left font-normal">
                   <Link href={checkHref(r.check_id)} className="font-mono text-meta">{r.check_id}</Link>
                 </th>
-                <td className="py-1.5 pr-3 font-mono text-meta">{r.table}</td>
-                <td className={`whitespace-nowrap py-1.5 pr-3 font-semibold ${s.cls}`}>
+                <td className="py-2 pr-3 font-mono text-meta">{r.table}</td>
+                <td className={`whitespace-nowrap py-2 pr-3 font-semibold ${s.cls}`}>
                   <span aria-hidden="true">{s.icon} </span>{s.label}
                 </td>
-                <td className="py-1.5 pr-3 text-right tabular-nums">{r.status === "fail" ? r.failing_rows.toLocaleString("en-SG") : ""}</td>
-                <td className="py-1.5 text-meta text-muted">
+                <td className="py-2 pr-3 text-right tabular-nums">{r.status === "fail" ? r.failing_rows.toLocaleString("en-SG") : ""}</td>
+                <td className="py-2 text-meta text-muted">
                   {r.details && r.details.length > 120 ? (
                     <details>
                       <summary className="cursor-pointer">{r.details.slice(0, 100)}…</summary>

@@ -51,7 +51,7 @@ export function CoverageGrid({ days, rows }: { days: string[]; rows: CoverageRow
     <div>
       <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-meta" aria-label="Legend">
         {(Object.keys(CELL_LABELS) as CellState[]).filter((s) => s !== "attendance_only").map((s) => (
-          <li key={s} className="flex items-center gap-1.5">
+          <li key={s} className="flex items-center gap-2">
             <Swatch state={s} />
             {s === "wait_only" ? "Only one of the two figures" : <Glossed text={CELL_LABELS[s]} />}
           </li>

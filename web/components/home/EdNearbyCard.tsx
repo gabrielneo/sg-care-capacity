@@ -26,7 +26,7 @@ export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
   const note = shortNote(hospital);
   const info = LEVELS[status.level];
   return (
-    <article className="h-full rounded-xl border border-line bg-surface p-4" data-testid="ed-card"
+    <article className="h-full rounded-xl border border-line bg-surface card" data-testid="ed-card"
              data-hospital={status.code} data-level={status.level}>
       <h3 className="font-semibold leading-snug text-ink text-h3"><HospitalName hospital={hospital} /></h3>
       {note ? <p className="mt-1"><CaveatChip large><span data-testid="ed-note">{note}</span></CaveatChip></p> : null}

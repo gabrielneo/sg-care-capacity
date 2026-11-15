@@ -12,11 +12,11 @@ export function FreshnessTable({ sources }: { sources: Source[] }) {
       <table className="w-full min-w-[720px] border-collapse text-small" data-testid="freshness-table">
         <thead>
           <tr className="border-b border-line text-left">
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Source</th>
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Data as of</th>
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Basis</th>
-            <th scope="col" className="py-1.5 pr-3 font-semibold">Last downloaded</th>
-            <th scope="col" className="py-1.5 font-semibold">Freshness</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Source</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Data as of</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Basis</th>
+            <th scope="col" className="py-2 pr-3 font-semibold">Last downloaded</th>
+            <th scope="col" className="py-2 font-semibold">Freshness</th>
           </tr>
         </thead>
         <tbody>
@@ -24,16 +24,16 @@ export function FreshnessTable({ sources }: { sources: Source[] }) {
             const cadence = cadenceOf(s.id);
             return (
               <tr key={s.id} className="border-b border-line align-top">
-                <th scope="row" className="py-1.5 pr-3 text-left font-normal">
+                <th scope="row" className="py-2 pr-3 text-left font-normal">
                   {s.url ? <a href={s.url}><Glossed text={s.name} plain /></a> : <Glossed text={s.name} />}
                 </th>
-                <td className="py-1.5 pr-3 tabular-nums">{s.as_of ? <Glossed text={formatAsOf(s.as_of, { withTime: cadence === "moment" })} /> : "Unknown"}</td>
-                <td className="py-1.5 pr-3 text-muted">{BASIS[s.id] ?? ""}</td>
-                <td className="py-1.5 pr-3 tabular-nums text-muted">{s.last_fetched_at ? formatAsOf(s.last_fetched_at) : "Unknown"}</td>
-                <td className="py-1.5">
+                <td className="py-2 pr-3 tabular-nums">{s.as_of ? <Glossed text={formatAsOf(s.as_of, { withTime: cadence === "moment" })} /> : "Unknown"}</td>
+                <td className="py-2 pr-3 text-muted">{BASIS[s.id] ?? ""}</td>
+                <td className="py-2 pr-3 tabular-nums text-muted">{s.last_fetched_at ? formatAsOf(s.last_fetched_at) : "Unknown"}</td>
+                <td className="py-2">
                   {/* One function and one config for every dataset (docs/datasets.yml). */}
                   {s.as_of ? <FreshnessBadge freshness={datasetFreshness(s.id, s.as_of)} /> : null}
-                  <span className="mt-0.5 block text-meta text-muted">{ruleText(s.id)}</span>
+                  <span className="mt-1 block text-meta text-muted">{ruleText(s.id)}</span>
                 </td>
               </tr>
             );

@@ -40,7 +40,7 @@ export function Scrolly({ steps }: { steps: ScrollyStep[] }) {
   }, []);
 
   return (
-    <div className="scrolly lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10" data-testid="scrolly" data-active={active}>
+    <div className="scrolly lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8" data-testid="scrolly" data-active={active}>
       <ol className="space-y-8 lg:space-y-0">
         {steps.map((s, i) => (
           <li

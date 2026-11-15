@@ -105,7 +105,7 @@ export default async function SummaryPage() {
           <p className="text-muted">No finding passed its statistical check in this data release.</p>
         ) : (
           <>
-            <ol className="mt-1 space-y-1.5" data-testid="summary-findings">
+            <ol className="mt-1 space-y-2" data-testid="summary-findings">
               {findings.map((f) => (
                 <li key={f.insight_id} className="grid grid-cols-[6.5rem_1fr] gap-3" data-testid="summary-finding">
                   <span className="font-semibold tabular-nums text-ink">

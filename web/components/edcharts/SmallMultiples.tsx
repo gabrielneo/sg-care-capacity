@@ -53,7 +53,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
 
   return (
     <div>
-      <ul className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3" data-testid="small-multiples">
+      <ul className="grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3" data-testid="small-multiples">
         {panels.map(({ hospital, series, missingUsual }) => {
           const code = hospital.hospital_code;
           const annotated = finding?.entity === code;
@@ -123,10 +123,10 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
         })}
       </ul>
       <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-muted" data-testid="band-legend">
-        <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-0.5 w-5 bg-accent" />This hospital</span>
-        <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-3 w-5 bg-line" />
+        <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="inline-block h-0.5 w-5 bg-accent" />This hospital</span>
+        <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="inline-block h-3 w-5 bg-line" />
           Middle half of the full emergency departments each day, with their median (dashed)</span>
-        {mode === "usual" ? <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-px w-5 bg-ink" />Usual level (0)</span> : null}
+        {mode === "usual" ? <span className="inline-flex items-center gap-2"><span aria-hidden="true" className="inline-block h-px w-5 bg-ink" />Usual level (0)</span> : null}
       </p>
     </div>
   );

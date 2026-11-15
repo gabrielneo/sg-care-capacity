@@ -61,7 +61,7 @@ export default async function LivePage() {
         <>
         {/* One date and source for every reading below; each reading has its own NUHS time. */}
         <Provenance meta={meta} compact />
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="mt-4 card-grid md:grid-cols-2">
           {data.map((r) => (
             <ChartCard key={`${r.site_name}|${r.department}`} title={`${r.site_name}: ${r.department}`} meta={meta} provenance={false}
                        caveat={r.is_adult_ed === false ? CAVEAT.childrensEmergency : CAVEAT.live}

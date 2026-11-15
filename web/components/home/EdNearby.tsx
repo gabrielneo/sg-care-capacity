@@ -29,7 +29,7 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
           <p className="mt-1 max-w-prose text-body text-ink">
             The three nearest hospital emergency departments, against each hospital&apos;s own usual week. This is context, not advice on where to go.
           </p>
-          <ol className="mt-4 grid gap-4 md:grid-cols-3" data-testid="ed-list">
+          <ol className="mt-4 card-grid md:grid-cols-3" data-testid="ed-list">
             {eds.map((n) => (
               <li key={n.place.code} className="flex flex-col gap-2" data-testid="ed-item">
                 <p className="text-body font-semibold text-ink" data-testid="ed-km">

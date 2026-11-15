@@ -28,7 +28,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
   );
   if (full) {
     return (
-      <section aria-labelledby="home-title" className="pb-2" data-testid="home-hero" data-density={density}>
+      <section aria-labelledby="home-title" data-testid="home-hero" data-density={density}>
         <div role="note" aria-label="Emergency" className="rounded-xl bg-danger px-4 py-3 text-surface sm:px-6 sm:py-4" data-testid="emergency-note">
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-h3 font-semibold leading-tight sm:text-h2">
             <span aria-hidden="true">✚</span>
@@ -62,7 +62,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
         Hospital emergency departments: the latest complete week against a usual week
       </h1>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p role="note" className="inline-flex max-w-prose items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-1.5 text-small font-semibold text-danger"
+        <p role="note" className="inline-flex max-w-prose items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-small font-semibold text-danger"
            data-testid="emergency-note">
           <span aria-hidden="true">✚</span>
           In an emergency, call 995 or go to the nearest emergency department.

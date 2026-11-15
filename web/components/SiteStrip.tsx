@@ -12,7 +12,7 @@ type Loaded = { ok: true; strip: StripData } | { ok: false };
 
 function Pill({ pill }: { pill: StripPill }) {
   return (
-    <span className={`inline-flex min-w-0 flex-col border px-2 py-0.5 text-meta leading-snug ${LEVEL_STYLE[pill.level]}`}
+    <span className={`inline-flex min-w-0 flex-col border px-2 py-1 text-meta leading-snug ${LEVEL_STYLE[pill.level]}`}
           data-testid="strip-pill" data-pill={pill.id} data-level={pill.level}>
       <span className="font-semibold"><span aria-hidden="true">{LEVEL_SYMBOL[pill.level]} </span>{pill.label}</span>
       <span>{pill.dataset} · {pill.source} · {pill.detail}</span>
@@ -71,7 +71,7 @@ export function SiteStrip() {
             ) : null}
           </Link>
           <button type="button" aria-expanded={open} aria-controls={panel} onClick={() => setOpen(!open)} data-testid="strip-details"
-                  className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2.5 text-meta font-semibold text-ink underline-offset-2 hover:underline">
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-md px-3 text-meta font-semibold text-ink underline-offset-2 hover:underline">
             Details <span aria-hidden="true">&nbsp;{open ? "▴" : "▾"}</span>
           </button>
         </div>

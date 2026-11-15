@@ -72,7 +72,7 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
   const own = findingMeta(insight, meta);       // dated by its sources, not by the end of its window
   const spoken = d.unit_text ? `${d.value_text} ${d.unit_text}` : d.value_text;
   return (
-    <header className="pb-10 pt-2 sm:pt-6" data-testid="hero">
+    <header className="pb-8 pt-2 sm:pt-6" data-testid="hero">
       <p className="max-w-3xl text-small text-muted" data-testid="site-purpose">
         <strong className="font-semibold text-ink">{SITE.name}</strong> means{" "}
         <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
@@ -86,7 +86,7 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
         <Glossed text={d.metric_label} />
         {d.comparison_label ? <>{" · vs "}<Glossed text={d.comparison_label} /></> : null}
       </p>
-      <h1 className="mt-5 max-w-3xl font-semibold leading-snug tracking-tight text-ink text-h1">
+      <h1 className="mt-6 max-w-3xl font-semibold leading-snug tracking-tight text-ink text-h1">
         <Glossed text={insight.headline} />
       </h1>
       <p className="mt-2 max-w-3xl text-small text-muted" data-testid="hero-bed-wait"><Glossed text={BED_WAIT_SHORT} /></p>
@@ -102,7 +102,7 @@ export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
 export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta }) {
   const share = populationShare(years);
   return (
-    <section aria-labelledby="why-now" className="border-t border-line py-10" data-testid="why-now">
+    <section aria-labelledby="why-now" className="border-t border-line py-8" data-testid="why-now">
       <h2 id="why-now" className="font-semibold text-ink text-h2">Why now</h2>
       {share ? (
         <>
@@ -133,7 +133,7 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
 function StepText({ insight, index, total }: { insight: StoryInsight; index: number; total: number }) {
   const caveat = primaryCaveat(insight);
   return (
-    <article id={insight.insight_id} className="story-card rounded-lg border border-line bg-surface p-5" data-insight={insight.insight_id}>
+    <article id={insight.insight_id} className="story-card rounded-lg border border-line bg-surface card" data-insight={insight.insight_id}>
       <p className="text-meta font-semibold uppercase tracking-wide text-muted">Finding {index + 1} of {total}</p>
       <h3 className="mt-1 font-semibold leading-snug text-ink text-h3" data-testid="step-headline">
         <Glossed text={insight.headline} />
@@ -173,7 +173,7 @@ function StoryChart({ insight, meta, where }: { insight: StoryInsight; meta: Met
 export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: Meta }) {
   const n = insights.length;
   return (
-    <section aria-labelledby="findings" className="border-t border-line py-10" data-testid="findings">
+    <section aria-labelledby="findings" className="border-t border-line py-8" data-testid="findings">
       <h2 id="findings" className="font-semibold text-ink text-h2">What the data shows</h2>
       <p className="mt-2 max-w-prose text-ink">
         The {NUMBER_WORDS[n] ?? n} strongest {n === 1 ? "finding" : "findings"} in this week&apos;s data release. Each was published only
@@ -203,7 +203,7 @@ export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: M
 /** 4. What the data can't tell you: the case study's own list, rendered from docs/case_study.md. */
 export function Limits({ list }: { list: ReactNode }) {
   return (
-    <section aria-labelledby="limits" className="border-t border-line py-10" data-testid="limits">
+    <section aria-labelledby="limits" className="border-t border-line py-8" data-testid="limits">
       <h2 id="limits" className="font-semibold text-ink text-h2">What this data can&apos;t tell you</h2>
       <p className="mt-2 text-ink">
         From the <Link href="/case-study#problem-statement">case study</Link>. The data can&apos;t show:
@@ -227,12 +227,12 @@ export interface DepthCard {
 /** 5. Where to go next, by how much time the reader has. */
 export function DepthCards({ cards }: { cards: DepthCard[] }) {
   return (
-    <section aria-labelledby="depth" className="border-t border-line py-10" data-testid="depth">
+    <section aria-labelledby="depth" className="border-t border-line py-8" data-testid="depth">
       <h2 id="depth" className="font-semibold text-ink text-h2">Go further</h2>
-      <ul className="mt-4 grid gap-4 md:grid-cols-3">
+      <ul className="mt-4 card-grid md:grid-cols-3">
         {cards.map((c) => (
           <li key={c.href} data-testid="depth-card">
-            <Link href={c.href} className="flex h-full flex-col rounded-lg border border-line bg-surface p-4 no-underline hover:border-accent">
+            <Link href={c.href} className="flex h-full flex-col rounded-lg border border-line bg-surface card no-underline hover:border-accent">
               <span className="text-meta font-semibold uppercase tracking-wide text-muted">{c.budget}</span>
               <span className="mt-1 font-semibold text-accent"><Glossed text={c.title} plain /> →</span>
               <span className="mt-1 flex-1 text-small text-muted"><Glossed text={c.text} plain /></span>

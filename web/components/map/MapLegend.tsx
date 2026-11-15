@@ -13,7 +13,7 @@ export function MapLegend({ metric, classes, noData, noResidents = 0, smallAreas
   return (
     <div className="text-meta text-ink" data-testid="map-legend">
       <p className="font-semibold"><Glossed text={metric.label} /></p>
-      <p className="mt-0.5 text-muted">
+      <p className="mt-1 text-muted">
         <span aria-hidden="true">▼ </span><Glossed text={metric.darker} />{" "}
         The map is shaded in <strong className="font-semibold text-ink">five groups with equal numbers of areas</strong>
         {classes.length < 5 ? " (fewer when areas share a value)" : ""}. Areas with no value are left out of the groups.

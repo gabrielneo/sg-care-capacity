@@ -33,6 +33,8 @@ const RULES: [string, RegExp][] = [
   ["arbitrary colour or font-size class", /\b(?:bg|text|fill|stroke|ring|outline|from|to|via|shadow|decoration|divide|caret|accent)-\[[^\]]+\]|\bborder-\[(?!\d)[^\]]+\]/],
   ["Tailwind font size outside the type scale (text-meta, -small, -body, -h3, -h2, -h1, -kpi)", /\btext-(?:xs|sm|base|lg|[2-9]?xl)\b/],
   ["font weight other than 400 and 600", /\bfont-(?:thin|extralight|light|medium|bold|extrabold|black)\b/],
+  ["spacing off the 4/8 scale (use 1, 2, 3, 4, 6, 8, 12, 16 or 24)", /(?<![\w[-])-?(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y|space-x|space-y)-(?:0\.5|1\.5|2\.5|3\.5|5|7|9|10|11|14|20)(?![\w.\]])/],
+  ["arbitrary spacing value", /(?<![\w[-])-?(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y|space-x|space-y)-\[/],
   ["font family outside the token stacks (app/globals.css)", /\bfont-?[Ff]amily:\s*["'`](?!system-ui|sans-serif)/],
   ["raw pixel or rem font size in an inline style", /\bfontSize:\s*[\d.]+\b(?!\s*\})/],
   ["SVG font size off the scale", /\bfontSize="(?!13"|14"|16")[^"]*"/],

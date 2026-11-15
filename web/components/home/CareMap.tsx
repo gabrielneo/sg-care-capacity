@@ -38,17 +38,17 @@ export function CareMap(props: CareMapProps) {
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-meta text-muted" aria-label="Map key" data-testid="map-key">
         {(["much_higher", "higher", "usual", "lower", "unknown"] as const).map((l) => (
-          <li key={l} className="flex items-center gap-1.5">
+          <li key={l} className="flex items-center gap-2">
             <span aria-hidden="true" className={`h-3 w-3 rounded-full ${{ much_higher: "bg-status-much", higher: "bg-status-higher", usual: "bg-status-usual", lower: "bg-status-lower", unknown: "bg-muted" }[l]}`} />
             Hospital: {LEVELS[l].label.toLowerCase()}
           </li>
         ))}
-        <li className="flex items-center gap-1.5"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-accent" />Polyclinic</li>
+        <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-accent" />Polyclinic</li>
         {props.gps.length ? (
-          <li className="flex items-center gap-1.5"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full border-2 border-accent bg-surface" /><Glossed text="Nearest GP clinics" plain /></li>
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full border-2 border-accent bg-surface" /><Glossed text="Nearest GP clinics" plain /></li>
         ) : null}
         {props.here ? (
-          <li className="flex items-center gap-1.5"><span aria-hidden="true" className="h-3 w-3 rounded-full border-[3px] border-ink bg-surface" />Your search</li>
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full border-[3px] border-ink bg-surface" />Your search</li>
         ) : null}
       </ul>
     </div>

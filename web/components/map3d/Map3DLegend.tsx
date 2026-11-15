@@ -10,17 +10,17 @@ export function Map3DLegend({ classes, excluded, maxSeniors }: { classes: Legend
   return (
     <div className="text-meta text-ink" data-testid="map3d-legend">
       <p className="font-semibold">Height</p>
-      <p className="mt-0.5 text-muted" data-testid="height-scale">
+      <p className="mt-1 text-muted" data-testid="height-scale">
         Height: {SENIORS_PER_STEP.toLocaleString("en-SG")} residents aged 65+ per step. The tallest area has{" "}
         {maxSeniors.toLocaleString("en-SG")}.
       </p>
-      <div className="mt-1 flex items-end gap-0.5" aria-hidden="true">
+      <div className="mt-1 flex items-end gap-1" aria-hidden="true">
         {Array.from({ length: steps }, (_, i) => (
           <span key={i} className="w-3 rounded-t-sm bg-line" style={{ height: `${(i + 1) * 5}px` }} />
         ))}
       </div>
       <p className="mt-3 font-semibold"><Glossed text="Colour: CDMP GP clinics per 1,000 residents aged 65+" /></p>
-      <p className="mt-0.5 text-muted">
+      <p className="mt-1 text-muted">
         <span aria-hidden="true">▼ </span>Darker means fewer chronic-care clinics per senior: worse access. Shaded in{" "}
         <strong className="font-semibold text-ink">five groups with equal numbers of areas</strong>, among the areas that are ranked.
       </p>

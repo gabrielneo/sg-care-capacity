@@ -45,7 +45,7 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
   const problems = provenanceProblems(meta);
   const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
-    <section aria-labelledby={id} data-testid="chart-card" data-provenance={provenance ? "card" : "section"} className="rounded-lg border border-line bg-surface p-4">
+    <section aria-labelledby={id} data-testid="chart-card" data-provenance={provenance ? "card" : "section"} className="rounded-lg border border-line bg-surface card">
       <Heading id={id} className="text-body font-semibold text-ink">
         {title}
       </Heading>

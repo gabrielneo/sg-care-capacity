@@ -21,7 +21,7 @@ export default async function CaseStudyPage() {
                  <li><Link href="/data-quality">Data quality</Link></li>
                </ul>
              }>
-      <aside className="mb-8 rounded-xl border border-line bg-surface p-5" aria-label="Short on time" data-testid="case-study-glance">
+      <aside className="mb-8 rounded-xl border border-line bg-surface card" aria-label="Short on time" data-testid="case-study-glance">
         <p className="text-small font-semibold uppercase tracking-wide text-muted">Short on time?</p>
         <p className="mt-1 max-w-prose text-body text-ink">
           <Link href="/project">The project page</Link> has the three headline findings, the checks behind them and how to reach the author.

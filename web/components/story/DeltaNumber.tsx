@@ -34,7 +34,7 @@ export interface DeltaNumberProps {
 export function DeltaNumber({ value, unit, label, comparison, change, word, direction, compact = false }: DeltaNumberProps) {
   if (compact) {
     return (
-      <span data-testid="delta-number" data-direction={direction} className="inline-flex flex-wrap items-baseline gap-x-1.5 text-small">
+      <span data-testid="delta-number" data-direction={direction} className="inline-flex flex-wrap items-baseline gap-x-2 text-small">
         <span className="font-semibold tabular-nums text-ink">{value}</span>
         {unit ? <span className="text-muted">{unit}</span> : null}
         {word ? (

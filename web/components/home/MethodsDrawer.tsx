@@ -19,9 +19,9 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
   return (
     <section aria-labelledby="methods-heading" className="border-t border-line py-8" data-testid="methods">
       <h2 id="methods-heading" className="font-semibold text-ink text-h2">How these figures are made</h2>
-      <details open={open} className="mt-3 rounded-xl border border-line bg-surface p-4" data-testid="methods-drawer">
+      <details open={open} className="mt-3 rounded-xl border border-line bg-surface card" data-testid="methods-drawer">
         <summary className="block cursor-pointer select-none py-3 font-semibold text-accent">Show the data and methods</summary>
-        <div className="mt-4 space-y-5 text-small text-ink">
+        <div className="mt-4 space-y-6 text-small text-ink">
           <div>
             <h3 className="font-semibold text-h3">The bed wait</h3>
             <p className="mt-1 max-w-prose"><Glossed text={BED_WAIT_EXPLAINER} /></p>

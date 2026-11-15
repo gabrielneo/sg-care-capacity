@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic"; // rendered per request; API responses a
 
 function Tile({ className = "", label, children, testId }: { className?: string; label: string; children: ReactNode; testId?: string }) {
   return (
-    <section aria-label={label} data-testid={testId} className={`flex flex-col rounded-xl border border-line bg-surface p-5 ${className}`}>
+    <section aria-label={label} data-testid={testId} className={`flex flex-col rounded-xl border border-line bg-surface card ${className}`}>
       {children}
     </section>
   );
@@ -75,7 +75,7 @@ export default async function ProjectPage() {
       </header>
 
       <Section tone="band">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="project-tiles">
+      <div className="card-grid sm:grid-cols-2 lg:grid-cols-4" data-testid="project-tiles">
         <Tile label="The problem" testId="project-context">
           <Eyebrow>1 · The problem</Eyebrow>
           <BigNumber>{share ?? <Missing why="not available" />}</BigNumber>
@@ -135,7 +135,7 @@ export default async function ProjectPage() {
               <dd className="text-kpi font-semibold tabular-nums text-ink">{BUILD_FACTS.auditSampled}</dd>
             </div>
           </dl>
-          <ul className="mt-4 grid max-w-4xl list-disc gap-1 pl-5 text-body text-ink sm:grid-cols-3 sm:gap-x-8" data-testid="project-what-i-did">
+          <ul className="mt-4 grid max-w-4xl list-disc gap-1 pl-6 text-body text-ink sm:grid-cols-3 sm:gap-x-8" data-testid="project-what-i-did">
             <li><Glossed text="Built a weekly pipeline from MOH, data.gov.sg, SingStat and NUHS data." /></li>
             <li>Wrote checks that block a bad release, and a statistical test every finding must pass.</li>
             <li>Designed one site for three readers: the public, planners and analysts.</li>

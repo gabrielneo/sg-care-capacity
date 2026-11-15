@@ -93,7 +93,7 @@ function Specimen({ theme, chart }: { theme: (typeof THEMES)[number]; chart: Awa
 
       <div>
         <h4 className="mb-2 text-small font-semibold text-muted">Card: a border, no shadow</h4>
-        <div className="max-w-sm rounded-lg border border-line bg-surface p-4">
+        <div className="max-w-sm rounded-lg border border-line bg-surface card">
           <p className="text-small text-muted">Bed wait, latest complete week{chart ? ` (${chart.hospital.short_name ?? chart.hospital.hospital_name})` : ""}</p>
           <p className="text-kpi font-semibold tabular-nums">{chart?.status.latest != null ? `${chart.status.latest.toFixed(1)} h` : "–"}</p>
           <p className="mt-1 text-meta text-tertiary">{chart ? <Glossed text={`MOH, data as of ${formatAsOf(chart.asOf)}.`} standalone /> : "The data service isn't reachable right now."}</p>

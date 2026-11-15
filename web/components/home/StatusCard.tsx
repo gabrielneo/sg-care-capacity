@@ -80,7 +80,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
   return (
     <li className={`${shell} p-3`} {...attrs}>
       <h3 className="font-semibold leading-snug text-ink text-h3">{title}</h3>
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <StatusBadge level={status.level} quiet />
         {note ? <CaveatChip><span data-testid="status-note">{note}</span></CaveatChip> : null}
       </div>
@@ -92,14 +92,14 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
         <Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} />
       </div>
       {delta && status.usual != null ? (
-        <p className="mt-1.5 text-small tabular-nums text-muted">
+        <p className="mt-2 text-small tabular-nums text-muted">
           <span className="font-semibold text-ink" data-testid="status-delta">
             <span aria-hidden="true">{delta.text}</span><span className="sr-only">{delta.spoken}</span> vs usual
           </span>
           {" · "}<span data-testid="status-usual">usual {hrs(status.usual)}</span>
         </p>
       ) : (
-        <p className="mt-1.5 text-small text-muted" data-testid="status-sentence">
+        <p className="mt-2 text-small text-muted" data-testid="status-sentence">
           {status.latest == null ? "No complete figures for the latest complete week." : "Too few weeks to compare."}
         </p>
       )}

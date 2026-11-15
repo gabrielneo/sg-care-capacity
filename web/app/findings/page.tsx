@@ -64,7 +64,7 @@ export default async function FindingsPage() {
         <WhyNow years={population.value.data} meta={population.value.meta} />
       ) : insights.ok ? (
         // (If both calls failed, the error at the top already says so.)
-        <section className="border-t border-line py-10">
+        <section className="border-t border-line py-8">
           <ErrorState title="The population figure can't be shown" error={plainError(population.error)} />
         </section>
       ) : null}

@@ -113,7 +113,7 @@ export function AccessViews({ requested, areas, clinics, caveats, labels }: Acce
             <Link href="/access-map?view=map">the 2D map</Link> and <Link href="/access-map?view=table">the table</Link> have the
             same figures.
           </p>
-          <div className="mt-3 grid gap-4 md:grid-cols-2">
+          <div className="mt-3 card-grid md:grid-cols-2">
             {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
             {styled ? <Map3DLegend classes={styled.classes} excluded={styled.excluded} maxSeniors={styled.maxSeniors} /> : null}
           </div>

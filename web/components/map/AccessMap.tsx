@@ -82,7 +82,7 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
       <LeafletMap areas={areas} clinics={clinics} metric={metric} breaks={breaks} colors={colors} showClinics={showClinics}
                   cdmpOnly={cdmpOnly} selected={selected} onSelect={setSelected} />
       <p className="mt-2 text-meta text-muted">Select an area (click, tap, or Tab then Enter) to see its details.</p>
-      <div className="mt-3 grid gap-4 md:grid-cols-2">
+      <div className="mt-3 card-grid md:grid-cols-2">
         {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
         <div className="space-y-2">
           <MapLegend metric={metric} classes={classes} noData={noData - noResidents} noResidents={noResidents} smallAreas={smallAreas} />

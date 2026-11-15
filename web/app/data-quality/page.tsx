@@ -66,7 +66,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
     <>
       <PageHeader title="Data quality" intro={INTRO} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="card-grid sm:grid-cols-2 lg:grid-cols-4">
         <KpiTile label="Checks run on this data release" value={results.length} meta={quality.meta} format={String} release provenance={false} />
         <KpiTile label="Failures that stop publishing" value={quality.data.blocking} meta={quality.meta} format={String} release provenance={false}
                  caveat="Always 0 in a published release" />
@@ -108,21 +108,21 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
                 <table className="mt-1 w-full min-w-[560px] border-collapse text-small" data-testid="coverage-history">
                   <thead>
                     <tr className="border-b border-line text-left">
-                      <th scope="col" className="py-1.5 pr-3 font-semibold">Hospital</th>
-                      <th scope="col" className="py-1.5 pr-3 font-semibold">Reported from</th>
-                      <th scope="col" className="py-1.5 pr-3 text-right font-semibold">Days expected</th>
-                      <th scope="col" className="py-1.5 pr-3 text-right font-semibold">Missing bed wait</th>
-                      <th scope="col" className="py-1.5 text-right font-semibold">Missing <Glossed text="ED" plain /> visits</th>
+                      <th scope="col" className="py-2 pr-3 font-semibold">Hospital</th>
+                      <th scope="col" className="py-2 pr-3 font-semibold">Reported from</th>
+                      <th scope="col" className="py-2 pr-3 text-right font-semibold">Days expected</th>
+                      <th scope="col" className="py-2 pr-3 text-right font-semibold">Missing bed wait</th>
+                      <th scope="col" className="py-2 text-right font-semibold">Missing <Glossed text="ED" plain /> visits</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(history).map(([code, c]) => (
                       <tr key={code} className="border-b border-line">
-                        <th scope="row" className="py-1.5 pr-3 text-left font-normal"><Term id={code.toLowerCase()} /></th>
-                        <td className="py-1.5 pr-3 tabular-nums">{c.first_day}</td>
-                        <td className="py-1.5 pr-3 text-right tabular-nums">{c.expected_days.toLocaleString("en-SG")}</td>
-                        <td className="py-1.5 pr-3 text-right tabular-nums">{c.missing_wait_days}</td>
-                        <td className="py-1.5 text-right tabular-nums">{c.missing_attendance_days}</td>
+                        <th scope="row" className="py-2 pr-3 text-left font-normal"><Term id={code.toLowerCase()} /></th>
+                        <td className="py-2 pr-3 tabular-nums">{c.first_day}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{c.expected_days.toLocaleString("en-SG")}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{c.missing_wait_days}</td>
+                        <td className="py-2 text-right tabular-nums">{c.missing_attendance_days}</td>
                       </tr>
                     ))}
                   </tbody>

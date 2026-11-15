@@ -129,7 +129,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     ednear: () => {
       if (!statusOk) {
         return (
-          <section className="py-8" data-testid="ed-near">
+          <section data-testid="ed-near">
             <ErrorState title="Hospital figures can't be shown right now"
                         error={plainError((hospitalsRes.ok ? (weeklyRes as { error: Error }).error : hospitalsRes.error))} />
           </section>
@@ -169,7 +169,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       <StatusGrid statuses={statuses} hospitals={hospitals} live={live} meta={weeklyRes.value.meta} latestWeek={latestWeek} density={density}
                   sort={density === "full" ? sort : undefined} query={view === "public" ? "" : `view=${view}`} />
     ) : (
-      <section className="py-8">
+      <section>
         <ErrorState title="Hospital figures can't be shown right now"
                     error={plainError((hospitalsRes.ok ? (weeklyRes as { error: Error }).error : hospitalsRes.error))} />
       </section>
@@ -188,7 +188,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
           }))
         : {};
       return (
-        <section aria-labelledby="map-heading" className="py-8" data-testid="map-section">
+        <section aria-labelledby="map-heading" data-testid="map-section">
           <h2 id="map-heading" className="font-semibold text-ink text-h2">On the map</h2>
           <p className="mb-3 mt-1 max-w-prose text-body text-ink">
             Hospitals are coloured by the latest complete week&apos;s bed wait against their own usual, and marked with a symbol and the words in the list.
@@ -209,7 +209,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
     ) : null),
 
     links: () => (
-      <section aria-labelledby="links-heading" className="py-8" data-testid="analyst-links">
+      <section aria-labelledby="links-heading" data-testid="analyst-links">
         <h2 id="links-heading" className="font-semibold text-ink text-h2">Check the data and the methods</h2>
         <ul className="mt-3 grid gap-x-6 gap-y-2 text-small sm:grid-cols-2">
           <li><Link href="/data-quality">Data Quality</Link>: every check, each source&apos;s date and the days with gaps</li>
@@ -229,9 +229,10 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   return (
     <div data-testid="home" data-view={view}>
+      {/* Public view: the heading and the search are one first screen, so they keep the compact rhythm; the chapters after them get the full one. */}
       {/* Chapters: every second section that renders sits on the band colour (full width, content in the container). */}
       {sectionsFor(view).flatMap(({ id, density }) => { const el = render[id](density); return el ? [{ id, el }] : []; })
-        .map(({ id, el }, i) => <div key={id} data-tone={i % 2 ? "band" : "page"} className={i % 2 ? "section-band" : undefined}>{el}</div>)}
+        .map(({ id, el }, i) => <div key={id} data-tone={i % 2 ? "band" : "page"} className={`section ${i % 2 ? "section-band" : ""} ${i === 0 ? "section-first" : ""} ${view === "public" && i > 1 ? "" : "section-compact"}`}>{el}</div>)}
     </div>
   );
 }

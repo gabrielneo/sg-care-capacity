@@ -14,9 +14,17 @@
 
   --space-1: 0.25rem;  --space-2: 0.5rem;  --space-3: 0.75rem; --space-4: 1rem;  --space-5: 1.5rem;
   --space-6: 2rem;     --space-7: 3rem;    --space-8: 4rem;    --space-9: 6rem;
+
+  /* Rhythm built from the steps above. Phone values here; the 640px block below sets the desktop ones. */
+  --section-gap: var(--space-7);        /* between sections: 48px, 64px on desktop */
+  --card-pad: var(--space-4);           /* inside a card: 16px, 20px on desktop */
+  --card-gap: var(--space-4);           /* between cards in a grid: 16px, 20px on desktop */
+  --row-gap: var(--space-3);            /* between rows inside a card: 12px */
+  --heading-lede: var(--space-2);       /* section heading to its lede: 8px */
+  --lede-content: var(--space-5);       /* lede (or heading) to the content: 24px */
 }
 @media (min-width: 40rem) {
-  :root { --fs-h2: 1.5rem; --fs-h1: 2.25rem; --fs-kpi: 2.25rem; }
+  :root { --fs-h2: 1.5rem; --fs-h1: 2.25rem; --fs-kpi: 2.25rem; --section-gap: var(--space-8); --card-pad: 1.25rem; --card-gap: 1.25rem; }
 }
 @media (min-width: 80rem) {
   :root { --fs-body: 1.0625rem; }

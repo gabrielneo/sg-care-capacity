@@ -224,7 +224,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
       {legend ? (
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-meta text-muted" data-testid="chart-legend">
           {drawn.map((s, si) => (
-            <li key={s.key} className="flex items-center gap-1.5">
+            <li key={s.key} className="flex items-center gap-2">
               <span aria-hidden="true" className="inline-block h-0.5 w-4" style={{ background: colourAt(si) }} />
               {s.label}
             </li>

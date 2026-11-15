@@ -34,7 +34,7 @@ export function FreshnessBadge({ meta, freshness, now, source }: {
   const text = latestOnly ? freshnessText({ ...f, label: LATEST_PUBLISHED }) : freshnessText(f);
   return (
     <span
-      className={`inline-flex items-center gap-1.5 border px-2 py-0.5 text-meta font-semibold ${LEVEL_STYLE[latestOnly ? "unknown" : f.level]}`}
+      className={`inline-flex items-center gap-2 border px-2 py-1 text-meta font-semibold ${LEVEL_STYLE[latestOnly ? "unknown" : f.level]}`}
       title={`${f.age ? `${f.age} old. ` : ""}${ruleText(f.sourceId)}`}
       data-level={f.level}
       data-testid="freshness-badge"

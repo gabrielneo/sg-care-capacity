@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="mb-10">
+    <section className="mb-8">
       <h2 className="mb-3 border-b border-line pb-1 font-semibold text-h2">{title}</h2>
       {children}
     </section>
@@ -59,7 +59,7 @@ async function LiveSnapshot() {
   const sgh = summary.data.find((h) => h.hospital_code === "SGH");
   const wait = sgh?.mean_of_daily_median_wait_hours;
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="card-grid sm:grid-cols-2">
       <KpiTile label="Days of ED data in this snapshot" value={snapshot.data.row_counts.fct_ed_daily ?? null}
                unit="hospital-days" meta={snapshot.meta} format={(v) => v.toLocaleString("en-SG")} />
       <KpiTile
@@ -99,7 +99,7 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="KpiTile">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="card-grid sm:grid-cols-3">
           <KpiTile label="Average of daily median bed waits" value={7.82} unit="hours" meta={edMeta} now={SAMPLE_NOW}
                    change={{ value: -5.7, unit: "%", label: "vs the previous 4-week average" }} />
           <KpiTile label="Attendances (week)" value={4812} unit="patients" meta={edMeta} now={SAMPLE_NOW}
@@ -110,7 +110,7 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="ChartCard">
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="card-grid lg:grid-cols-2">
           <ChartCard title="Median wait for a ward bed" meta={edMeta} now={SAMPLE_NOW}
                      description="Daily median, by hospital. The chart goes here.">
             <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-small text-muted">
@@ -146,10 +146,10 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="EmptyState, ErrorState, Skeleton">
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="card-grid lg:grid-cols-3">
           <EmptyState title="No clinics in this area" message="Try a wider area, or clear the CDMP filter." />
           <ErrorState error={{ code: "unknown_hospital", message: "Unknown hospital 'XYZ'; use one of AH, CGH, KTPH, …" }} />
-          <div className="space-y-2 rounded-lg border border-line bg-surface p-4">
+          <div className="space-y-2 rounded-lg border border-line bg-surface card">
             <Skeleton className="h-5 w-1/2" />
             <Skeleton className="h-24 w-full" />
           </div>
@@ -161,13 +161,13 @@ export default function ComponentsPage() {
           Value, unit, comparison, and the change as an arrow and a word. Colour comes from the insight&apos;s direction, never
           from the arrow: the same ▲ is brick red for a longer wait and violet for more clinics. Neutral findings have no colour.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="card-grid sm:grid-cols-2 lg:grid-cols-4">
           {storySample.map((i) => (
-            <div key={i.insight_id} className="rounded-lg border border-line bg-surface p-4">
+            <div key={i.insight_id} className="rounded-lg border border-line bg-surface card">
               <DeltaNumber {...deltaFromDisplay(i.display, i.direction)} />
             </div>
           ))}
-          <div className="rounded-lg border border-line bg-surface p-4">
+          <div className="rounded-lg border border-line bg-surface card">
             <DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" label="Sample: clinics in an area that gained some"
                          comparison="1.27, the national rate" change="up" word="higher than the national rate" direction="better" />
           </div>
@@ -194,7 +194,7 @@ export default function ComponentsPage() {
           Server-rendered SVG: direct labels, one callout arrow at the highlighted point, gaps for missing values, and a legend only
           with more than 3 series. The headline findings of data-2026-11-08, then a 4-series sample.
         </p>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="card-grid lg:grid-cols-2">
           {storySample.map((i) => (
             <AnnotatedChart key={i.insight_id} id={`dev-${i.insight_id}`} title={chartTitle(i)} description={i.chart.y_label}
                             meta={{ ...insightMeta, as_of: i.as_of }} format={chartFormat(i)} {...fromInsightChart(i.chart)} />

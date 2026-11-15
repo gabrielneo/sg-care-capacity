@@ -48,7 +48,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
   const full = density === "full";
   // The full EDs in the order given; the urgent care centre in its own group below (ADR 0012).
   const { rankable, urgentCare } = splitByCare(statuses, (s) => s.code, hospitals);
-  const gridClass = full ? "mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
+  const gridClass = full ? "mt-2 card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 card-grid sm:grid-cols-2 lg:grid-cols-3";
   const byCode = new Map(hospitals.map((h) => [h.hospital_code, h]));
   const liveFor = (code: string) => live.find((r) => r.hospital_code === code && r.is_adult_ed) ?? null;
   const noteFor = (code: string) => {

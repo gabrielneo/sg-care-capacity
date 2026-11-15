@@ -11,7 +11,7 @@ export function Section({ tone = "page", heading, id, children, className = "" }
   const headingId = id && heading ? `${id}-heading` : undefined;
   return (
     <section id={id} aria-labelledby={headingId} data-tone={tone} data-testid="section"
-             className={`section py-8 sm:py-12 ${tone === "band" ? "section-band" : ""} ${className}`}>
+             className={`section ${tone === "band" ? "section-band" : ""} ${className}`}>
       {heading ? <h2 id={headingId} className="mb-4 max-w-prose font-semibold text-ink text-h2">{heading}</h2> : null}
       {children}
     </section>

@@ -50,7 +50,7 @@ export function Skeleton({ className = "h-4 w-full", label = "Loading" }: { clas
 
 export function ChartCardSkeleton({ title, label }: { title?: ReactNode; label?: string }) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-4" aria-busy="true">
+    <section className="rounded-lg border border-line bg-surface card" aria-busy="true">
       {title ? <h2 className="font-semibold text-h2">{title}</h2> : <Skeleton className="h-5 w-1/3" label="Loading chart" />}
       <div className="mt-4">
         <Skeleton className="h-48 w-full" label={label ?? (typeof title === "string" ? `Loading ${title}` : "Loading")} />
