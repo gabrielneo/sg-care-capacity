@@ -148,6 +148,9 @@
 /* Cards and card grids take their padding and gaps from the spacing tokens (16px on a phone, 20px from 640px). */
 @utility card { padding: var(--card-pad); }
 @utility card-grid { display: grid; gap: var(--card-gap); }
+@utility status-edge { border-left-width: var(--bar-status); }
+@utility w-spark { width: var(--spark-w); }
+@utility h-spark { height: var(--spark-h); }
 @utility rows { display: flex; flex-direction: column; gap: var(--row-gap); }
 
 /* A section's heading, its lede, then the content: 8px, then 24px. */

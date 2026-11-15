@@ -31,6 +31,11 @@
   --heading-lede: var(--space-2);       /* section heading to its lede: 8px */
   --kpi-visual-row: var(--space-6);     /* a KPI tile's reserved micro-visual row: 32px */
   --lede-content: var(--space-5);       /* lede (or heading) to the content: 24px */
+
+  /* Hospital status cards: the sparkline's size and the width of the status edge on a card above usual. */
+  --spark-w: 6rem;                      /* 96px */
+  --spark-h: 1.75rem;                   /* 28px */
+  --bar-status: 0.1875rem;              /* 3px */
 }
 @media (min-width: 40rem) {
   :root { --fs-h2: 1.5rem; --fs-h1: 2.25rem; --fs-kpi: 2.25rem; --section-gap: var(--space-8); --card-pad: 1.25rem; --card-gap: 1.25rem; --h-map: 28.75rem; --h-map-tall: 32.5rem; }   /* maps: 460px, 520px */

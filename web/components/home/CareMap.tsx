@@ -48,7 +48,7 @@ export function CareMap(props: CareMapProps) {
           <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full border-2 border-accent bg-surface" /><Glossed text="Nearest GP clinics" plain /></li>
         ) : null}
         {props.here ? (
-          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full border-[3px] border-ink bg-surface" />Your search</li>
+          <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full border-3 border-ink bg-surface" />Your search</li>
         ) : null}
       </ul>
     </div>
