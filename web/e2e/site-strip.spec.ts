@@ -1,71 +1,113 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
 
-test.describe("site strip", () => {
-  test.beforeEach(async ({ page }) => blockTiles(page));
+/**
+ * The sticky status strip (audit E4): Planner and Analyst only, from 768px, and only once the page's intro has scrolled away.
+ * Everything else (the public view, every other page, every phone) has no strip.
+ */
+const wide = (page: Page) => (page.viewportSize()?.width ?? 1280) >= 768;
+const scrollPastIntro = async (page: Page) => { await page.evaluate(() => window.scrollTo(0, 700)); };
 
-  test("shows the overview, a pill per dataset and the 995 notice stays on the page", async ({ page }) => {
-    await page.goto("/");
-    const strip = page.getByTestId("site-strip");
-    await expect(page.getByTestId("strip-summary")).toContainText(/\d+ of \d+ emergency departments above usual|No comparison with usual yet/);
-    await expect(page.getByTestId("strip-summary")).toHaveAttribute("href", "/?view=planner");
-    // One fixed height at every width, so nothing shifts when it loads; the pills are behind Details.
-    expect((await strip.boundingBox())!.height).toBeLessThanOrEqual(46);
-    await expect(page.getByTestId("strip-pill").first()).toBeHidden();
-    await page.getByTestId("strip-details").click();
-    await expect(page.getByTestId("strip-pill").first()).toBeVisible();
-    await expect(page.getByTestId("strip-details")).toHaveAttribute("aria-expanded", "true");
-    await expect(page.getByText(/995/).first()).toBeVisible();
-    // The count says where it comes from and when, in words, at every width (no tooltip needed).
-    await expect(page.getByTestId("strip-basis")).toContainText(/MOH, data as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
-    await expectNoHorizontalScroll(page);
-    await expectNoA11yViolations(page, { wcag22: true });
-  });
+test.beforeEach(async ({ page }) => blockTiles(page));
 
-  test("each pill carries its own date, so the estimate never sits beside another source's date", async ({ page }) => {
-    await page.goto("/");
-    await page.getByTestId("strip-details").click();
-    const bed = page.locator('[data-pill="bed"]');
-    await expect(bed).toContainText("Bed waits · MOH");
-    await expect(bed).toContainText(/as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
-    const doctor = page.locator('[data-pill="doctor"]');
-    if (await doctor.count()) {
-      await expect(doctor).toContainText(/updated \d{1,2} [A-Z][a-z]{2} \d{4}/);
-      await expect(doctor).toContainText("NUHS");
-      await expect(doctor).toContainText("some hospitals only");
-    }
-  });
+for (const view of ["planner", "analyst"] as const) {
+  test.describe(`${view} view`, () => {
+    test("appears only after the intro has scrolled away, and goes again at the top", async ({ page }) => {
+      test.skip(!wide(page), "never on a phone: see the next test");
+      await page.goto(`/?view=${view}`);
+      const strip = page.getByTestId("site-strip");
+      await expect(strip).toBeHidden();                 // at the top, the intro is in view
+      await scrollPastIntro(page);
+      await expect(strip).toBeVisible();
+      expect((await strip.boundingBox())).toMatchObject({ y: 0, height: 40 });
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await expect(strip).toBeHidden();
+    });
 
-  test("stays at the top while scrolling and never covers a focused field", async ({ page }) => {
-    await page.goto("/");
-    await page.mouse.wheel(0, 1500);
-    await expect(page.getByTestId("site-strip")).toBeInViewport();
-    expect((await page.getByTestId("site-strip").boundingBox())!.y).toBeLessThanOrEqual(1);
-    // Tab through the page: whatever has focus never overlaps the strip where it currently is.
-    for (let i = 0; i < 25; i++) {
-      await page.keyboard.press("Tab");
-      const hit = await page.evaluate(() => {
-        const el = document.activeElement as HTMLElement | null;
-        if (!el || el === document.body || el.closest('[data-testid="site-strip"]') || el.matches('a[href="#main"]')) return null; // the skip link is drawn above the strip (z-50)
-        const r = el.getBoundingClientRect();
-        const s = document.querySelector('[data-testid="site-strip"]')!.getBoundingClientRect();
-        return r.bottom > s.top && r.top < s.bottom && r.bottom > 0 ? el.outerHTML.slice(0, 120) : null;
-      });
-      expect(hit, "focused element under the strip").toBeNull();
-    }
-  });
+    test("never shows on a phone, however far the page is scrolled", async ({ page }) => {
+      test.skip(wide(page), "a phone-width test");
+      await page.goto(`/?view=${view}`);
+      await scrollPastIntro(page);
+      await page.mouse.wheel(0, 1200);
+      await expect(page.getByTestId("site-strip")).toBeHidden();
+    });
 
-  test("an anchor jump lands below the strip (scroll-padding-top)", async ({ page }) => {
-    await page.goto("/methodology");
-    const pad = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
-    const strip = await page.getByTestId("site-strip").boundingBox();
-    expect(pad).toBeGreaterThanOrEqual(strip!.height);
-  });
+    test("says how many EDs are higher than usual and which week, as plain text, with the dataset's freshness", async ({ page }) => {
+      test.skip(!wide(page), "desktop only");
+      await page.goto(`/?view=${view}`);
+      await scrollPastIntro(page);
+      const summary = page.getByTestId("strip-summary");
+      await expect(summary).toContainText(/\d+ of \d+ emergency departments higher than usual · week of |No comparison with usual yet/);
+      await expect(summary).not.toContainText(/busier|busy/i);
+      await expect(summary.locator("a")).toHaveCount(0);                                        // not a link, so not underlined
+      expect(await summary.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe("none");
+      // The same count as the summary tile below it: one rule, one number.
+      const tile = await page.locator('[data-tile="above"] .text-kpi').first().innerText();
+      await expect(summary).toContainText(`${tile.replace(/\s*of\s*/, " of ").split(" of ")[0]!.trim()} of`);
+      // A symbol and words (never colour alone), then each dataset's own date in the panel.
+      const fresh = page.getByTestId("strip-freshness");
+      await expect(fresh).toContainText(/MOH data: (Up to date|Due an update|Overdue|Date unknown)/);
+      await fresh.click();
+      await expect(page.locator('[data-pill="bed"]')).toContainText(/as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
+      const doctor = page.locator('[data-pill="doctor"]');
+      if (await doctor.count()) {
+        await expect(doctor).toContainText(/updated \d{1,2} [A-Z][a-z]{2} \d{4}/);
+        await expect(doctor).toContainText("some hospitals only");
+      }
+    });
 
-  test("the strip is on other pages too", async ({ page }) => {
-    await page.goto("/methodology");
-    await expect(page.getByTestId("strip-summary")).toBeVisible();
-    await expect(page.getByTestId("strip-clusters")).toHaveCount(0);
+    test("Jump to section lists the view's sections, jumps to one below the strip, and closes with Esc", async ({ page }) => {
+      test.skip(!wide(page), "desktop only");
+      await page.goto(`/?view=${view}`);
+      await scrollPastIntro(page);
+      const jump = page.getByTestId("strip-jump");
+      await jump.click();
+      const list = page.getByTestId("strip-jump-list");
+      const links = list.getByRole("link");
+      await expect(links.first()).toBeVisible();
+      const hrefs = await links.evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+      expect(hrefs.length).toBeGreaterThanOrEqual(view === "analyst" ? 5 : 4);
+      for (const href of hrefs) expect(await page.locator(href!).count(), href!).toBe(1);   // every stop exists on the page
+      // Jumping lands the section's heading under the strip, not behind it.
+      const target = hrefs.at(-1)!;
+      await links.last().click();
+      await expect(list).toBeHidden();
+      await expect(page).toHaveURL(new RegExp(`${target}$`));
+      const [strip, section] = await Promise.all([page.getByTestId("site-strip").boundingBox(), page.locator(target).boundingBox()]);
+      expect(section!.y).toBeGreaterThanOrEqual(strip!.y + strip!.height - 1);
+      // Esc closes the list and gives focus back to its button.
+      await jump.click();
+      await expect(list).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(list).toBeHidden();
+      await expect(jump).toBeFocused();
+    });
+
+    test("fits the screen and passes the accessibility checks, with the strip showing", async ({ page }) => {
+      await page.goto(`/?view=${view}`);
+      await scrollPastIntro(page);
+      await expectNoHorizontalScroll(page);
+      await expectNoA11yViolations(page, { wcag22: true });
+    });
   });
+}
+
+test("the public view has no strip", async ({ page }) => {
+  await page.goto("/");
+  await scrollPastIntro(page);
+  await expect(page.getByTestId("site-strip")).toHaveCount(0);
+});
+
+test("no other page has a strip", async ({ page }) => {
+  for (const path of ["/methodology", "/ed-trends", "/findings", "/about"]) {
+    await page.goto(path);
+    await expect(page.getByTestId("site-strip"), path).toHaveCount(0);
+  }
+});
+
+test("an anchor jump lands below the strip (scroll-padding-top)", async ({ page }) => {
+  await page.goto("/methodology");
+  const pad = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
+  expect(pad).toBeGreaterThanOrEqual(40);   // the strip is 40px
 });

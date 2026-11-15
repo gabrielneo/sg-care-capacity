@@ -35,7 +35,7 @@ test("a link in running text is accent and always underlined", async ({ page }) 
   expect(style.colour).toBe(await resolve(page, "--accent"));
 });
 
-test("navigation links and the strip are underlined only on hover or focus", async ({ page }) => {
+test("navigation links are underlined only on hover or focus, and the strip's plain text never is", async ({ page }) => {
   test.skip((page.viewportSize()?.width ?? 0) < 500, "hover is a desktop measure");
   await blockTiles(page);
   await page.goto("/?view=planner");
@@ -48,9 +48,12 @@ test("navigation links and the strip are underlined only on hover or focus", asy
   await nav.focus();
   expect(await line(nav)).toContain("underline");
 
+  // The strip (audit C4, E4) is plain text, not a link: no underline at rest or on hover.
+  await page.evaluate(() => window.scrollTo(0, 700));
   const strip = page.getByTestId("strip-summary");
+  await expect(strip).toBeVisible();
   await page.mouse.move(0, 400);
   expect(await line(strip)).toBe("none");
   await strip.hover();
-  expect(await line(strip)).toContain("underline");
+  expect(await line(strip)).toBe("none");
 });

@@ -1,71 +1,92 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { StripData } from "@/lib/strip";
 
-import { SiteStrip } from "./SiteStrip";
+import { SiteStrip, stripLead } from "./SiteStrip";
 
 const strip: StripData = {
-  total: 9, above: 3, noComparison: 0, week: "19–25 Oct 2026",
+  total: 8, above: 1, noComparison: 0, week: "19–25 Oct 2026",
   bed: { source: "MOH", asOf: "2026-10-31" },
   pills: [
     { id: "bed", dataset: "Bed waits", source: "MOH", level: "due", label: "Due an update", detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" },
     { id: "doctor", dataset: "Time-to-see-a-doctor estimates", source: "NUHS", level: "up_to_date", label: "Up to date", detail: "some hospitals only · updated 11 Nov 2026, 12:01 pm SGT", asOf: "2026-11-11T12:01:49" },
   ],
 };
+const targets = [{ id: "summary", label: "Summary", href: "#section-summary" }, { id: "hospitals", label: "Hospitals", href: "#section-hospitals" }];
 
-const serve = (body: unknown) => vi.stubGlobal("fetch", vi.fn(async () => ({ json: async () => body })));
+/** A stand-in for IntersectionObserver that lets a test say whether the intro has scrolled away. */
+let observe: ((past: boolean) => void) | null = null;
+beforeEach(() => {
+  document.body.insertAdjacentHTML("afterbegin", '<div data-strip-sentinel=""></div>');
+  vi.stubGlobal("IntersectionObserver", class {
+    constructor(cb: (e: Partial<IntersectionObserverEntry>[]) => void) {
+      observe = (past) => cb([{ isIntersecting: !past, boundingClientRect: { bottom: past ? -10 : 80 } as DOMRectReadOnly }]);
+    }
+    observe() {} disconnect() {}
+  });
+});
+afterEach(() => { document.querySelector("[data-strip-sentinel]")?.remove(); vi.unstubAllGlobals(); });
 
-beforeEach(() => window.history.replaceState(null, "", "/"));
+const scrollPast = (past: boolean) => act(() => observe!(past));
 
 describe("SiteStrip", () => {
-  it("shows the count, the week and a link to the Planner view", async () => {
-    serve({ ok: true, strip });
-    render(<SiteStrip />);
-    const link = await screen.findByTestId("strip-summary");
-    expect(link).toHaveTextContent("3 of 9 emergency departments above usual");
-    expect(link).toHaveTextContent("week of 19–25 Oct 2026");   // joins the line from 640px; below that the line is the source and date
-    expect(link).toHaveAttribute("href", "/?view=planner");
+  it("says how many EDs are higher than usual and which week, as plain text (not a link)", () => {
+    expect(stripLead(strip)).toBe("1 of 8 emergency departments higher than usual · week of 19–25 Oct 2026");
+    render(<SiteStrip strip={strip} targets={targets} />);
+    expect(screen.getByTestId("strip-summary")).toHaveTextContent("1 of 8 emergency departments higher than usual");
+    expect(screen.getByTestId("strip-summary").querySelector("a")).toBeNull();
+    // The language rules: never "busier".
+    expect(screen.getByTestId("site-strip")).not.toHaveTextContent(/busy|busier/i);
   });
 
-  it("says the count's source and as-of date in words, not only in a tooltip", async () => {
-    serve({ ok: true, strip });
-    render(<SiteStrip />);
-    expect(await screen.findByTestId("strip-basis")).toHaveTextContent("MOH, data as of 31 Oct 2026");
-    expect(screen.getByTestId("site-strip").querySelector("[title]")).toBeNull();
+  it("says so, never a zero, when no hospital has a usual level yet", () => {
+    expect(stripLead({ ...strip, total: 2, above: 0, noComparison: 2 })).toBe("No comparison with usual yet · week of 19–25 Oct 2026");
   });
 
-  it("gives each dataset its own pill, with a symbol and words, not colour alone", async () => {
-    serve({ ok: true, strip });
-    render(<SiteStrip />);
-    const pills = await screen.findAllByTestId("strip-pill");
-    expect(pills[0]).toHaveTextContent("! Due an update");
+  it("is out of sight until the intro has scrolled away, and hides again when it is back", () => {
+    render(<SiteStrip strip={strip} targets={targets} />);
+    const bar = screen.getByTestId("site-strip");
+    expect(bar).toHaveAttribute("data-shown", "false");
+    expect(bar.className).not.toContain("md:block");
+    scrollPast(true);
+    expect(bar).toHaveAttribute("data-shown", "true");
+    // Never on a phone: the class that shows it starts at 768px.
+    expect(bar.className).toContain("hidden md:block");
+    scrollPast(false);
+    expect(bar).toHaveAttribute("data-shown", "false");
+  });
+
+  it("shows the bed-wait data's freshness in a symbol and words, and opens each dataset's own date", () => {
+    render(<SiteStrip strip={strip} targets={targets} />);
+    scrollPast(true);
+    const fresh = screen.getByTestId("strip-freshness");
+    expect(fresh).toHaveTextContent(/^!MOH data: Due an update/);
+    expect(fresh).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(fresh);
+    expect(fresh).toHaveAttribute("aria-expanded", "true");
+    const pills = screen.getAllByTestId("strip-pill");
     expect(pills[0]).toHaveTextContent("Bed waits · MOH · weekly · as of 31 Oct 2026 · 12 days old");
-    expect(pills[1]).toHaveTextContent("✓ Up to date");
     expect(pills[1]).toHaveTextContent("Time-to-see-a-doctor estimates · NUHS · some hospitals only · updated 11 Nov 2026, 12:01 pm SGT");
   });
 
-  it("opens and closes the details with aria-expanded", async () => {
-    serve({ ok: true, strip });
-    render(<SiteStrip />);
-    const button = await screen.findByTestId("strip-details");
-    expect(button).toHaveAttribute("aria-expanded", "false");
-    fireEvent.click(button);
-    expect(button).toHaveAttribute("aria-expanded", "true");
-    expect(document.getElementById(button.getAttribute("aria-controls")!)).toBe(screen.getByTestId("strip-panel"));
+  it("opens the section list, jumps with plain anchors, and closes with Esc, returning focus", () => {
+    render(<SiteStrip strip={strip} targets={targets} />);
+    scrollPast(true);
+    const jump = screen.getByTestId("strip-jump");
+    expect(jump).toHaveTextContent("Jump to section");
+    expect(screen.getByTestId("strip-jump-list")).not.toBeVisible();
+    fireEvent.click(jump);
+    expect(jump).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Hospitals" })).toHaveAttribute("href", "#section-hospitals");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(jump).toHaveAttribute("aria-expanded", "false");
+    expect(jump).toHaveFocus();
   });
 
-  it("has no cluster filter: that lives with the hospital map", async () => {
-    serve({ ok: true, strip });
-    render(<SiteStrip />);
-    await screen.findByTestId("strip-summary");
+  it("has no tooltip-only content and no cluster filter", () => {
+    render(<SiteStrip strip={strip} targets={targets} />);
+    expect(screen.getByTestId("site-strip").querySelector("[title]")).toBeNull();
     expect(screen.queryByRole("group", { name: "Show hospitals from" })).toBeNull();
-  });
-
-  it("says so when the data is unavailable, and invents nothing", async () => {
-    serve({ ok: false });
-    render(<SiteStrip />);
-    await waitFor(() => expect(screen.getByTestId("site-strip")).toHaveTextContent("Data status is not available right now."));
-    expect(screen.queryByTestId("strip-pill")).toBeNull();
   });
 });

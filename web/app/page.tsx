@@ -14,6 +14,7 @@ import { StatusGrid } from "@/components/home/StatusGrid";
 import { SummaryStrip } from "@/components/home/SummaryStrip";
 import { WhatChanged } from "@/components/home/WhatChanged";
 import { SectionHeading } from "@/components/SectionHeading";
+import { SiteStrip } from "@/components/SiteStrip";
 import { Takeaways } from "@/components/home/Takeaways";
 import { WeekPattern } from "@/components/home/WeekPattern";
 import { Provenance } from "@/components/Provenance";
@@ -23,11 +24,12 @@ import type { CareRow } from "@/lib/careMapState";
 import { plainError } from "@/lib/copy";
 import { renderDocList } from "@/lib/docs";
 import { coversWindow, findingFor, latestCompleteWeek, type Profile, profileFetchFrom, profileWindow, usualLevels, weekdayProfile } from "@/lib/edCompare";
-import { type Density, densityOf, parseView, type SectionId, sectionsFor, viewHref } from "@/lib/homeViews";
+import { type Density, densityOf, jumpTargets, parseView, type SectionId, sectionAnchor, sectionsFor, viewHref, VIEWS } from "@/lib/homeViews";
 import { parseSort, sortStatuses } from "@/lib/planner";
 import { shortNote } from "@/lib/hospitalNotes";
 import { isUrgentCare, rankableCodes, splitByCare } from "@/lib/hospitals";
 import { hospitalStatus, SPARK_WEEKS } from "@/lib/status";
+import { buildStrip } from "@/lib/strip";
 import { takeaways } from "@/lib/takeaways";
 import { weekChanges } from "@/lib/weekChanges";
 import { formatWindow } from "@/lib/windows";
@@ -110,6 +112,11 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   const latestWeek = latest ? { week_start: latest, week_end: addDays(latest, 6) } : null;
   const statusOk = hospitalsRes.ok && weeklyRes.ok;
+
+  // The sticky status strip is for Planner and Analyst only: the same count as the cards, built here from the same statuses.
+  const strip = view !== "public" && hospitalsRes.ok && weeklyRes.ok
+    ? buildStrip({ hospitals, weekly, weeklyMeta: weeklyRes.value.meta, live, liveMeta: liveRes.ok ? liveRes.value.meta : null, now: new Date() })
+    : null;
 
   // One builder per section. The view's config decides which run, in what order and at what density.
   const render: Record<SectionId, (density: Density) => ReactNode> = {
@@ -194,7 +201,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
             lede="Hospitals are coloured by the latest complete week's bed wait against their own usual, with a symbol and words. Search above to mark your search.">
             Where are the hospitals, and how did each compare with usual?
           </SectionHeading>
-          <Suspense fallback={<Skeleton className="h-[380px] w-full rounded-xl sm:h-[460px]" label="Loading map" />}>
+          <Suspense fallback={<Skeleton className="h-map w-full rounded-xl" label="Loading map" />}>
             <FinderMap rows={careRows} bodies={bodies} polyclinics={polyclinics}
                        provenance={weeklyRes.ok ? <div className="mt-3"><Provenance meta={weeklyRes.value.meta} compact large /><LocationSource hospitals={hospitals} /></div> : null} />
           </Suspense>
@@ -229,10 +236,17 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   return (
     <div data-testid="home" data-view={view}>
+      {strip ? <SiteStrip strip={strip} targets={jumpTargets(view)} /> : null}
+      {/* Without JavaScript, a phone has no view control (it is in the menu sheet): the three views as plain links. */}
+      <noscript>
+        <nav aria-label="View (no script)" className="mb-3 flex flex-wrap gap-x-4 md:hidden">
+          {VIEWS.map((v) => <Link key={v.id} href={viewHref(v.id)} aria-current={v.id === view ? "true" : undefined} className="inline-flex min-h-11 items-center">{v.label}</Link>)}
+        </nav>
+      </noscript>
       {/* Public view: the heading and the search are one first screen, so they keep the compact rhythm; the chapters after them get the full one. */}
       {/* Chapters: every second section that renders sits on the band colour (full width, content in the container). */}
       {sectionsFor(view).flatMap(({ id, density }) => { const el = render[id](density); return el ? [{ id, el }] : []; })
-        .map(({ id, el }, i) => <div key={id} data-tone={i % 2 ? "band" : "page"} className={`section ${i % 2 ? "section-band" : ""} ${i === 0 ? "section-first" : ""} ${view === "public" && i > 1 ? "" : "section-compact"}`}>{el}</div>)}
+        .map(({ id, el }, i) => <div key={id} id={sectionAnchor(id)} data-tone={i % 2 ? "band" : "page"} className={`section ${i % 2 ? "section-band" : ""} ${i === 0 ? "section-first" : ""} ${view === "public" && i > 1 ? "" : "section-compact"}`}>{el}</div>)}
     </div>
   );
 }
