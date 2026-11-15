@@ -13,6 +13,7 @@ import { MethodsDrawer } from "@/components/home/MethodsDrawer";
 import { StatusGrid } from "@/components/home/StatusGrid";
 import { SummaryStrip } from "@/components/home/SummaryStrip";
 import { WhatChanged } from "@/components/home/WhatChanged";
+import { SectionHeading } from "@/components/SectionHeading";
 import { Takeaways } from "@/components/home/Takeaways";
 import { WeekPattern } from "@/components/home/WeekPattern";
 import { Provenance } from "@/components/Provenance";
@@ -189,11 +190,10 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
         : {};
       return (
         <section aria-labelledby="map-heading" data-testid="map-section">
-          <h2 id="map-heading" className="font-semibold text-ink text-h2">On the map</h2>
-          <p className="mb-3 mt-1 max-w-prose text-body text-ink">
-            Hospitals are coloured by the latest complete week&apos;s bed wait against their own usual, and marked with a symbol and the words in the list.
-            Search above to mark your search and the nearest clinics.
-          </p>
+          <SectionHeading id="map-heading"
+            lede="Hospitals are coloured by the latest complete week's bed wait against their own usual, with a symbol and words. Search above to mark your search.">
+            Where are the hospitals, and how did each compare with usual?
+          </SectionHeading>
           <Suspense fallback={<Skeleton className="h-[380px] w-full rounded-xl sm:h-[460px]" label="Loading map" />}>
             <FinderMap rows={careRows} bodies={bodies} polyclinics={polyclinics}
                        provenance={weeklyRes.ok ? <div className="mt-3"><Provenance meta={weeklyRes.value.meta} compact large /><LocationSource hospitals={hospitals} /></div> : null} />
@@ -210,8 +210,8 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
     links: () => (
       <section aria-labelledby="links-heading" data-testid="analyst-links">
-        <h2 id="links-heading" className="font-semibold text-ink text-h2">Check the data and the methods</h2>
-        <ul className="mt-3 grid gap-x-6 gap-y-2 text-small sm:grid-cols-2">
+        <SectionHeading id="links-heading" lede="Every figure here can be traced to its source, check and definition.">Where can I check the data and the methods?</SectionHeading>
+        <ul className="grid gap-x-6 gap-y-2 text-small sm:grid-cols-2">
           <li><Link href="/data-quality">Data Quality</Link>: every check, each source&apos;s date and the days with gaps</li>
           <li><Link href="/methodology">Methodology</Link>: sources, definitions and what the figures can&apos;t tell you</li>
           <li><Link href="/docs/insights-method">How findings are tested</Link>: the test and the bar each finding has to pass</li>

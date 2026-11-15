@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { type ReactNode, useMemo } from "react";
 
+import { Prose } from "@/components/Prose";
+import { SectionHeading } from "@/components/SectionHeading";
 import { ClientTerm } from "@/components/terms/ClientTerm";
 import { useFinder } from "@/lib/finderStore";
 import { kmText, locate, NEAREST, nearest } from "@/lib/nearby";
@@ -23,13 +25,16 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
   );
   return (
     <section aria-labelledby="ed-heading" className="py-8" data-testid="ed-near">
-      <h2 id="ed-heading" className="font-semibold text-ink text-h2">How long were bed waits at <ClientTerm id="ed" plural /> near you in the latest complete week?</h2>
+      <SectionHeading id="ed-heading" lede={eds.length
+        ? "The three nearest hospital emergency departments, against each hospital's own usual week. This is context, not advice on where to go."
+        : located?.ok
+          ? "This data release has no hospital locations, so the nearest emergency departments can't be shown."
+          : "Search for a postcode or area above to see the three nearest hospital emergency departments."} ledeTestId={eds.length ? undefined : "ed-prompt"}>
+        How long were bed waits at <ClientTerm id="ed" plural /> near you in the latest complete week?
+      </SectionHeading>
       {eds.length ? (
         <>
-          <p className="mt-1 max-w-prose text-body text-ink">
-            The three nearest hospital emergency departments, against each hospital&apos;s own usual week. This is context, not advice on where to go.
-          </p>
-          <ol className="mt-4 card-grid md:grid-cols-3" data-testid="ed-list">
+          <ol className="card-grid md:grid-cols-3" data-testid="ed-list">
             {eds.map((n) => (
               <li key={n.place.code} className="flex flex-col gap-2" data-testid="ed-item">
                 <p className="text-body font-semibold text-ink" data-testid="ed-km">
@@ -39,16 +44,10 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
               </li>
             ))}
           </ol>
-          <div className="mt-3 max-w-prose space-y-1 text-small text-muted">{notes}</div>
+          <Prose as="div" size="small" tone="muted" className="mt-3 space-y-1">{notes}</Prose>
           {provenance}
         </>
-      ) : (
-        <p className="mt-1 max-w-prose text-body text-ink" data-testid="ed-prompt">
-          {located?.ok
-            ? "This data release has no hospital locations, so the nearest emergency departments can't be shown."
-            : "Search for a postcode or area above to see the three nearest hospital emergency departments."}
-        </p>
-      )}
+      ) : null}
       <p className="mt-4 text-body">
         <Link href={analystHref} className="inline-flex min-h-11 items-center">See every hospital and the statistics: Analyst detail</Link>
       </p>

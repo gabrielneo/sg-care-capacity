@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { Prose } from "@/components/Prose";
+import { SectionHeading } from "@/components/SectionHeading";
 import { Glossed } from "@/components/terms/Glossed";
 import type { Insight } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
@@ -17,35 +19,44 @@ const pText = (p: number | null | undefined) => (p == null ? "not tested" : p < 
  */
 export function MethodsDrawer({ findings, limits, open = false }: { findings: Insight[]; limits: ReactNode; open?: boolean }) {
   return (
-    <section aria-labelledby="methods-heading" className="border-t border-line py-8" data-testid="methods">
-      <h2 id="methods-heading" className="font-semibold text-ink text-h2">How these figures are made</h2>
-      <details open={open} className="mt-3 rounded-xl border border-line bg-surface card" data-testid="methods-drawer">
+    <section aria-labelledby="methods-heading" className="border-t border-line" data-testid="methods">
+      <SectionHeading id="methods-heading" lede="Every figure uses the same definitions: here is what each one means and what the data can't show.">
+        How these figures are made
+      </SectionHeading>
+      <details open={open} className="rounded-xl border border-line bg-surface card" data-testid="methods-drawer">
         <summary className="block cursor-pointer select-none py-3 font-semibold text-accent">Show the data and methods</summary>
         <div className="mt-4 space-y-6 text-small text-ink">
-          <div>
-            <h3 className="font-semibold text-h3">The bed wait</h3>
-            <p className="mt-1 max-w-prose"><Glossed text={BED_WAIT_EXPLAINER} /></p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-h3">The badges</h3>
-            <p className="mt-1 max-w-prose">
-              Each hospital is compared with itself. &quot;Usual&quot; is the middle value of its {USUAL_WEEKS} complete weeks before the latest
-              one. A week that is {HIGHER_PCT}% or more above usual is higher; {MUCH_HIGHER_PCT}% or more is much higher;
-              {" "}{HIGHER_PCT}% or more below is lower. With fewer than {USUAL_WEEKS} complete weeks, there is no comparison.
-              The badges are a plain comparison, not a statistical test.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-h3">Wait to see a doctor</h3>
-            <p className="mt-1 max-w-prose"><Glossed text={CAVEAT.live} /></p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-h3">Clinics near you</h3>
-            <p className="mt-1 max-w-prose">
-              <Glossed text="Polyclinics come from HPB's list of screening centres; GP clinics from the CHAS list on data.gov.sg." />{" "}
-              Distances are straight lines. A postcode that isn&apos;t in the lists is placed at the middle of its postal district.
-            </p>
-          </div>
+          {/* Four definitions side by side from 1024px, so a wide screen isn't half empty (audit D7). */}
+          <dl className="grid gap-x-8 gap-y-6 lg:grid-cols-2" data-testid="methods-definitions">
+            <div>
+              <dt className="font-semibold text-h3">The bed wait</dt>
+              <dd><Prose size="small" className="mt-1"><Glossed text={BED_WAIT_EXPLAINER} /></Prose></dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-h3">The badges</dt>
+              <dd>
+                <Prose size="small" className="mt-1">
+                  Each hospital is compared with itself. &quot;Usual&quot; is the middle value of its {USUAL_WEEKS} complete weeks before the latest
+                  one. A week that is {HIGHER_PCT}% or more above usual is higher; {MUCH_HIGHER_PCT}% or more is much higher;
+                  {" "}{HIGHER_PCT}% or more below is lower. With fewer than {USUAL_WEEKS} complete weeks, there is no comparison.
+                  The badges are a plain comparison, not a statistical test.
+                </Prose>
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-h3">Wait to see a doctor</dt>
+              <dd><Prose size="small" className="mt-1"><Glossed text={CAVEAT.live} /></Prose></dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-h3">Clinics near you</dt>
+              <dd>
+                <Prose size="small" className="mt-1">
+                  <Glossed text="Polyclinics come from HPB's list of screening centres; GP clinics from the CHAS list on data.gov.sg." />{" "}
+                  Distances are straight lines. A postcode that isn&apos;t in the lists is placed at the middle of its postal district.
+                </Prose>
+              </dd>
+            </div>
+          </dl>
           {findings.length ? (
             <div>
               <h3 className="font-semibold text-h3">The statistics behind the takeaways</h3>
@@ -67,7 +78,7 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
           ) : null}
           <div data-testid="limits">
             <h3 className="font-semibold text-h3">What the data can&apos;t show</h3>
-            <div className="mt-1 max-w-prose">{limits}</div>
+            <Prose as="div" size="small" className="mt-1">{limits}</Prose>
           </div>
           <p>
             <Link href="/methodology">Full methodology</Link> · <Link href="/docs/insights-method">How findings are tested</Link>

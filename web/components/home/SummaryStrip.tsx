@@ -2,14 +2,17 @@ import type { ReactNode } from "react";
 
 import { Provenance } from "@/components/Provenance";
 import { FreshnessBadge } from "@/components/FreshnessBadge";
+import { Prose } from "@/components/Prose";
+import { SectionHeading } from "@/components/SectionHeading";
 import { KpiTile } from "@/components/KpiTile";
 import { Glossed } from "@/components/terms/Glossed";
 import { Term } from "@/components/terms/Term";
 import { Tip } from "@/components/terms/TermView";
 import type { Hospital, Meta } from "@/lib/api/types";
 import { BED_WAIT_SHORT } from "@/lib/copy";
+import { aboveUsualLede } from "@/lib/ledes";
 import { shortNote } from "@/lib/hospitalNotes";
-import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
+import { fullName, splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { aboveUsual, acrossHospitals, formatDelta, largestChange, longestWait, MIN_HOSPITALS } from "@/lib/planner";
 import { HIGHER_PCT, type HospitalStatus, levelCounts, SPARK_WEEKS } from "@/lib/status";
 import type { WeekRange } from "@/lib/weeks";
@@ -59,17 +62,12 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
 
   return (
     <section aria-labelledby="summary-heading" className="pb-2" data-testid="summary-strip">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="summary-heading" className="font-semibold text-ink text-h2">
-          At a glance: {formatWindow({ kind: "latest_week", week: latestWeek })}
-        </h2>
-        {/* One badge for the four tiles: they share one source and date. */}
-        <FreshnessBadge meta={meta} />
-      </div>
-      <p className="mt-1 text-small text-muted">
-        <Glossed text={BED_WAIT_SHORT} />
-      </p>
-      <ul className="mt-2 card-grid sm:grid-cols-2 lg:grid-cols-4">
+      {/* One badge for the four tiles: they share one source and date. */}
+      <SectionHeading id="summary-heading" badge={<FreshnessBadge meta={meta} />}
+                      lede={aboveUsualLede(above.map((s) => (() => { const h = hospitals.find((x) => x.hospital_code === s.code); return h ? fullName(h) : s.code; })()), rankable.length - noComparison)} ledeTestId="summary-lede">
+        At a glance: {formatWindow({ kind: "latest_week", week: latestWeek })}
+      </SectionHeading>
+      <ul className="card-grid sm:grid-cols-2 lg:grid-cols-4">
         <Tile id="above">
           <KpiTile dense provenance={false} label="Emergency departments above usual, latest complete week" value={above.length} unit={`of ${rankable.length}`} meta={meta}
                    detail={
@@ -107,18 +105,19 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
                    ) : `Needs ${MIN_HOSPITALS}+ emergency departments with a complete week.`} />
         </Tile>
       </ul>
+      <Prose size="small" tone="muted" className="mt-3"><Glossed text={BED_WAIT_SHORT} /></Prose>
       {/* The date and source, once, for all four tiles. */}
       <Provenance meta={meta} compact freshness={false} tight />
       {adultsOnly.length ? (
-        <p className="mt-1 text-meta text-muted" data-testid="summary-adults-note">
+        <Prose size="meta" tone="muted" className="mt-1" data-testid="summary-adults-note">
           {adultsOnly.map((h, i) => <span key={h.hospital_code}>{i > 0 ? ", " : null}{name(h.hospital_code)}</span>)}
           {" "}<Glossed text={`covers ${adultsOnly.length === 1 ? "its" : "their"} adult emergency ${adultsOnly.length === 1 ? "department" : "departments"} only: children's emergency is not in MOH's figures.`} />
-        </p>
+        </Prose>
       ) : null}
       {urgentCare.length ? (
-        <p className="mt-2 text-meta text-muted" data-testid="summary-ucc-note">
+        <Prose size="meta" tone="muted" className="mt-2" data-testid="summary-ucc-note">
           The {URGENT_CARE_HEADING.toLowerCase()} is left out of these four figures. {URGENT_CARE_NOTE}.
-        </p>
+        </Prose>
       ) : null}
     </section>
   );

@@ -1,14 +1,17 @@
 import Link from "next/link";
 
+import { Prose } from "@/components/Prose";
 import { Provenance } from "@/components/Provenance";
+import { SectionHeading } from "@/components/SectionHeading";
 import { Glossed } from "@/components/terms/Glossed";
 import type { Hospital, LiveReading, Meta } from "@/lib/api/types";
 import { BED_WAIT_SHORT } from "@/lib/copy";
 import type { Density } from "@/lib/homeViews";
+import { levelSplitLede } from "@/lib/ledes";
 import { shortNote } from "@/lib/hospitalNotes";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { type Sort, sortHref, SORTS } from "@/lib/planner";
-import { type HospitalStatus, HIGHER_PCT, MUCH_HIGHER_PCT, SPARK_WEEKS } from "@/lib/status";
+import { type HospitalStatus, HIGHER_PCT, levelCounts, MUCH_HIGHER_PCT, SPARK_WEEKS } from "@/lib/status";
 import type { WeekRange } from "@/lib/weeks";
 
 import { StatusCard } from "./StatusCard";
@@ -48,7 +51,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
   const full = density === "full";
   // The full EDs in the order given; the urgent care centre in its own group below (ADR 0012).
   const { rankable, urgentCare } = splitByCare(statuses, (s) => s.code, hospitals);
-  const gridClass = full ? "mt-2 card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 card-grid sm:grid-cols-2 lg:grid-cols-3";
+  const gridClass = full ? "card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "card-grid sm:grid-cols-2 lg:grid-cols-3";
   const byCode = new Map(hospitals.map((h) => [h.hospital_code, h]));
   const liveFor = (code: string) => live.find((r) => r.hospital_code === code && r.is_adult_ed) ?? null;
   const noteFor = (code: string) => {
@@ -60,20 +63,11 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
   return (
     <section aria-labelledby="status-heading" className={full ? "py-2" : "py-8"} data-testid="status-grid" data-density={density}
              data-sort={sort}>
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        <div>
-          <h2 id="status-heading" className="font-semibold text-ink text-h2">
-            {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How long were bed waits at hospital emergency departments in the latest complete week?"}
-          </h2>
-          {full ? null : (
-            <p className="mt-1 max-w-prose text-small text-muted">
-              {latestWeek ? <>{formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}, compared with each hospital&apos;s own usual week. </> : null}
-              <Glossed text={BED_WAIT_SHORT} />
-            </p>
-          )}
-        </div>
-        {full && sort ? <SortLinks sort={sort} query={query} /> : null}
-      </div>
+      <SectionHeading id="status-heading" aside={full && sort ? <SortLinks sort={sort} query={query} /> : null}
+                      lede={full ? levelSplitLede(levelCounts(rankable)) : latestWeek
+                        ? <>{formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}, compared with each hospital&apos;s own usual week.</> : null}>
+        {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How long were bed waits at hospital emergency departments in the latest complete week?"}
+      </SectionHeading>
       <ul className={gridClass} data-testid="status-group" data-group="ed">
         {rankable.map((s) => (
           <StatusCard key={s.code} status={s} hospital={byCode.get(s.code)} note={noteFor(s.code)} live={liveFor(s.code)} weeklyAsOf={meta.as_of} density={density} />
@@ -82,7 +76,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
       {urgentCare.length ? (
         <div className="mt-4" data-testid="status-ucc">
           <h3 className="font-semibold text-ink text-h3">{URGENT_CARE_HEADING}</h3>
-          <p className="text-small text-muted">{URGENT_CARE_NOTE}.</p>
+          <Prose size="small" tone="muted">{URGENT_CARE_NOTE}.</Prose>
           <ul className={gridClass} data-testid="status-group" data-group="ucc">
             {urgentCare.map((s) => (
               <StatusCard key={s.code} status={s} hospital={byCode.get(s.code)} note={noteFor(s.code)} live={liveFor(s.code)} weeklyAsOf={meta.as_of} density={density} />
@@ -90,13 +84,13 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
           </ul>
         </div>
       ) : null}
-      {full ? <p className="mt-3 max-w-prose text-meta text-muted" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></p> : null}
-      <p className={`${full ? "mt-1" : "mt-3"} text-meta text-muted`} data-testid="status-key">
+      <Prose size={full ? "meta" : "small"} tone="muted" className="mt-3" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></Prose>
+      <Prose size="meta" tone="muted" className="mt-1" data-testid="status-key">
         Usual = the median of the previous {USUAL_WEEKS} complete weeks. Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.
         {full ? ` The line shows the ${formatWindow({ kind: "weeks", n: SPARK_WEEKS })}. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.` : null}
-      </p>
+      </Prose>
       {exclusions ? (
-        <p className="mt-1 text-meta text-muted" data-testid="status-exclusions"><Glossed text={exclusions} /></p>
+        <Prose size="meta" tone="muted" className="mt-1" data-testid="status-exclusions"><Glossed text={exclusions} /></Prose>
       ) : null}
       <Provenance meta={meta} compact />
     </section>

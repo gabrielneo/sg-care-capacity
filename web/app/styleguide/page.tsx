@@ -138,7 +138,7 @@ export default async function StyleguidePage() {
           shadow on the site comes from <code>styles/tokens.css</code>; a test checks their contrast.
         </p>
       </header>
-      <Section tone="band" heading="Which colours and components does the site use?">
+      <Section tone="band" heading="Which colours and components does the site use?" lede="Every colour, size and gap below comes from the design tokens, in light and dark.">
         <div className="grid gap-6 lg:grid-cols-2">
           {THEMES.map((t) => <Specimen key={t} theme={t} chart={chart} />)}
         </div>

@@ -1,5 +1,8 @@
 import { FreshnessBadge } from "@/components/FreshnessBadge";
+import { Prose } from "@/components/Prose";
+import { SectionHeading } from "@/components/SectionHeading";
 import type { Meta } from "@/lib/api/types";
+import { changesLede } from "@/lib/ledes";
 import { LEVELS } from "@/lib/status";
 import { formatWeek, type WeekRange } from "@/lib/weeks";
 import type { WeekChanges } from "@/lib/weekChanges";
@@ -16,13 +19,11 @@ export function WhatChanged({ changes, names, meta, latestWeek }: {
   const { moved, unchanged, notCompared } = changes;
   return (
     <section aria-labelledby="changes-heading" className="py-6" data-testid="what-changed">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="changes-heading" className="font-semibold text-ink text-h2">What changed since the week before</h2>
-        <FreshnessBadge meta={meta} />
-      </div>
-      <p className="mt-1 text-small text-muted">Week of {formatWeek(latestWeek)} compared with {before}. A badge compares a week with the hospital&apos;s own usual.</p>
+      <SectionHeading id="changes-heading" badge={<FreshnessBadge meta={meta} />} lede={changesLede(moved.length, unchanged)} ledeTestId={moved.length ? "changes-lede" : "changes-none"}>
+        What changed since the week before
+      </SectionHeading>
       {moved.length ? (
-        <ul className="mt-3 space-y-1 text-body text-ink" data-testid="changes-list">
+        <ul className="space-y-1 text-body text-ink" data-testid="changes-list">
           {moved.map((m) => (
             <li key={m.code} data-testid="change-item" data-direction={m.step > 0 ? "longer" : "shorter"}>
               <span className="font-semibold">{names[m.code] ?? m.code}</span>
@@ -30,12 +31,11 @@ export function WhatChanged({ changes, names, meta, latestWeek }: {
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="mt-3 text-body text-ink" data-testid="changes-none">No hospital changed its badge since the week before.</p>
-      )}
-      <p className="mt-2 text-small text-muted" data-testid="changes-counts">
-        {unchanged} kept the same badge{notCompared ? `; ${notCompared} could not be compared (not enough complete weeks)` : ""}.
-      </p>
+      ) : null}
+      <Prose size="small" tone="muted" className="mt-3" data-testid="changes-counts">
+        Week of {formatWeek(latestWeek)} compared with {before}. A badge compares a week with the hospital&apos;s own usual.
+        {" "}{unchanged} kept the same badge{notCompared ? `; ${notCompared} could not be compared (not enough complete weeks)` : ""}.
+      </Prose>
     </section>
   );
 }
