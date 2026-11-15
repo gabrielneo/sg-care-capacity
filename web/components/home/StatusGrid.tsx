@@ -29,7 +29,7 @@ function SortLinks({ sort, query }: { sort: Sort; query: string }) {
         {SORTS.map((s) => (
           <li key={s.id}>
             <Link href={sortHref(s.id, query)} scroll={false} aria-current={s.id === sort ? "true" : undefined}
-                  className={"flex min-h-11 items-center rounded border px-3 font-semibold no-underline "
+                  className={"flex min-h-11 items-center rounded border px-3 font-semibold link-quiet "
                     + (s.id === sort ? "border-accent bg-accent-soft text-accent-strong" : "border-transparent text-muted hover:text-ink")}>
               {s.label}
             </Link>

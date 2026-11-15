@@ -24,7 +24,7 @@ export function DocPage({ toc, todos = 0, children, aside }: {
           <ul className="space-y-1">
             {toc.map((h) => (
               <li key={h.id}>
-                <a href={`#${h.id}`} className="text-muted no-underline hover:text-ink hover:underline">{h.text}</a>
+                <a href={`#${h.id}`} className="text-muted link-quiet hover:text-ink">{h.text}</a>
               </li>
             ))}
           </ul>

@@ -34,7 +34,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
   const delta = full ? formatDelta(status.pct) : null;
   const title = (
     <Link href={`/ed-trends?hospital=${status.code}`}
-          className="text-ink no-underline after:absolute after:inset-0 after:rounded-xl hover:underline">
+          className="text-ink link-quiet after:absolute after:inset-0 after:rounded-xl">
       {/* Short name and code, with the full name as the title (audit G4); the glossary's full name without a reference. */}
       {hospital ? <HospitalName hospital={hospital} inControl /> : <Term id={status.code.toLowerCase()} plain standalone />}
     </Link>

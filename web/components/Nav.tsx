@@ -18,7 +18,7 @@ export function Nav() {
               <Link
                 href={item.href}
                 aria-current={current ? "page" : undefined}
-                className={`flex min-h-11 items-center rounded-md px-2 text-small sm:px-3 font-semibold no-underline ${
+                className={`flex min-h-11 items-center rounded-md px-2 text-small sm:px-3 font-semibold link-quiet ${
                   current ? "bg-accent-soft text-accent-strong" : "text-muted hover:bg-page hover:text-ink"
                 }`}
               >

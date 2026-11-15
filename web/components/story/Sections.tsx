@@ -232,7 +232,7 @@ export function DepthCards({ cards }: { cards: DepthCard[] }) {
       <ul className="mt-4 card-grid md:grid-cols-3">
         {cards.map((c) => (
           <li key={c.href} data-testid="depth-card">
-            <Link href={c.href} className="flex h-full flex-col rounded-lg border border-line bg-surface card no-underline hover:border-accent">
+            <Link href={c.href} className="flex h-full flex-col rounded-lg border border-line bg-surface card link-quiet hover:border-accent">
               <span className="text-meta font-semibold uppercase tracking-wide text-muted">{c.budget}</span>
               <span className="mt-1 font-semibold text-accent"><Glossed text={c.title} plain /> →</span>
               <span className="mt-1 flex-1 text-small text-muted"><Glossed text={c.text} plain /></span>

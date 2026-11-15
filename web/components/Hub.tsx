@@ -16,7 +16,7 @@ export function Hub({ title, intro, items }: { title: string; intro: string; ite
       <ul className="card-grid sm:grid-cols-2 lg:grid-cols-3">
         {items.map((i) => (
           <li key={i.href}>
-            <Link href={i.href} className="block h-full rounded-xl border border-line bg-surface card no-underline hover:bg-page">
+            <Link href={i.href} className="block h-full rounded-xl border border-line bg-surface card link-quiet hover:bg-page">
               <span className="text-h3 font-semibold text-ink">{i.title}</span>
               <span className="mt-1 block text-body text-muted">{i.text}</span>
             </Link>

@@ -23,7 +23,7 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
             {TABLE_COLUMNS.map((c) => (
               <th key={c.key} scope="col" aria-sort={s.key === c.key ? (s.dir === "asc" ? "ascending" : "descending") : "none"}
                   className={`px-2 py-2 font-semibold ${c.numeric ? "text-right" : ""}`}>
-                <Link href={href(c.key)} className="text-ink no-underline hover:underline">
+                <Link href={href(c.key)} className="text-ink link-quiet">
                   <Glossed text={c.label} plain />
                   <span aria-hidden="true">{s.key === c.key ? (s.dir === "asc" ? " ▲" : " ▼") : ""}</span>
                 </Link>

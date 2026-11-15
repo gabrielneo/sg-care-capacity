@@ -132,6 +132,12 @@
   }
 }
 
+/* Links in navigation, tabs and cards: no underline until hover or keyboard focus. Links in running text keep the base rule (always underlined). */
+@utility link-quiet {
+  text-decoration-line: none;
+  &:hover, &:focus-visible { text-decoration-line: underline; }
+}
+
 /* Cards and card grids take their padding and gaps from the spacing tokens (16px on a phone, 20px from 640px). */
 @utility card { padding: var(--card-pad); }
 @utility card-grid { display: grid; gap: var(--card-gap); }
@@ -198,11 +204,11 @@
            border-radius: 2px; }
 td.todo-me, th.todo-me { border-left-width: 3px; }
 
-/* Glossary terms (<Term>): dotted underline, definition in a tooltip on hover, focus or tap. */
+/* Glossary terms (<Term>): not links, so never the accent colour: ink text with a dotted tertiary underline. Definition in a tooltip, definition in a tooltip on hover, focus or tap. */
 .term-wrap { position: relative; }
 .term {
   font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
-  text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 3px;
+  text-decoration: underline dotted var(--text-tertiary); text-decoration-thickness: 1px; text-underline-offset: 3px;
   cursor: help; text-align: inherit;
 }
 .term-tip {
