@@ -195,5 +195,7 @@ repository, so each is named by what the brief says it fixes. `docs/design/redes
 - **Spacing** The 4/8 steps are tokens; sections, cards and card grids take their gaps from them (`web/test/scale-tokens.test.ts`, `web/test/design-tokens.test.ts`).
 - **Ledes** Each Overview heading has a one-sentence lede. Where it states a fact it is built from the data (`web/lib/ledes.ts`); with no data there is no sentence.
 
-**TODO(me):** C1, C2 and C3 are not in the repository, so they are not closed. Send the audit file (the brief names `docs/ux_audit_2026-11-14.md`) and I will map them.
-The ledes cover the Overview only; the other pages' headings (ED Trends, Access Map, Live, Data Quality) have none yet.
+C1-C4, D6 and D7 are closed in `docs/ux_audit_2026-11-14.md`, with the commits that fixed them. C2's deviation: the KPI figure uses the h1 size, not 34/30px.
+Ledes also open the Data Quality "Check results" and "Freshness" cards and the ED Trends "latest week against usual" card (`web/e2e/page-ledes.spec.ts`). The other cards keep
+their descriptions: ED Trends' charts already carry the engine's findings above them, and Live and Access Map have no sentence a figure supports yet.
+**Not closed here (other prompts):** A1, the rule that the urgent care centre is out of every rank and count, is not part of this brief. The Overview and ED Trends ledes already use `rankableHospitals`.
