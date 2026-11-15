@@ -12,8 +12,8 @@ export const DEFAULT_VIEW: View = "public";
 
 export const VIEWS: readonly { id: View; label: string }[] = [
   { id: "public", label: "Public" },
-  { id: "planner", label: "Planner summary" },
-  { id: "analyst", label: "Analyst detail" },
+  { id: "planner", label: "Planner" },
+  { id: "analyst", label: "Analyst" },
 ];
 
 /** Anything that isn't a known view (missing, misspelt, repeated) is the public view. */
@@ -82,4 +82,27 @@ export function viewHref(view: View, current: string | URLSearchParams = ""): st
   if (view !== DEFAULT_VIEW) q.set("view", view);
   const s = q.toString();
   return s ? `/?${s}` : "/";
+}
+
+/** What each section is called in the "Jump to section" list (the strip's menu). The notice is the page's intro, so it is not a stop. */
+export const SECTION_LABEL: Record<SectionId, string> = {
+  notice: "Introduction",
+  finder: "Find a clinic",
+  ednear: "Nearest emergency departments",
+  summary: "Summary",
+  changes: "What changed",
+  hospitals: "Hospitals",
+  map: "Map",
+  takeaways: "Takeaways",
+  weekdays: "Weekday pattern",
+  links: "Data and methods",
+  methods: "Definitions and limits",
+};
+
+/** The id of the element a section sits in on the page (app/page.tsx), so a link can jump to it. */
+export const sectionAnchor = (id: SectionId): string => `section-${id}`;
+
+/** The stops in "Jump to section" for a view: its sections in page order, without the intro. */
+export function jumpTargets(view: View, sections: readonly SectionSpec[] = SECTIONS): { id: SectionId; label: string; href: string }[] {
+  return sectionsFor(view, sections).filter((s) => s.id !== "notice").map((s) => ({ id: s.id, label: SECTION_LABEL[s.id], href: `#${sectionAnchor(s.id)}` }));
 }

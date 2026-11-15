@@ -51,18 +51,28 @@ test.describe("shell", () => {
     expect(down).toEqual({ ok: false });
   });
 
-  test("the nav reaches every section and marks the current one", async ({ page }) => {
+  test("the nav has five sections and marks the current one; below 768px the same links are in the menu sheet", async ({ page }) => {
     await page.goto("/methodology");
-    const nav = page.getByRole("navigation", { name: "Main" });
-    await expect(nav.getByRole("link")).toHaveText(["Home", "The project", "Findings", "Explore", "How it's built", "Case Study"]);
-    await expect(nav.getByRole("link", { name: "How it's built" })).toHaveAttribute("aria-current", "page");   // /methodology is under it
-    // Every section is on screen at every width: the nav wraps rather than scrolling sideways.
-    const viewport = page.viewportSize()!.width;
+    const wide = page.viewportSize()!.width >= 768;
+    if (!wide) {
+      await expect(page.getByRole("navigation", { name: "Main" })).toBeHidden();
+      await page.getByTestId("menu-button").click();
+    }
+    const nav = wide ? page.getByRole("navigation", { name: "Main" }) : page.getByRole("navigation", { name: "Menu" });
+    await expect(nav.getByRole("link")).toHaveText(["Home", "Findings", "Explore", "Methods", "About"].map((t) => new RegExp(`^${t}`)));
+    await expect(nav.locator('a[aria-current="page"]')).toHaveText(/^Methods/);   // /methodology is under it
     for (const link of await nav.getByRole("link").all()) {
       const box = (await link.boundingBox())!;
       expect(box.x, await link.innerText()).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.width, await link.innerText()).toBeLessThanOrEqual(viewport);
+      expect(box.x + box.width, await link.innerText()).toBeLessThanOrEqual(page.viewportSize()!.width);
       expect(box.height).toBeGreaterThanOrEqual(44);   // tap target
+    }
+  });
+
+  test("the pages that moved under About are still there and mark About", async ({ page }) => {
+    for (const path of ["/about", "/project", "/how-its-built", "/case-study"]) {
+      await page.goto(path);
+      if (page.viewportSize()!.width >= 768) await expect(page.getByRole("navigation", { name: "Main" }).locator('a[aria-current="page"]')).toHaveText("About");
     }
   });
 

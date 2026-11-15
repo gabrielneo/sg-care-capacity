@@ -5,10 +5,10 @@ import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./
 /*
  * The home page's three views (lib/homeViews.ts), on the API's fixture snapshot:
  * SGH is +25% ("higher than usual"); AH and NUH have no usual level ("no comparison").
- * Both projects run this file: at 1280 px the control is a radio group, at 375 px a select.
+ * Both projects run this file: from 768 px the control is a segmented radio group in the header; below it, a radio group in the menu sheet.
  */
 const AS_OF = /^Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4} · Source: .+/;
-const LABEL = { public: "Public", planner: "Planner summary", analyst: "Analyst detail" } as const;
+const LABEL = { public: "Public", planner: "Planner", analyst: "Analyst" } as const;
 type View = keyof typeof LABEL;
 
 // Each section's test id, and the views it belongs to.
@@ -26,17 +26,33 @@ const SECTIONS: Record<string, View[]> = {
   "methods": ["public", "planner", "analyst"],
 };
 
-const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 640;
+const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 768;
 
 async function choose(page: Page, view: View) {
-  if (narrow(page)) await page.getByTestId("view-select").selectOption(view);
-  else await page.getByTestId("view-radios").getByText(LABEL[view], { exact: true }).click();
+  if (narrow(page)) {
+    await page.getByTestId("menu-button").click();
+    await page.getByTestId("view-radios-sheet").getByText(LABEL[view], { exact: true }).click();   // picking a view closes the sheet
+    await expect(page.getByTestId("menu-sheet")).toBeHidden();
+  } else await page.getByTestId("view-radios").getByText(LABEL[view], { exact: true }).click();
 }
 
 async function expectView(page: Page, view: View) {
   await expect(page.getByTestId("home")).toHaveAttribute("data-view", view);
-  if (narrow(page)) await expect(page.getByTestId("view-select")).toHaveValue(view);
-  else await expect(page.getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
+  if (narrow(page)) {
+    await page.getByTestId("menu-button").click();
+    await expect(page.getByTestId("view-radios-sheet").getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("menu-sheet")).toBeHidden();
+  } else await expect(page.getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
+}
+
+/** Follow a section's link: in the header's nav from 768 px, in the menu sheet below it. */
+async function goNav(page: Page, label: string) {
+  if (narrow(page)) {
+    await page.getByTestId("menu-button").click();
+    await page.getByTestId("nav-sheet").getByRole("link", { name: new RegExp(`^${label}`) }).click();
+    await expect(page.getByTestId("menu-sheet")).toBeHidden();   // following a link closes the sheet
+  } else await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: label, exact: true }).click();
 }
 
 test.beforeEach(async ({ page }) => blockTiles(page));
@@ -46,14 +62,17 @@ test.describe("Home views", () => {
     await page.goto("/");
     await expectView(page, "public");
     if (narrow(page)) {
-      await expect(page.getByRole("combobox", { name: "View" })).toBeVisible();     // a labelled select
+      // Below 768 px the choice lives in the menu sheet, not in the header.
       await expect(page.getByTestId("view-radios")).toBeHidden();
-      expect(await page.getByTestId("view-select").locator("option").allTextContents()).toEqual(Object.values(LABEL));
+      await page.getByTestId("menu-button").click();
+      const group = page.getByTestId("view-radios-sheet");
+      await expect(group).toBeVisible();
+      expect((await group.locator("label").allInnerTexts()).map((t) => t.replace("✓", "").trim())).toEqual(Object.values(LABEL));
     } else {
       const group = page.getByRole("radiogroup", { name: "View" });
       await expect(group).toBeVisible();
       await expect(group.getByRole("radio")).toHaveCount(3);
-      await expect(page.getByTestId("view-select")).toBeHidden();
+      expect((await group.boundingBox())!.height).toBeCloseTo(36, 0);          // the 36px segmented control
     }
   });
 
@@ -67,7 +86,9 @@ test.describe("Home views", () => {
       // On every view: one page heading, the emergency line, "not medical advice", and a dated source on every block.
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
       await expect(page.getByTestId("emergency-note")).toHaveText(/call 995/i);
-      await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
+      // Public: the full card says it in two sentences. Planner and Analyst: one compact line, with the same words as the footer.
+      if (view === "public") await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
+      else await expect(page.getByTestId("emergency-note")).toHaveText("✚ Emergency? Call 995. This site shows public statistics, not medical advice.");
       const lines = page.getByTestId("home").getByTestId("provenance-line");
       // Public shows no figure until a search (then each block is dated: e2e/finder.spec.ts); the other views always do.
       if (view !== "public") expect(await lines.count()).toBeGreaterThan(0);
@@ -253,7 +274,7 @@ test.describe("Home views", () => {
   });
 
   test("keyboard: Tab reaches the group once, arrow keys move the choice, focus is visible", async ({ page }) => {
-    test.skip(narrow(page), "the radio group is the wide layout; a select is used at 375 px");
+    test.skip(narrow(page), "the header's segmented control is the wide layout; the menu sheet has its own keyboard test (e2e/frame.spec.ts)");
     await page.goto("/");
     let onRadio = false;
     for (let i = 0; i < 10 && !onRadio; i++) {
@@ -271,13 +292,13 @@ test.describe("Home views", () => {
     await page.keyboard.press("ArrowRight");
     await expect(page).toHaveURL(/\?view=planner$/);
     await expectView(page, "planner");
-    await expect(page.getByRole("radio", { name: "Planner summary" })).toBeFocused();   // focus stays in the group
+    await expect(page.getByRole("radio", { name: "Planner" })).toBeFocused();   // focus stays in the group
     await page.keyboard.press("ArrowRight");
     await expectView(page, "analyst");
     await page.keyboard.press("ArrowLeft");
     await expect(page).toHaveURL(/\?view=planner$/);
     await expectView(page, "planner");
-    await expect(page.getByRole("radio", { name: "Planner summary" })).toBeFocused();
+    await expect(page.getByRole("radio", { name: "Planner" })).toBeFocused();
 
     // One Tab leaves the group: it is a single stop, not three.
     await page.keyboard.press("Tab");
@@ -287,13 +308,15 @@ test.describe("Home views", () => {
   test("works without JavaScript: the link, and the control as a form", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    const wide = (page.viewportSize()?.width ?? 1280) >= 640;
     await page.goto("/?view=planner");
     await expect(page.getByTestId("summary-strip")).toHaveCount(1);
     await expect(page.getByTestId("status-card")).toHaveCount(3);
-    if (wide) await page.getByTestId("view-radios").getByText("Analyst detail", { exact: true }).click();
-    else await page.getByTestId("view-select").selectOption("analyst");
-    await page.getByRole("button", { name: "Change view" }).click();
+    // Without JavaScript the header's control is a plain form; below 768px the page has the three views as links.
+    if (narrow(page)) await page.getByRole("navigation", { name: "View (no script)" }).getByRole("link", { name: "Analyst" }).click();   // a phone: plain links
+    else {
+      await page.getByTestId("view-radios").getByText("Analyst", { exact: true }).click();
+      await page.getByRole("button", { name: "Change view" }).click();
+    }
     await expect(page).toHaveURL(/\?view=analyst$/);
     await expect(page.getByTestId("week-pattern")).toHaveCount(1);
     await context.close();
@@ -301,17 +324,16 @@ test.describe("Home views", () => {
 
   test("the control is only on the home page, however the page is reached", async ({ page }) => {
     await page.goto("/findings");
-    await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
     await expect(page.getByTestId("view-switch")).toHaveCount(0);
+    await expect(narrow(page) ? page.getByTestId("menu-button") : page.getByRole("navigation", { name: "Main" })).toBeVisible();
 
     // Following links, without a full page load: it goes when leaving the home page and returns with it.
     await page.goto("/?view=planner");
     await expect(page.getByTestId("view-switch")).toHaveCount(1);
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "How it's built" }).click();
-    await page.getByTestId("hub").locator('a[href="/methodology"]').click();
+    await goNav(page, "Methods");
     await expect(page.getByRole("heading", { level: 1, name: "Methodology" })).toBeVisible();
     await expect(page.getByTestId("view-switch")).toHaveCount(0);
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Home" }).click();
+    await goNav(page, "Home");
     await expectView(page, "public");
     await expect(page.getByTestId("view-switch")).toHaveCount(1);
   });
