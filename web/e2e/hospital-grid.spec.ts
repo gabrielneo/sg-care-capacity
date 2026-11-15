@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
@@ -132,3 +135,15 @@ test("no horizontal overflow at 375, 768, 1280 and 1440; axe is clean in both th
     await expectNoA11yViolations(page, { wcag22: true });
   }
 });
+
+// Visual snapshots of the grid on the sample data. Pixels differ by operating system, so the baselines are the Linux ones CI renders
+// (`UPDATE_VISUAL=1 npx playwright test e2e/hospital-grid.spec.ts --update-snapshots` there, then commit e2e/hospital-grid.spec.ts-snapshots/).
+for (const scheme of ["light", "dark"] as const) {
+  test(`snapshot of the grid, ${scheme}`, async ({ page, viewport }) => {
+    const baseline = path.join(__dirname, "hospital-grid.spec.ts-snapshots", `grid-${scheme}-desktop-linux.png`);
+    test.skip((viewport?.width ?? 0) < 1000 || process.platform !== "linux" || (!existsSync(baseline) && !process.env.UPDATE_VISUAL),
+              "baselines are rendered on Linux (CI) and committed; none yet");
+    await open(page, 1280, scheme);
+    await expect(page.getByTestId("status-grid")).toHaveScreenshot(`grid-${scheme}.png`, { maxDiffPixelRatio: 0.005 });
+  });
+}

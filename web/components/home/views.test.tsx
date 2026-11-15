@@ -35,7 +35,7 @@ describe("StatusCard densities", () => {
     render(<ul><StatusCard status={status("SGH", 25)} hospital={hospital("SGH")} note={null} live={null} density="full" /></ul>);
     expect(screen.getByTestId("hospital-name")).toHaveAttribute("title", "Singapore General Hospital");
     expect(screen.getByTestId("hospital-name")).toHaveTextContent(/^Singapore General SGH/);
-    expect(screen.getByTestId("status-live-none")).toHaveTextContent("Doctor wait: no NUHS estimate");
+    expect(screen.getByTestId("status-live-none")).toHaveTextContent(/Doctor wait: no .*NUHS.* estimate/);
   });
 
   it("simple: badge, figure and sentence, without the line or the change", () => {
@@ -138,7 +138,7 @@ describe("StatusCard densities", () => {
       <StatusCard status={status("NUH", 0)} hospital={hospital("NUH")} note="Adults only" live={null} />
     </ul>);
     const [a, b] = screen.getAllByTestId("status-card");
-    expect(within(a!).getByTestId("status-live")).toHaveTextContent("To see a doctor: under 1 h · NUHS estimate, 6 Nov 2:00 pm");
+    expect(within(a!).getByTestId("status-live")).toHaveTextContent(/To see a doctor: under 1 h · .*NUHS.* estimate, 6 Nov 2:00 pm/);
     expect(within(a!).queryByTestId("nuhs-timing")).toBeNull();                          // said once, in the section's key
     expect(within(a!).getByRole("link")).toHaveAccessibleName("Singapore General Hospital (SGH), Higher than usual, rising over 12 weeks");
     expect(within(b!).getByTestId("status-live-none")).toHaveClass("text-tertiary");

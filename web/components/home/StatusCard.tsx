@@ -88,11 +88,11 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
   const liveLine = live ? (
     <p className="sc-foot border-t border-line text-meta text-muted" data-testid="status-live">
       <span className="sc-short">Ward-bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>To see a doctor: {estimateShort(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
-      {" · "}NUHS estimate, <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { compact: true })}</time>
+      {" · "}<Term id="nuhs" plain /> estimate, <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { compact: true })}</time>
     </p>
   ) : (
     <p className="sc-foot border-t border-line text-meta text-tertiary" data-testid="status-live-none">
-      <span className="sc-short">Ward-bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>Doctor wait: no NUHS estimate
+      <span className="sc-short">Ward-bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>Doctor wait: no <Term id="nuhs" plain /> estimate
     </p>
   );
   return (

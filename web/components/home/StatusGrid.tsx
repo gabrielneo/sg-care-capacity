@@ -49,7 +49,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
                        <span data-testid="status-key">
                          <span className="block">Usual = the median of the previous {USUAL_WEEKS} complete weeks.</span>
                          <span className="mt-1 block">Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.</span>
-                         {full ? <span className="mt-1 block">To see a doctor is a <Term id="nuhs" /> estimate. NUHS publishes it separately, with its own time on each card, so it can be newer than the weekly figures.</span> : null}
+                         {full ? <span className="mt-1 block">To see a doctor is a <Term id="nuhs" /> estimate. <Term id="nuhs" plain /> publishes it separately, with its own time on each card, so it can be newer than the weekly figures.</span> : null}
                          {full ? <span className="mt-1 block">{`The line shows the ${formatWindow({ kind: "weeks", n: SPARK_WEEKS })}. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.`}</span> : null}
                        </span>
                      }
