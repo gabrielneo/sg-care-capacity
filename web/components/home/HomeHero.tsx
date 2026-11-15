@@ -1,5 +1,5 @@
-import Link from "next/link";
 
+import { Notice995 } from "@/components/Notice995";
 import { Term } from "@/components/terms/Term";
 import { TRIAGE_EMERGENCY, TRIAGE_GUIDANCE_LABEL, TRIAGE_GUIDANCE_URL, TRIAGE_NEXT } from "@/lib/copy";
 import type { Density } from "@/lib/homeViews";
@@ -10,20 +10,13 @@ import type { Density } from "@/lib/homeViews";
  *   highest-contrast block. It says to call 995 and, in one line, that a GP clinic or polyclinic can
  *   often help when it isn't life-threatening, with a link to the official guidance. It gives no
  *   other medical advice. Then the page's heading and what the site is for.
- * - Simple (Planner, Analyst): one compact row.
+ * - Simple (Planner, Analyst): the heading, then one compact line (components/Notice995.tsx). The Analyst and Planner views have no CV or LinkedIn line.
  */
 export function HomeNotice({ density = "full" }: { density?: Density }) {
   const full = density === "full";
   const notAdvice = (
     <p className={`${full ? "mt-2 text-small text-ink sm:mt-3 sm:text-body" : "text-small text-muted"} max-w-prose`} data-testid="not-advice">
       This site shows public statistics. It isn&apos;t medical advice: if you&apos;re unsure where to go, ask a doctor or nurse.
-    </p>
-  );
-  // For someone who arrives from a CV or LinkedIn link: the way to the project's story, after the emergency line. Not on phones
-  // in the public view: there it would push the search off the first screen, and the nav's "The project" is in its first row.
-  const project = (
-    <p className={`${full ? "mt-3 hidden sm:block" : ""} text-small text-ink`} data-testid="project-link">
-      Here from a CV or LinkedIn? <Link href="/project" className="font-semibold">See the project in 60 seconds</Link>
     </p>
   );
   if (full) {
@@ -52,7 +45,6 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
           Getting care in the most suitable place is called <Term id="right_siting">right-siting</Term>.
         </p>
         {notAdvice}
-        {project}
       </section>
     );
   }
@@ -61,15 +53,9 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
       <h1 id="home-title" className="max-w-4xl font-semibold text-ink text-h2">
         Hospital emergency departments: the latest complete week against a usual week
       </h1>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p role="note" className="inline-flex max-w-prose items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-small font-semibold text-danger"
-           data-testid="emergency-note">
-          <span aria-hidden="true">✚</span>
-          In an emergency, call 995 or go to the nearest emergency department.
-        </p>
-        {notAdvice}
-        {project}
-      </div>
+      <Notice995 variant="compact" className="mt-2" />
+      {/* The end of the page's intro: the sticky status strip appears once this has scrolled out of view (components/SiteStrip.tsx). */}
+      <div data-strip-sentinel="" aria-hidden="true" />
     </section>
   );
 }

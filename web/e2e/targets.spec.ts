@@ -8,7 +8,7 @@ import { blockTiles } from "./helpers";
  * whose label is itself the 44px target.
  */
 const ROUTES = ["/", "/?view=planner", "/?view=analyst", "/ed-trends", "/live", "/access-map", "/findings", "/data-quality",
-  "/methodology", "/glossary", "/project", "/explore", "/styleguide"];
+  "/methodology", "/glossary", "/project", "/about", "/explore", "/styleguide"];
 
 test.use({ viewport: { width: 375, height: 812 } });
 

@@ -169,7 +169,7 @@ describe("EdNearby", () => {
     expect(screen.getByTestId("ed-prompt")).toHaveTextContent("Search for a postcode or area above");
     expect(screen.queryByTestId("ed-item")).toBeNull();
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(/^How long were bed waits at EDs.* near you in the latest complete week\?$/);
-    expect(screen.getByRole("link", { name: /Analyst detail/ })).toHaveAttribute("href", "/?view=analyst");
+    expect(screen.getByRole("link", { name: /Analyst view/ })).toHaveAttribute("href", "/?view=analyst");
   });
 
   it("shows the three nearest, nearest first, with the straight-line distance", async () => {

@@ -29,10 +29,13 @@ test.describe("The project page", () => {
     await expect(page.getByTestId("project-checks")).toHaveText(`${passed}/${q.data.results.length}`);
   });
 
-  test("has the byline in the footer of other pages, and a nav link", async ({ page }) => {
+  test("is reached from the footer's About column and from the About page, and the footer credits the author", async ({ page }) => {
     await page.goto("/methodology");
-    await expect(page.locator("footer").getByTestId("author-byline")).toContainText("Gabriel Neo");
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "The project" }).click();
+    await expect(page.getByTestId("footer-credits")).toContainText("Built by Gabriel Neo");
+    await page.locator("footer").getByRole("link", { name: "The project in 60 seconds" }).click();
+    await expect(page).toHaveURL(/\/project$/);
+    await page.goto("/about");
+    await page.getByTestId("hub").getByRole("link", { name: /The project/ }).click();
     await expect(page).toHaveURL(/\/project$/);
   });
 
@@ -44,18 +47,21 @@ test.describe("The project page", () => {
     await expect(glance).toContainText(/\d+ minutes to read/);
   });
 
-  test("the home page points CV and LinkedIn visitors to it, after the emergency line", async ({ page }) => {
-    const phone = page.viewportSize()!.width < 640;
-    for (const path of ["/", "/?view=planner"]) {
+  test("no product view has the CV or LinkedIn line (E2): it lives in the footer and on /about", async ({ page }) => {
+    for (const path of ["/", "/?view=planner", "/?view=analyst"]) {
       await page.goto(path);
-      const link = page.getByTestId("project-link").locator('a[href="/project"]');
-      await expect(link).toHaveText("See the project in 60 seconds");
-      // On a phone's public view the line is hidden (it would push the search off the first screen): the nav's link is in view instead.
-      if (phone && path === "/") await expect(link).toBeHidden();
-      else await expect(link).toBeVisible();
+      await expect(page.getByTestId("home")).not.toContainText("Here from a CV or LinkedIn");
+      await expect(page.getByTestId("project-link")).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "See the project in 60 seconds" })).toHaveCount(0);
+      await expect(page.locator("footer").getByRole("link", { name: "The project in 60 seconds" })).toHaveAttribute("href", "/project");
     }
-    await page.goto("/");
-    await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "The project" })).toBeInViewport({ ratio: 1 });
+    await page.goto("/about");
+    const sixty = page.getByTestId("sixty-seconds");
+    await expect(sixty).toBeVisible();
+    // The 60-second card comes first, above the three cards.
+    const [card, hub] = await Promise.all([sixty.boundingBox(), page.getByTestId("hub").locator(".card-grid").boundingBox()]);
+    expect(card!.y).toBeLessThan(hub!.y);
+    await expect(page.getByTestId("hub").locator(".card-grid li")).toHaveCount(3);
   });
 
   test("findings say why their hours can sit above the case study's typical waits", async ({ page }) => {

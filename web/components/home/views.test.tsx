@@ -234,8 +234,18 @@ describe("HomeNotice", () => {
       setTestScope(createScope());
       const { unmount } = render(<HomeNotice density={density} />);
       expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-      expect(screen.getByTestId("emergency-note")).toHaveTextContent(density === "full" ? "Life-threatening emergency? Call 995." : "In an emergency, call 995");
-      expect(screen.getByTestId("not-advice")).toHaveTextContent("isn't medical advice");
+      expect(screen.getByTestId("emergency-note")).toHaveTextContent(density === "full" ? "Life-threatening emergency? Call 995." : "Emergency? Call 995.");
+      // Full: the card says it in two sentences. Simple: one line under the heading, with 995 as a tel: link.
+      if (density === "full") expect(screen.getByTestId("not-advice")).toHaveTextContent("isn't medical advice");
+      else {
+        expect(screen.getByTestId("emergency-note")).toHaveTextContent("This site shows public statistics, not medical advice.");
+        expect(screen.queryByTestId("not-advice")).toBeNull();
+        expect(screen.getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
+        // The intro ends in the marker that the status strip waits for; neither density has the CV line any more.
+        expect(document.querySelector("[data-strip-sentinel]")).not.toBeNull();
+      }
+      expect(screen.queryByTestId("project-link")).toBeNull();
+      expect(screen.queryByText(/CV or LinkedIn/)).toBeNull();
       expect(screen.queryByTestId("site-purpose") != null).toBe(density === "full");
       unmount();
     }

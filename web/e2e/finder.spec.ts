@@ -94,7 +94,7 @@ test.describe("Public finder", () => {
     expect(await page.getByTestId("ed-near").innerText()).not.toMatch(/wait time/i);
     await expect(page.getByTestId("status-exclusions")).toContainText("Children's Emergency");
     for (const line of await page.getByTestId("ed-near").getByTestId("provenance-line").all()) await expect(line).toHaveText(AS_OF);
-    await expect(page.getByTestId("ed-near").getByRole("link", { name: /Analyst detail/ })).toHaveAttribute("href", "/?view=analyst");
+    await expect(page.getByTestId("ed-near").getByRole("link", { name: /Analyst view/ })).toHaveAttribute("href", "/?view=analyst");
   });
 
   test("the bed-wait help opens on keyboard focus, explains it isn't time to see a doctor, and closes on Escape", async ({ page }) => {
@@ -144,7 +144,7 @@ test.describe("Public finder", () => {
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("nearby-place").first()).toBeVisible();
     for (const target of [page.getByLabel("Your postcode or area"), page.getByRole("button", { name: "Find clinics" }),
-      page.getByTestId("type-filter").locator("label").first(), page.getByTestId("directions").first(), page.getByRole("link", { name: "Call 995" })]) {
+      page.getByTestId("type-filter").locator("label").first(), page.getByTestId("directions").first(), page.getByTestId("emergency-note").getByRole("link", { name: "Call 995" })]) {
       const box = (await target.boundingBox())!;
       expect(box.height, "target height").toBeGreaterThanOrEqual(44);
     }

@@ -10,7 +10,7 @@ import { blockTiles } from "./helpers";
  */
 const ROUTES = ["/", "/?view=public", "/?view=planner", "/?view=analyst", "/project", "/findings", "/explore", "/ed-trends",
   "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/how-its-built", "/case-study", "/docs/insights-method",
-  "/summary", "/styleguide"];
+  "/summary", "/about", "/styleguide"];
 
 for (const route of ROUTES) {
   test(`${route}: at most 6 font sizes, none under 13px`, async ({ page }) => {

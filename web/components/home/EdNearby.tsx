@@ -49,7 +49,7 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
         </>
       ) : null}
       <p className="mt-4 text-body">
-        <Link href={analystHref} className="inline-flex min-h-11 items-center">See every hospital and the statistics: Analyst detail</Link>
+        <Link href={analystHref} className="inline-flex min-h-11 items-center">See every hospital and the statistics: Analyst view</Link>
       </p>
     </section>
   );
