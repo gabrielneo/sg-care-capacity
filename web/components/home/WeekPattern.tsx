@@ -9,8 +9,8 @@ export function WeekPattern({ profiles, hospitals, finding, meta }: { profiles: 
   const shown = hospitals.filter((h) => profiles.some((p) => p.code === h.hospital_code));
   return (
     <section aria-labelledby="week-heading" className="py-8" data-testid="week-pattern">
-      <h2 id="week-heading" className="text-xl font-semibold tracking-tight text-ink">Which days have the longest bed waits?</h2>
-      <p className="mb-3 mt-1 max-w-prose text-sm text-muted">
+      <h2 id="week-heading" className="font-semibold text-ink text-h2">Which days have the longest bed waits?</h2>
+      <p className="mb-3 mt-1 max-w-prose text-small text-muted">
         Each day&apos;s bed wait over the {formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}, compared with that hospital&apos;s own average. Orange is longer, purple is shorter.
       </p>
       <div className="rounded-xl border border-line bg-surface p-4">

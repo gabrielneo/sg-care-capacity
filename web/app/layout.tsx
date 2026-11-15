@@ -46,7 +46,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
         <header className="border-b border-line bg-surface">
           <div className="mx-auto max-w-6xl px-4 pt-2">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <Link href="/" className="inline-flex min-h-11 items-center text-base font-semibold text-ink no-underline">
+              <Link href="/" className="inline-flex min-h-11 items-center text-body font-semibold text-ink no-underline">
                 {SITE.name} <span className="hidden font-normal text-muted sm:inline">{SITE.tagline}</span>
               </Link>
               {/* The home page's view control (app/@viewbar): a slot, because a layout can't read ?view=. */}
@@ -63,7 +63,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
           {children}
         </main>
         <footer className="border-t border-line bg-surface">
-          <div className="mx-auto max-w-6xl px-4 py-4 text-sm text-muted">
+          <div className="mx-auto max-w-6xl px-4 py-4 text-small text-muted">
             {/* Standalone: the footer is site chrome, so it doesn't use up the page's first use of a term. */}
             <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
             Page views are counted without cookies, and searches aren&apos;t recorded.{" "}

@@ -89,7 +89,7 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
                        <span className="inline-flex flex-wrap gap-2 align-middle" aria-label="Window">
                          {COVERAGE_WINDOWS.map((w) => (
                            <Link key={w} href={w === 13 ? "/data-quality" : `/data-quality?weeks=${w}`} aria-current={w === weeks ? "page" : undefined}
-                                 className={`inline-flex min-h-11 items-center rounded-md px-3 text-sm no-underline ${w === weeks ? "bg-accent-soft font-semibold text-accent-strong" : "text-accent hover:underline"}`}>
+                                 className={`inline-flex min-h-11 items-center rounded-md px-3 text-small no-underline ${w === weeks ? "bg-accent-soft font-semibold text-accent-strong" : "text-accent hover:underline"}`}>
                              {w} weeks
                            </Link>
                          ))}
@@ -103,9 +103,9 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
           )}
           {Object.keys(history).length ? (
             <>
-              <h3 className="mt-6 text-sm font-semibold">Whole series</h3>
+              <h3 className="mt-6 font-semibold text-h3">Whole series</h3>
               <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Coverage over the whole series (scrolls sideways)">
-                <table className="mt-1 w-full min-w-[560px] border-collapse text-sm" data-testid="coverage-history">
+                <table className="mt-1 w-full min-w-[560px] border-collapse text-small" data-testid="coverage-history">
                   <thead>
                     <tr className="border-b border-line text-left">
                       <th scope="col" className="py-1.5 pr-3 font-semibold">Hospital</th>

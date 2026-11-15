@@ -22,7 +22,7 @@ export function ModeToggle({ mode, params }: { mode: Mode; params: Record<string
     <nav aria-label="Compare" className="mb-6 inline-flex flex-wrap rounded-md border border-control bg-surface p-1" data-testid="mode-toggle">
       {options.map((o) => (
         <Link key={o.m} href={href(o.m)} aria-current={mode === o.m ? "page" : undefined}
-              className={`flex min-h-11 items-center rounded px-4 text-sm font-medium no-underline ${
+              className={`flex min-h-11 items-center rounded px-4 text-small font-semibold no-underline ${
                 mode === o.m ? "bg-accent-soft text-accent-strong" : "text-muted hover:text-ink"}`}>
           {o.label}
         </Link>

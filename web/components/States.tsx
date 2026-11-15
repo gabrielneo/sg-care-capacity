@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 export function EmptyState({ title, message, action }: { title: ReactNode; message?: ReactNode; action?: ReactNode }) {
   return (
     <div className="rounded-lg border border-dashed border-line bg-surface px-4 py-8 text-center">
-      <p className="font-medium text-ink">{title}</p>
-      {message ? <div className="mx-auto mt-1 max-w-prose text-sm text-muted">{message}</div> : null}
+      <p className="font-semibold text-ink">{title}</p>
+      {message ? <div className="mx-auto mt-1 max-w-prose text-small text-muted">{message}</div> : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );
@@ -28,10 +28,10 @@ export function ErrorState({
   const info = typeof error === "string" ? { message: error } : error;
   return (
     <div role="alert" className="rounded-lg border border-danger/30 bg-danger-soft px-4 py-4 text-danger">
-      <p className="font-medium">{title}</p>
-      <p className="mt-1 text-sm">
+      <p className="font-semibold">{title}</p>
+      <p className="mt-1 text-small">
         {info.message}
-        {info.code ? <span className="ml-1 text-xs">(Reference: <span className="font-mono">{info.code}</span>)</span> : null}
+        {info.code ? <span className="ml-1 text-meta">(Reference: <span className="font-mono">{info.code}</span>)</span> : null}
       </p>
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
@@ -51,7 +51,7 @@ export function Skeleton({ className = "h-4 w-full", label = "Loading" }: { clas
 export function ChartCardSkeleton({ title, label }: { title?: ReactNode; label?: string }) {
   return (
     <section className="rounded-lg border border-line bg-surface p-4" aria-busy="true">
-      {title ? <h2 className="text-base font-semibold">{title}</h2> : <Skeleton className="h-5 w-1/3" label="Loading chart" />}
+      {title ? <h2 className="font-semibold text-h2">{title}</h2> : <Skeleton className="h-5 w-1/3" label="Loading chart" />}
       <div className="mt-4">
         <Skeleton className="h-48 w-full" label={label ?? (typeof title === "string" ? `Loading ${title}` : "Loading")} />
       </div>

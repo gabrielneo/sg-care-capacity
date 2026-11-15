@@ -49,7 +49,7 @@ export function CoverageGrid({ days, rows }: { days: string[]; rows: CoverageRow
   const total = (s: CellState) => rows.reduce((n, r) => n + r.counts[s], 0);
   return (
     <div>
-      <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs" aria-label="Legend">
+      <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-meta" aria-label="Legend">
         {(Object.keys(CELL_LABELS) as CellState[]).filter((s) => s !== "attendance_only").map((s) => (
           <li key={s} className="flex items-center gap-1.5">
             <Swatch state={s} />
@@ -62,11 +62,11 @@ export function CoverageGrid({ days, rows }: { days: string[]; rows: CoverageRow
              aria-label={`${rows.length} hospitals by ${days.length} days, ${days[0]} to ${days.at(-1)}: ${total("both")} hospital-days with both figures, ${total("wait_only") + total("attendance_only")} with one, ${total("missing")} missing, ${total("not_expected")} before a site was reported. Missing dates are listed below.`}>
           <Defs />
           {months.map((m) => (
-            <text key={m.i} x={LABEL_W + m.i * (CELL + GAP)} y={11} fontSize="10" fill="var(--text-secondary)">{m.label}</text>
+            <text key={m.i} x={LABEL_W + m.i * (CELL + GAP)} y={11} fontSize="13" fill="var(--text-secondary)">{m.label}</text>
           ))}
           {rows.map((r, ri) => (
             <g key={r.code} transform={`translate(0 ${TOP + ri * ROW_H})`}>
-              <text x={0} y={CELL + 3} fontSize="11" fill="var(--text-primary)" fontWeight="600">{r.code}</text>
+              <text x={0} y={CELL + 3} fontSize="13" fill="var(--text-primary)" fontWeight="600">{r.code}</text>
               {r.cells.map((s, ci) => (
                 <rect key={days[ci]} x={LABEL_W + ci * (CELL + GAP)} y={0} width={CELL} height={ROW_H - 4} rx={1} fill={FILL[s]}
                       stroke={s === "missing" ? "var(--status-much)" : "none"} strokeWidth={s === "missing" ? 1 : 0} data-state={s}>
@@ -77,14 +77,14 @@ export function CoverageGrid({ days, rows }: { days: string[]; rows: CoverageRow
           ))}
         </svg>
       </div>
-      <h3 className="mt-4 text-sm font-semibold">Days with a figure missing</h3>
-      <ul className="mt-1 space-y-1 text-sm" data-testid="coverage-gaps">
+      <h3 className="mt-4 font-semibold text-h3">Days with a figure missing</h3>
+      <ul className="mt-1 space-y-1 text-small" data-testid="coverage-gaps">
         {rows.map((r) => {
           const missing = r.gaps.filter((g) => g.state === "missing").map((g) => g.date);
           const partial = r.gaps.filter((g) => g.state !== "missing").map((g) => g.date);
           return (
             <li key={r.code}>
-              <span className="font-medium"><Term id={r.code.toLowerCase()} /></span>{" "}
+              <span className="font-semibold"><Term id={r.code.toLowerCase()} /></span>{" "}
               {r.gaps.length === 0 ? (
                 <span className="text-muted">none</span>
               ) : (

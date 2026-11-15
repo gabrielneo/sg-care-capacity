@@ -10,7 +10,8 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = path.join(__dirname, "..");
 const SCAN = ["app", "components", "lib"];
-const ALLOWED_FILES = new Set(["lib/palette.ts"]);          // the TypeScript copy of the tokens
+// lib/palette.ts is the TypeScript copy of the tokens; the share-preview image is drawn by satori (pixels, not CSS), outside the page.
+const ALLOWED_FILES = new Set(["lib/palette.ts", "app/opengraph-image.tsx"]);
 const SKIP = /(\.test\.tsx?|\.d\.ts|\.generated\.ts)$|[\\/]api[\\/]schema/;
 
 function files(dir: string): string[] {
@@ -30,6 +31,10 @@ const RULES: [string, RegExp][] = [
   ["raw hex colour", /#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6})\b|(?<=["'`: (])#[0-9A-Fa-f]{3}(?=["'`;) ])/],
   ["rgb()/hsl() colour", /\b(?:rgba?|hsla?|oklch|oklab)\(/],
   ["arbitrary colour or font-size class", /\b(?:bg|text|fill|stroke|ring|outline|from|to|via|shadow|decoration|divide|caret|accent)-\[[^\]]+\]|\bborder-\[(?!\d)[^\]]+\]/],
+  ["Tailwind font size outside the type scale (text-meta, -small, -body, -h3, -h2, -h1, -kpi)", /\btext-(?:xs|sm|base|lg|[2-9]?xl)\b/],
+  ["font weight other than 400 and 600", /\bfont-(?:thin|extralight|light|medium|bold|extrabold|black)\b/],
+  ["raw pixel or rem font size in an inline style", /\bfontSize:\s*[\d.]+\b(?!\s*\})/],
+  ["SVG font size off the scale", /\bfontSize="(?!13"|14"|16")[^"]*"/],
   ["Tailwind colour name the theme does not define",
     /\b(?:bg|text|border|ring|fill|stroke|outline|from|to|via|decoration|divide)-(?:white|black|slate|gray|zinc|neutral|stone|red|green|emerald|teal|lime|amber|orange|yellow|blue|indigo|violet|purple|pink|rose|sky|cyan|fuchsia)(?:-\d{2,3})?\b/],
 ];

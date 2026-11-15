@@ -60,13 +60,13 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
   return (
     <section aria-labelledby="summary-heading" className="pb-2" data-testid="summary-strip">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="summary-heading" className="text-xl font-semibold tracking-tight text-ink">
+        <h2 id="summary-heading" className="font-semibold text-ink text-h2">
           At a glance: {formatWindow({ kind: "latest_week", week: latestWeek })}
         </h2>
         {/* One badge for the four tiles: they share one source and date. */}
         <FreshnessBadge meta={meta} />
       </div>
-      <p className="mt-1 text-sm text-muted">
+      <p className="mt-1 text-small text-muted">
         <Glossed text={BED_WAIT_SHORT} />
       </p>
       <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -110,13 +110,13 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
       {/* The date and source, once, for all four tiles. */}
       <Provenance meta={meta} compact freshness={false} tight />
       {adultsOnly.length ? (
-        <p className="mt-1 text-xs text-muted" data-testid="summary-adults-note">
+        <p className="mt-1 text-meta text-muted" data-testid="summary-adults-note">
           {adultsOnly.map((h, i) => <span key={h.hospital_code}>{i > 0 ? ", " : null}{name(h.hospital_code)}</span>)}
           {" "}<Glossed text={`covers ${adultsOnly.length === 1 ? "its" : "their"} adult emergency ${adultsOnly.length === 1 ? "department" : "departments"} only: children's emergency is not in MOH's figures.`} />
         </p>
       ) : null}
       {urgentCare.length ? (
-        <p className="mt-2 text-xs text-muted" data-testid="summary-ucc-note">
+        <p className="mt-2 text-meta text-muted" data-testid="summary-ucc-note">
           The {URGENT_CARE_HEADING.toLowerCase()} is left out of these four figures. {URGENT_CARE_NOTE}.
         </p>
       ) : null}

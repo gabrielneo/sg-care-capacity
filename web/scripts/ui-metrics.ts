@@ -8,7 +8,7 @@
  *
  * Per route and viewport (375, 768, 1280):
  * - fontSizes: distinct computed font sizes of visible elements with their own text (SVG chart text included)
- * - smallText: visible text elements under 14px
+ * - smallText: visible text elements under 13px
  * - textColours / backgroundColours: distinct computed colours (transparent backgrounds left out)
  * - pageHeight: document scroll height (the brief asks for it at 375; recorded at every width)
  * - dataAsOf: visible occurrences of "Data as of"
@@ -43,7 +43,10 @@ export interface RouteMetrics {
   overflow: { page: number; element: number };
 }
 
-export const SMALL_TEXT_PX = 14;
+/** The type scale's floor (--fs-meta, 13px): nothing a reader sees is smaller. */
+export const SMALL_TEXT_PX = 13;
+/** At most this many distinct font sizes on one route at one width (docs/design/redesign_brief.md). */
+export const MAX_FONT_SIZES = 6;
 
 /** Runs in the browser. Self-contained by design: Playwright serialises it. */
 export function collectRaw(): RawPage {
@@ -123,4 +126,12 @@ export function summarise(raw: RawPage, viewportWidth: number): RouteMetrics {
       element: Math.max(0, Math.ceil(raw.maxRight - viewportWidth)),
     },
   };
+}
+
+/** What a route's metrics break in the type budget: more than MAX_FONT_SIZES sizes, or any text under SMALL_TEXT_PX. */
+export function typeBudgetProblems(m: Pick<RouteMetrics, "fontSizes" | "fontSizeList" | "smallText">): string[] {
+  const out: string[] = [];
+  if (m.fontSizes > MAX_FONT_SIZES) out.push(`${m.fontSizes} font sizes (max ${MAX_FONT_SIZES}): ${m.fontSizeList.join(", ")}`);
+  if (m.smallText > 0) out.push(`${m.smallText} text elements under ${SMALL_TEXT_PX}px`);
+  return out;
 }

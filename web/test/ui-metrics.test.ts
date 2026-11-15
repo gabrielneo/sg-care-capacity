@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { countDataAsOf, normaliseColour, summarise, type RawPage } from "@/scripts/ui-metrics";
+import { countDataAsOf, normaliseColour, summarise, typeBudgetProblems, type RawPage } from "@/scripts/ui-metrics";
 import { hospitalRoute, ROUTES } from "@/tests/visual/routes";
 
 const WEB = path.resolve(import.meta.dirname, "..");
@@ -51,7 +51,7 @@ describe("summarise", () => {
     expect(summarise(raw, 375)).toEqual({
       fontSizes: 3,
       fontSizeList: [12.5, 13, 16],
-      smallText: 2,
+      smallText: 1,
       textColours: 2,
       backgroundColours: 2,
       pageHeight: 4200,
@@ -91,5 +91,17 @@ describe("baseline and metrics stay out of the default e2e run", () => {
     for (const f of readdirSync(path.join(WEB, "e2e"))) {
       expect(readFileSync(path.join(WEB, "e2e", f), "utf8"), f).not.toMatch(/@baseline|@metrics/);
     }
+  });
+});
+
+describe("typeBudgetProblems", () => {
+  it("passes six sizes, all 13px or larger", () => {
+    expect(typeBudgetProblems({ fontSizes: 6, fontSizeList: [13, 14, 16, 18, 24, 36], smallText: 0 })).toEqual([]);
+  });
+  it("names a seventh size and any text under 13px", () => {
+    expect(typeBudgetProblems({ fontSizes: 7, fontSizeList: [12, 13, 14, 16, 18, 24, 36], smallText: 3 })).toEqual([
+      "7 font sizes (max 6): 12, 13, 14, 16, 18, 24, 36",
+      "3 text elements under 13px",
+    ]);
   });
 });

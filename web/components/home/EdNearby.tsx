@@ -23,33 +23,33 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
   );
   return (
     <section aria-labelledby="ed-heading" className="py-8" data-testid="ed-near">
-      <h2 id="ed-heading" className="text-2xl font-semibold tracking-tight text-ink">How long were bed waits at <ClientTerm id="ed" plural /> near you in the latest complete week?</h2>
+      <h2 id="ed-heading" className="font-semibold text-ink text-h2">How long were bed waits at <ClientTerm id="ed" plural /> near you in the latest complete week?</h2>
       {eds.length ? (
         <>
-          <p className="mt-1 max-w-prose text-base text-ink">
+          <p className="mt-1 max-w-prose text-body text-ink">
             The three nearest hospital emergency departments, against each hospital&apos;s own usual week. This is context, not advice on where to go.
           </p>
           <ol className="mt-4 grid gap-4 md:grid-cols-3" data-testid="ed-list">
             {eds.map((n) => (
               <li key={n.place.code} className="flex flex-col gap-2" data-testid="ed-item">
-                <p className="text-base font-medium text-ink" data-testid="ed-km">
+                <p className="text-body font-semibold text-ink" data-testid="ed-km">
                   {kmText(n.km)} <span className="font-normal text-muted">straight-line distance</span>
                 </p>
                 <div className="flex-1">{cards[n.place.code]}</div>
               </li>
             ))}
           </ol>
-          <div className="mt-3 max-w-prose space-y-1 text-sm text-muted">{notes}</div>
+          <div className="mt-3 max-w-prose space-y-1 text-small text-muted">{notes}</div>
           {provenance}
         </>
       ) : (
-        <p className="mt-1 max-w-prose text-base text-ink" data-testid="ed-prompt">
+        <p className="mt-1 max-w-prose text-body text-ink" data-testid="ed-prompt">
           {located?.ok
             ? "This data release has no hospital locations, so the nearest emergency departments can't be shown."
             : "Search for a postcode or area above to see the three nearest hospital emergency departments."}
         </p>
       )}
-      <p className="mt-4 text-base">
+      <p className="mt-4 text-body">
         <Link href={analystHref} className="inline-flex min-h-11 items-center">See every hospital and the statistics: Analyst detail</Link>
       </p>
     </section>

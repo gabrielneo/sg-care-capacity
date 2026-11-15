@@ -8,7 +8,7 @@ import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
 export function Map3DLegend({ classes, excluded, maxSeniors }: { classes: LegendClass[]; excluded: number; maxSeniors: number }) {
   const steps = heightSteps(maxSeniors);
   return (
-    <div className="text-xs text-ink" data-testid="map3d-legend">
+    <div className="text-meta text-ink" data-testid="map3d-legend">
       <p className="font-semibold">Height</p>
       <p className="mt-0.5 text-muted" data-testid="height-scale">
         Height: {SENIORS_PER_STEP.toLocaleString("en-SG")} residents aged 65+ per step. The tallest area has{" "}
@@ -22,7 +22,7 @@ export function Map3DLegend({ classes, excluded, maxSeniors }: { classes: Legend
       <p className="mt-3 font-semibold"><Glossed text="Colour: CDMP GP clinics per 1,000 residents aged 65+" /></p>
       <p className="mt-0.5 text-muted">
         <span aria-hidden="true">▼ </span>Darker means fewer chronic-care clinics per senior: worse access. Shaded in{" "}
-        <strong className="font-medium text-ink">five groups with equal numbers of areas</strong>, among the areas that are ranked.
+        <strong className="font-semibold text-ink">five groups with equal numbers of areas</strong>, among the areas that are ranked.
       </p>
       <ul className="mt-2 space-y-1">
         {classes.map((c) => (

@@ -125,7 +125,7 @@ export default function CareMapLeaflet({ hospitals, polyclinics, gps, here, focu
                         // A marker is an SVG path: make it a keyboard-reachable button, with its status in words.
                         add: (e) => makeButton(e.target as L.CircleMarker, h, onOpen),
                       }}>
-          <Tooltip permanent direction="right" offset={[10, 0]} className="!text-xs !font-semibold">
+          <Tooltip permanent direction="right" offset={[10, 0]} className="!text-meta !font-semibold">
             <span aria-hidden="true">{LEVELS[h.level].icon} </span>{h.code}
           </Tooltip>
         </CircleMarker>

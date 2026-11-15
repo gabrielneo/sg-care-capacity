@@ -49,6 +49,28 @@
   --shadow-*: initial;
   --shadow-popover: var(--shadow-float);
 
+  /* The type scale (styles/tokens.css). Tailwind's own sizes are removed: text-meta ... text-kpi are all there is. */
+  --text-*: initial;
+  --text-meta: var(--fs-meta);
+  --text-meta--line-height: var(--lh-meta);
+  --text-small: var(--fs-small);
+  --text-small--line-height: var(--lh-small);
+  --text-body: var(--fs-body);
+  --text-body--line-height: var(--lh-body);
+  --text-h3: var(--fs-h3);
+  --text-h3--line-height: var(--lh-h3);
+  --text-h2: var(--fs-h2);
+  --text-h2--line-height: var(--lh-h2);
+  --text-h1: var(--fs-h1);
+  --text-h1--line-height: var(--lh-h1);
+  --text-kpi: var(--fs-kpi);
+  --text-kpi--line-height: var(--lh-kpi);
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --tracking-*: initial;
+  --tracking-tight: -0.01em;
+
   --container-prose: 68ch;   /* prose is never wider than 68 characters */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -73,13 +95,19 @@
   }
   body {
     font-family: var(--font-sans);
-    line-height: 1.6;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
   }
+  /* Headings take their size from the scale; a utility class on the element still wins. */
+  h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; letter-spacing: -0.01em; }
+  h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
+  h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; }
   /* Headlines in a system serif: a voice of its own with nothing to download. (A web font put the LCP over its 2.5 s budget.) */
-  h1 {
+  h1, h2 {
     font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-    letter-spacing: -0.01em;
   }
+  /* Figures line up in columns: tabular numerals everywhere. */
+  body { font-feature-settings: "tnum"; }
   /* Links are underlined unless a component opts out (nav, tabs, cards): colour alone must not
      be the only cue (WCAG 1.4.1). */
   a {
@@ -127,23 +155,23 @@
 
 /* Rendered docs (docs/*.md). Readable measure, clear hierarchy, tables that scroll inside a region. */
 .doc { color: var(--text-primary); }
-.doc h1 { font-size: 1.75rem; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 1rem; }
-.doc h2 { font-size: 1.3rem; line-height: 1.3; font-weight: 600; margin: 2.25rem 0 0.75rem; padding-top: 0.75rem;
+.doc h1 { margin: 0 0 1rem; }
+.doc h2 { margin: 2.25rem 0 0.75rem; padding-top: 0.75rem;
           border-top: 1px solid var(--border-subtle); scroll-margin-top: 1rem; }
-.doc h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.5rem; scroll-margin-top: 1rem; }
-.doc h4 { font-weight: 600; margin: 1.25rem 0 0.5rem; }
-.doc p, .doc ul, .doc ol { max-width: 72ch; margin: 0 0 0.85rem; }
+.doc h3 { margin: 1.5rem 0 0.5rem; scroll-margin-top: 1rem; }
+.doc h4 { font-size: var(--fs-body); font-weight: 600; margin: 1.25rem 0 0.5rem; }
+.doc p, .doc ul, .doc ol { max-width: 68ch; margin: 0 0 0.85rem; }
 .doc ul { list-style: disc; padding-left: 1.25rem; }
 .doc ol { list-style: decimal; padding-left: 1.25rem; }
 .doc li { margin: 0.2rem 0; }
 .doc li > ul, .doc li > ol { margin: 0.25rem 0; }
-.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.875em; background: var(--bg-page);
+.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--fs-small); background: var(--bg-page);
             border: 1px solid var(--border-subtle); border-radius: 4px; padding: 0 0.25em; overflow-wrap: anywhere; }
 .doc pre { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.75rem;
-           overflow-x: auto; font-size: 0.8rem; margin: 0 0 1rem; }
+           overflow-x: auto; font-size: var(--fs-small); margin: 0 0 1rem; }
 .doc pre code { border: 0; padding: 0; background: none; }
 .doc-table { overflow-x: auto; margin: 0 0 1rem; border: 1px solid var(--border-subtle); border-radius: 6px; }
-.doc table { border-collapse: collapse; font-size: 0.875rem; min-width: 100%; }
+.doc table { border-collapse: collapse; font-size: var(--fs-small); min-width: 100%; }
 .doc th, .doc td { border-bottom: 1px solid var(--border-subtle); padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
 .doc thead th { background: var(--bg-page); font-weight: 600; }
 .doc-diagram { margin: 0 0 1rem; padding: 0.75rem; border: 1px solid var(--border-subtle); border-radius: 6px;
@@ -166,7 +194,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 60;
   width: max-content; max-width: min(20rem, calc(100vw - 2rem));
   background: var(--text-primary); color: var(--bg-surface); border-radius: 6px;
-  padding: 0.5rem 0.7rem; font-size: 1rem; line-height: 1.45; font-weight: 400;
+  padding: 0.5rem 0.7rem; font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 400;
   text-align: left; white-space: normal; letter-spacing: normal; text-transform: none;
   box-shadow: var(--shadow-float);
 }
@@ -223,7 +251,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 /* The 3D map's floating labels (drei <Html>): real text, so it stays crisp and readable. */
 .map3d-label {
   display: inline-block; white-space: nowrap; padding: 0.1rem 0.4rem; border-radius: 4px;
-  background: var(--text-primary); color: var(--bg-surface); font-size: 0.75rem; font-weight: 600;
+  background: var(--text-primary); color: var(--bg-surface); font-size: var(--fs-meta); font-weight: 600;
   box-shadow: var(--shadow-float);
 }
 

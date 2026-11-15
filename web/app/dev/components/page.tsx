@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-10">
-      <h2 className="mb-3 border-b border-line pb-1 text-lg font-semibold">{title}</h2>
+      <h2 className="mb-3 border-b border-line pb-1 font-semibold text-h2">{title}</h2>
       {children}
     </section>
   );
@@ -47,7 +47,7 @@ async function LiveSnapshot() {
         title="The API isn't reachable from the site"
         error={{ code: result.error.code, message: result.error.message }}
         action={
-          <p className="text-sm">
+          <p className="text-small">
             Start the API (<code>LOCAL_SNAPSHOT_PATH=data/build/publish uvicorn --factory sg_health_api.main:create_app</code>) and
             set <code>API_BASE_URL</code> in <code>web/.env.local</code>.
           </p>
@@ -89,7 +89,7 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="ViewSwitch and StatusBadge (home page views)">
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-small text-muted">
           The header control on the home page: a radio group from 640 px, a select below. Choosing a view here goes to the home page.
         </p>
         <ViewSwitch view="planner" home="/dev/components" />
@@ -113,12 +113,12 @@ export default function ComponentsPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <ChartCard title="Median wait for a ward bed" meta={edMeta} now={SAMPLE_NOW}
                      description="Daily median, by hospital. The chart goes here.">
-            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-sm text-muted">
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-small text-muted">
               chart slot
             </div>
           </ChartCard>
           <ChartCard title="CHAS clinics near seniors" meta={clinicMeta} now={SAMPLE_NOW}>
-            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-sm text-muted">
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-small text-muted">
               chart slot (old source: the badge says so)
             </div>
           </ChartCard>
@@ -157,7 +157,7 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="DeltaNumber">
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-small text-muted">
           Value, unit, comparison, and the change as an arrow and a word. Colour comes from the insight&apos;s direction, never
           from the arrow: the same ▲ is brick red for a longer wait and violet for more clinics. Neutral findings have no colour.
         </p>
@@ -175,22 +175,22 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="CountUp">
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-small text-muted">
           Rolling digits, CSS only (transform, 600 ms, once). The final value is in the server HTML; reduced motion shows it at once.
           Reload to see it again.
         </p>
-        <p className="text-6xl font-semibold text-ink"><CountUp value="12.7" label="12.7 hours" /></p>
+        <p className="text-kpi font-semibold text-ink"><CountUp value="12.7" label="12.7 hours" /></p>
       </Section>
 
       <Section title="HighlightPhrase">
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-small text-muted">
           A marker stroke that draws once when the phrase scrolls into view (drawn in the server HTML; never reset with reduced motion).
         </p>
-        <p className="text-2xl text-ink"><HighlightPhrase>19.5% of Singapore residents</HighlightPhrase> were aged 65 or over.</p>
+        <p className="text-h2 text-ink"><HighlightPhrase>19.5% of Singapore residents</HighlightPhrase> were aged 65 or over.</p>
       </Section>
 
       <Section title="AnnotatedChart">
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-small text-muted">
           Server-rendered SVG: direct labels, one callout arrow at the highlighted point, gaps for missing values, and a legend only
           with more than 3 series. The headline findings of data-2026-11-08, then a 4-series sample.
         </p>
@@ -208,12 +208,12 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="Palette">
-        <p className="mb-3 text-sm text-muted">One accent. Status colours only appear with a text label. Map: Viridis, light = low.</p>
+        <p className="mb-3 text-small text-muted">One accent. Status colours only appear with a text label. Map: Viridis, light = low.</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(colors)
             .filter(([k]) => !k.startsWith("map"))
             .map(([name, hex]) => (
-              <div key={name} className="w-28 rounded-md border border-line bg-surface p-2 text-xs">
+              <div key={name} className="w-28 rounded-md border border-line bg-surface p-2 text-meta">
                 <div className="mb-1 h-8 rounded" style={{ background: hex }} />
                 {name}
                 <br />
@@ -227,7 +227,7 @@ export default function ComponentsPage() {
           ))}
           <div className="bg-nodata h-8 flex-1 rounded border border-line" title="No data" />
         </div>
-        <div className="mt-1 flex justify-between text-xs text-muted">
+        <div className="mt-1 flex justify-between text-meta text-muted">
           <span>Low</span>
           <span>High · then “no data” (hatched)</span>
         </div>

@@ -13,8 +13,8 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
   };
   return (
     <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Area table (scrolls sideways)">
-      <table className="w-full min-w-[880px] border-collapse text-sm" data-testid="area-table">
-        <caption className="mb-2 text-left text-xs text-muted">
+      <table className="w-full min-w-[880px] border-collapse text-small" data-testid="area-table">
+        <caption className="mb-2 text-left text-meta text-muted">
           Clinic access for residents aged 65+, {areas.length} areas. Sorted by{" "}
           {TABLE_COLUMNS.find((c) => c.key === s.key)?.label} ({s.dir === "asc" ? "ascending" : "descending"}); areas with no data are listed last.
         </caption>
@@ -39,14 +39,14 @@ export function AreaTable({ areas, sort, dir }: { areas: AreaProps[]; sort?: str
                 const v = a[c.key as keyof AreaProps];
                 const text = c.numeric ? areaValueText(a, c.key, c.decimals) : String(v ?? "No data");
                 return i === 0 ? (
-                  <th key={c.key} scope="row" className="px-2 py-1.5 text-left font-medium">{text}</th>
+                  <th key={c.key} scope="row" className="px-2 py-1.5 text-left font-semibold">{text}</th>
                 ) : (
                   <td key={c.key} className={`px-2 py-1.5 ${c.numeric ? "text-right tabular-nums" : ""} ${text === "No data" || text === NOT_APPLICABLE ? "text-muted" : ""}`}>
                     {text}
                   </td>
                 );
               })}
-              <td className="px-2 py-1.5 text-xs text-muted">{a.dq_note ?? ""}</td>
+              <td className="px-2 py-1.5 text-meta text-muted">{a.dq_note ?? ""}</td>
             </tr>
           ))}
         </tbody>

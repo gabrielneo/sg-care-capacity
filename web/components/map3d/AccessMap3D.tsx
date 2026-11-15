@@ -172,7 +172,7 @@ export default function AccessMap3D({ layer, labels, selected, onSelect, intro, 
       <div ref={overlay} className="pointer-events-none absolute inset-0" aria-hidden="true" />
       {hover ? (
         <div data-testid="map3d-tooltip"
-             className="pointer-events-none absolute z-10 w-60 rounded-md bg-ink px-3 py-2 text-xs text-surface shadow-popover"
+             className="pointer-events-none absolute z-10 w-60 rounded-md bg-ink px-3 py-2 text-meta text-surface shadow-popover"
              style={{ left: Math.min(hover.x + 14, 9999), top: hover.y + 14, transform: hover.x > 300 ? "translateX(-110%)" : undefined }}>
           <p className="font-semibold">{hover.area.name}</p>
           <p>Residents aged 65+: {formatValue(hover.area.props.residents_65plus, 0)}</p>

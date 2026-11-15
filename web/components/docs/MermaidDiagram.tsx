@@ -16,7 +16,11 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     let cancelled = false;
     import("mermaid")
       .then(async ({ default: mermaid }) => {
-        mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral", fontFamily: "system-ui, sans-serif" });
+        // Diagram text stays on the type scale (13px or larger): the quadrant chart's own defaults are 12px and 20px.
+        mermaid.initialize({
+          startOnLoad: false, securityLevel: "strict", theme: "neutral", fontFamily: "system-ui, sans-serif", themeVariables: { fontSize: "14px" },
+          quadrantChart: { titleFontSize: 14, quadrantLabelFontSize: 13, pointLabelFontSize: 13, xAxisLabelFontSize: 13, yAxisLabelFontSize: 13 },
+        });
         const out = await mermaid.render(id, chart);
         if (!cancelled) setSvg(out.svg);
       })
@@ -37,7 +41,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
       ) : (
         <pre tabIndex={0} aria-label="Diagram source">{chart}</pre>
       )}
-      {failed ? <figcaption className="text-xs text-muted">The diagram couldn&apos;t be drawn; its source is shown instead.</figcaption> : null}
+      {failed ? <figcaption className="text-meta text-muted">The diagram couldn&apos;t be drawn; its source is shown instead.</figcaption> : null}
     </figure>
   );
 }

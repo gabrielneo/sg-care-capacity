@@ -40,13 +40,13 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
     </Link>
   );
   const liveLine = live ? (
-    <p className={`${full ? "mt-2 pt-2" : "mt-2 pt-2"} border-t border-line text-xs text-muted`} data-testid="status-live">
+    <p className={`${full ? "mt-2 pt-2" : "mt-2 pt-2"} border-t border-line text-meta text-muted`} data-testid="status-live">
       To see a doctor: {estimateText(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
       {" "}(<Term id="nuhs" /> estimate, <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { withTime: true })}</time>).
       {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, weeklyAsOf)}</span>
     </p>
   ) : (
-    <p className="mt-2 border-t border-line pt-2 text-xs text-muted" data-testid="status-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
+    <p className="mt-2 border-t border-line pt-2 text-meta text-muted" data-testid="status-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
   );
   const shell = "relative flex flex-col rounded-xl border border-line bg-surface hover:border-accent "
     + "has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent";
@@ -56,19 +56,19 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
     return (
       <li className={`${shell} p-4`} {...attrs}>
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold leading-snug text-ink">
+          <h3 className="font-semibold leading-snug text-ink text-h3">
             {title}
-            {note ? <span className="block text-xs font-normal text-muted" data-testid="status-note">{note}</span> : null}
+            {note ? <span className="block text-meta font-normal text-muted" data-testid="status-note">{note}</span> : null}
           </h3>
           <StatusBadge level={status.level} />
         </div>
         <p className="mt-3">
-          <span className="block text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
+          <span className="block text-kpi font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
             {status.latest == null ? <Missing /> : hrs(status.latest)}
           </span>
-          <span className="block text-xs text-muted">wait for a ward bed, latest complete week</span>
+          <span className="block text-meta text-muted">wait for a ward bed, latest complete week</span>
         </p>
-        <p className="mt-3 text-sm text-ink" data-testid="status-sentence">
+        <p className="mt-3 text-small text-ink" data-testid="status-sentence">
           {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
           {status.usual != null ? <span className="text-muted"> Usual: {hrs(status.usual)}.</span> : null}
         </p>
@@ -79,27 +79,27 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
 
   return (
     <li className={`${shell} p-3`} {...attrs}>
-      <h3 className="text-sm font-semibold leading-snug text-ink">{title}</h3>
+      <h3 className="font-semibold leading-snug text-ink text-h3">{title}</h3>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         <StatusBadge level={status.level} quiet />
         {note ? <CaveatChip><span data-testid="status-note">{note}</span></CaveatChip> : null}
       </div>
-      <p className="mt-2 text-xs text-muted">Wait for a ward bed, latest complete week</p>
+      <p className="mt-2 text-meta text-muted">Wait for a ward bed, latest complete week</p>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
+        <p className="text-kpi font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
           {status.latest == null ? <Missing /> : hrs(status.latest)}
         </p>
         <Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} />
       </div>
       {delta && status.usual != null ? (
-        <p className="mt-1.5 text-sm tabular-nums text-muted">
-          <span className="font-medium text-ink" data-testid="status-delta">
+        <p className="mt-1.5 text-small tabular-nums text-muted">
+          <span className="font-semibold text-ink" data-testid="status-delta">
             <span aria-hidden="true">{delta.text}</span><span className="sr-only">{delta.spoken}</span> vs usual
           </span>
           {" · "}<span data-testid="status-usual">usual {hrs(status.usual)}</span>
         </p>
       ) : (
-        <p className="mt-1.5 text-sm text-muted" data-testid="status-sentence">
+        <p className="mt-1.5 text-small text-muted" data-testid="status-sentence">
           {status.latest == null ? "No complete figures for the latest complete week." : "Too few weeks to compare."}
         </p>
       )}

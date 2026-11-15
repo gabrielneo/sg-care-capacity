@@ -29,28 +29,28 @@ export function GlossaryList({ terms }: { terms: readonly GlossaryEntry[] }) {
   return (
     <div>
       <div className="mb-6 max-w-md">
-        <label htmlFor={inputId} className="block text-sm font-semibold">Search the glossary</label>
+        <label htmlFor={inputId} className="block text-small font-semibold">Search the glossary</label>
         <input id={inputId} type="search" value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off"
                className="mt-1 min-h-11 w-full rounded-md border border-control bg-surface px-3" placeholder="e.g. CHAS, median, bed wait" />
-        <p role="status" aria-live="polite" className="mt-1 text-sm text-muted" data-testid="glossary-count">
+        <p role="status" aria-live="polite" className="mt-1 text-small text-muted" data-testid="glossary-count">
           {query.trim() ? `${shown.length} of ${terms.length} terms match` : `${terms.length} terms`}
         </p>
       </div>
       {shown.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-line bg-surface p-4 text-sm">No term matches &ldquo;{query}&rdquo;.</p>
+        <p className="rounded-lg border border-dashed border-line bg-surface p-4 text-small">No term matches &ldquo;{query}&rdquo;.</p>
       ) : null}
       {GROUPS.map((g) => {
         const items = shown.filter((t) => t.category === g.category);
         if (!items.length) return null;
         return (
           <section key={g.category} aria-labelledby={`g-${g.category}`} className="mb-8" data-testid={`glossary-${g.category}`}>
-            <h2 id={`g-${g.category}`} className="text-lg font-semibold">{g.title}</h2>
-            <p className="mb-3 text-sm text-muted">{g.intro}</p>
+            <h2 id={`g-${g.category}`} className="font-semibold text-h2">{g.title}</h2>
+            <p className="mb-3 text-small text-muted">{g.intro}</p>
             <dl className="divide-y divide-line rounded-lg border border-line bg-surface">
               {items.map((t) => (
                 <div key={t.id} id={t.id} className="grid gap-1 p-3 sm:grid-cols-[minmax(0,16rem)_1fr] sm:gap-4">
-                  <dt className="font-medium text-ink">{heading(t)}</dt>
-                  <dd className="text-sm">
+                  <dt className="font-semibold text-ink">{heading(t)}</dt>
+                  <dd className="text-small">
                     {t.pending ? (
                       <span className="todo-me inline-block">{t.plain_definition}</span>
                     ) : (
@@ -58,7 +58,7 @@ export function GlossaryList({ terms }: { terms: readonly GlossaryEntry[] }) {
                     )}
                     {t.public_wording ? <span className="mt-1 block text-muted">Public pages say: {t.public_wording}</span> : null}
                     {/* Inline, after the definition: on its own line it read as a term with no definition. */}
-                    {t.source_url ? <>{" "}<a href={t.source_url} className="text-xs">Source</a></> : null}
+                    {t.source_url ? <>{" "}<a href={t.source_url} className="text-meta">Source</a></> : null}
                   </dd>
                 </div>
               ))}

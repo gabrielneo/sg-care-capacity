@@ -39,7 +39,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
     return (
       <li key={code} data-testid="dumbbell-row" data-hospital={code} data-annotated={annotated ? "" : undefined}
           className={`grid gap-x-3 gap-y-1 sm:grid-cols-[8rem_minmax(0,1fr)_14rem] sm:items-center ${annotated ? "rounded-md bg-accent-soft p-2" : ""}`}>
-        <span className="text-sm font-medium text-ink"><HospitalName hospital={h} /></span>
+        <span className="text-small font-semibold text-ink"><HospitalName hospital={h} /></span>
         <span className="relative block h-6" aria-hidden="true">
           {mode === "usual" ? <span className="absolute inset-y-0 left-1/2 w-px bg-ink" /> : null}
           <span className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-muted"
@@ -56,7 +56,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
                      unit={mode === "raw" ? `vs ${hours(u.usual)} usual` : null}
                      word={sign > 0 ? "higher than usual" : sign < 0 ? "lower than usual" : "about the same as usual"} />
         {annotated && finding?.chart ? (
-          <p className="text-xs font-medium text-ink sm:col-start-2" data-testid="chart-callout">
+          <p className="text-meta font-semibold text-ink sm:col-start-2" data-testid="chart-callout">
             <span aria-hidden="true">↑ </span>{finding.chart.callout} (the unusual-week finding)
           </p>
         ) : null}
@@ -76,7 +76,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
           </ol>
           {ucc.length ? (
             <div className="mt-4" data-testid="dumbbell-ucc">
-              <p className="mb-2 text-sm font-semibold text-ink">
+              <p className="mb-2 text-small font-semibold text-ink">
                 {URGENT_CARE_HEADING} <span className="font-normal text-muted">· {URGENT_CARE_NOTE}</span>
               </p>
               <ol className="space-y-3" data-group="ucc">
@@ -86,15 +86,15 @@ export function Dumbbell({ usuals, hospitals, mode, finding }: {
           ) : null}
         </>
       ) : (
-        <p className="text-sm text-muted">No hospital has a complete latest week and {USUAL_WEEKS} complete weeks before it.</p>
+        <p className="text-small text-muted">No hospital has a complete latest week and {USUAL_WEEKS} complete weeks before it.</p>
       )}
-      <p className="mt-3 text-xs text-muted" data-testid="dumbbell-legend">
+      <p className="mt-3 text-meta text-muted" data-testid="dumbbell-legend">
         {mode === "raw"
           ? "Hollow dot: usual level. Filled dot: the latest complete week. Hours, average of each day's median."
           : "Dot: the latest complete week, as a % above (right) or below (left) the hospital's own usual level (the line)."}
       </p>
       {missing.length ? (
-        <p className="mt-1 text-xs text-muted" data-testid="dumbbell-missing">
+        <p className="mt-1 text-meta text-muted" data-testid="dumbbell-missing">
           <Glossed text={`Not shown, as the usual level needs all ${USUAL_WEEKS} weeks complete: ${missing.map((h) => {
             const u = usuals[h.hospital_code];
             return `${h.hospital_code} (${u?.weeks ?? 0} of ${USUAL_WEEKS}${u?.latest == null ? ", no complete latest week" : ""})`;

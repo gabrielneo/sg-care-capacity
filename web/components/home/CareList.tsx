@@ -33,13 +33,13 @@ export function CareList({ rows, sort, onSort, onOpen }: {
     const delta = formatDelta(r.pct);
     return (
       <tr key={r.code} className="border-b border-line last:border-0 align-top" data-testid="care-row" data-hospital={r.code} data-level={r.level}>
-        <th scope="row" className="p-3 text-left font-medium">
+        <th scope="row" className="p-3 text-left font-semibold">
           <button type="button" onClick={() => onOpen(r.code)} data-hospital-trigger={r.code}
                   className="min-h-11 text-left font-semibold text-accent underline underline-offset-3">
             <HospitalName hospital={{ hospital_code: r.code, hospital_name: r.name, short_name: r.shortName }} inControl />
         <span className="sr-only">: show details</span>
           </button>
-          <span className="block text-xs font-normal text-muted" data-testid="row-cluster">{r.cluster}</span>
+          <span className="block text-meta font-normal text-muted" data-testid="row-cluster">{r.cluster}</span>
           {r.note ? <span className="mt-1 block"><CaveatChip><span data-testid="row-note">{r.note}</span></CaveatChip></span> : null}
         </th>
         <td className="p-3"><StatusBadge level={r.level} /></td>
@@ -47,7 +47,7 @@ export function CareList({ rows, sort, onSort, onOpen }: {
           <span data-testid="row-hours">{r.latest == null ? <Missing /> : hrs(r.latest)}</span>
           {/* Below 640px the change sits under the hours: a fourth column would not fit. */}
           {delta && r.usual != null ? (
-            <span className="block text-xs text-muted sm:hidden">
+            <span className="block text-meta text-muted sm:hidden">
               <span aria-hidden="true">{delta.text}</span><span className="sr-only">{delta.spoken}</span> vs usual {hrs(r.usual)}
             </span>
           ) : null}
@@ -55,7 +55,7 @@ export function CareList({ rows, sort, onSort, onOpen }: {
         <td className="p-3 tabular-nums max-sm:hidden" data-testid="row-delta">
           {delta && r.usual != null ? (
             <><span aria-hidden="true">{delta.text}</span><span className="sr-only">{delta.spoken}</span>
-              <span className="block text-xs text-muted">usual {hrs(r.usual)}</span></>
+              <span className="block text-meta text-muted">usual {hrs(r.usual)}</span></>
           ) : <span className="text-muted">No comparison</span>}
         </td>
       </tr>
@@ -63,12 +63,12 @@ export function CareList({ rows, sort, onSort, onOpen }: {
   };
   return (
     <div className="overflow-x-auto rounded-xl border border-line bg-surface" data-testid="care-list">
-      <table className="w-full text-left text-sm">
-        <caption className="p-3 text-left text-sm text-muted">
+      <table className="w-full text-left text-small">
+        <caption className="p-3 text-left text-small text-muted">
           Hospital emergency departments: the wait for a ward bed after the decision to admit in the latest complete week, against each hospital&apos;s own usual.
           Sorted by {COLUMNS.find((c) => c.sort === sort)?.label.toLowerCase()}.
         </caption>
-        <thead className="border-y border-line bg-page text-xs text-muted">
+        <thead className="border-y border-line bg-page text-meta text-muted">
           <tr>
             {COLUMNS.map((c) => (
               <th key={c.sort} scope="col" aria-sort={sort === c.sort ? c.dir : "none"} className="p-0 font-semibold">
@@ -86,7 +86,7 @@ export function CareList({ rows, sort, onSort, onOpen }: {
         {ucc.length ? (
           <tbody data-group="ucc" data-testid="care-ucc">
             <tr className="border-b border-line bg-page">
-              <th scope="rowgroup" colSpan={4} className="px-3 py-2 text-left text-xs font-semibold text-ink">
+              <th scope="rowgroup" colSpan={4} className="px-3 py-2 text-left text-meta font-semibold text-ink">
                 {URGENT_CARE_HEADING} <span className="font-normal text-muted">· {URGENT_CARE_NOTE}</span>
               </th>
             </tr>

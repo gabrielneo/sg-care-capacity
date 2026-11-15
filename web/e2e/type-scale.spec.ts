@@ -1,0 +1,25 @@
+import { expect, test } from "@playwright/test";
+
+import { collectRaw, summarise, typeBudgetProblems } from "../scripts/ui-metrics";
+import { blockTiles } from "./helpers";
+
+/**
+ * The type budget (docs/design/redesign_brief.md): on every route, at most 6 distinct font sizes and no text under 13px.
+ * Runs at 1280 px (desktop project) and 375 px (mobile project). Measured by scripts/ui-metrics.ts, the same code
+ * as `npm run ui:metrics`, so the report and the check can't disagree.
+ */
+const ROUTES = ["/", "/?view=public", "/?view=planner", "/?view=analyst", "/project", "/findings", "/explore", "/ed-trends",
+  "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/how-its-built", "/case-study", "/docs/insights-method",
+  "/summary", "/styleguide"];
+
+for (const route of ROUTES) {
+  test(`${route}: at most 6 font sizes, none under 13px`, async ({ page }) => {
+    await blockTiles(page);
+    await page.goto(route);
+    await page.waitForLoadState("networkidle");
+    await page.evaluate(async () => { await document.fonts.ready; });
+    const width = page.viewportSize()?.width ?? 1280;
+    const metrics = summarise(await page.evaluate(collectRaw), width);
+    expect(typeBudgetProblems(metrics), `${route} at ${width}px`).toEqual([]);
+  });
+}

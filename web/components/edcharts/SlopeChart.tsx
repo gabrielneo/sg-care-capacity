@@ -38,7 +38,7 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
   const both = paired.filter((p) => !p.nuhs.bound);
   const bounded = paired.filter((p) => p.nuhs.bound);
   const boundNote = bounded.length ? (
-    <p className="mt-1 text-xs text-ink" data-testid="slope-bounded">
+    <p className="mt-1 text-meta text-ink" data-testid="slope-bounded">
       <Glossed text={`Not drawn, because NUHS gave a range rather than a figure: ${bounded.map((p) =>
         `${p.code}, NUHS estimate ${estimateText(p.nuhs.value, p.nuhs.bound)} (MOH ${hours(p.moh.value)} h on ${shortDay(p.moh.date)})`).join("; ")}.`} />
     </p>
@@ -46,7 +46,7 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
   if (!both.length) {
     return (
       <div>
-        <p className="text-sm text-muted"><Glossed text="No NUHS site has both an estimate and an MOH figure in this data release." /></p>
+        <p className="text-small text-muted"><Glossed text="No NUHS site has both an estimate and an MOH figure in this data release." /></p>
         {boundNote}
       </div>
     );
@@ -62,8 +62,8 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
 
   return (
     <div>
-      {finding?.chart ? <p className="mb-2 text-sm font-medium text-ink" data-testid="chart-callout">{finding.chart.callout}</p> : null}
-      <div className="grid grid-cols-2 text-xs font-medium text-ink">
+      {finding?.chart ? <p className="mb-2 text-small font-semibold text-ink" data-testid="chart-callout">{finding.chart.callout}</p> : null}
+      <div className="grid grid-cols-2 text-meta font-semibold text-ink">
         <p className="text-center"><Glossed text={`MOH figure: daily median, ${mohDays}`} /></p>
         <p className="text-center"><Glossed text={`NUHS estimate: ${nuhsAt}`} /></p>
       </div>
@@ -75,13 +75,13 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
             <line x1={pct(XL)} x2={pct(XR)} y1={y(p.moh.value)} y2={y(p.nuhs.value)} stroke={colors.accent} strokeWidth={2} />
             <circle cx={pct(XL)} cy={y(p.moh.value)} r={4} fill={colors.accent} />
             <circle cx={pct(XR)} cy={y(p.nuhs.value)} r={4} fill={colors.accent} />
-            <text x={pct(XL)} dx={-8} y={(left[i] as number) + 4} textAnchor="end" fontSize="11" fill={colors.ink}>{p.code} {hours(p.moh.value)} h</text>
-            <text x={pct(XR)} dx={8} y={(right[i] as number) + 4} fontSize="11" fill={colors.ink}>{hours(p.nuhs.value)} h {p.code}</text>
+            <text x={pct(XL)} dx={-8} y={(left[i] as number) + 4} textAnchor="end" fontSize="13" fill={colors.ink}>{p.code} {hours(p.moh.value)} h</text>
+            <text x={pct(XR)} dx={8} y={(right[i] as number) + 4} fontSize="13" fill={colors.ink}>{hours(p.nuhs.value)} h {p.code}</text>
           </g>
         ))}
       </svg>
       {boundNote}
-      <p className="mt-1 text-xs text-muted" data-testid="slope-caveat">
+      <p className="mt-1 text-meta text-muted" data-testid="slope-caveat">
         <Glossed text="Different days and different measures: NUHS estimates the wait at one moment; MOH reports the day's median for admitted patients, a few days later." />
       </p>
     </div>

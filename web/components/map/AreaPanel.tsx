@@ -15,15 +15,15 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
   return (
     <aside aria-labelledby="area-panel-title" className="rounded-lg border border-line bg-surface p-4" data-testid="area-panel">
       <div className="flex items-start justify-between gap-2">
-        <h3 id="area-panel-title" ref={heading} tabIndex={-1} className="text-base font-semibold">
+        <h3 id="area-panel-title" ref={heading} tabIndex={-1} className="font-semibold text-h3">
           {area.planning_area}
-          <span className="block text-xs font-normal text-muted">{area.region_name}</span>
+          <span className="block text-meta font-normal text-muted">{area.region_name}</span>
         </h3>
-        <button type="button" onClick={onClose} className="min-h-11 rounded-md px-3 text-sm text-accent hover:bg-page">
+        <button type="button" onClick={onClose} className="min-h-11 rounded-md px-3 text-small text-accent hover:bg-page">
           Close<span className="sr-only"> {area.planning_area} details</span>
         </button>
       </div>
-      <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-sm">
+      <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 text-small">
         <dt className="text-muted">Residents aged 65+</dt>
         <dd className="text-right tabular-nums">{count(area.residents_65plus)}</dd>
         <dt className="text-muted">All residents</dt>
@@ -42,7 +42,7 @@ export function AreaPanel({ area, caveats, onClose }: { area: AreaProps; caveats
         <dt className="text-muted">Nearest <Glossed text="polyclinic" /></dt>
         <dd className="text-right">{area.nearest_polyclinic ?? "No data"}</dd>
       </dl>
-      <div className="mt-3 rounded-md bg-page p-2 text-xs">
+      <div className="mt-3 rounded-md bg-page p-2 text-meta">
         <p className="font-semibold">Data note</p>
         <p className="mt-0.5">{area.dq_note ? area.dq_note.split(";").map((s) => s.trim()).join(". ") + "." : "No area-specific notes."}</p>
         <p className="mt-1 text-muted">

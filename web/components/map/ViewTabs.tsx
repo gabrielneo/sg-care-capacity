@@ -14,7 +14,7 @@ export function ViewTabs({ active }: { active: AccessView | null }) {
     <nav aria-label="View" className="mb-4 inline-flex rounded-md border border-control bg-surface p-1" data-testid="view-tabs">
       {TABS.map((t) => (
         <Link key={t.view} href={t.href} aria-current={active === t.view ? "page" : undefined}
-              className={`flex min-h-11 items-center rounded px-4 text-sm font-medium no-underline ${
+              className={`flex min-h-11 items-center rounded px-4 text-small font-semibold no-underline ${
                 active === t.view ? "bg-accent-soft text-accent-strong" : "text-muted hover:text-ink"}`}>
           {t.label}
         </Link>

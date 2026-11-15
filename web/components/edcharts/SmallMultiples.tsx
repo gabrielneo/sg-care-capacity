@@ -64,10 +64,10 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
           return (
             <li key={code} data-testid="multiple" data-hospital={code} data-annotated={annotated ? "" : undefined}
                 className={`rounded-md border p-2 ${annotated ? "border-accent" : "border-line"}`}>
-              <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm">
-                <span className="font-medium text-ink"><HospitalName hospital={hospital} /></span>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-small">
+                <span className="font-semibold text-ink"><HospitalName hospital={hospital} /></span>
                 {lastValue?.value != null ? (
-                  <span className="text-xs tabular-nums text-muted">
+                  <span className="text-meta tabular-nums text-muted">
                     {shortDay(lastValue.date)}: {fmt(lastValue.value)} {mode === "raw" ? "hours" : "hours vs usual"}
                   </span>
                 ) : null}
@@ -76,12 +76,12 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
                 <div className="mt-1" data-testid="pinned-caveat"><CaveatChip><Glossed text={note} /></CaveatChip></div>
               ) : null}
               {annotated && finding?.chart ? (
-                <p className="mt-1 text-xs font-medium text-ink" data-testid="chart-callout">
+                <p className="mt-1 text-meta font-semibold text-ink" data-testid="chart-callout">
                   <span aria-hidden="true">↘ </span>{finding.chart.callout}
                 </p>
               ) : null}
               {missingUsual ? (
-                <p className="mt-2 flex h-[110px] items-center justify-center rounded bg-page px-2 text-center text-xs text-muted">{missingUsual}</p>
+                <p className="mt-2 flex h-[110px] items-center justify-center rounded bg-page px-2 text-center text-meta text-muted">{missingUsual}</p>
               ) : (
                 <div className="relative mt-1">
                   <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" width="100%" height={H} aria-hidden="true" className="block">
@@ -102,10 +102,10 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
                                 data-testid="series" points={r.items.map((d, k) => `${x(r.start + k)},${y(d.value as number)}`).join(" ")} />
                     ))}
                   </svg>
-                  <span className="absolute left-0 top-0 text-xs tabular-nums text-muted">{fmt(hi)}</span>
-                  <span className="absolute bottom-0 left-0 text-xs tabular-nums text-muted">{fmt(lo)}</span>
+                  <span className="absolute left-0 top-0 text-meta tabular-nums text-muted">{fmt(hi)}</span>
+                  <span className="absolute bottom-0 left-0 text-meta tabular-nums text-muted">{fmt(lo)}</span>
                   {mode === "usual" ? (
-                    <span className="absolute right-0 text-xs text-ink" style={{ top: Math.max(y(0) - 12, 0) }}>usual</span>
+                    <span className="absolute right-0 text-meta text-ink" style={{ top: Math.max(y(0) - 12, 0) }}>usual</span>
                   ) : null}
                 </div>
               )}
@@ -113,7 +113,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
                 {hospital.hospital_name}: {lastValue?.value != null ? `latest ${fmt(lastValue.value)} hours${mode === "usual" ? " vs its usual level" : ""}` : "no figures"}
                 {gaps ? `, ${gaps} days missing` : ""}.
               </p>
-              <p className="mt-1 flex justify-between text-xs text-muted" aria-hidden="true">
+              <p className="mt-1 flex justify-between text-meta text-muted" aria-hidden="true">
                 <span>{first ? shortDay(first) : ""}</span>
                 {gaps ? <span data-testid="gap-count">{gaps} {gaps === 1 ? "day" : "days"} missing</span> : null}
                 <span>{last ? shortDay(last) : ""}</span>
@@ -122,7 +122,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding }: {
           );
         })}
       </ul>
-      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted" data-testid="band-legend">
+      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-muted" data-testid="band-legend">
         <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-0.5 w-5 bg-accent" />This hospital</span>
         <span className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-3 w-5 bg-line" />
           Middle half of the full emergency departments each day, with their median (dashed)</span>

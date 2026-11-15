@@ -84,7 +84,7 @@ export function AccessViews({ requested, areas, clinics, caveats, labels }: Acce
     <div data-testid="access-views" data-view={choice ? (show3d ? "3d" : "2d") : "pending"}>
       <ViewTabs active={choice ? (show3d ? "3d" : "map") : null} />
       {reason ? (
-        <p className="mb-3 text-sm text-muted" data-testid="view-reason">
+        <p className="mb-3 text-small text-muted" data-testid="view-reason">
           {reason}{" "}
           {reason.includes("Reduced motion") || reason.includes("little memory")
             ? <Link href="/access-map?view=3d">Show the 3D map anyway</Link> : null}
@@ -94,7 +94,7 @@ export function AccessViews({ requested, areas, clinics, caveats, labels }: Acce
         <Skeleton className="h-[420px] w-full sm:h-[520px]" label="Loading the map" />
       ) : show3d ? (
         <div>
-          <p className="mb-3 text-sm font-medium text-ink" data-testid="reading-guide">{READING_GUIDE}</p>
+          <p className="mb-3 text-small font-semibold text-ink" data-testid="reading-guide">{READING_GUIDE}</p>
           {layer.status === "ready" ? (
             <AccessMap3D layer={layer.layer} labels={labels.slice(0, 5)} selected={selected} onSelect={setSelected}
                          intro={intro && !choice.reducedMotion}
@@ -103,12 +103,12 @@ export function AccessViews({ requested, areas, clinics, caveats, labels }: Acce
             <Skeleton className="h-[420px] w-full sm:h-[520px]" label="Loading the 3D map" />
           )}
           {labels.length ? (
-            <p className="mt-2 text-sm text-ink" data-testid="map3d-key">
-              <span className="font-medium">Priority areas in this week&apos;s findings: </span>
+            <p className="mt-2 text-small text-ink" data-testid="map3d-key">
+              <span className="font-semibold">Priority areas in this week&apos;s findings: </span>
               {labels.slice(0, 5).map((name, i) => <span key={name}>{i ? " · " : ""}<strong>{i + 1}</strong> {name}</span>)}
             </p>
           ) : null}
-          <p className="mt-2 text-xs text-muted">
+          <p className="mt-2 text-meta text-muted">
             Drag to turn the map, scroll or pinch to zoom. Select an area for its details. For keyboard use,{" "}
             <Link href="/access-map?view=map">the 2D map</Link> and <Link href="/access-map?view=table">the table</Link> have the
             same figures.

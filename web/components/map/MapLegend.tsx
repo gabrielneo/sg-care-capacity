@@ -11,11 +11,11 @@ import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
 export function MapLegend({ metric, classes, noData, noResidents = 0, smallAreas = 0 }: {
   metric: AreaMetric; classes: LegendClass[]; noData: number; noResidents?: number; smallAreas?: number }) {
   return (
-    <div className="text-xs text-ink" data-testid="map-legend">
+    <div className="text-meta text-ink" data-testid="map-legend">
       <p className="font-semibold"><Glossed text={metric.label} /></p>
       <p className="mt-0.5 text-muted">
         <span aria-hidden="true">▼ </span><Glossed text={metric.darker} />{" "}
-        The map is shaded in <strong className="font-medium text-ink">five groups with equal numbers of areas</strong>
+        The map is shaded in <strong className="font-semibold text-ink">five groups with equal numbers of areas</strong>
         {classes.length < 5 ? " (fewer when areas share a value)" : ""}. Areas with no value are left out of the groups.
       </p>
       <ul className="mt-2 space-y-1">

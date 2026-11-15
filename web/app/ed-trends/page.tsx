@@ -166,7 +166,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
                    </>}>
           {callouts(["trend", "volume_vs_wait"], "daily bed waits")}
           <SmallMultiples panels={panels} bandPoints={bandPoints} mode={mode} finding={findingFor(findings, "trend", hospitals)} />
-          <p className="mt-2 text-xs text-muted" data-testid="gap-summary">
+          <p className="mt-2 text-meta text-muted" data-testid="gap-summary">
             {gapText ? <Glossed text={`Days with no figure in this range: ${gapText}.`} /> : "Every day in this range has a figure for each hospital shown."}
           </p>
         </ChartCard>

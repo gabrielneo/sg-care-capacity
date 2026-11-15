@@ -76,7 +76,7 @@ export function CareMapPanel({ rows, bodies, map, provenance }: {
         <ClusterChips clusters={clusters} counts={counts} selected={params.cluster} onSelect={(cluster) => go({ cluster }, "replace")} />
         <LayoutToggle value={params.layout} fallback={wide ? "map" : "list"} onSelect={choose} />
       </div>
-      <p className="mb-3 text-sm text-muted" aria-live="polite" data-testid="care-count">
+      <p className="mb-3 text-small text-muted" aria-live="polite" data-testid="care-count">
         {/* EDs are counted; the urgent care centre is said separately, never counted among them (ADR 0012). */}
         Showing {shown.filter((r) => !r.urgentCare).length} of {rows.filter((r) => !r.urgentCare).length} emergency departments
         {params.cluster ? ` in ${params.cluster}` : ""}{shown.some((r) => r.urgentCare) ? ", and the urgent care centre" : ""}.

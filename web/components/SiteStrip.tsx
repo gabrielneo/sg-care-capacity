@@ -12,7 +12,7 @@ type Loaded = { ok: true; strip: StripData } | { ok: false };
 
 function Pill({ pill }: { pill: StripPill }) {
   return (
-    <span className={`inline-flex min-w-0 flex-col border px-2 py-0.5 text-xs leading-[15px] ${LEVEL_STYLE[pill.level]}`}
+    <span className={`inline-flex min-w-0 flex-col border px-2 py-0.5 text-meta leading-snug ${LEVEL_STYLE[pill.level]}`}
           data-testid="strip-pill" data-pill={pill.id} data-level={pill.level}>
       <span className="font-semibold"><span aria-hidden="true">{LEVEL_SYMBOL[pill.level]} </span>{pill.label}</span>
       <span>{pill.dataset} · {pill.source} · {pill.detail}</span>
@@ -44,7 +44,7 @@ export function SiteStrip() {
 
   if (!data) return <div className="h-[45px] border-b border-line bg-surface" data-testid="site-strip-loading" />;
   if (!data.ok) {
-    return <div className="flex h-[45px] items-center border-b border-line bg-surface px-4 text-xs text-muted" data-testid="site-strip">Data status is not available right now.</div>;
+    return <div className="flex h-[45px] items-center border-b border-line bg-surface px-4 text-meta text-muted" data-testid="site-strip">Data status is not available right now.</div>;
   }
 
   const s = data.strip;
@@ -53,14 +53,16 @@ export function SiteStrip() {
   const lead = s.noComparison === s.total
     ? "No comparison with usual yet"
     : `${s.above} of ${s.total} emergency departments above usual`;
+  // On a phone the longer line would wrap to a second row: "ED" is a glossary term used throughout the site.
+  const shortLead = lead.replace("emergency departments", "EDs");
   const basis = s.bed ? `${s.bed.source}, data as of ${formatAsOf(s.bed.asOf)}` : null;
 
   return (
     <div className="sticky top-0 z-30 border-b border-line bg-surface" data-testid="site-strip" role="region" aria-label="Data overview">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4">
         <div className="flex min-h-11 shrink-0 items-center justify-between gap-3">
-          <Link href={viewHref("planner")} className="flex min-h-11 min-w-0 flex-col justify-center py-1 text-xs leading-[15px] text-ink" data-testid="strip-summary">
-            <span className="block font-semibold">{lead}</span>
+          <Link href={viewHref("planner")} className="flex min-h-11 min-w-0 flex-col justify-center py-1 text-meta leading-snug text-ink" data-testid="strip-summary">
+            <span className="block font-semibold"><span className="sm:hidden">{shortLead}</span><span className="hidden sm:inline">{lead}</span></span>
             {/* One line, so the bar is the same height before and after it loads (no layout shift). The week joins it where there is room. */}
             {basis ? (
               <span className="block text-muted" data-testid="strip-basis">
@@ -69,7 +71,7 @@ export function SiteStrip() {
             ) : null}
           </Link>
           <button type="button" aria-expanded={open} aria-controls={panel} onClick={() => setOpen(!open)} data-testid="strip-details"
-                  className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2.5 text-xs font-medium text-ink underline-offset-2 hover:underline">
+                  className="inline-flex min-h-11 shrink-0 items-center rounded-md px-2.5 text-meta font-semibold text-ink underline-offset-2 hover:underline">
             Details <span aria-hidden="true">&nbsp;{open ? "▴" : "▾"}</span>
           </button>
         </div>

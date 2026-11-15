@@ -20,13 +20,13 @@ import { formatWindow, USUAL_WEEKS } from "@/lib/windows";
  */
 function SortLinks({ sort, query }: { sort: Sort; query: string }) {
   return (
-    <nav aria-label="Order of the hospitals" className="flex items-center gap-2 text-sm" data-testid="sort-links">
+    <nav aria-label="Order of the hospitals" className="flex items-center gap-2 text-small" data-testid="sort-links">
       <span className="text-muted" aria-hidden="true">Order by</span>
       <ul className="inline-flex rounded-md border border-control bg-surface p-1">
         {SORTS.map((s) => (
           <li key={s.id}>
             <Link href={sortHref(s.id, query)} scroll={false} aria-current={s.id === sort ? "true" : undefined}
-                  className={"flex min-h-11 items-center rounded border px-3 font-medium no-underline "
+                  className={"flex min-h-11 items-center rounded border px-3 font-semibold no-underline "
                     + (s.id === sort ? "border-accent bg-accent-soft text-accent-strong" : "border-transparent text-muted hover:text-ink")}>
               {s.label}
             </Link>
@@ -62,11 +62,11 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
              data-sort={sort}>
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div>
-          <h2 id="status-heading" className="text-xl font-semibold tracking-tight text-ink">
+          <h2 id="status-heading" className="font-semibold text-ink text-h2">
             {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How long were bed waits at hospital emergency departments in the latest complete week?"}
           </h2>
           {full ? null : (
-            <p className="mt-1 max-w-prose text-sm text-muted">
+            <p className="mt-1 max-w-prose text-small text-muted">
               {latestWeek ? <>{formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}, compared with each hospital&apos;s own usual week. </> : null}
               <Glossed text={BED_WAIT_SHORT} />
             </p>
@@ -81,8 +81,8 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
       </ul>
       {urgentCare.length ? (
         <div className="mt-4" data-testid="status-ucc">
-          <h3 className="text-base font-semibold text-ink">{URGENT_CARE_HEADING}</h3>
-          <p className="text-sm text-muted">{URGENT_CARE_NOTE}.</p>
+          <h3 className="font-semibold text-ink text-h3">{URGENT_CARE_HEADING}</h3>
+          <p className="text-small text-muted">{URGENT_CARE_NOTE}.</p>
           <ul className={gridClass} data-testid="status-group" data-group="ucc">
             {urgentCare.map((s) => (
               <StatusCard key={s.code} status={s} hospital={byCode.get(s.code)} note={noteFor(s.code)} live={liveFor(s.code)} weeklyAsOf={meta.as_of} density={density} />
@@ -90,13 +90,13 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
           </ul>
         </div>
       ) : null}
-      {full ? <p className="mt-3 max-w-prose text-xs text-muted" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></p> : null}
-      <p className={`${full ? "mt-1" : "mt-3"} text-xs text-muted`} data-testid="status-key">
+      {full ? <p className="mt-3 max-w-prose text-meta text-muted" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></p> : null}
+      <p className={`${full ? "mt-1" : "mt-3"} text-meta text-muted`} data-testid="status-key">
         Usual = the median of the previous {USUAL_WEEKS} complete weeks. Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.
         {full ? ` The line shows the ${formatWindow({ kind: "weeks", n: SPARK_WEEKS })}. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.` : null}
       </p>
       {exclusions ? (
-        <p className="mt-1 text-xs text-muted" data-testid="status-exclusions"><Glossed text={exclusions} /></p>
+        <p className="mt-1 text-meta text-muted" data-testid="status-exclusions"><Glossed text={exclusions} /></p>
       ) : null}
       <Provenance meta={meta} compact />
     </section>

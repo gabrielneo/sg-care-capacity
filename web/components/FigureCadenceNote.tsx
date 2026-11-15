@@ -9,7 +9,7 @@ import Link from "next/link";
  */
 export function FigureCadenceNote({ kind }: { kind: "case-study" | "findings" }) {
   return (
-    <aside className="mb-8 rounded-xl border border-line bg-surface p-4 text-sm text-ink" aria-label="How often this page changes" data-testid="cadence-note" data-kind={kind}>
+    <aside className="mb-8 rounded-xl border border-line bg-surface p-4 text-small text-ink" aria-label="How often this page changes" data-testid="cadence-note" data-kind={kind}>
       <p className="font-semibold">How often this page changes</p>
       {kind === "case-study" ? (
         <p className="mt-1 max-w-prose">

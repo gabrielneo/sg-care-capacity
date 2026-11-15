@@ -25,7 +25,7 @@ const order = (r: Result) => (r.status === "fail" ? 0 : r.status === "skipped" ?
 function ResultTable({ rows, label }: { rows: Result[]; label: string }) {
   return (
     <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`${label} (scrolls sideways)`}>
-      <table className="w-full min-w-[640px] border-collapse text-sm">
+      <table className="w-full min-w-[640px] border-collapse text-small">
         <thead>
           <tr className="border-b border-line text-left">
             <th scope="col" className="py-1.5 pr-3 font-semibold">Check</th>
@@ -41,14 +41,14 @@ function ResultTable({ rows, label }: { rows: Result[]; label: string }) {
             return (
               <tr key={`${r.check_id}|${r.table}`} className="border-b border-line align-top" data-status={r.status}>
                 <th scope="row" className="py-1.5 pr-3 text-left font-normal">
-                  <Link href={checkHref(r.check_id)} className="font-mono text-xs">{r.check_id}</Link>
+                  <Link href={checkHref(r.check_id)} className="font-mono text-meta">{r.check_id}</Link>
                 </th>
-                <td className="py-1.5 pr-3 font-mono text-xs">{r.table}</td>
-                <td className={`whitespace-nowrap py-1.5 pr-3 font-medium ${s.cls}`}>
+                <td className="py-1.5 pr-3 font-mono text-meta">{r.table}</td>
+                <td className={`whitespace-nowrap py-1.5 pr-3 font-semibold ${s.cls}`}>
                   <span aria-hidden="true">{s.icon} </span>{s.label}
                 </td>
                 <td className="py-1.5 pr-3 text-right tabular-nums">{r.status === "fail" ? r.failing_rows.toLocaleString("en-SG") : ""}</td>
-                <td className="py-1.5 text-xs text-muted">
+                <td className="py-1.5 text-meta text-muted">
                   {r.details && r.details.length > 120 ? (
                     <details>
                       <summary className="cursor-pointer">{r.details.slice(0, 100)}…</summary>
@@ -78,18 +78,18 @@ export function CheckResults({ report }: { report: QualityReport }) {
         const failed = rows.filter((r) => r.status === "fail").length;
         return (
           <section key={g.key} aria-labelledby={`group-${g.key}`} data-testid={`checks-${g.key}`}>
-            <h3 id={`group-${g.key}`} className="text-base font-semibold">
+            <h3 id={`group-${g.key}`} className="font-semibold text-h3">
               {g.title} <span className="font-normal text-muted">({rows.length} checks, {failed} failed)</span>
             </h3>
-            <p className="mb-2 text-sm text-muted">{g.text}</p>
+            <p className="mb-2 text-small text-muted">{g.text}</p>
             {attention.length ? (
               <ResultTable rows={attention} label={`${g.title}: failed or skipped`} />
             ) : (
-              <p className="text-sm text-status-usual"><span aria-hidden="true">✓ </span>Every check in this group passed.</p>
+              <p className="text-small text-status-usual"><span aria-hidden="true">✓ </span>Every check in this group passed.</p>
             )}
             {passed.length ? (
               <details className="mt-2">
-                <summary className="cursor-pointer py-3 text-sm text-accent">Show {passed.length} passed checks</summary>
+                <summary className="cursor-pointer py-3 text-small text-accent">Show {passed.length} passed checks</summary>
                 <ResultTable rows={passed} label={`${g.title}: passed`} />
               </details>
             ) : null}

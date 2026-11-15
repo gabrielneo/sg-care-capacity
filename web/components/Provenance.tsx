@@ -83,7 +83,7 @@ export function Provenance({
   const extra = detail ? meta.caveats : notes;
   const count = extra.length + (detail ? warnings.length : warnings.length ? 1 : 0);
   return (
-    <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-sm" : "text-xs"} text-muted`}>
+    <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-small" : "text-meta"} text-muted`}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <p data-testid="provenance-line">
           Data as of{" "}

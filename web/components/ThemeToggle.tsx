@@ -20,7 +20,7 @@ export function ThemeToggle() {
       type="button"
       data-testid="theme-toggle"
       onClick={() => applyTheme(next)}
-      className="print-hide inline-flex min-h-11 items-center gap-2 rounded-md border border-control bg-surface px-3 text-sm font-medium text-ink hover:border-accent"
+      className="print-hide inline-flex min-h-11 items-center gap-2 rounded-md border border-control bg-surface px-3 text-small font-semibold text-ink hover:border-accent"
       aria-label={`Theme: ${LABEL[choice].text}. Switch to ${LABEL[next].text}.`}
     >
       <span aria-hidden="true">{LABEL[choice].icon}</span>

@@ -11,7 +11,7 @@ export function DocPage({ toc, todos = 0, children, aside }: {
     <div className="grid gap-8 lg:grid-cols-[1fr_240px]">
       <article className="doc min-w-0">
         {todos > 0 ? (
-          <p role="note" data-testid="draft-banner" className="mb-6 rounded-lg border border-status-higher/40 bg-status-higher-soft p-3 text-sm text-status-higher">
+          <p role="note" data-testid="draft-banner" className="mb-6 rounded-lg border border-status-higher/40 bg-status-higher-soft p-3 text-small text-status-higher">
             <strong>Draft:</strong> {todos} {todos === 1 ? "item needs" : "items need"} the author&apos;s own input, marked{" "}
             <strong>TODO(me)</strong> and highlighted below. Nothing in them has been made up to fill the gap.
           </p>
@@ -19,7 +19,7 @@ export function DocPage({ toc, todos = 0, children, aside }: {
         {children}
       </article>
       <aside className="order-first lg:order-last">
-        <nav aria-label="On this page" className="text-sm lg:sticky lg:top-4">
+        <nav aria-label="On this page" className="text-small lg:sticky lg:top-4">
           <p className="mb-2 font-semibold">On this page</p>
           <ul className="space-y-1">
             {toc.map((h) => (

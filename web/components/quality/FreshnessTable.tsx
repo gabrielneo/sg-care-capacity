@@ -9,7 +9,7 @@ import { Glossed } from "../terms/Glossed";
 export function FreshnessTable({ sources }: { sources: Source[] }) {
   return (
     <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Freshness by source (scrolls sideways)">
-      <table className="w-full min-w-[720px] border-collapse text-sm" data-testid="freshness-table">
+      <table className="w-full min-w-[720px] border-collapse text-small" data-testid="freshness-table">
         <thead>
           <tr className="border-b border-line text-left">
             <th scope="col" className="py-1.5 pr-3 font-semibold">Source</th>
@@ -33,7 +33,7 @@ export function FreshnessTable({ sources }: { sources: Source[] }) {
                 <td className="py-1.5">
                   {/* One function and one config for every dataset (docs/datasets.yml). */}
                   {s.as_of ? <FreshnessBadge freshness={datasetFreshness(s.id, s.as_of)} /> : null}
-                  <span className="mt-0.5 block text-xs text-muted">{ruleText(s.id)}</span>
+                  <span className="mt-0.5 block text-meta text-muted">{ruleText(s.id)}</span>
                 </td>
               </tr>
             );

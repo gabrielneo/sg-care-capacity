@@ -17,23 +17,23 @@ export function WhatChanged({ changes, names, meta, latestWeek }: {
   return (
     <section aria-labelledby="changes-heading" className="py-6" data-testid="what-changed">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 id="changes-heading" className="text-xl font-semibold tracking-tight text-ink">What changed since the week before</h2>
+        <h2 id="changes-heading" className="font-semibold text-ink text-h2">What changed since the week before</h2>
         <FreshnessBadge meta={meta} />
       </div>
-      <p className="mt-1 text-sm text-muted">Week of {formatWeek(latestWeek)} compared with {before}. A badge compares a week with the hospital&apos;s own usual.</p>
+      <p className="mt-1 text-small text-muted">Week of {formatWeek(latestWeek)} compared with {before}. A badge compares a week with the hospital&apos;s own usual.</p>
       {moved.length ? (
-        <ul className="mt-3 space-y-1 text-base text-ink" data-testid="changes-list">
+        <ul className="mt-3 space-y-1 text-body text-ink" data-testid="changes-list">
           {moved.map((m) => (
             <li key={m.code} data-testid="change-item" data-direction={m.step > 0 ? "longer" : "shorter"}>
-              <span className="font-medium">{names[m.code] ?? m.code}</span>
+              <span className="font-semibold">{names[m.code] ?? m.code}</span>
               {`: ${LEVELS[m.from].label.toLowerCase()} → ${LEVELS[m.to].label.toLowerCase()}`}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-base text-ink" data-testid="changes-none">No hospital changed its badge since the week before.</p>
+        <p className="mt-3 text-body text-ink" data-testid="changes-none">No hospital changed its badge since the week before.</p>
       )}
-      <p className="mt-2 text-sm text-muted" data-testid="changes-counts">
+      <p className="mt-2 text-small text-muted" data-testid="changes-counts">
         {unchanged} kept the same badge{notCompared ? `; ${notCompared} could not be compared (not enough complete weeks)` : ""}.
       </p>
     </section>

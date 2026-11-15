@@ -21,13 +21,13 @@ const TITLE = <Glossed text="Live: NUHS estimates" />;
 
 function Reading({ r }: { r: LiveReading }) {
   return (
-    <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2 text-sm">
+    <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2 text-small">
       <dt className="text-muted">Patients waiting to see a doctor</dt>
-      <dd className="text-right text-lg font-semibold tabular-nums">{r.patients_waiting ?? "Not stated"}</dd>
+      <dd className="text-right text-h3 font-semibold tabular-nums">{r.patients_waiting ?? "Not stated"}</dd>
       <dt className="text-muted">Estimated wait to see a doctor</dt>
-      <dd className="text-right text-lg font-semibold tabular-nums">{estimateCell(r.est_wait_to_see_doctor_hours, r.est_wait_to_see_doctor_qualifier)}</dd>
+      <dd className="text-right text-h3 font-semibold tabular-nums">{estimateCell(r.est_wait_to_see_doctor_hours, r.est_wait_to_see_doctor_qualifier)}</dd>
       <dt className="text-muted"><Glossed text="Estimated wait for a ward bed (NUHS estimate)" /></dt>
-      <dd className="text-right text-lg font-semibold tabular-nums">{estimateCell(r.est_bed_wait_hours, r.est_bed_wait_qualifier)}</dd>
+      <dd className="text-right text-h3 font-semibold tabular-nums">{estimateCell(r.est_bed_wait_hours, r.est_bed_wait_qualifier)}</dd>
     </dl>
   );
 }
@@ -46,7 +46,7 @@ export default async function LivePage() {
   return (
     <>
       <PageHeader title={TITLE} intro={INTRO} />
-      <div role="note" className="mb-6 max-w-prose rounded-lg border border-status-higher/40 bg-status-higher-soft p-4 text-sm text-status-higher">
+      <div role="note" className="mb-6 max-w-prose rounded-lg border border-status-higher/40 bg-status-higher-soft p-4 text-small text-status-higher">
         <p className="font-semibold"><Glossed text="Estimates from the NUHS public page, not live and not MOH statistics" /></p>
         <p className="mt-1">
           <Glossed text="They are read from the NUHS page when each weekly data release is built, so each one can be up to 7 days old: check its time." />{" "}

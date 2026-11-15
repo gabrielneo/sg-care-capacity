@@ -41,16 +41,16 @@ const defaultFormat = (v: number) => v.toLocaleString("en-SG", { maximumFraction
 
 function ChangeLine({ change }: { change: KpiChange }) {
   if (change.value === null) {
-    return <p className="mt-1 text-sm text-muted">No comparison available {change.label}</p>;
+    return <p className="mt-1 text-small text-muted">No comparison available {change.label}</p>;
   }
   // Neutral on purpose: whether a rise is good depends on the measure, so no red/green here.
   const arrow = change.value > 0 ? "▲" : change.value < 0 ? "▼" : "■";
   const sign = change.value > 0 ? "+" : "";
   const text = `${sign}${change.value.toLocaleString("en-SG", { maximumFractionDigits: 1 })}${change.unit ?? ""}`;
   return (
-    <p className="mt-1 text-sm text-muted">
+    <p className="mt-1 text-small text-muted">
       <span aria-hidden="true">{arrow} </span>
-      <span className="font-medium text-ink">{text}</span> {change.label}
+      <span className="font-semibold text-ink">{text}</span> {change.label}
     </p>
   );
 }
@@ -60,14 +60,14 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
   const problems = provenanceProblems(meta);
   return (
     <div data-testid="kpi-tile" data-provenance={provenance ? "tile" : "section"} className={`h-full rounded-lg border border-line bg-surface ${dense ? "p-3" : "p-4"}`}>
-      <p className="text-sm font-medium text-muted">{label}</p>
+      <p className="text-small font-semibold text-muted">{label}</p>
       {problems.length ? (
         <div className="mt-2">
           <ErrorState title="Can't be shown" error={{ message: `The figure can't be shown because ${problems.join(" and ")}.` }} />
         </div>
       ) : (
         <>
-          <p className={`mt-1 font-semibold tabular-nums text-ink ${dense ? "text-2xl" : "text-3xl"}`}>
+          <p className={`mt-1 font-semibold tabular-nums text-ink text-kpi`}>
             {value === null ? (
               <>
                 <span aria-hidden="true">—</span>
@@ -76,9 +76,9 @@ export function KpiTile({ label, value, unit, meta, format = defaultFormat, chan
             ) : (
               format(value)
             )}
-            {value !== null && unit ? <>{" "}<span className="text-base font-normal text-muted">{unit}</span></> : null}
+            {value !== null && unit ? <>{" "}<span className="text-body font-normal text-muted">{unit}</span></> : null}
           </p>
-          {detail ? <div className="mt-1 text-sm text-muted" data-testid="kpi-detail">{detail}</div> : null}
+          {detail ? <div className="mt-1 text-small text-muted" data-testid="kpi-detail">{detail}</div> : null}
           {change ? <ChangeLine change={change} /> : null}
           {caveat ? (
             <div className="mt-2">

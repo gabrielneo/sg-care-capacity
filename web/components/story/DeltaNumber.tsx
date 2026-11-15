@@ -34,11 +34,11 @@ export interface DeltaNumberProps {
 export function DeltaNumber({ value, unit, label, comparison, change, word, direction, compact = false }: DeltaNumberProps) {
   if (compact) {
     return (
-      <span data-testid="delta-number" data-direction={direction} className="inline-flex flex-wrap items-baseline gap-x-1.5 text-sm">
+      <span data-testid="delta-number" data-direction={direction} className="inline-flex flex-wrap items-baseline gap-x-1.5 text-small">
         <span className="font-semibold tabular-nums text-ink">{value}</span>
         {unit ? <span className="text-muted">{unit}</span> : null}
         {word ? (
-          <span className={`font-medium ${TONE[direction]}`} data-testid="delta-change">
+          <span className={`font-semibold ${TONE[direction]}`} data-testid="delta-change">
             {change ? <span aria-hidden="true">{ARROW[change]} </span> : null}
             {word}
             {direction !== "neutral" ? <span className="sr-only"> ({direction === "worse" ? "worse" : "better"})</span> : null}
@@ -49,20 +49,20 @@ export function DeltaNumber({ value, unit, label, comparison, change, word, dire
   }
   return (
     <div data-testid="delta-number" data-direction={direction} className="my-3">
-      {label ? <p className="text-sm text-muted">{label}</p> : null}
+      {label ? <p className="text-small text-muted">{label}</p> : null}
       <p className="text-ink">
-        <span className="text-3xl font-semibold tabular-nums">{value}</span>
-        {unit ? <>{" "}<span className="text-base text-muted">{unit}</span></> : null}
+        <span className="text-kpi font-semibold tabular-nums">{value}</span>
+        {unit ? <>{" "}<span className="text-body text-muted">{unit}</span></> : null}
       </p>
       {word ? (
-        <p className={`text-sm font-medium ${TONE[direction]}`} data-testid="delta-change">
+        <p className={`text-small font-semibold ${TONE[direction]}`} data-testid="delta-change">
           {change ? <span aria-hidden="true">{ARROW[change]} </span> : null}
           <Glossed text={word} />
           {direction !== "neutral" ? <span className="sr-only"> ({direction === "worse" ? "worse" : "better"})</span> : null}
         </p>
       ) : null}
       {comparison ? (
-        <p className="text-sm text-muted">
+        <p className="text-small text-muted">
           vs <Glossed text={comparison} />
         </p>
       ) : null}

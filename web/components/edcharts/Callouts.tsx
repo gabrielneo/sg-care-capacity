@@ -21,14 +21,14 @@ function Callout({ insight, meta }: { insight: Insight; meta: Meta }) {
   const href = insight.headline_rank ? `/findings#${insight.insight_id}` : "/findings#findings";
   return (
     <li className="rounded-md border border-line bg-page p-3" data-testid="callout" data-insight={insight.insight_id}>
-      <p className="text-sm text-ink" data-testid="callout-text"><Glossed text={insight.headline} /></p>
-      <p className="mt-1 text-xs text-muted" data-testid="callout-strength">
+      <p className="text-small text-ink" data-testid="callout-text"><Glossed text={insight.headline} /></p>
+      <p className="mt-1 text-meta text-muted" data-testid="callout-strength">
         <span aria-hidden="true">{insight.strength ? STRENGTH_SYMBOL[insight.strength] : ""}</span>{" "}
         {insight.strength ? `Strength: ${insight.strength}` : "Strength not rated"}
         {insight.p_adjusted == null ? " · A plain comparison, not a statistical test" : ""}
       </p>
       {caveat ? <div className="mt-2"><CaveatChip><Glossed text={caveat} /></CaveatChip></div> : null}
-      <p className="mt-2 text-xs text-muted" data-testid="callout-provenance">
+      <p className="mt-2 text-meta text-muted" data-testid="callout-provenance">
         Data as of {dates.length ? dates.map((d) => `${formatAsOf(d.asOf)} (${d.name})`).join(", ") : formatAsOf(insight.as_of)}
         {period ? ` · Uses data from ${period}` : ""}
         {" · "}<Link href={href}>Read the finding</Link>
@@ -54,7 +54,7 @@ export function Callouts({ insights, types, codes, hospitals, meta, label }: {
       </ul>
       {more.length ? (
         <details className="mt-2" data-testid="callouts-more">
-          <summary className="min-h-11 cursor-pointer py-3 text-sm text-accent underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+          <summary className="min-h-11 cursor-pointer py-3 text-small text-accent underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
             More findings ({more.length})
           </summary>
           <ul className="mt-2 space-y-2">

@@ -1,4 +1,29 @@
 /*
+ * Type scale and spacing (docs/design/redesign_brief.md). The only font sizes, line heights and gaps the site uses.
+ * Sizes are in rem so the reader's own text-size setting still works; at the default 16px they are the pixel values in the comments.
+ * Weights are 400 and 600 only. Letter-spacing is -0.01em on h1 and the KPI figure, never on body text.
+ */
+:root {
+  --fs-meta: 0.8125rem;  --lh-meta: 1.4;     /* 13px: metadata, axis labels, footnotes */
+  --fs-small: 0.875rem;  --lh-small: 1.5;    /* 14px: secondary UI, table cells */
+  --fs-body: 1rem;       --lh-body: 1.65;    /* 16px (17px from 1280px): all prose */
+  --fs-h3: 1.125rem;     --lh-h3: 1.4;       /* 18px, sans 600 */
+  --fs-h2: 1.375rem;     --lh-h2: 1.25;      /* 22px, 24px from 640px; serif 600 */
+  --fs-h1: 1.75rem;      --lh-h1: 1.15;      /* 28px, 36px from 640px; serif 600 */
+  --fs-kpi: 1.75rem;     --lh-kpi: 1;        /* 28px, 36px from 640px (the h1 size: a page may use at most 6 sizes); sans 600, tabular figures */
+
+  --space-1: 0.25rem;  --space-2: 0.5rem;  --space-3: 0.75rem; --space-4: 1rem;  --space-5: 1.5rem;
+  --space-6: 2rem;     --space-7: 3rem;    --space-8: 4rem;    --space-9: 6rem;
+}
+@media (min-width: 40rem) {
+  :root { --fs-h2: 1.5rem; --fs-h1: 2.25rem; --fs-kpi: 2.25rem; }
+}
+@media (min-width: 80rem) {
+  :root { --fs-body: 1.0625rem; }
+}
+
+
+/*
  * Design tokens: "Paper & Ink" (docs/design/redesign_brief.md). The ONE place colours are written as hex
  * (besides lib/palette.ts, which a test keeps identical to this file).
  *

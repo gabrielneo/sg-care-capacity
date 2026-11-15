@@ -51,10 +51,10 @@ export default async function SummaryPage() {
 
   const header = (
     <header className="border-b border-line pb-3">
-      <p className="text-xs font-medium text-accent" data-testid="summary-release">
+      <p className="text-meta font-semibold text-accent" data-testid="summary-release">
         One-page summary{release ? ` · weekly data release ${release}` : null}
       </p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">{SITE_TITLE}</h1>
+      <h1 className="mt-1 font-semibold tracking-tight text-ink text-h1">{SITE_TITLE}</h1>
       <p className="mt-1 text-muted">
         {SITE.name} means <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
@@ -64,7 +64,7 @@ export default async function SummaryPage() {
   // Nothing came back: one message, as on the Overview, not one per block.
   if (!insights.ok && !areas.ok && !population.ok) {
     return (
-      <article className="summary mx-auto max-w-3xl text-sm" data-testid="summary">
+      <article className="summary mx-auto max-w-3xl text-small" data-testid="summary">
         {header}
         <div className="mt-4"><ErrorState error={plainError(insights.error)} /></div>
       </article>
@@ -72,7 +72,7 @@ export default async function SummaryPage() {
   }
 
   return (
-    <article className="summary mx-auto max-w-3xl text-sm" data-testid="summary">
+    <article className="summary mx-auto max-w-3xl text-small" data-testid="summary">
       <div className="print-hide mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link href="/findings">Back to the findings</Link>
         <PrintButton />
@@ -81,14 +81,14 @@ export default async function SummaryPage() {
       {header}
 
       <section aria-labelledby="s-why" className="summary-block mt-3">
-        <h2 id="s-why" className="text-base font-semibold text-ink">Why now</h2>
+        <h2 id="s-why" className="font-semibold text-ink text-h2">Why now</h2>
         {share && population.ok ? (
           <>
             <p className="text-ink" data-testid="summary-share">
               <strong>{percentText(share.latest.share_65plus)}</strong> of Singapore residents were aged 65 or over in{" "}
               {monthYear(share.latest.reference_date)}. A <Glossed text="super-aged society" plain /> has 21% or more.
             </p>
-            <div className="text-xs text-muted"><AsOfLine asOf={population.value.meta.as_of} meta={population.value.meta} /></div>
+            <div className="text-meta text-muted"><AsOfLine asOf={population.value.meta.as_of} meta={population.value.meta} /></div>
           </>
         ) : population.ok ? (
           <p className="text-muted">This data release has no population figures.</p>
@@ -98,7 +98,7 @@ export default async function SummaryPage() {
       </section>
 
       <section aria-labelledby="s-findings" className="summary-block mt-3">
-        <h2 id="s-findings" className="text-base font-semibold text-ink">The strongest findings this week</h2>
+        <h2 id="s-findings" className="font-semibold text-ink text-h2">The strongest findings this week</h2>
         {!insights.ok ? (
           <ErrorState title="The findings can't be shown" error={plainError(insights.error)} />
         ) : findings.length === 0 ? (
@@ -113,7 +113,7 @@ export default async function SummaryPage() {
                   </span>
                   <span className="text-ink">
                     <Glossed text={f.headline} />
-                    <span className="block text-xs text-muted">
+                    <span className="block text-meta text-muted">
                       <span data-testid="summary-metric">The number: <Glossed text={lowerFirst(f.display.metric_label)} plain /></span>.{" "}
                       Uses data to <time dateTime={f.as_of}>{formatAsOf(f.as_of)}</time>.
                     </span>
@@ -121,14 +121,14 @@ export default async function SummaryPage() {
                 </li>
               ))}
             </ol>
-            <p className="mt-1 text-xs text-muted"><Glossed text={BED_WAIT_SHORT} /></p>
-            <div className="text-xs text-muted"><AsOfLine asOf={findingsMeta!.as_of} meta={findingsMeta!} bySource /></div>
+            <p className="mt-1 text-meta text-muted"><Glossed text={BED_WAIT_SHORT} /></p>
+            <div className="text-meta text-muted"><AsOfLine asOf={findingsMeta!.as_of} meta={findingsMeta!} bySource /></div>
           </>
         )}
       </section>
 
       <section aria-labelledby="s-areas" className="summary-block mt-3">
-        <h2 id="s-areas" className="text-base font-semibold text-ink">Areas with the least clinic access for seniors</h2>
+        <h2 id="s-areas" className="font-semibold text-ink text-h2">Areas with the least clinic access for seniors</h2>
         {areaError || !areas.ok ? (
           <ErrorState title="The areas can't be shown" error={plainError(areaError ?? { message: "" })} />
         ) : rows.length === 0 ? (
@@ -139,20 +139,20 @@ export default async function SummaryPage() {
               <Glossed text="The priority areas from this week's findings: many residents aged 65+, few CDMP GP clinics per senior." />
             </p>
             <table className="mt-1 w-full text-left tabular-nums" data-testid="summary-areas">
-              <thead className="text-xs text-muted">
+              <thead className="text-meta text-muted">
                 <tr>
-                  <th scope="col" className="py-1 pr-2 font-medium">Rank</th>
-                  <th scope="col" className="py-1 pr-2 font-medium">Area</th>
-                  <th scope="col" className="py-1 pr-2 text-right font-medium">Residents aged 65+</th>
-                  <th scope="col" className="py-1 pr-2 text-right font-medium"><Glossed text="CDMP clinics per 1,000 aged 65+" plain /></th>
-                  <th scope="col" className="py-1 text-right font-medium">Clinics short of the national rate</th>
+                  <th scope="col" className="py-1 pr-2 font-semibold">Rank</th>
+                  <th scope="col" className="py-1 pr-2 font-semibold">Area</th>
+                  <th scope="col" className="py-1 pr-2 text-right font-semibold">Residents aged 65+</th>
+                  <th scope="col" className="py-1 pr-2 text-right font-semibold"><Glossed text="CDMP clinics per 1,000 aged 65+" plain /></th>
+                  <th scope="col" className="py-1 text-right font-semibold">Clinics short of the national rate</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.name} className="border-t border-line" data-testid="summary-area">
                     <td className="py-1 pr-2">{r.rank}</td>
-                    <th scope="row" className="py-1 pr-2 font-medium text-ink">{r.name}</th>
+                    <th scope="row" className="py-1 pr-2 font-semibold text-ink">{r.name}</th>
                     <td className="py-1 pr-2 text-right">{r.seniors == null ? MISSING : r.seniors.toLocaleString("en-SG")}</td>
                     <td className="py-1 pr-2 text-right">{r.rate == null ? MISSING : r.rate.toLocaleString("en-SG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td className="py-1 text-right">{r.shortfall == null ? MISSING : `about ${Math.round(r.shortfall)}`}</td>
@@ -160,17 +160,17 @@ export default async function SummaryPage() {
                 ))}
               </tbody>
             </table>
-            <div className="text-xs text-muted"><AsOfLine asOf={areas.value.meta.as_of} meta={areas.value.meta} /></div>
+            <div className="text-meta text-muted"><AsOfLine asOf={areas.value.meta.as_of} meta={areas.value.meta} /></div>
           </>
         )}
       </section>
 
       <section aria-labelledby="s-limits" className="summary-block mt-3" data-testid="summary-limits">
-        <h2 id="s-limits" className="text-base font-semibold text-ink">What this data can&apos;t show</h2>
+        <h2 id="s-limits" className="font-semibold text-ink text-h2">What this data can&apos;t show</h2>
         <div className="doc doc-tight">{limits.content}</div>
       </section>
 
-      <footer className="mt-3 border-t border-line pt-2 text-xs text-muted">
+      <footer className="mt-3 border-t border-line pt-2 text-meta text-muted">
         <Glossed text="Aggregate public data only. No personal or patient-level data. Findings describe patterns, not their causes." />{" "}
         Methods and every limit: <Link href="/methodology">the methodology</Link>.
       </footer>

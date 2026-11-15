@@ -37,7 +37,7 @@ export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: s
 
   const submit = (
     <noscript>
-      <button type="submit" className="ml-2 min-h-11 rounded-md border border-control bg-surface px-3 text-sm font-medium text-ink">
+      <button type="submit" className="ml-2 min-h-11 rounded-md border border-control bg-surface px-3 text-small font-semibold text-ink">
         Change view
       </button>
     </noscript>
@@ -50,7 +50,7 @@ export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: s
              data-testid="view-radios">
           {VIEWS.map((v) => (
             <label key={v.id}
-                   className={"flex min-h-11 cursor-pointer items-center rounded border border-transparent px-3 text-sm font-medium "
+                   className={"flex min-h-11 cursor-pointer items-center rounded border border-transparent px-3 text-small font-semibold "
                      + "text-muted hover:text-ink has-checked:border-accent has-checked:bg-accent-soft has-checked:text-accent-strong "
                      + "has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent"}>
               <input type="radio" name="view" value={v.id} checked={view === v.id} onChange={() => go(v.id)} className="sr-only" />
@@ -62,9 +62,9 @@ export function ViewSwitch({ view: current, home = "/" }: { view: View; home?: s
       </form>
 
       <form action="/" method="get" className="flex items-center sm:hidden">
-        <label htmlFor="view-select" className="mr-2 text-sm font-medium text-muted">View</label>
+        <label htmlFor="view-select" className="mr-2 text-small font-semibold text-muted">View</label>
         <select id="view-select" name="view" value={view} onChange={(e) => go(parseView(e.target.value))}
-                className="min-h-11 rounded-md border border-control bg-surface px-2 text-base font-medium text-ink"
+                className="min-h-11 rounded-md border border-control bg-surface px-2 text-body font-semibold text-ink"
                 data-testid="view-select">
           {VIEWS.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
         </select>

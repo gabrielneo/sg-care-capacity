@@ -46,10 +46,10 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
   const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
     <section aria-labelledby={id} data-testid="chart-card" data-provenance={provenance ? "card" : "section"} className="rounded-lg border border-line bg-surface p-4">
-      <Heading id={id} className="text-base font-semibold text-ink">
+      <Heading id={id} className="text-body font-semibold text-ink">
         {title}
       </Heading>
-      {description ? <div className="mt-1 text-sm text-muted">{description}</div> : null}
+      {description ? <div className="mt-1 text-small text-muted">{description}</div> : null}
       {problems.length ? (
         <div className="mt-4">
           <ErrorState title="This chart can't be shown" error={{ message: `The data can't be shown because ${problems.join(" and ")}.` }} />
@@ -60,9 +60,9 @@ export function ChartCard({ title, slug, meta, children, description, caveat, no
           {provenance ? (
             <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} now={now}
                         bySource={bySource} findingTo={findingTo} release={release} />
-          ) : caveat ? <p className="mt-3 text-xs text-muted" data-testid="card-caveat"><Glossed text={caveat} /></p> : null}
+          ) : caveat ? <p className="mt-3 text-meta text-muted" data-testid="card-caveat"><Glossed text={caveat} /></p> : null}
           {download ? (
-            <p className="mt-2 text-xs">
+            <p className="mt-2 text-meta">
               <a href={download} download data-testid="csv-download">Download the figures (CSV)</a>
             </p>
           ) : null}

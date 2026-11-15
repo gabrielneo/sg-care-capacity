@@ -189,8 +189,8 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
         : {};
       return (
         <section aria-labelledby="map-heading" className="py-8" data-testid="map-section">
-          <h2 id="map-heading" className="text-2xl font-semibold tracking-tight text-ink">On the map</h2>
-          <p className="mb-3 mt-1 max-w-prose text-base text-ink">
+          <h2 id="map-heading" className="font-semibold text-ink text-h2">On the map</h2>
+          <p className="mb-3 mt-1 max-w-prose text-body text-ink">
             Hospitals are coloured by the latest complete week&apos;s bed wait against their own usual, and marked with a symbol and the words in the list.
             Search above to mark your search and the nearest clinics.
           </p>
@@ -210,8 +210,8 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
     links: () => (
       <section aria-labelledby="links-heading" className="py-8" data-testid="analyst-links">
-        <h2 id="links-heading" className="text-xl font-semibold tracking-tight text-ink">Check the data and the methods</h2>
-        <ul className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+        <h2 id="links-heading" className="font-semibold text-ink text-h2">Check the data and the methods</h2>
+        <ul className="mt-3 grid gap-x-6 gap-y-2 text-small sm:grid-cols-2">
           <li><Link href="/data-quality">Data Quality</Link>: every check, each source&apos;s date and the days with gaps</li>
           <li><Link href="/methodology">Methodology</Link>: sources, definitions and what the figures can&apos;t tell you</li>
           <li><Link href="/docs/insights-method">How findings are tested</Link>: the test and the bar each finding has to pass</li>

@@ -134,7 +134,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
 
   return (
     <figure className="annotated-chart" data-testid="annotated-chart" data-kind={kind}>
-      <p className={`mb-1 text-sm font-medium text-ink ${right ? "text-right" : ""}`} data-testid="chart-callout">
+      <p className={`mb-1 text-small font-semibold text-ink ${right ? "text-right" : ""}`} data-testid="chart-callout">
         {callout}
       </p>
       <svg width="100%" height={height} role="img" aria-label={summary} className="block overflow-visible">
@@ -150,7 +150,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
             <line x1={pct(X0)} x2={pct(X1)} y1={y(reference.value)} y2={y(reference.value)} stroke={colors.muted}
                   strokeDasharray="4 4" />
             {/* on the side away from the highlighted point, where the marks are less likely to be */}
-            <text x={pct(right ? X0 : X1)} y={y(reference.value) - 5} fontSize="11" fill={colors.muted}
+            <text x={pct(right ? X0 : X1)} y={y(reference.value) - 5} fontSize="13" fill={colors.muted}
                   textAnchor={right ? "start" : "end"} {...HALO}>
               {reference.label}{reference.value !== 0 ? `: ${format(reference.value)}` : ""}
             </text>
@@ -160,7 +160,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
         {kind === "bar"
           ? drawn[0]?.values.map((v, i) => {
               if (v == null) {
-                return <text key={i} x={pct(x(i))} y={zero - 4} fontSize="10" textAnchor="middle" fill={colors.muted}>No data</text>;
+                return <text key={i} x={pct(x(i))} y={zero - 4} fontSize="13" textAnchor="middle" fill={colors.muted}>No data</text>;
               }
               const top = Math.min(y(v), zero);
               const hot = marked.includes(i);
@@ -168,7 +168,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
                 <g key={i} data-testid="chart-bar" data-highlight={hot ? "" : undefined}>
                   <rect x={pct(x(i) - band * 0.34)} width={pct(band * 0.68)} y={top} height={Math.max(Math.abs(y(v) - zero), 1)}
                         rx="2" fill={hot ? colors.accent : colors.line} />
-                  <text x={pct(x(i))} y={v >= 0 ? top - 4 : top + Math.abs(y(v) - zero) + 12} fontSize="11" textAnchor="middle"
+                  <text x={pct(x(i))} y={v >= 0 ? top - 4 : top + Math.abs(y(v) - zero) + 12} fontSize="13" textAnchor="middle"
                         fill={hot ? colors.ink : colors.muted} fontWeight={hot ? 600 : 400} className="tabular-nums" {...HALO}>
                     {format(v)}
                   </text>
@@ -195,7 +195,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
               </g>
             ))}
         {kind === "line" && marked.length && targetValue != null ? (
-          <text x={pct(x(target))} dx={right ? -9 : 9} y={y(targetValue) + 4} fontSize="11" fontWeight={600} fill={colors.ink}
+          <text x={pct(x(target))} dx={right ? -9 : 9} y={y(targetValue) + 4} fontSize="13" fontWeight={600} fill={colors.ink}
                 textAnchor={right ? "end" : "start"} className="tabular-nums" data-testid="chart-point-label" {...HALO}>
             {format(targetValue)}
           </text>
@@ -211,7 +211,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
         {/* x labels */}
         {categories.map((c, i) =>
           labels.always.has(i) || labels.wide.has(i) ? (
-            <text key={c.key} x={pct(x(i))} y={height - 8} fontSize="11" textAnchor={kind === "line" && i === 0 ? "start" :
+            <text key={c.key} x={pct(x(i))} y={height - 8} fontSize="13" textAnchor={kind === "line" && i === 0 ? "start" :
                   kind === "line" && i === n - 1 ? "end" : "middle"} fill={marked.includes(i) ? colors.ink : colors.muted}
                   fontWeight={marked.includes(i) ? 600 : 400} className={labels.always.has(i) ? undefined : "max-sm:hidden"}
                   data-testid="chart-x-label">
@@ -220,9 +220,9 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
           ) : null,
         )}
       </svg>
-      {xLabel ? <figcaption className="mt-1 text-xs text-muted">{xLabel}</figcaption> : null}
+      {xLabel ? <figcaption className="mt-1 text-meta text-muted">{xLabel}</figcaption> : null}
       {legend ? (
-        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted" data-testid="chart-legend">
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-meta text-muted" data-testid="chart-legend">
           {drawn.map((s, si) => (
             <li key={s.key} className="flex items-center gap-1.5">
               <span aria-hidden="true" className="inline-block h-0.5 w-4" style={{ background: colourAt(si) }} />
@@ -244,7 +244,7 @@ function EndLabel({ series, x, y, pct, colour }: { series: ChartSeries; x: (i: n
   const i = series.values.findLastIndex((v) => v != null);
   if (i < 0) return null;
   return (
-    <text x={pct(x(i))} y={y(series.values[i] as number) - 8} fontSize="11" textAnchor="end" fill={colour} fontWeight={600}>
+    <text x={pct(x(i))} y={y(series.values[i] as number) - 8} fontSize="13" textAnchor="end" fill={colour} fontWeight={600}>
       {series.label}
     </text>
   );

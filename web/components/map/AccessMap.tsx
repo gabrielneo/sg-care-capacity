@@ -51,7 +51,7 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-x-6 gap-y-3">
-        <label htmlFor={ids.metric} className="w-full min-w-0 text-sm sm:w-auto">
+        <label htmlFor={ids.metric} className="w-full min-w-0 text-small sm:w-auto">
           <span className="block font-semibold">Measure</span>
           <select id={ids.metric} value={metricKey} onChange={(e) => setMetricKey(e.target.value as MetricKey)}
                   className="mt-1 min-h-11 w-full rounded-md border border-control bg-surface px-2 sm:w-auto">
@@ -60,7 +60,7 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
             ))}
           </select>
         </label>
-        <fieldset className="text-sm" aria-describedby={ids.clinics}>
+        <fieldset className="text-small" aria-describedby={ids.clinics}>
           <legend className="font-semibold">Clinic points</legend>
           <div className="mt-1 flex flex-wrap gap-x-4">
             <label className="flex min-h-11 items-center gap-2">
@@ -73,7 +73,7 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
               <Glossed text="CDMP only" plain />
             </label>
           </div>
-          <p id={ids.clinics} className="text-xs text-muted" aria-live="polite">
+          <p id={ids.clinics} className="text-meta text-muted" aria-live="polite">
             {showClinics ? <Glossed text={`${shownClinics.toLocaleString("en-SG")} ${cdmpOnly ? "CDMP" : "CHAS"} GP clinics shown as white dots.`} /> : "Clinics hidden."}
           </p>
         </fieldset>
@@ -81,12 +81,12 @@ export function AccessMap({ areas, clinics, caveats }: AccessMapProps) {
 
       <LeafletMap areas={areas} clinics={clinics} metric={metric} breaks={breaks} colors={colors} showClinics={showClinics}
                   cdmpOnly={cdmpOnly} selected={selected} onSelect={setSelected} />
-      <p className="mt-2 text-xs text-muted">Select an area (click, tap, or Tab then Enter) to see its details.</p>
+      <p className="mt-2 text-meta text-muted">Select an area (click, tap, or Tab then Enter) to see its details.</p>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         {area ? <AreaPanel area={area} caveats={caveats} onClose={() => setSelected(null)} /> : null}
         <div className="space-y-2">
           <MapLegend metric={metric} classes={classes} noData={noData - noResidents} noResidents={noResidents} smallAreas={smallAreas} />
-          {caveats[metric.metricId] ? <p className="text-xs text-muted"><Glossed text={caveats[metric.metricId]!} /></p> : null}
+          {caveats[metric.metricId] ? <p className="text-meta text-muted"><Glossed text={caveats[metric.metricId]!} /></p> : null}
         </div>
       </div>
     </div>

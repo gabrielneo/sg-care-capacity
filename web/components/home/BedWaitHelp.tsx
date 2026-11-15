@@ -11,7 +11,7 @@ export function BedWaitHelp() {
   return (
     <Tip data={{ "data-testid": "bed-wait-help" }}
          label={
-           <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-control bg-page text-base font-semibold text-ink no-underline">
+           <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-control bg-page text-body font-semibold text-ink no-underline">
              <span aria-hidden="true">?</span>
              <span className="sr-only">What does this wait mean?</span>
            </span>

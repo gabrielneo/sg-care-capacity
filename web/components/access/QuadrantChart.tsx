@@ -38,12 +38,12 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
   return (
     <ChartCard title="Many seniors, few clinics" slug="quadrant" meta={meta} headingLevel={3} download="/export/areas.csv"
                description={<Glossed text="Each dot is an area with at least 1,000 residents aged 65+. Across: residents aged 65+. Up: CDMP GP clinics per 1,000 of them. The lines mark the middle value of each." />}>
-      {callout ? <p className="mb-1 text-sm font-medium text-ink" data-testid="chart-callout">{callout.name}: {callout.text}</p> : null}
+      {callout ? <p className="mb-1 text-small font-semibold text-ink" data-testid="chart-callout">{callout.name}: {callout.text}</p> : null}
       <svg width="100%" height={H} role="img" aria-label={summary} className="block overflow-visible" data-testid="quadrant-chart">
         {/* the corner that needs attention first: many seniors (right), few clinics (bottom) */}
         <rect x={pct(x(medianSeniors))} width={pct(X1 - x(medianSeniors))} y={y(medianRate)} height={H - BOTTOM - y(medianRate)}
               fill={colors["status-higher-soft"]} />
-        <text x={pct(X1)} y={H - BOTTOM - 6} textAnchor="end" fontSize="11" fill={colors["status-higher"]} fontWeight={600}>Many seniors, few clinics</text>
+        <text x={pct(X1)} y={H - BOTTOM - 6} textAnchor="end" fontSize="13" fill={colors["status-higher"]} fontWeight={600}>Many seniors, few clinics</text>
         <line x1={pct(x(medianSeniors))} x2={pct(x(medianSeniors))} y1={TOP} y2={H - BOTTOM} stroke={colors.muted} strokeDasharray="4 4" />
         <line x1={pct(X0)} x2={pct(X1)} y1={y(medianRate)} y2={y(medianRate)} stroke={colors.muted} strokeDasharray="4 4" />
         <line x1={pct(X0)} x2={pct(X1)} y1={H - BOTTOM} y2={H - BOTTOM} stroke={colors.line} />
@@ -51,7 +51,7 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
         {ordered.map((p) => (
           <g key={p.name}>
             {p.rate > maxY ? (
-              <text x={pct(x(p.seniors))} y={TOP + 4} textAnchor="middle" fontSize="10" fill={colors.muted} data-testid="quadrant-off-scale">
+              <text x={pct(x(p.seniors))} y={TOP + 4} textAnchor="middle" fontSize="13" fill={colors.muted} data-testid="quadrant-off-scale">
                 ▲<title>{`${p.name}: ${p.rate.toFixed(2)} per 1,000, above the axis`}</title>
               </text>
             ) : (
@@ -65,7 +65,7 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
         ))}
         {/* numbers, not names, beside the top 5 (names would collide): the key is under the chart */}
         {top5.map((p) => (
-          <text key={`n-${p.name}`} x={pct(x(p.seniors))} y={y(p.rate) + ((p.rank as number) % 2 ? -8 : 15)} fontSize="10"
+          <text key={`n-${p.name}`} x={pct(x(p.seniors))} y={y(p.rate) + ((p.rank as number) % 2 ? -8 : 15)} fontSize="13"
                 fontWeight={700} textAnchor="middle" fill={colors.ink} stroke={colors.surface} strokeWidth={3} paintOrder="stroke">
             {p.rank}
           </text>
@@ -74,20 +74,20 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
           <line x1={pct(x(target.seniors))} x2={pct(x(target.seniors))} y1={2} y2={y(target.rate) - 8} stroke={colors.ink}
                 strokeWidth={1.25} data-testid="chart-callout-arrow" data-target={target.name} />
         ) : null}
-        <text x={pct((X0 + X1) / 2)} y={H - 6} textAnchor="middle" fontSize="11" fill={colors.muted}>Residents aged 65+</text>
-        <text x={pct(X0)} y={H - BOTTOM + 14} fontSize="10" fill={colors.muted}>0</text>
-        <text x={pct(X1)} y={H - BOTTOM + 14} textAnchor="end" fontSize="10" fill={colors.muted}>
+        <text x={pct((X0 + X1) / 2)} y={H - 6} textAnchor="middle" fontSize="13" fill={colors.muted}>Residents aged 65+</text>
+        <text x={pct(X0)} y={H - BOTTOM + 14} fontSize="13" fill={colors.muted}>0</text>
+        <text x={pct(X1)} y={H - BOTTOM + 14} textAnchor="end" fontSize="13" fill={colors.muted}>
           {Math.round(maxX / 1000) * 1000 >= 1000 ? `${Math.round(maxX / 1000).toLocaleString("en-SG")},000` : ""}
         </text>
-        <text x={pct(X0 - 1)} y={TOP + 4} textAnchor="end" fontSize="10" fill={colors.muted}>{maxY.toFixed(1)}</text>
-        <text x={pct(X0 - 1)} y={y(medianRate) + 3} textAnchor="end" fontSize="10" fill={colors.muted}>{medianRate.toFixed(1)}</text>
-        <text x={pct(X0 - 1)} y={H - BOTTOM} textAnchor="end" fontSize="10" fill={colors.muted}>0</text>
+        <text x={pct(X0 - 1)} y={TOP + 4} textAnchor="end" fontSize="13" fill={colors.muted}>{maxY.toFixed(1)}</text>
+        <text x={pct(X0 - 1)} y={y(medianRate) + 3} textAnchor="end" fontSize="13" fill={colors.muted}>{medianRate.toFixed(1)}</text>
+        <text x={pct(X0 - 1)} y={H - BOTTOM} textAnchor="end" fontSize="13" fill={colors.muted}>0</text>
       </svg>
-      <p className="mt-2 text-xs text-ink" data-testid="quadrant-key">
+      <p className="mt-2 text-meta text-ink" data-testid="quadrant-key">
         {top5.map((p, i) => <span key={p.name}>{i ? " · " : ""}<strong>{p.rank}</strong> {p.name}</span>)}
       </p>
       {off.length ? (
-        <p className="mt-1 text-xs text-muted">
+        <p className="mt-1 text-meta text-muted">
           {off.length} {off.length === 1 ? "area" : "areas"} above {maxY.toFixed(1)} per 1,000 {off.length === 1 ? "sits" : "sit"} on the top
           edge (▲): {off.map((p) => `${p.name} ${p.rate.toFixed(2)}`).join(", ")}.
         </p>

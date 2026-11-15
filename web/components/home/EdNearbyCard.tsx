@@ -28,33 +28,33 @@ export function EdNearbyCard({ status, hospital, live, weeklyAsOf }: {
   return (
     <article className="h-full rounded-xl border border-line bg-surface p-4" data-testid="ed-card"
              data-hospital={status.code} data-level={status.level}>
-      <h3 className="text-lg font-semibold leading-snug text-ink"><HospitalName hospital={hospital} /></h3>
+      <h3 className="font-semibold leading-snug text-ink text-h3"><HospitalName hospital={hospital} /></h3>
       {note ? <p className="mt-1"><CaveatChip large><span data-testid="ed-note">{note}</span></CaveatChip></p> : null}
       <p className="mt-3"><StatusBadge level={status.level} plain /></p>
       <div className="mt-3 flex items-start justify-between gap-2">
-        <p className="text-base text-ink" data-testid="ed-label">{BED_WAIT_LABEL}</p>
+        <p className="text-body text-ink" data-testid="ed-label">{BED_WAIT_LABEL}</p>
         <BedWaitHelp />
       </div>
       <p>
-        <span className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="ed-hours">
+        <span className="text-kpi font-semibold tabular-nums tracking-tight text-ink" data-testid="ed-hours">
           {status.latest == null ? <Missing /> : hours(status.latest)}
         </span>
-        <span className="block text-sm text-muted">Average of each day&apos;s median, latest complete week</span>
+        <span className="block text-small text-muted">Average of each day&apos;s median, latest complete week</span>
       </p>
-      <p className="mt-2 text-base text-ink" data-testid="ed-sentence">
+      <p className="mt-2 text-body text-ink" data-testid="ed-sentence">
         {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
         {status.usual != null ? <span className="text-muted"> Usual: {hours(status.usual)}.</span> : null}
       </p>
       {live ? (
-        <p className="mt-3 border-t border-line pt-3 text-base text-ink" data-testid="ed-live">
+        <p className="mt-3 border-t border-line pt-3 text-body text-ink" data-testid="ed-live">
           To see a doctor (<Term id="nuhs" /> estimate): {estimateText(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
-          <span className="block text-sm text-muted">
+          <span className="block text-small text-muted">
             As of <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { withTime: true })}</time>. An estimate, not live.
             {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, weeklyAsOf)}</span>
           </span>
         </p>
       ) : (
-        <p className="mt-3 border-t border-line pt-3 text-sm text-muted" data-testid="ed-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
+        <p className="mt-3 border-t border-line pt-3 text-small text-muted" data-testid="ed-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
       )}
     </article>
   );

@@ -46,63 +46,63 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
   const note = shortNote(hospital);
   return (
     <div className="space-y-4" data-testid="drawer-body" data-hospital={status.code} data-level={status.level}>
-      <p className="text-sm text-muted" data-testid="drawer-cluster">{hospital.cluster}</p>
+      <p className="text-small text-muted" data-testid="drawer-cluster">{hospital.cluster}</p>
       <p><StatusBadge level={status.level} plain /></p>
 
       <section aria-labelledby={`drawer-wait-${status.code}`}>
-        <h3 id={`drawer-wait-${status.code}`} className="text-sm font-semibold text-ink">{BED_WAIT_LABEL}</h3>
+        <h3 id={`drawer-wait-${status.code}`} className="font-semibold text-ink text-h3">{BED_WAIT_LABEL}</h3>
         <p className="mt-1">
-          <span className="text-3xl font-semibold tabular-nums tracking-tight text-ink" data-testid="drawer-hours">
+          <span className="text-kpi font-semibold tabular-nums tracking-tight text-ink" data-testid="drawer-hours">
             {status.latest == null ? <Missing /> : hours(status.latest)}
           </span>
-          <span className="block text-sm text-muted">
+          <span className="block text-small text-muted">
             Average of each day&apos;s median, {formatWindow({ kind: "latest_week", week: latestWeek ? { week_start: latestWeek, week_end: addDays(latestWeek, 6) } : null })}
           </span>
         </p>
-        <p className="mt-2 text-sm text-ink" data-testid="drawer-sentence">
+        <p className="mt-2 text-small text-ink" data-testid="drawer-sentence">
           {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
         </p>
         {status.usual != null ? (
-          <p className="mt-1 text-sm tabular-nums text-muted" data-testid="drawer-usual">
+          <p className="mt-1 text-small tabular-nums text-muted" data-testid="drawer-usual">
             Usual: {hours(status.usual)}
             {delta ? (
-              <> · <span className="font-medium text-ink" data-testid="drawer-delta">
+              <> · <span className="font-semibold text-ink" data-testid="drawer-delta">
                 <span aria-hidden="true">{delta.text}</span><span className="sr-only">{delta.spoken}</span> vs usual
               </span></>
             ) : null}
           </p>
         ) : (
-          <p className="mt-1 text-sm text-muted" data-testid="drawer-usual">No usual level: fewer than {USUAL_WEEKS} complete weeks to compare with.</p>
+          <p className="mt-1 text-small text-muted" data-testid="drawer-usual">No usual level: fewer than {USUAL_WEEKS} complete weeks to compare with.</p>
         )}
       </section>
 
       <section aria-labelledby={`drawer-line-${status.code}`}>
-        <h3 id={`drawer-line-${status.code}`} className="text-sm font-semibold text-ink">{formatWindow({ kind: "weeks", n: SPARK_WEEKS }, { capital: true })}</h3>
+        <h3 id={`drawer-line-${status.code}`} className="font-semibold text-ink text-h3">{formatWindow({ kind: "weeks", n: SPARK_WEEKS }, { capital: true })}</h3>
         <div className="mt-1"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} /></div>
-        <p className="mt-1 text-sm text-ink tabular-nums" data-testid="drawer-spark-summary">{sparkSummary(status.spark)}</p>
-        <p className="mt-1 text-xs text-muted">
+        <p className="mt-1 text-small text-ink tabular-nums" data-testid="drawer-spark-summary">{sparkSummary(status.spark)}</p>
+        <p className="mt-1 text-meta text-muted">
           Weekly average of daily medians. The shaded band is the &quot;about usual&quot; range; a week that isn&apos;t complete is a gap.
         </p>
       </section>
 
       {live ? (
-        <p className="border-t border-line pt-3 text-sm text-ink" data-testid="drawer-live">
+        <p className="border-t border-line pt-3 text-small text-ink" data-testid="drawer-live">
           To see a doctor (<Term id="nuhs" /> estimate): {estimateText(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
-          <span className="block text-xs text-muted">
+          <span className="block text-meta text-muted">
             As of <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { withTime: true })}</time>. An estimate, not live, and not the bed wait above.
             {" "}<span data-testid="nuhs-timing">{nuhsTimingNote(live.snapshot_at, meta.as_of)}</span>
           </span>
         </p>
       ) : (
-        <p className="border-t border-line pt-3 text-sm text-muted" data-testid="drawer-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
+        <p className="border-t border-line pt-3 text-small text-muted" data-testid="drawer-live-none">To see a doctor: {NO_DOCTOR_ESTIMATE}.</p>
       )}
 
       {note || hospital.coverage_note || hospital.exclusions_note ? (
         <section aria-labelledby={`drawer-cover-${status.code}`} className="border-t border-line pt-3" data-testid="drawer-coverage">
-          <h3 id={`drawer-cover-${status.code}`} className="text-sm font-semibold text-ink">What these figures cover</h3>
+          <h3 id={`drawer-cover-${status.code}`} className="font-semibold text-ink text-h3">What these figures cover</h3>
           {note ? <p className="mt-1"><CaveatChip large>{note}</CaveatChip></p> : null}
-          {hospital.coverage_note ? <p className="mt-1 text-sm text-ink"><Glossed text={hospital.coverage_note} /></p> : null}
-          {hospital.exclusions_note ? <p className="mt-1 text-sm text-muted"><Glossed text={hospital.exclusions_note} /></p> : null}
+          {hospital.coverage_note ? <p className="mt-1 text-small text-ink"><Glossed text={hospital.coverage_note} /></p> : null}
+          {hospital.exclusions_note ? <p className="mt-1 text-small text-muted"><Glossed text={hospital.exclusions_note} /></p> : null}
         </section>
       ) : null}
 

@@ -17,7 +17,7 @@ export function StatusBadge({ level, quiet = false, plain = false }: { level: Le
   const info = LEVELS[level];
   const tone = quiet && (info.tone === "usual" || info.tone === "lower") ? "none" : info.tone;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border ${plain ? "px-3 py-1 text-base" : "shrink-0 px-2 py-0.5 text-xs"} font-medium ${BADGE[tone]}`}
+    <span className={`inline-flex items-center gap-1 rounded-full border ${plain ? "px-3 py-1 text-body" : "shrink-0 px-2 py-0.5 text-meta"} font-semibold ${BADGE[tone]}`}
           data-testid="status-badge">
       <span aria-hidden="true">{info.icon}</span>
       {info.label}

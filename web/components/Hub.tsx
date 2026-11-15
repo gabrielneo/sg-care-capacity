@@ -17,8 +17,8 @@ export function Hub({ title, intro, items }: { title: string; intro: string; ite
         {items.map((i) => (
           <li key={i.href}>
             <Link href={i.href} className="block h-full rounded-xl border border-line bg-surface p-5 no-underline hover:bg-page">
-              <span className="text-lg font-semibold text-ink">{i.title}</span>
-              <span className="mt-1 block text-base text-muted">{i.text}</span>
+              <span className="text-h3 font-semibold text-ink">{i.title}</span>
+              <span className="mt-1 block text-body text-muted">{i.text}</span>
             </Link>
           </li>
         ))}

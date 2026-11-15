@@ -2,7 +2,7 @@
 
 import type { Layout } from "@/lib/careMapState";
 
-const BUTTON = "min-h-11 rounded-full border px-4 text-sm font-medium";
+const BUTTON = "min-h-11 rounded-full border px-4 text-small font-semibold";
 const ON = "border-accent bg-accent text-surface";
 const OFF = "border-control bg-surface text-ink hover:border-accent";
 
@@ -40,7 +40,7 @@ export function LayoutToggle({ value, fallback, onSelect }: { value: Layout | nu
     <div role="group" aria-label="Show hospitals as" className="inline-flex overflow-hidden rounded-full border border-control" data-testid="layout-toggle">
       {(["map", "list"] as const).map((l) => (
         <button key={l} type="button" aria-pressed={current === l} onClick={() => onSelect(l)} data-layout={l}
-                className={`min-h-11 px-4 text-sm font-medium ${current === l ? ON : "bg-surface text-ink"}`}>
+                className={`min-h-11 px-4 text-small font-semibold ${current === l ? ON : "bg-surface text-ink"}`}>
           {current === l ? <span aria-hidden="true">✓ </span> : null}{l === "map" ? "Map" : "List"}
         </button>
       ))}
