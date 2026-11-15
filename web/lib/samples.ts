@@ -155,3 +155,46 @@ export const storySample: StoryInsight[] = [
     },
   },
 ];
+
+/**
+ * Sample data for /dev/status-grid (dev pages only, never the real site): eight EDs and the urgent care centre, with the cases the
+ * cards must hold their lines for (a long name, a caveat, no estimate, a bound estimate, a missing week, no usual level).
+ * e2e/hospital-grid.spec.ts measures the grid on it, because the e2e API fixture has only three hospitals.
+ */
+const SAMPLE_HOSPITALS: [string, string, string, "ED" | "UCC", string | null][] = [
+  ["SGH", "Singapore General Hospital", "Singapore General", "ED", null],
+  ["CGH", "Changi General Hospital", "Changi General", "ED", null],
+  ["SKH", "Sengkang General Hospital", "Sengkang General", "ED", null],
+  ["TTSH", "Tan Tock Seng Hospital", "Tan Tock Seng", "ED", null],
+  ["KTPH", "Khoo Teck Puat Hospital", "Khoo Teck Puat", "ED", null],
+  ["WH", "Woodlands Health", "Woodlands", "ED", null],
+  ["NUH", "National University Hospital", "National University", "ED", "Adult emergency department only; NUH Children's Emergency is excluded by MOH."],
+  ["NTFGH", "Ng Teng Fong General Hospital", "Ng Teng Fong General", "ED", null],
+  ["AH", "Alexandra Hospital (UCC)", "Alexandra", "UCC", "Urgent Care Centre at Alexandra Hospital, not a full emergency department."],
+];
+export const gridSampleHospitals = SAMPLE_HOSPITALS.map(([hospital_code, hospital_name, short_name, facility_type, coverage_note]) => ({
+  hospital_code, hospital_name, short_name, cluster: "SAMPLE", facility_type, reported_from: null, coverage_note,
+  exclusions_note: "MOH excludes KK Women's and Children's Hospital and NUH Children's Emergency from these statistics.",
+  source_url: "https://www.moh.gov.sg/", as_of: "2026-11-06", as_of_basis: "reference_checked" })) as unknown as import("@/lib/api/types").Hospital[];
+
+const RAMP = (a: number, b: number) => Array.from({ length: 12 }, (_, i) => Math.round((a + ((b - a) * i) / 11) * 10) / 10);
+// [code, latest, usual, spark]: the percentage is worked out from them, like the real figure.
+const SAMPLE_WAITS: [string, number | null, number | null, (number | null)[]][] = [
+  ["SGH", 11.4, 7.1, RAMP(6, 11.4)],
+  ["CGH", 9.5, 7.0, RAMP(7, 9.5)],
+  ["SKH", 7.2, 7.0, [7, 7.1, 6.9, null, 7.2, 7, 7.3, 7.1, 6.8, 7.2, 7, 7.2]],
+  ["TTSH", 5.6, 7.0, RAMP(7.5, 5.6)],
+  ["KTPH", 6.9, 6.8, RAMP(6.6, 6.9)],
+  ["WH", 4.1, 4.0, RAMP(4.4, 4.1)],
+  ["NUH", 12.7, 8.4, RAMP(8, 12.7)],
+  ["NTFGH", null, null, []],
+  ["AH", 2.1, null, RAMP(2, 2.1)],
+];
+export const gridSampleStatuses = SAMPLE_WAITS.map(([code, latest, usual, spark]) => {
+  const pct = latest != null && usual != null ? ((latest - usual) / usual) * 100 : null;
+  return { code, latest, usual, pct, spark, level: pct == null ? "unknown" : pct >= 30 ? "much_higher" : pct >= 15 ? "higher" : pct <= -15 ? "lower" : "usual" };
+}) as unknown as import("@/lib/status").HospitalStatus[];
+export const gridSampleLive = [
+  { hospital_code: "NUH", is_adult_ed: true, est_wait_to_see_doctor_hours: 2, est_wait_to_see_doctor_qualifier: null, snapshot_at: "2026-11-11T14:00:00" },
+  { hospital_code: "AH", is_adult_ed: true, est_wait_to_see_doctor_hours: 1, est_wait_to_see_doctor_qualifier: "<", snapshot_at: "2026-11-11T14:00:00" },
+] as unknown as import("@/lib/api/types").LiveReading[];

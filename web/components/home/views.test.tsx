@@ -34,8 +34,8 @@ describe("StatusCard densities", () => {
   it("names the hospital by short name and code, and says when NUHS gives no estimate (audit G4, G5)", () => {
     render(<ul><StatusCard status={status("SGH", 25)} hospital={hospital("SGH")} note={null} live={null} density="full" /></ul>);
     expect(screen.getByTestId("hospital-name")).toHaveAttribute("title", "Singapore General Hospital");
-    expect(screen.getByTestId("hospital-name")).toHaveTextContent(/^Singapore General \(SGH\)/);
-    expect(screen.getByTestId("status-live-none")).toHaveTextContent("To see a doctor: No NUHS estimate for this hospital.");
+    expect(screen.getByTestId("hospital-name")).toHaveTextContent(/^Singapore General SGH/);
+    expect(screen.getByTestId("status-live-none")).toHaveTextContent("Doctor wait: no NUHS estimate");
   });
 
   it("simple: badge, figure and sentence, without the line or the change", () => {
@@ -81,13 +81,14 @@ describe("StatusCard densities", () => {
       const links = within(screen.getByTestId("status-card")).getAllByRole("link");
       expect(links).toHaveLength(1);
       expect(links[0]).toHaveAttribute("href", "/ed-trends?hospital=SGH");
-      expect(links[0]).toHaveAccessibleName("Singapore General Hospital (SGH)");
+      expect(links[0]).toHaveAccessibleName(density === "full"
+        ? "Singapore General Hospital (SGH), Higher than usual, too few weeks to describe a trend" : "Singapore General Hospital (SGH)");
       expect(links[0]!.className).toContain("after:absolute");                           // stretched over the card
       unmount();
     }
   });
 
-  it("full: only a hospital above usual keeps a coloured badge", () => {
+  it("full: every badge has its status fill, symbol and words; simple is the same", () => {
     render(<ul>
       <StatusCard status={status("SGH", 40)} note={null} live={null} />
       <StatusCard status={status("CGH", 20)} note={null} live={null} />
@@ -95,9 +96,52 @@ describe("StatusCard densities", () => {
       <StatusCard status={status("SKH", -20)} note={null} live={null} />
       <StatusCard status={status("WH", 0)} note={null} live={null} density="simple" />
     </ul>);
-    const badge = screen.getAllByTestId("status-badge").map((b) => [b.textContent, /text-(status-much|status-higher|status-usual|muted)/.exec(b.className)?.[1]]);
-    expect(badge).toEqual([["▲▲Much higher than usual", "status-much"], ["▲Higher than usual", "status-higher"], ["●About usual", "muted"],
-      ["▼Lower than usual", "muted"], ["●About usual", "status-usual"]]);
+    const badge = screen.getAllByTestId("status-badge").map((b) => [b.textContent, /text-(status-much|status-higher|status-usual|status-lower)/.exec(b.className)?.[1],
+      /bg-(status-\w+)-soft/.exec(b.className)?.[1]]);
+    expect(badge).toEqual([["▲▲Much higher than usual", "status-much", "status-much"], ["▲Higher than usual", "status-higher", "status-higher"],
+      ["●About usual", "status-usual", "status-usual"], ["▼Lower than usual", "status-lower", "status-lower"], ["●About usual", "status-usual", "status-usual"]]);
+  });
+
+  it("full: only a hospital above usual has a status-coloured left edge", () => {
+    render(<ul>
+      <StatusCard status={status("SGH", 40)} note={null} live={null} />
+      <StatusCard status={status("CGH", 20)} note={null} live={null} />
+      <StatusCard status={status("TTSH", 0)} note={null} live={null} />
+      <StatusCard status={status("SKH", -20)} note={null} live={null} />
+      <StatusCard status={status("AH", null)} note={null} live={null} />
+    </ul>);
+    const cards = screen.getAllByTestId("status-card");
+    expect(cards.map((c) => c.getAttribute("data-edge"))).toEqual(["true", "true", "false", "false", "false"]);
+    expect(cards[0]).toHaveClass("border-l-status-much");
+    expect(cards[1]).toHaveClass("border-l-status-higher");
+    expect(cards[2]!.className).not.toMatch(/border-l-status/);
+  });
+
+  it("full: always the six slots, in order, whether or not there is a caveat, an estimate or a comparison", () => {
+    const slots = (c: HTMLElement) => ["sc-name", "sc-chips", "sc-label", "sc-value", "sc-delta", "sc-foot"]
+      .map((k) => c.querySelector(`.${k}`) ? k : null);
+    render(<ul>
+      <StatusCard status={status("SGH", 25)} hospital={hospital("SGH")} note={null} live={live} />
+      <StatusCard status={status("NUH", -3)} hospital={hospital("NUH")} note="Adults only" live={null} />
+      <StatusCard status={status("AH", null, null)} note="Urgent care centre" live={null} />
+    </ul>);
+    for (const c of screen.getAllByTestId("status-card")) {
+      expect(slots(c)).toEqual(["sc-name", "sc-chips", "sc-label", "sc-value", "sc-delta", "sc-foot"]);
+      expect(c.querySelector(".sc-name")!.nextElementSibling).toBe(c.querySelector(".sc-chips"));
+      expect(c.querySelector(".sc-label")).toHaveTextContent("Ward-bed wait, latest complete week");
+    }
+  });
+
+  it("full: the footer is the NUHS estimate with its own short time, or says there is none, and the trend is in the name", () => {
+    render(<ul>
+      <StatusCard status={{ ...status("SGH", 25), spark: [4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 6] }} hospital={hospital("SGH")} note={null} live={live} />
+      <StatusCard status={status("NUH", 0)} hospital={hospital("NUH")} note="Adults only" live={null} />
+    </ul>);
+    const [a, b] = screen.getAllByTestId("status-card");
+    expect(within(a!).getByTestId("status-live")).toHaveTextContent("To see a doctor: under 1 h · NUHS estimate, 6 Nov 2:00 pm");
+    expect(within(a!).queryByTestId("nuhs-timing")).toBeNull();                          // said once, in the section's key
+    expect(within(a!).getByRole("link")).toHaveAccessibleName("Singapore General Hospital (SGH), Higher than usual, rising over 12 weeks");
+    expect(within(b!).getByTestId("status-live-none")).toHaveClass("text-tertiary");
   });
 
   it("full: the change never disagrees with the badge at a threshold", () => {
@@ -151,11 +195,23 @@ describe("StatusGrid", () => {
     expect(screen.getByTestId("status-key")).toHaveTextContent("The line shows the last 12 weeks. The shaded band is the usual range: within 15% of usual.");
   });
 
+  it("full: the urgent care centre is one full-width card under the grid, and the key says NUHS publishes separately", () => {
+    render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week} sort="usual" />);
+    const ucc = within(screen.getByTestId("status-ucc"));
+    expect(ucc.getByRole("heading", { name: "Urgent care centre" })).toBeInTheDocument();
+    expect(ucc.getAllByTestId("status-card")).toHaveLength(1);
+    expect(ucc.getByTestId("status-card")).toHaveClass("sc-wide");
+    expect(screen.getAllByTestId("status-group").filter((g) => g.getAttribute("data-group") === "ed").flatMap((g) => within(g).getAllByTestId("status-card"))).toHaveLength(2);
+    expect(screen.getByTestId("status-key")).toHaveTextContent("NUHS publishes it separately, with its own time on each card");
+    // The order control is the header's actions slot, not part of the lede row.
+    expect(screen.getByTestId("section-header")).toHaveAttribute("data-actions", "true");
+  });
+
   it("full: the order control links to each order and marks the current one; simple has none", () => {
     const { unmount } = render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week}
                                            sort="hours" query="view=planner" />);
     const links = within(screen.getByRole("navigation", { name: "Order of the hospitals" })).getAllByRole("link");
-    expect(links.map((l) => [l.textContent, l.getAttribute("href"), l.getAttribute("aria-current")])).toEqual([
+    expect(links.map((l) => [l.textContent?.replace("✓", ""), l.getAttribute("href"), l.getAttribute("aria-current")])).toEqual([
       ["Change vs usual", "/?view=planner", null], ["Hours", "/?view=planner&sort=hours", "true"], ["A–Z", "/?view=planner&sort=name", null]]);
     // The bed-wait definition is in the page intro, not repeated under the cards (E3); the badge legend is a popover in the header.
     expect(screen.queryByTestId("status-definition")).toBeNull();

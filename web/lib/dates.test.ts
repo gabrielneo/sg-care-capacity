@@ -14,6 +14,8 @@ describe("as_of dates are Singapore time", () => {
   });
   it("formats for display", () => {
     expect(formatAsOf("2026-10-31")).toBe("31 Oct 2026");
+    expect(formatAsOf("2026-11-11T14:00:00", { compact: true })).toBe("11 Nov 2:00 pm");
+    expect(formatAsOf("2026-11-11", { compact: true })).toBe("11 Nov");
     expect(formatAsOf("2024-06-06T14:36:42")).toBe("6 Jun 2024");
     expect(formatAsOf("2026-11-06T12:01:49", { withTime: true })).toBe("6 Nov 2026, 12:01 pm SGT");
     expect(formatAsOf("2026-10-31", { withTime: true })).toBe("31 Oct 2026");

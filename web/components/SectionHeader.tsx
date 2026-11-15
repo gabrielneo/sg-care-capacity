@@ -18,15 +18,16 @@ import { Tip } from "./terms/TermView";
  *   Row 3: "{window} · Source: {sources} · Data as of {date}" and "How this is measured"
  * Row 3 is the ONLY place the date and source appear for the section. Everything inside it inherits them; a child shows
  * its own tag only when its provenance differs (lib/sectionMeta.ts, childMeta).
+ * `actions` (a control for the section, such as its order) sits at the right of row 1 from 768px and below the lede on a phone.
  * `measure` is the popover behind "How this is measured", or `measureLabel` (the definitions this section uses); without it the link goes to the methodology.
  */
-export function SectionHeader({ id, title, lede, ledeTestId, meta, window, measure, measureLabel = "How this is measured", aside, now, testId }: {
+export function SectionHeader({ id, title, lede, ledeTestId, meta, window, measure, measureLabel = "How this is measured", aside, actions, now, testId }: {
   id: string; title: ReactNode; lede?: ReactNode; ledeTestId?: string; meta: Meta; window?: string | null;
-  measure?: ReactNode; measureLabel?: string; aside?: ReactNode; now?: Date; testId?: string;
+  measure?: ReactNode; measureLabel?: string; aside?: ReactNode; actions?: ReactNode; now?: Date; testId?: string;
 }) {
   const live = meta.sources.length > 0 && meta.sources.every((s) => cadenceOf(s.id) === "moment");
   return (
-    <header className="section-head" data-testid={testId ?? "section-header"}>
+    <header className="section-head" data-actions={actions ? "true" : undefined} data-testid={testId ?? "section-header"}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h2 id={id} className="min-w-0 font-semibold text-ink">{title}</h2>
         <FreshnessBadge meta={meta} now={now} />
@@ -37,6 +38,7 @@ export function SectionHeader({ id, title, lede, ledeTestId, meta, window, measu
           {aside}
         </div>
       ) : null}
+      {actions ? <div className="section-actions">{actions}</div> : null}
       {/* Running text, not a flex row: the link inside is inline, so it needs no 44px box of its own. */}
       <p className="mt-2 text-meta text-tertiary" data-testid="section-meta">
         {window ? <>{window}{" · "}</> : null}

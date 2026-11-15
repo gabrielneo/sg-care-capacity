@@ -19,12 +19,15 @@ export function hasTime(value: string): boolean {
 }
 
 const DAY = new Intl.DateTimeFormat("en-SG", { timeZone: "Asia/Singapore", day: "numeric", month: "short", year: "numeric" });
+const DAY_SHORT = new Intl.DateTimeFormat("en-SG", { timeZone: "Asia/Singapore", day: "numeric", month: "short" });
 const TIME = new Intl.DateTimeFormat("en-SG", { timeZone: "Asia/Singapore", hour: "numeric", minute: "2-digit" });
 
 /** "31 Oct 2026", or "6 Nov 2026, 12:01 pm SGT" with withTime. "unknown date" if unparseable. */
-export function formatAsOf(value: string, opts: { withTime?: boolean } = {}): string {
+export function formatAsOf(value: string, opts: { withTime?: boolean; compact?: boolean } = {}): string {
   const d = parseAsOf(value);
   if (!d) return "unknown date";
+  // compact: "6 Nov 2:00 pm" (a card's own timestamp; the year and zone are the section's).
+  if (opts.compact) return hasTime(value) ? `${DAY_SHORT.format(d)} ${TIME.format(d)}` : DAY_SHORT.format(d);
   return opts.withTime && hasTime(value) ? `${DAY.format(d)}, ${TIME.format(d)} SGT` : DAY.format(d);
 }
 

@@ -100,7 +100,7 @@ test.describe("Home views", () => {
       if (view !== "public") {
         await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-note")).toHaveText("Urgent care centre");
         await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-live"))
-          .toContainText(/To see a doctor: .+ estimate, .+\. Published separately by NUHS, so newer than the weekly data\./);
+          .toContainText(/(To see a doctor: .+ · NUHS estimate, \d{1,2} [A-Z][a-z]{2} \d{1,2}:\d{2} [ap]m|Doctor wait: no NUHS estimate)/);
       }
     });
   }

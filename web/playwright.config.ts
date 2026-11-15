@@ -8,6 +8,7 @@ import { defineConfig, devices } from "@playwright/test";
 const API_PORT = 8791;
 const WEB_PORT = 3301;
 const WEB_DOWN_PORT = 3302; // API_BASE_URL points at a port nothing listens on
+const WEB_DEV_PORT = 3303;  // the same build with SHOW_DEV_PAGES=true: /dev/status-grid, sample data for the layout tests
 
 export default defineConfig({
   testDir: "./e2e",
@@ -29,5 +30,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI, timeout: 300_000, env: { API_BASE_URL: `http://127.0.0.1:${API_PORT}` } },
     { command: `npx next start -p ${WEB_DOWN_PORT}`, url: `http://127.0.0.1:${WEB_DOWN_PORT}/methodology`,
       reuseExistingServer: !process.env.CI, timeout: 120_000, env: { API_BASE_URL: "http://127.0.0.1:8799" } },
+    { command: `npx next start -p ${WEB_DEV_PORT}`, url: `http://127.0.0.1:${WEB_DEV_PORT}/methodology`,
+      reuseExistingServer: !process.env.CI, timeout: 120_000, env: { API_BASE_URL: `http://127.0.0.1:${API_PORT}`, SHOW_DEV_PAGES: "true" } },
   ],
 });
