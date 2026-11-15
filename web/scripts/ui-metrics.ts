@@ -11,7 +11,7 @@
  * - smallText: visible text elements under 13px
  * - textColours / backgroundColours: distinct computed colours (transparent backgrounds left out)
  * - pageHeight: document scroll height (the brief asks for it at 375; recorded at every width)
- * - dataAsOf: visible occurrences of "Data as of"
+ * - dataAsOf: visible occurrences of "Data as of" or "Data to"
  * - overflow: page horizontal overflow (scrollWidth - clientWidth) and the furthest element edge past the viewport
  *
  * `collectRaw` runs inside the page, so it must stay self-contained (no imports, no outer variables).
@@ -101,9 +101,9 @@ export function normaliseColour(value: string): string {
   return alpha >= 1 ? `rgb(${rgb})` : `rgba(${rgb},${Number(alpha.toFixed(3))})`;
 }
 
-/** Visible "Data as of" occurrences, case-insensitive. */
+/** Visible "Data as of" and "Data to" occurrences, case-insensitive: the two ways a date is stated. */
 export function countDataAsOf(text: string): number {
-  return (text.match(/data as of/gi) ?? []).length;
+  return (text.match(/data (?:as of|to)\b/gi) ?? []).length;
 }
 
 const px = (v: string) => Number.parseFloat(v);

@@ -28,6 +28,8 @@ describe("countDataAsOf", () => {
   it("counts every occurrence, any case", () => {
     expect(countDataAsOf("Data as of 1 Nov 2026 · Source: MOH\nDATA AS OF 2 Nov\ndata as of")).toBe(3);
     expect(countDataAsOf("as of 1 Nov")).toBe(0);
+    // "Data to" is the other way a date is stated (a finding's window); "data tools" is not.
+    expect(countDataAsOf("Data to 7 Nov 2026 and data as of 7 Nov; data tools")).toBe(2);
   });
 });
 
