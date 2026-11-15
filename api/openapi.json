@@ -1051,6 +1051,68 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "Event": {
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "as_of_basis": {
+            "title": "As Of Basis",
+            "type": "string"
+          },
+          "event_date": {
+            "format": "date",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "kind": {
+            "description": "'holiday' (a Singapore public holiday) or 'source_change' (a hospital starts to appear in MOH's figures)",
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "description": "As published for a holiday, e.g. 'Chinese New Year'; for a source change, '<hospital> starts in MOH's figures'",
+            "title": "Label",
+            "type": "string"
+          },
+          "source_sha256": {
+            "title": "Source Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_date",
+          "label",
+          "kind",
+          "source_sha256",
+          "as_of",
+          "as_of_basis"
+        ],
+        "title": "Event",
+        "type": "object"
+      },
+      "EventsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "EventsResponse",
+        "type": "object"
+      },
       "Geometry": {
         "properties": {
           "coordinates": {
@@ -3391,6 +3453,97 @@
           }
         },
         "summary": "ISO-week (Mon-Sun) aggregates",
+        "tags": [
+          "emergency departments"
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "events_api_v1_events_get",
+        "parameters": [
+          {
+            "description": "First day (YYYY-MM-DD). Default: 90 days before `to`",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First day (YYYY-MM-DD). Default: 90 days before `to`",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Last day (YYYY-MM-DD). Default: the latest day MOH has published",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last day (YYYY-MM-DD). Default: the latest day MOH has published",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This data release has no event list"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dated events that charts mark: public holidays, and hospitals that start part-way through the series",
         "tags": [
           "emergency departments"
         ]

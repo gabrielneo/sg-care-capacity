@@ -43,6 +43,10 @@
   --color-div-5: var(--div-5);
   --color-div-6: var(--div-6);
   --color-div-7: var(--div-7);
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-cat-4: var(--cat-4);
   --color-on-data-dark: var(--on-data-dark);
   --color-on-data-light: var(--on-data-light);
 
@@ -123,11 +127,17 @@
     outline-offset: 2px;
     border-radius: 2px;
   }
+  /* The one hover/focus motion: colour only, 120 ms, on the way into the hover or focus state. It is not on the base state, so a
+     control that changes state by itself (a pressed toggle after hydration) never sits mid-fade. */
+  a:is(:hover, :focus-visible), button:is(:hover, :focus-visible), summary:is(:hover, :focus-visible), [role="button"]:is(:hover, :focus-visible) {
+    transition: color var(--dur-hover) var(--ease-out), background-color var(--dur-hover) var(--ease-out),
+      border-color var(--dur-hover) var(--ease-out);
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
     }
   }
 }
@@ -147,9 +157,15 @@
 
 /* Cards and card grids take their padding and gaps from the spacing tokens (16px on a phone, 20px from 640px). */
 @utility card { padding: var(--card-pad); }
+/* A loading placeholder that appears only if loading takes over a second: a fast load never flashes it. */
+@keyframes show-after-delay { to { opacity: 1; } }
+@utility delay-show { opacity: 0; animation: show-after-delay 0s linear 1s forwards; }
 @utility card-grid { display: grid; gap: var(--card-gap); }
 @utility w-spark { width: var(--spark-w); }
 @utility h-spark { height: var(--spark-h); }
+@utility w-label { width: var(--w-label); }
+@utility w-legend { width: var(--legend-w); }
+@utility h-legend { height: var(--legend-h); }
 @utility rows { display: flex; flex-direction: column; gap: var(--row-gap); }
 
 /* A section's heading, its lede, then the content: 8px, then 24px. */
@@ -173,6 +189,7 @@
 .section { padding-block: calc(var(--section-gap) / 2); }   /* two page sections side by side are one section-gap apart */
 .section-first { padding-top: 0; }                                  /* the page's first section sits right under the strip */
 .section-compact { --section-gap: var(--space-4); }              /* Planner, Analyst and the public first screen: dense, so the answer stays above the fold */
+.section-in-chapter + .section-in-chapter { margin-top: var(--section-gap); }   /* two sections in one chapter */
 .section-band {
   padding-block: var(--section-gap);                          /* inside a band: the full gap above and below */
   background: var(--bg-band);
@@ -180,10 +197,36 @@
   clip-path: inset(0 -100vmax);
 }
 
+/* Reading aids for long pages. From 1280px a page with an "On this page" list is two columns: the content, then the sticky list.
+   Below that the list is not in the page (a "Jump to section" menu is), and the content is the full width. */
+.rail-layout { display: block; }
+.rail { display: none; }
+@media (min-width: 80rem) {
+  .rail-layout { display: grid; grid-template-columns: minmax(0, 1fr) var(--w-rail); column-gap: var(--space-5); align-items: start; }
+  .rail { display: block; position: sticky; top: var(--space-8); padding-top: var(--space-4); }
+}
+.rail-link { display: block; padding: var(--space-1) 0 var(--space-1) var(--space-3); margin-left: -1px; border-left: 3px solid transparent; text-decoration: none; }
+.rail-link:hover { color: var(--text-primary); text-decoration: underline; }
+.rail-link[data-active="true"] { border-left-color: var(--accent); }
+.back-to-top { display: flex; justify-content: flex-end; padding-top: var(--space-3); }
+.jump-menu[open] > summary { border-bottom: 1px solid var(--border-subtle); }
+.accordion > summary { list-style: none; }
+.accordion > summary::-webkit-details-marker { display: none; }
+.accordion-mark::before { content: "+"; font-size: var(--fs-h3); line-height: 1; }
+.accordion[open] > summary > .accordion-mark::before { content: "\2212"; }
+/* An accordion's height animates over 180 ms where the browser supports ::details-content; elsewhere it opens at once. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports selector(::details-content) {
+    .accordion { interpolate-size: allow-keywords; }
+    .accordion::details-content { block-size: 0; overflow: clip; transition: block-size var(--dur-accordion) var(--ease-out), content-visibility var(--dur-accordion) allow-discrete; }
+    .accordion[open]::details-content { block-size: auto; }
+  }
+}
+
 /* The map's own controls follow the type scale too: Leaflet's defaults are 12px (attribution) and 22px (zoom buttons). */
 .leaflet-container { font-family: inherit; font-size: var(--fs-small); }
 .leaflet-control-attribution { font-size: var(--fs-meta); }
-.leaflet-bar a, .leaflet-control-zoom a { font-size: var(--fs-h3); }
+.leaflet-bar a, .leaflet-control-zoom a, .leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out { font-size: var(--fs-h3); }   /* Leaflet's touch rule sets 22px */
 
 /* Tailwind's base styles make images block-level; Leaflet's attribution logo must stay inline. */
 .leaflet-control-attribution img {
@@ -248,51 +291,12 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 .term-tip[data-open="true"] { display: block; }
 .term-tip strong { font-weight: 600; }
 
-/*
- * The Overview's scroll story. Motion rules: only opacity and transform are animated, 300-600 ms,
- * ease-out, once per element, never looping. prefers-reduced-motion turns every one of them off.
- */
-
-/* CountUp: each digit's column (0 to the digit) slides up once; the real digit is the last line. */
-.countup-digits { display: inline-flex; align-items: flex-start; line-height: 1; font-variant-numeric: tabular-nums; }
-.countup-digits > span { height: 1em; }
-.countup-cell { display: inline-block; overflow: hidden; }
-.countup-roll { display: block; transform: translateY(calc(var(--n, 0) * -1em)); animation: countup-roll 600ms ease-out both; }
-.countup-roll::before { display: block; white-space: pre; }
-.countup-roll[data-digit="1"] { --n: 1; } .countup-roll[data-digit="1"]::before { content: "0"; }
-.countup-roll[data-digit="2"] { --n: 2; } .countup-roll[data-digit="2"]::before { content: "0\A 1"; }
-.countup-roll[data-digit="3"] { --n: 3; } .countup-roll[data-digit="3"]::before { content: "0\A 1\A 2"; }
-.countup-roll[data-digit="4"] { --n: 4; } .countup-roll[data-digit="4"]::before { content: "0\A 1\A 2\A 3"; }
-.countup-roll[data-digit="5"] { --n: 5; } .countup-roll[data-digit="5"]::before { content: "0\A 1\A 2\A 3\A 4"; }
-.countup-roll[data-digit="6"] { --n: 6; } .countup-roll[data-digit="6"]::before { content: "0\A 1\A 2\A 3\A 4\A 5"; }
-.countup-roll[data-digit="7"] { --n: 7; } .countup-roll[data-digit="7"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6"; }
-.countup-roll[data-digit="8"] { --n: 8; } .countup-roll[data-digit="8"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7"; }
-.countup-roll[data-digit="9"] { --n: 9; } .countup-roll[data-digit="9"]::before { content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8"; }
-@keyframes countup-roll { from { transform: translateY(0); } }
-
-/* HighlightPhrase: a marker stroke under a phrase, drawn left to right once. An inline block that
+/* HighlightPhrase: a static marker stroke under a phrase (no motion: audit D9). An inline block that
    may wrap (never nowrap: a wider font, e.g. Linux's fallback, would push it past a 375 px screen). */
 .highlight { position: relative; display: inline-block; max-width: 100%; isolation: isolate; }
 .highlight::after {
   content: ""; position: absolute; left: -0.1em; right: -0.1em; bottom: 0.08em; height: 0.42em; z-index: -1;
   background: var(--map-1); opacity: 0.55; border-radius: 2px;
-  transform-origin: left center; transform: scaleX(1); transition: transform 500ms ease-out;
-}
-.highlight[data-state="waiting"]::after { transform: scaleX(0); transition: none; }
-
-/* Scrolly: the sticky panel's states are stacked in one cell; the current one fades in. */
-.story-chart { grid-area: 1 / 1; transition: opacity 300ms ease-out, transform 300ms ease-out; }
-.story-chart[data-current="false"] { opacity: 0; transform: translateY(0.5rem); pointer-events: none; }
-@media (min-width: 64rem) {
-  .story-inline { display: none; }
-  .story-step { min-height: 70vh; padding-block: 1.5rem; }
-  .story-step[data-current="true"] .story-card { border-color: var(--accent); }
-}
-
-/* The base rule above shortens transitions to 0.01 ms, which still turns any change into a tiny
-   transition (the default transition-property is all). The story's changing parts get none at all. */
-@media (prefers-reduced-motion: reduce) {
-  .countup-roll, .highlight::after, .story-chart, .story-card { animation: none !important; transition: none !important; }
 }
 
 /* The 3D map's floating labels (drei <Html>): real text, so it stays crisp and readable. */
@@ -305,16 +309,34 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 /* The one-page summary (/summary, requirement S4). */
 .doc-tight p, .doc-tight ul { margin: 0; }
 
-/* Printing: the page's content only, on A4. The site's header, nav and footer, the skip link and
-   anything marked .print-hide stay on screen. The summary is sized to fit one page (web/e2e/summary.spec.ts). */
+/* Printing: the content only, on A4, in the light theme (audit D9). The site's header, nav, footer, status strip, rail, jump
+   menu, view and theme toggles, and anything marked .print-hide are dropped; every section's meta line (window, source, as-of)
+   stays. Cards, charts and tables are not split across pages, and a closed mobile accordion prints open. */
 @page { size: A4; margin: 12mm 14mm; }
+/*
+ * Phone fold (review N12): below 768px, a .phone-fold hides its .phone-fold-hide parts until its .phone-fold-toggle (a <details>
+ * that holds only its summary) is opened; from 768px the toggle is gone and everything shows. CSS only, so nothing shifts after
+ * load (an accordion that closes on hydration would move the page); a browser without :has() shows everything; print shows all.
+ */
+.phone-fold-toggle { display: none; }
+.phone-fold-toggle[open] .when-closed, .phone-fold-toggle:not([open]) .when-open { display: none; }
+@media screen and (max-width: 47.99rem) {
+  .phone-fold-toggle { display: block; }
+  .phone-fold:not(:has(.phone-fold-toggle[open])) .phone-fold-hide { display: none; }
+}
+
 @media print {
-  body > header, body > footer, body > a[href="#main"], .print-hide { display: none !important; }
-  body { background: white; }
+  html, body { background: white !important; color: black !important; }
+  body > header, body > footer, body > a[href="#main"], .print-hide, .site-strip, .rail, .jump-menu, .back-to-top,
+  [data-testid="site-strip"], [data-testid="view-switch"], .leaflet-control-container { display: none !important; }
   main { max-width: none; padding: 0 !important; }
   a { color: inherit; text-decoration: none; }
+  .section, .section-band { background: none !important; box-shadow: none !important; clip-path: none !important; }
+  .rail-layout { display: block !important; }
+  .sc, .card, figure, svg, table, tr, [data-testid="chart-frame"], .summary-block { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; }
+  .accordion::details-content { block-size: auto !important; content-visibility: visible !important; }
   .summary { max-width: none; font-size: 10pt; }
-  .summary-block { break-inside: avoid; }
 }
 
 /* Hospital markers on the map are keyboard buttons (components/home/CareMapLeaflet.tsx): a ring that shows on a map. */
@@ -350,7 +372,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .care-drawer[open] { animation: care-drawer-in 180ms ease-out; }
+  .care-drawer[open] { animation: care-drawer-in var(--dur-drawer) var(--ease-out); }
   @media (max-width: 639.98px) {
     .care-drawer[open] { animation-name: care-sheet-in; }
   }
@@ -385,6 +407,11 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
     row-gap: 0; margin-bottom: var(--card-gap); }
   .sc > *, .sc-chips > * { grid-area: auto; }
   .sc-name { overflow: hidden; overflow-wrap: normal; text-overflow: ellipsis; white-space: nowrap; }
+  /* The ellipsis cuts the name, never the code (review N10): the code is what a reader scans for. */
+  .sc-name > a, .sc-name .hn-box, .sc-name .hn-row { display: flex; min-width: 0; }
+  .sc-name .hn-row { gap: var(--space-1); }
+  .sc-name .hn-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .sc-name .hn-code { flex: none; }
   .sc-chips { display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: var(--space-2); margin-top: var(--space-2); }
   .sc-chip { display: inline-flex; }
   .sc-badge { justify-self: start; }

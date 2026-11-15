@@ -24,14 +24,17 @@ const CHECK_LINKS = [
  * show. A native <details>, so it opens without JavaScript. Closed unless `open`; the analyst view
  * opens it and passes the takeaways' findings, whose statistics are then listed (lib/homeViews.ts).
  */
-export function MethodsDrawer({ findings, limits, open = false }: { findings: Insight[]; limits: ReactNode; open?: boolean }) {
+export function MethodsDrawer({ findings, limits, open = false, audience = "analyst" }: {
+  findings: Insight[]; limits: ReactNode; open?: boolean; audience?: "public" | "analyst" }) {
+  const isPublic = audience === "public";
   return (
     <section aria-labelledby="methods-heading" className="border-t border-line" data-testid="methods">
-      <SectionHeading id="methods-heading" lede="Every figure uses the same definitions: here is what each one means and what the data can't show.">
-        How these figures are made
+      <SectionHeading id="methods-heading" lede={isPublic ? "What the bed-wait figures mean, and what they can't tell you."
+        : "Every figure uses the same definitions: here is what each one means and what the data can't show."}>
+        {isPublic ? "About these numbers" : "How these figures are made"}
       </SectionHeading>
       <details open={open} className="rounded-xl border border-line bg-surface card" data-testid="methods-drawer">
-        <summary className="block cursor-pointer select-none py-3 font-semibold text-accent">Show the data and methods</summary>
+        <summary className="block cursor-pointer select-none py-3 font-semibold text-accent">{isPublic ? "Show the definitions" : "Show the data and methods"}</summary>
         <div className="mt-4 space-y-6 text-small text-ink">
           {/* Four definitions side by side from 1024px, so a wide screen isn't half empty (audit D7). */}
           <dl className="grid gap-x-8 gap-y-6 lg:grid-cols-2" data-testid="methods-definitions">
@@ -54,6 +57,7 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
               <dt className="font-semibold text-h3">Wait to see a doctor</dt>
               <dd><Prose size="small" className="mt-1"><Glossed text={CAVEAT.live} /></Prose></dd>
             </div>
+            {isPublic ? (
             <div>
               <dt className="font-semibold text-h3">Clinics near you</dt>
               <dd>
@@ -63,6 +67,7 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
                 </Prose>
               </dd>
             </div>
+            ) : null}
           </dl>
           {findings.length ? (
             <div>
@@ -90,6 +95,9 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
         </div>
       </details>
       {/* Where to check the data and the methods: four links, so every figure can be traced (was its own section). */}
+      {isPublic ? (
+        <p className="mt-4 text-small" data-testid="about-link"><Link href="/methodology">Read the full methodology</Link></p>
+      ) : (
       <ul className="card-grid mt-6 sm:grid-cols-2" data-testid="analyst-links">
         {CHECK_LINKS.map((l) => (
           <li key={l.href} className="rounded-xl border border-line bg-surface card relative hover:border-accent">
@@ -98,6 +106,7 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
           </li>
         ))}
       </ul>
+      )}
     </section>
   );
 }

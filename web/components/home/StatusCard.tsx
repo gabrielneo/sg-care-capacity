@@ -71,7 +71,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
           <span className="block text-kpi font-semibold tabular-nums tracking-tight text-ink" data-testid="status-hours">
             {status.latest == null ? <Missing /> : hrs(status.latest)}
           </span>
-          <span className="block text-meta text-muted">wait for a ward bed, latest complete week</span>
+          <span className="block text-meta text-muted">bed wait, latest complete week</span>
         </p>
         <p className="mt-3 text-small text-ink" data-testid="status-sentence">
           {status.latest == null ? "No complete figures for the latest complete week." : info.sentence}
@@ -87,12 +87,12 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
   const edgeColour = status.level === "much_higher" ? "border-l-status-much" : "border-l-status-higher";
   const liveLine = live ? (
     <p className="sc-foot border-t border-line text-meta text-muted" data-testid="status-live">
-      <span className="sc-short">Ward-bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>To see a doctor: {estimateShort(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
+      <span className="sc-short">Bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>To see a doctor: {estimateShort(live.est_wait_to_see_doctor_hours, live.est_wait_to_see_doctor_qualifier)}
       {" · "}<Term id="nuhs" plain /> estimate, <time dateTime={live.snapshot_at}>{formatAsOf(live.snapshot_at, { compact: true })}</time>
     </p>
   ) : (
     <p className="sc-foot border-t border-line text-meta text-tertiary" data-testid="status-live-none">
-      <span className="sc-short">Ward-bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>Doctor wait: no <Term id="nuhs" plain /> estimate
+      <span className="sc-short">Bed wait, {formatWindow({ kind: "latest_week" })}{" · "}{note ? <>{note}{" · "}</> : null}</span>Doctor wait: no <Term id="nuhs" plain /> estimate
     </p>
   );
   return (
@@ -102,7 +102,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
         <span className="sc-badge"><StatusBadge level={status.level} /></span>
         {note ? <span className="sc-chip"><CaveatChip><span data-testid="status-note">{note}</span></CaveatChip></span> : null}
       </div>
-      <p className="sc-label text-meta text-muted">Ward-bed wait, {formatWindow({ kind: "latest_week" })}</p>
+      <p className="sc-label text-meta text-muted">Bed wait, {formatWindow({ kind: "latest_week" })}</p>
       <div className="sc-value">
         <p className="text-kpi font-semibold tabular-nums tracking-tight text-ink">
           <span data-testid="status-hours">{status.latest == null ? <Missing /> : <>{status.latest.toFixed(1)} <span className="text-small font-normal text-muted">h</span></>}</span>

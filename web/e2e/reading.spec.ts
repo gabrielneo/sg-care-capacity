@@ -37,11 +37,11 @@ test("every lede is secondary text, one block, and no wider than 68ch", async ({
 });
 
 test.describe("D7: the methods drawer", () => {
-  test("the four definitions sit in two columns from 1024px, one column below", async ({ page }) => {
+  test("the definitions sit in two columns from 1024px, one column below", async ({ page }) => {
     await blockTiles(page);
-    await page.goto("/?view=analyst");
+    await page.goto("/?view=analyst#section-methods");   // below 768px the methods are an accordion; the fragment opens it
     const items = page.getByTestId("methods-definitions").locator("> div");
-    await expect(items).toHaveCount(4);
+    await expect(items).toHaveCount(3);   // bed wait, badges, doctor wait: the clinic definition is on Public only (G1)
     const box = async (i: number) => (await items.nth(i).boundingBox())!;
     const a = await box(0), b = await box(1), c = await box(2);
     if ((page.viewportSize()?.width ?? 0) >= 1024) {

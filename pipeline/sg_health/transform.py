@@ -38,6 +38,7 @@ MODELS: list[tuple[str, str]] = [
     ("staging", "stg_singstat_residents"),
     ("staging", "stg_planning_area_boundaries"),
     ("staging", "stg_polyclinics"),
+    ("staging", "stg_public_holidays"),
     # Geospatial steps (sg_health/geo.py, SVY21): not expressible in plain SQL.
     ("python", "area_name_map"),
     ("python", "clinic_planning_area"),
@@ -46,6 +47,7 @@ MODELS: list[tuple[str, str]] = [
     ("marts", "fct_ed_weekly"),
     ("marts", "dim_clinic"),
     ("marts", "dim_polyclinic"),
+    ("marts", "dim_event"),
     ("marts", "fct_live_ed_snapshot"),
     ("marts", "fct_planning_area_population"),
     ("python", "area_geo_metrics"),
@@ -116,6 +118,13 @@ RECONCILIATIONS: list[Reconciliation] = [
     Reconciliation("marts.dim_polyclinic", "staging.stg_polyclinics (is_polyclinic)",
                    "SELECT count(*) FROM staging.stg_polyclinics WHERE is_polyclinic",
                    "SELECT count(*) FROM marts.dim_polyclinic"),
+    Reconciliation("staging.stg_public_holidays", "main.public_holidays",
+                   "SELECT count(*) FROM main.public_holidays", "SELECT count(*) FROM staging.stg_public_holidays"),
+    # Every holiday, and every hospital with a start date, is one event: none dropped, none added.
+    Reconciliation("marts.dim_event", "staging.stg_public_holidays + dim_hospital (reported_from)",
+                   "SELECT (SELECT count(*) FROM staging.stg_public_holidays) + "
+                   "(SELECT count(*) FROM marts.dim_hospital WHERE reported_from IS NOT NULL)",
+                   "SELECT count(*) FROM marts.dim_event"),
     Reconciliation("marts.dim_hospital", "main.ref_hospital",
                    "SELECT count(*) FROM main.ref_hospital", "SELECT count(*) FROM marts.dim_hospital"),
     # Every staged value lands in exactly one daily row.
@@ -149,6 +158,7 @@ UPSTREAM_QUARANTINE = {
     "staging.stg_singstat_residents": "quarantine_pop_65plus_by_area",
     "staging.stg_planning_area_boundaries": "quarantine_planning_area_boundaries",
     "staging.stg_polyclinics": "quarantine_polyclinics",
+    "staging.stg_public_holidays": "quarantine_public_holidays",
 }
 
 

@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CaveatChip } from "@/components/CaveatChip";
-import { ChartCard } from "@/components/ChartCard";
+import { ChartFrame } from "@/components/ChartFrame";
+import { DailyTable } from "@/components/edcharts/DailyTable";
 import { Chapters } from "@/components/Section";
 import { Callouts } from "@/components/edcharts/Callouts";
 import { Dumbbell } from "@/components/edcharts/Dumbbell";
 import { ModeToggle } from "@/components/edcharts/ModeToggle";
 import { type Panel, SmallMultiples } from "@/components/edcharts/SmallMultiples";
 import { SlopeChart } from "@/components/edcharts/SlopeChart";
+import { SlopeTable } from "@/components/edcharts/SlopeTable";
+import { UsualTable } from "@/components/edcharts/UsualTable";
 import { WeekdayHeatmap } from "@/components/edcharts/WeekdayHeatmap";
 import { EdFilterForm } from "@/components/EdFilterForm";
 import { Lede } from "@/components/Lede";
@@ -17,9 +20,10 @@ import { EmptyState, ErrorState } from "@/components/States";
 import { Glossed } from "@/components/terms/Glossed";
 import { Term } from "@/components/terms/Term";
 import { api, settle } from "@/lib/api/client";
+import type { Annotation } from "@/lib/annotations";
 import type { Insight, Meta } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, BED_WAIT_LABEL, CAVEAT, dayText, plainError } from "@/lib/copy";
-import { sortByDate } from "@/lib/dates";
+import { formatAsOf, sortByDate } from "@/lib/dates";
 import {
   band,
   findingFor,
@@ -121,6 +125,13 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
 
   // 1. Small multiples over the chosen range.
   const days = eachDay(from, to);
+  // Public holidays and hospitals that start part-way through (marts.dim_event). A release without the list, or an error,
+  // means no marks: they are never guessed.
+  const eventsRes = from && to ? await settle(api.events({ from, to })) : null;
+  const annotations: Annotation[] = eventsRes?.ok
+    ? eventsRes.value.data.map((e) => ({ date: e.event_date, label: e.label, kind: e.kind === "source_change" ? "source_change" : "holiday" })) : [];
+  const annotationSource = eventsRes?.ok && annotations.length
+    ? `${eventsRes.value.meta.sources.map((s) => s.name).join("; ")}, data as of ${formatAsOf(eventsRes.value.meta.as_of)}` : null;
   const bandPoints = band(daily, fullEds(hospitals), days, mode, usuals);
   // The full EDs first, the urgent care centre last: it is never set among them (lib/hospitals.ts, ADR 0012).
   const panels: Panel[] = [...rankableHospitals(chosen), ...urgentCareHospitals(chosen)].map((h) => {
@@ -159,7 +170,9 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
     <>
       {header(from, to)}
       <Chapters first="band">
-        <ChartCard title={`${BED_WAIT_LABEL}, ${formatWindow({ kind: "days", from, to })}`} meta={meta} caveat={CAVEAT.bedWaitUnit} download={csv("/export/ed-daily.csv", { from, to })}
+        <ChartFrame title={`${BED_WAIT_LABEL}, ${formatWindow({ kind: "days", from, to })}`} meta={meta} caveat={CAVEAT.bedWaitUnit} csv={csv("/export/ed-daily.csv", { from, to, context: "1" })}
+                    summary={`Small line charts of each hospital's daily ${BED_WAIT_LABEL.toLowerCase()}, ${range}, over the middle half of the full emergency departments. A break in a line is a day with no figure.`}
+                    table={<DailyTable panels={panels} mode={mode} />}
                    description={<>
                      <Glossed text={mode === "usual"
                        ? `Each hospital's daily median, in hours above or below its own usual level, ${range}. ${usualDef}`
@@ -168,39 +181,44 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
                      <span className="mt-1 block"><Glossed text={`The shaded band is the middle half of the ${rankableHospitals(hospitals).length} full EDs each day, with their median dashed. Alexandra Hospital's UCC is left out of the band. A break in a line is a day MOH didn't publish.`} /></span>
                    </>}>
           {callouts(["trend", "volume_vs_wait"], "daily bed waits")}
-          <SmallMultiples panels={panels} bandPoints={bandPoints} mode={mode} finding={findingFor(findings, "trend", hospitals)} />
+          <SmallMultiples panels={panels} bandPoints={bandPoints} mode={mode} finding={findingFor(findings, "trend", hospitals)}
+                          annotations={annotations} annotationSource={annotationSource} />
           <p className="mt-2 text-meta text-muted" data-testid="gap-summary">
             {gapText ? <Glossed text={`Days with no figure in this range: ${gapText}.`} /> : "Every day in this range has a figure for each hospital shown."}
           </p>
-        </ChartCard>
+        </ChartFrame>
 
         {weeklyRes.ok ? (
-          <ChartCard title={`The ${formatWindow({ kind: "latest_week", week: latestRange })} ${formatWindow({ kind: "usual" })}`} slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
-                     download="/export/ed-weekly.csv?weeks=10"
+          <ChartFrame title={`The ${formatWindow({ kind: "latest_week", week: latestRange })} ${formatWindow({ kind: "usual" })}`} slug="latest-vs-usual" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
+                     csv="/export/ed-weekly.csv?weeks=10&context=1" table={<UsualTable usuals={usuals} hospitals={chosen} />}
+                     summary={`For each hospital, ${latestText} as hours against its usual level, the median of the ${USUAL_WEEKS} complete weeks before it, largest difference first.`}
                      description={<>
                        <Lede text={levelSplitLede(levelCounts(rankableHospitals(chosen).map((h) => hospitalStatus(h.hospital_code, usuals[h.hospital_code], weekly, latest))))} testId="usual-lede" />
                        <Glossed text={`${latestText} for each hospital, against its usual level. ${usualDef} Largest difference first.`} />
                      </>}>
             {callouts(["usual_gap", "anomaly"], "latest week against usual")}
             <Dumbbell usuals={usuals} hospitals={chosen} mode={mode} finding={findingFor(findings, "anomaly", hospitals)} />
-          </ChartCard>
+          </ChartFrame>
         ) : <ErrorState title="The weekly figures can't be shown" error={plainError(weeklyRes.error)} />}
 
         {profileRes?.ok && window ? (
-          <ChartCard title={`Bed wait by day of the week, ${formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}`} slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
-                     download={csv("/export/ed-daily.csv", { from: window.from, to: window.to })}
+          <ChartFrame title={`Bed wait by day of the week, ${formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}`} slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
+                     csv={csv("/export/ed-daily.csv", { from: window.from, to: window.to, context: "1" })} table="self"
+                     summary={`A table of each hospital's bed wait on each day of the week, ${mode === "usual" ? "as % above or below its own average" : "in hours"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)}.`}
                      description={<Glossed text={`${mode === "usual" ? "Each weekday against the hospital's own average" : "The average bed wait on each weekday"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)} (up to 26).`} />}>
             {callouts(["weekday"], "day of the week")}
             <WeekdayHeatmap profiles={profiles} hospitals={chosen} mode={mode} finding={findingFor(findings, "weekday", hospitals)} />
-          </ChartCard>
+          </ChartFrame>
         ) : null}
 
         {slopeMeta ? (
-          <ChartCard title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} bySource
+          <ChartFrame title={<Glossed text="NUHS estimate and MOH figure" />} slug="nuhs-vs-moh" meta={slopeMeta} bySource
+                     csv="/export/nuhs-vs-moh.csv?context=1" table={<SlopeTable pairs={pairs} hospitals={chosen} />}
+                     summary="For each National University Health System site, the Ministry of Health's latest daily median bed wait beside the system's latest estimate, on different days and different measures."
                      description={<Glossed text="For each NUHS site: MOH's latest daily median beside NUHS's latest estimate of the bed wait. This chart shows values only; the comparison toggle doesn't apply." />}>
             {callouts(["source_gap"], "NUHS estimate and MOH figure")}
             <SlopeChart pairs={pairs} finding={findingFor(findings, "source_gap", hospitals)} />
-          </ChartCard>
+          </ChartFrame>
         ) : null}
       </Chapters>
     </>

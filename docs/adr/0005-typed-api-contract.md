@@ -21,7 +21,7 @@ carry `as_of` and its source. That rule is only as strong as the site's ability 
    `web/lib/api/schema.d.ts`, and CI fails if that's out of date (`npm run check:api-types`).
 4. **The site's client is typed from those types.** `openapi-fetch` checks paths, query parameters
    and response shapes when the site compiles.
-5. **Provenance can't be skipped.** The site's data components (`ChartCard`, `KpiTile`) require the
+5. **Provenance can't be skipped.** The site's data components (`ChartFrame`, `KpiTile`) require the
    generated `Meta` type, so a figure without its date and source doesn't compile.
 
 ## Alternatives considered

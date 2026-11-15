@@ -55,8 +55,8 @@ describe.each(THEMES)("%s theme", (_name, c) => {
 });
 
 describe("data cells carry their own label colour, in both themes", () => {
-  const dark = ["div-1", "div-7", "map-4", "map-5"] as const;
-  const light = ["div-2", "div-3", "div-4", "div-5", "div-6", "map-1", "map-2", "map-3"] as const;
+  const dark = ["div-1", "div-2", "div-7", "map-4", "map-5"] as const;
+  const light = ["div-3", "div-4", "div-5", "div-6", "map-1", "map-2", "map-3"] as const;
   it.each(dark)("on-data-light on %s >= 4.5", (k) => expect(contrast(colors["on-data-light"], colors[k])).toBeGreaterThanOrEqual(4.5));
   it.each(light)("on-data-dark on %s >= 4.5", (k) => expect(contrast(colors["on-data-dark"], colors[k])).toBeGreaterThanOrEqual(4.5));
 });

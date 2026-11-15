@@ -15,7 +15,7 @@
  */
 import type { EdDay, EdWeek, Hospital, Insight, LiveReading } from "./api/types";
 import { rankableCodes, systemFindings } from "./hospitals";
-import { divergingScale, mapScale } from "./palette";
+import { colors, contrast, divergingScale, mapScale } from "./palette";
 import { PROFILE_WEEKS, USUAL_WEEKS } from "./windows";
 
 export { PROFILE_WEEKS, USUAL_WEEKS };
@@ -189,10 +189,12 @@ export function classFor(v: number, classes: ColourClass[]): ColourClass {
   return classes.find((c, i) => v < c.max || i === classes.length - 1) as ColourClass;
 }
 
-/** Light or dark text for a cell, matching the contrast pairs tested in palette.ts. */
+/**
+ * Light or dark text for a cell: whichever of the two label colours has the higher contrast on it
+ * (palette.ts). lib/edCompare.test.ts checks every bin of both scales reaches 4.5:1 this way.
+ */
 export function textOn(color: string): "light" | "dark" {
-  const dark = [divergingScale[0], divergingScale[6], mapScale[3], mapScale[4]] as string[];
-  return dark.includes(color) ? "light" : "dark";
+  return contrast(colors["on-data-light"], color) > contrast(colors["on-data-dark"], color) ? "light" : "dark";
 }
 
 // ------------------------------------------------------------------ NUHS vs MOH

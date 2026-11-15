@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 
+import { JumpMenu } from "@/components/JumpMenu";
+import { OnThisPage } from "@/components/OnThisPage";
 import { FigureCadenceNote } from "@/components/FigureCadenceNote";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { type DepthCard, DepthCards, Findings, Hero, Limits, WhyNow } from "@/components/story/Sections";
 import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
-import { docWords, renderDocList } from "@/lib/docs";
+import { docWords, renderDocListItems } from "@/lib/docs";
 import { EMPTY_STORY, emptyReason, readingMinutes, storySteps } from "@/lib/story";
 import { SITE_TITLE } from "@/lib/site";
 
@@ -26,7 +28,7 @@ export default async function FindingsPage() {
     settle(api.insights({ headline: true })),
     settle(api.hospitals()),
     settle(api.population()),
-    renderDocList("case_study.md", LIMITS_MARKER),
+    renderDocListItems("case_study.md", LIMITS_MARKER),
     docWords("case_study.md", "Problem statement"),
     docWords("insights_method.md"),
   ]);
@@ -44,7 +46,15 @@ export default async function FindingsPage() {
       text: "Every method, threshold and check behind the findings on this page." },
   ];
 
-  return (
+  // The sections that are on the page, in order: the list and the menu name only these.
+  const stops = [
+    ...(population.ok ? [{ id: "why-now", label: "Why now" }] : []),
+    ...(insights.ok && steps.length ? [{ id: "findings", label: "What does the data show?" }] : []),
+    { id: "limits", label: "What can't this data tell you?" },
+    { id: "depth", label: "Go further" },
+  ];
+
+  const page = (
     <>
       {!insights.ok ? (
         <>
@@ -52,7 +62,7 @@ export default async function FindingsPage() {
           <ErrorState error={plainError(insights.error)} />
         </>
       ) : top ? (
-        <Hero insight={top} meta={insights.value.meta} />
+        <Hero insight={top} meta={insights.value.meta} count={steps.length} />
       ) : (
         <>
           <PageHeader title={SITE_TITLE} />
@@ -72,8 +82,18 @@ export default async function FindingsPage() {
       {insights.ok && steps.length ? <Findings insights={steps} meta={insights.value.meta} /> : null}
 
       <div className="mx-auto max-w-3xl pt-6"><FigureCadenceNote kind="findings" /></div>
-      <Limits list={limits.content} />
+      <Limits items={limits} />
       <DepthCards cards={cards} />
     </>
+  );
+
+  return (
+    <div className="rail-layout">
+      <div className="min-w-0">
+        <JumpMenu items={stops} className="mb-3 xl:hidden" />
+        {page}
+      </div>
+      <aside className="rail" aria-label="Page contents"><OnThisPage items={stops} /></aside>
+    </div>
   );
 }

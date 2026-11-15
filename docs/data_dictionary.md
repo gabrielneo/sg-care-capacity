@@ -25,7 +25,7 @@ evidence available. `as_of_basis` says which evidence:
 
 | `as_of_basis` | Meaning | Used by |
 |---|---|---|
-| `source_updated` | The publisher's own "last updated" time | `dim_clinic`, `dim_polyclinic` (data.gov.sg `lastUpdatedAt`), `fct_live_ed_snapshot` (NUHS "Last updated at") |
+| `source_updated` | The publisher's own "last updated" time | `dim_clinic`, `dim_polyclinic`, `dim_event` holidays (data.gov.sg `lastUpdatedAt`), `fct_live_ed_snapshot` (NUHS "Last updated at") |
 | `fetched` | When we downloaded the file; the publisher gives no per-figure date | `fct_ed_daily`, `fct_ed_weekly` (MOH); fallback for the two above |
 | `reference_checked` | When the reference list in code was last verified | `dim_hospital` |
 | `reference_period` | The date the statistic describes, set by the publisher | `fct_planning_area_population` (end of June) |
@@ -157,6 +157,27 @@ HPB lists it.
 | `fetched_at` | When that file was downloaded | timestamp (SGT) | staging | |
 | `as_of` | When data.gov.sg last updated the dataset | timestamp (SGT) | metadata `lastUpdatedAt` | Falls back to `fetched_at` if metadata is unavailable. |
 | `as_of_basis` | `source_updated`, or `fetched` for the fallback | text | | |
+
+### `marts.dim_event`
+
+**Grain:** one row per dated event that a time-series chart marks with a vertical rule. **Sources:** two
+kinds, never mixed up. `holiday`: Singapore public holidays, MOM's *Singapore Public Holidays
+(consolidated)* on data.gov.sg (CSV, `d_8ef23381f9417e4d4254ee8b4dcdb176`, 2020–2027) → `public_holidays`
+→ `staging.stg_public_holidays`. `source_change`: a hospital that starts to appear in MOH's figures part-way
+through the series (`marts.dim_hospital.reported_from`: Woodlands Hospital, 23 Jun 2024), because totals
+across hospitals step when it joins (see the methodology's note on Woodlands).
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `event_date` | The day of the event | date | holiday date, or `reported_from` | Singapore dates; no time of day. |
+| `label` | Name of the event | text | holiday name as published, or "{short name} starts in MOH's figures" | Holiday names are kept as published, including "(Observed)" days and the two days of Chinese New Year as two rows. |
+| `kind` | `holiday` or `source_change` | text | | |
+| `source_url`, `source_sha256` | The file or reference the row came from | text | lineage | For `source_change`, the hospital reference (`config.HOSPITAL_REFERENCE`). |
+| `as_of` | When data.gov.sg last updated the dataset, or when the reference was last checked | timestamp | metadata `lastUpdatedAt`, or `dim_hospital.as_of` | |
+| `as_of_basis` | `source_updated`, `fetched` or `reference_checked` | text | | |
+
+Not an event list of everything that could move a wait: school holidays, outbreaks and policy changes are not
+in it, because no source here publishes them. A chart shows only these.
 
 ### `marts.fct_live_ed_snapshot`
 
@@ -454,7 +475,7 @@ and on `reparse`.
 | Column | Type | Definition |
 |---|---|---|
 | `seq` | integer | Position in `manifest.jsonl`, from 0. This is the replay order. |
-| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `datagov_annual_ae`, `datagov_metadata`, `singstat_residents`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch`, `datagov_has` and `singstat` (kept, not parsed). |
+| `source` | text | Raw source name, which decides the parser: `moh_bed_waits`, `moh_ed_attendances`, `nuhs_live`, `datagov_chas`, `datagov_annual_ae`, `datagov_public_holidays`, `datagov_metadata`, `singstat_residents`, or `moh_page` (stored, not parsed). Older files may also carry the retired sources `singhealth_qwatch`, `datagov_has` and `singstat` (kept, not parsed). |
 | `url` | text | Where the bytes came from (see `source_url` above). |
 | `sha256` | text | SHA-256 of the bytes. |
 | `bytes` | integer | Size in bytes. |
@@ -484,6 +505,7 @@ Checked 2026-11-06. Update this table whenever a source changes.
 | `singhealth_qwatch` | **Retired** (not fetched) | `/patient-care/xrayqwatch` redirects to the SingHealth homepage. It was polyclinic X-ray queues, outside the project's scope. |
 | `datagov_planning_areas` | OK | URA Master Plan 2025 Planning Area Boundary (No Sea), `d_2cc750190544007400b2cfd5d7f53209`, updated upstream 2026-02-27: 55 areas, names match SingStat 55 of 55. Not collection 2104 (that is the 2019 edition). |
 | `datagov_polyclinics` | OK, a proxy | HPB *Cervical Screening Centre* (`d_3ca2a28059588f297908b32da4ac3cbe`, Jan 2026) used as the polyclinic list: all 26 polyclinics. Not a polyclinic register: a new polyclinic appears only once HPB lists it for screening. MOH's *Vaccination_Polyclinics* has only 8 and isn't used. |
+| `datagov_public_holidays` | OK | MOM *Singapore Public Holidays (consolidated)*, `d_8ef23381f9417e4d4254ee8b4dcdb176`, 104 rows, 2020-01-01 to 2027-12-25 (checked 2026-11-15). Columns `date`, `day`, `holiday`; `day` is not stored. Used only to mark time-series charts. The per-year datasets in collection 691 are not used. |
 | `datagov_annual_ae` | OK | 1984–2023; only 2023 overlaps the daily MOH series. Reconciliation only. |
 | `singstat_residents` | OK | June 2026, 55 planning areas: 4,240,430 residents, 828,010 aged 65+ (19.5%). Read only from the committed reference copy `data/reference/singstat/respopagesextod2026.zip` (downloaded by hand: SingStat refuses GitHub's runners), loaded only if its SHA-256 matches `config.SINGSTAT_RESIDENTS_SHA256`. Yearly refresh each September: see `docs/runbook.md`. |
 

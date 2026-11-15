@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ChartCard } from "@/components/ChartCard";
+import { ChartFrame } from "@/components/ChartFrame";
 import { Chapters } from "@/components/Section";
 import { Provenance } from "@/components/Provenance";
 import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
 import { CheckResults } from "@/components/quality/CheckResults";
 import { CoverageGrid } from "@/components/quality/CoverageGrid";
+import { CoverageTable } from "@/components/quality/CoverageTable";
 import { FreshnessTable } from "@/components/quality/FreshnessTable";
 import { ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
@@ -80,15 +81,18 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
       <Provenance meta={quality.meta} compact release />
 
       <Chapters first="band">
-        <ChartCard title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail release
+        <ChartFrame title="Check results" meta={quality.meta} caveat={CAVEAT.quality} detail release csv="/export/quality.csv?context=1" table="self"
+                   summary={`${results.length} data-quality checks for this data release, grouped by what a failure does: ${quality.data.blocking} block publishing, ${failed("WARN").length} warn.`}
                    description={<>
                      <Lede text={checksLede(results.length, quality.data.blocking, failed("WARN").length)} testId="checks-lede" />
                      {`The checks that published data release ${snapshot.data.snapshot_id}, grouped by what a failure does.`}
                    </>}>
           <CheckResults report={quality.data} />
-        </ChartCard>
+        </ChartFrame>
 
-        <ChartCard title={<Glossed text="ED coverage: hospital × day" />} slug="ed-coverage" meta={daily?.ok ? daily.value.meta : snapshot.meta} caveat={null}
+        <ChartFrame title={<Glossed text="ED coverage: hospital × day" />} slug="ed-coverage" meta={daily?.ok ? daily.value.meta : snapshot.meta} caveat={null}
+                   csv={`/export/ed-coverage.csv?weeks=${weeks}&context=1`} table={grid ? <CoverageTable rows={grid.rows} days={grid.days.length} /> : "self"}
+                   summary={`A grid of the last ${weeks} weeks: one row per hospital, one cell per day, showing whether the Ministry of Health published both the bed wait and the emergency department visits. Gaps are listed as text under the grid.`}
                    description={
                      <>
                        <Glossed text="Whether MOH published both figures (the bed wait and ED visits) for each hospital on each day." />{" "}
@@ -102,10 +106,10 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
                        </span>
                      </>
                    }>
-          {grid ? (
-            <CoverageGrid days={grid.days} rows={grid.rows} />
-          ) : (
-            <ErrorState title="The coverage grid couldn't be loaded" error={daily && !daily.ok ? plainError(daily.error) : { message: "This week's data release has no date for the MOH figures." }} />
+          {grid ? <CoverageGrid days={grid.days} rows={grid.rows} /> : (
+            // The whole-series table below doesn't depend on the grid, so a failed grid is a message here, not a failed chart.
+            <ErrorState title="The coverage grid couldn't be loaded" error={daily && !daily.ok ? plainError(daily.error) : { message: "This week's data release has no date for the MOH figures." }}
+                        action={<Link href={`/data-quality?weeks=${weeks}`} className="font-semibold underline" data-testid="retry">Try again</Link>} />
           )}
           {Object.keys(history).length ? (
             <>
@@ -136,15 +140,16 @@ export default async function DataQualityPage({ searchParams }: { searchParams: 
               </div>
             </>
           ) : null}
-        </ChartCard>
+        </ChartFrame>
 
-        <ChartCard title="Freshness by source" meta={snapshot.meta} caveat={null} release
+        <ChartFrame title="Freshness by source" meta={snapshot.meta} caveat={null} release csv="/export/freshness.csv?context=1" table="self"
+                   summary={`${snapshot.meta.sources.length} sources with the date of their data and whether each is current, due an update or overdue for how often it is published.`}
                    description={<>
                      <Lede text={freshnessLede(snapshot.meta.sources.map((s) => (s.as_of ? datasetFreshness(s.id, s.as_of).level : "unknown")))} testId="freshness-lede" />
                      How current each source is, judged against how often it is published. An old source is flagged, not hidden.
                    </>}>
           <FreshnessTable sources={snapshot.meta.sources} />
-        </ChartCard>
+        </ChartFrame>
       </Chapters>
     </>
   );

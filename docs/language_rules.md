@@ -84,8 +84,16 @@ Keep the internal term only on the Methodology and technical detail pages.
 
 ## Rule 4: The bed-wait metric
 
-Wherever the bed-wait metric appears, its label is "Time waiting for a ward bed after
-the decision to admit", with the unit "hours, daily median". The first chart on a page
+The bed-wait metric has two names, and only these two (settled 2026-11-16):
+
+- **Long label**, on chart titles and axes and in table captions: "Time waiting for a ward
+  bed after the decision to admit", with the unit "hours, daily median".
+- **Short label**, on summary tiles, hospital cards and table column headers: "Bed wait",
+  followed by the window ("Bed wait, latest complete week"). It is the glossary term
+  `bed_wait`, defined once on the page (the intro's popover); a card that is one link carries
+  it as plain text, because a popover can't sit inside a link.
+
+Never "ward-bed wait", "wait for a ward bed" or "wait time" on its own. The first chart on a page
 that uses it carries this explainer:
 
 > This is not the time to see a doctor. It measures how long admitted patients wait in

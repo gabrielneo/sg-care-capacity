@@ -90,7 +90,7 @@ describe("baseline and metrics stay out of the default e2e run", () => {
   });
 
   it("no e2e spec carries the @baseline or @metrics tag", () => {
-    for (const f of readdirSync(path.join(WEB, "e2e"))) {
+    for (const f of readdirSync(path.join(WEB, "e2e")).filter((n) => n.endsWith(".ts"))) {   // not the snapshot folders
       expect(readFileSync(path.join(WEB, "e2e", f), "utf8"), f).not.toMatch(/@baseline|@metrics/);
     }
   });

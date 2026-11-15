@@ -3,15 +3,14 @@ import { notFound } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 
 import { CaveatChip } from "@/components/CaveatChip";
-import { ChartCard } from "@/components/ChartCard";
+import { ChartFrame } from "@/components/ChartFrame";
 import { FreshnessBadge } from "@/components/FreshnessBadge";
 import { StatusBadge } from "@/components/home/StatusBadge";
 import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
-import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "@/components/States";
+import { ChartFrameSkeleton, EmptyState, ErrorState, Skeleton } from "@/components/States";
 import { AnnotatedChart, fromInsightChart } from "@/components/story/AnnotatedChart";
 import { ViewSwitch } from "@/components/ViewSwitch";
-import { CountUp } from "@/components/story/CountUp";
 import { DeltaNumber, deltaFromDisplay } from "@/components/story/DeltaNumber";
 import { HighlightPhrase } from "@/components/story/HighlightPhrase";
 import { api, settle } from "@/lib/api/client";
@@ -83,7 +82,7 @@ export default function ComponentsPage() {
       />
 
       <Section title="Live: typed client against the API">
-        <Suspense fallback={<ChartCardSkeleton title="Live snapshot" />}>
+        <Suspense fallback={<ChartFrameSkeleton title="Live snapshot" />}>
           <LiveSnapshot />
         </Suspense>
       </Section>
@@ -109,22 +108,28 @@ export default function ComponentsPage() {
         </div>
       </Section>
 
-      <Section title="ChartCard">
+      <Section title="ChartFrame">
         <div className="card-grid lg:grid-cols-2">
-          <ChartCard title="Median wait for a ward bed" meta={edMeta} now={SAMPLE_NOW}
-                     description="Daily median, by hospital. The chart goes here.">
+          <ChartFrame title="Median wait for a ward bed" meta={edMeta} now={SAMPLE_NOW} summary="A placeholder for a chart." csv="/export/ed-daily.csv?context=1"
+                      table={<p className="text-small">The figures as a table go here.</p>} description="Daily median, by hospital. The chart goes here.">
             <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-small text-muted">
               chart slot
             </div>
-          </ChartCard>
-          <ChartCard title="CHAS clinics near seniors" meta={clinicMeta} now={SAMPLE_NOW}>
+          </ChartFrame>
+          <ChartFrame title="CHAS clinics near seniors" meta={clinicMeta} now={SAMPLE_NOW} summary="A placeholder for a map." csv="/export/areas.csv?context=1" table={{ href: "/access-map?view=table" }}>
             <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-line text-small text-muted">
               chart slot (old source: the badge says so)
             </div>
-          </ChartCard>
-          <ChartCard title="Without a date" meta={{ ...edMeta, as_of: "" }}>
+          </ChartFrame>
+          <ChartFrame title="Inside a section" meta={edMeta} now={SAMPLE_NOW} section={edMeta} summary="A chart whose section already states the date and source."
+                      csv="/export/ed-daily.csv?context=1" table="self">
+            <p>No date or source of its own: the section&apos;s line covers it.</p>
+          </ChartFrame>
+          <ChartFrame title="Empty" meta={edMeta} now={SAMPLE_NOW} state="empty" summary="No figures." csv="/export/ed-daily.csv?context=1" table="self"><p>never shown</p></ChartFrame>
+          <ChartFrame title="Could not load" meta={edMeta} now={SAMPLE_NOW} state="error" retryHref="/dev/components" summary="Failed to load." csv="/export/ed-daily.csv?context=1" table="self"><p>never shown</p></ChartFrame>
+          <ChartFrame title="Without a date" meta={{ ...edMeta, as_of: "" }} summary="Never shown." csv="/export/ed-daily.csv?context=1" table="self">
             <p>This is never shown.</p>
-          </ChartCard>
+          </ChartFrame>
         </div>
       </Section>
 
@@ -174,17 +179,9 @@ export default function ComponentsPage() {
         </div>
       </Section>
 
-      <Section title="CountUp">
-        <p className="mb-3 text-small text-muted">
-          Rolling digits, CSS only (transform, 600 ms, once). The final value is in the server HTML; reduced motion shows it at once.
-          Reload to see it again.
-        </p>
-        <p className="text-kpi font-semibold text-ink"><CountUp value="12.7" label="12.7 hours" /></p>
-      </Section>
-
       <Section title="HighlightPhrase">
         <p className="mb-3 text-small text-muted">
-          A marker stroke that draws once when the phrase scrolls into view (drawn in the server HTML; never reset with reduced motion).
+          A static marker stroke under a phrase (server HTML, no motion).
         </p>
         <p className="text-h2 text-ink"><HighlightPhrase>19.5% of Singapore residents</HighlightPhrase> were aged 65 or over.</p>
       </Section>

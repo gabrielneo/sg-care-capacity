@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { QuadrantChart } from "@/components/access/QuadrantChart";
 import { ShortfallBars } from "@/components/access/ShortfallBars";
 import { Section } from "@/components/Section";
-import { ChartCard } from "@/components/ChartCard";
+import { ChartFrame } from "@/components/ChartFrame";
 import { AccessViews } from "@/components/map3d/AccessViews";
 import { AreaTable } from "@/components/map/AreaTable";
 import { ViewTabs } from "@/components/map/ViewTabs";
@@ -92,21 +92,23 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
       ) : table ? (
         <>
           <ViewTabs active="table" />
-          <ChartCard title="Clinic access by area (table)" meta={areas.meta} caveat={CAVEAT.clinics} download="/export/areas.csv"
+          <ChartFrame title="Clinic access by area (table)" meta={areas.meta} caveat={CAVEAT.clinics} csv="/export/areas.csv?context=1" table="self"
+                      summary={`A table of ${features.length} planning areas with their clinics, residents aged 65+ and the measures of access, sortable by column.`}
                      description="The same figures as the maps. Select a column heading to sort.">
             <AreaTable areas={props} sort={first(params.sort)} dir={first(params.dir)} />
-          </ChartCard>
+          </ChartFrame>
         </>
       ) : (
         <Section tone="band">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <ChartCard title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics} download="/export/areas.csv"
+          <ChartFrame title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics} csv="/export/areas.csv?context=1" table={{ href: "/access-map?view=table", label: "Show as table" }}
+                      summary={`A map of ${features.length} planning areas shaded by Chronic Disease Management Programme clinics per 1,000 residents aged 65+, darker where there are fewer, with each clinic as a point. The same figures are in the table view.`}
                      description="Counts where clinics are, not where their patients live: residents use clinics in neighbouring areas too.">
             <AccessViews requested={view === "3d" ? "3d" : view === "2d" ? "2d" : "auto"} areas={areas.data}
                          clinics={(clinics?.items ?? []).map((c) => ({ clinic_key: c.clinic_key, clinic_name: c.clinic_name,
                                                                         latitude: c.latitude, longitude: c.longitude, has_cdmp: c.has_cdmp }))}
                          caveats={metricCaveats} labels={priority} />
-          </ChartCard>
+          </ChartFrame>
           {side}
         </div>
         </Section>

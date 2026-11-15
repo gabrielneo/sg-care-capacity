@@ -211,6 +211,15 @@ test.describe("notices (E5)", () => {
 });
 
 test.describe("footer", () => {
+  test("on a phone the footer's links wrap in rows, each still a 44px target (review N2)", async ({ page }) => {
+    test.skip((page.viewportSize()?.width ?? 0) >= 640, "phones only");
+    await page.goto("/methodology");
+    const links = page.getByTestId("site-footer").locator("ul").first().getByRole("link");
+    const boxes = await Promise.all((await links.all()).map((l) => l.boundingBox()));
+    for (const b of boxes) expect(b!.height).toBeGreaterThanOrEqual(44);
+    expect(new Set(boxes.map((b) => Math.round(b!.y))).size).toBeLessThan(boxes.length);    // some share a row
+  });
+
   test("three columns with at most six links each, on the band colour, credits on one line", async ({ page }) => {
     await page.goto("/findings");
     const footer = page.getByTestId("site-footer");

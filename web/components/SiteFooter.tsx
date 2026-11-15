@@ -19,7 +19,8 @@ function Column({ id, title, children }: { id: string; title: string; children: 
 
 /** At most six links a column (a test counts them). */
 function Links({ children }: { children: ReactNode }) {
-  return <ul className="mt-2 space-y-1">{children}</ul>;
+  // Phones: the links wrap in a row (each still a 44px target) instead of one per line (review N2); one per line from 640px.
+  return <ul className="mt-2 flex flex-wrap gap-x-4 sm:block sm:space-y-1">{children}</ul>;
 }
 const TARGET = "inline-flex min-h-11 min-w-11 items-center sm:min-h-0 sm:min-w-0";   // 44px on a phone, text-sized from 640px
 const item = (href: string, label: string) => <li key={href}><Link href={href} className={TARGET}>{label}</Link></li>;

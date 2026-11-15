@@ -1,7 +1,8 @@
 import type { Meta } from "@/lib/api/types";
 import type { ShortfallBar } from "@/lib/accessCharts";
 
-import { ChartCard } from "../ChartCard";
+import { ChartFrame } from "../ChartFrame";
+import { ShortfallTable } from "./ChartTables";
 import { Glossed } from "../terms/Glossed";
 
 /**
@@ -11,7 +12,9 @@ import { Glossed } from "../terms/Glossed";
 export function ShortfallBars({ bars, meta, top }: { bars: ShortfallBar[]; meta: Meta; top: string | null }) {
   const max = Math.max(1, ...bars.map((b) => b.shortfall));
   return (
-    <ChartCard title="Clinics short of the national rate" slug="shortfall" meta={meta} headingLevel={3} download="/export/areas.csv"
+    <ChartFrame title="Clinics short of the national rate" slug="shortfall" meta={meta} headingLevel={3} csv="/export/areas.csv?context=1"
+               summary={`Bars of the clinics each of the ${bars.length} priority areas is short of the national rate, largest first: ${bars.map((b) => `${b.name} about ${Math.round(b.shortfall)}`).join("; ")}.`}
+               table={<ShortfallTable bars={bars} />}
                description={<Glossed text={`The ${bars.length} priority areas from this week's findings: CDMP GP clinics the national rate would give their residents aged 65+, minus the clinics they have. Largest first.`} />}>
       <ol className="space-y-2 text-small" data-testid="shortfall-bars">
         {bars.map((b) => (
@@ -26,6 +29,6 @@ export function ShortfallBars({ bars, meta, top }: { bars: ShortfallBar[]; meta:
           </li>
         ))}
       </ol>
-    </ChartCard>
+    </ChartFrame>
   );
 }

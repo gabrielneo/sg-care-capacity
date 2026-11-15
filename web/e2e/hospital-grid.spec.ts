@@ -147,3 +147,18 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(page.getByTestId("status-grid")).toHaveScreenshot(`grid-${scheme}.png`, { maxDiffPixelRatio: 0.005 });
   });
 }
+
+test("a long name is cut with an ellipsis, never the hospital code (review N10)", async ({ page, viewport }) => {
+  test.skip((viewport?.width ?? 0) < 1000);
+  for (const width of [768, 1280, 1440]) {
+    await open(page, width);
+    const cards = page.locator(GRID);
+    for (let i = 0; i < await cards.count(); i++) {
+      const name = cards.nth(i).locator(".sc-name");
+      const box = (await name.boundingBox())!;
+      const code = (await cards.nth(i).locator(".hn-code").boundingBox())!;
+      expect(code.x + code.width, `card ${i + 1} at ${width}px`).toBeLessThanOrEqual(box.x + box.width + 0.5);   // the code is whole and inside
+      expect(await cards.nth(i).locator(".hn-code").evaluate((el) => el.scrollWidth <= el.clientWidth + 0.5)).toBe(true);
+    }
+  }
+});

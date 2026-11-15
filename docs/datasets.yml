@@ -69,6 +69,13 @@ datasets:
     cadence: yearly
     due_after: {months: 15}
     overdue_after: {months: 18}
+  datagov_public_holidays:
+    label: Public holidays
+    publisher: data.gov.sg
+    cadence: yearly
+    # MOM publishes the next year's holidays in the second half of the year; the list is used only to mark charts.
+    due_after: {months: 15}
+    overdue_after: {months: 18}
   insight_findings:
     label: Findings
     publisher: this site's insight engine

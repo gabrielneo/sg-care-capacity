@@ -27,42 +27,67 @@ export type SectionId = "notice" | "finder" | "ednear" | "summary" | "changes" |
 /** How much a section shows: "simple" is the short form, "full" adds the detail. */
 export type Density = "simple" | "full";
 
+/**
+ * A chapter is a run of sections that share one band: the page alternates "page" and "band" tones chapter by chapter,
+ * so a long view reads as chapters (docs/design/redesign_brief.md). Sections with the same chapter in a row are one chapter.
+ */
+export type Chapter = "start" | "near" | "map" | "data" | "findings" | "pattern" | "methods";
+
 export interface SectionSpec {
   id: SectionId;
+  chapter: Chapter;
   /** The views the section appears in, each with its density. A view that isn't listed doesn't show it. */
   views: Partial<Record<View, Density>>;
 }
 
-/** Every home-page section, in page order. */
+/**
+ * Every home-page section, in page order, and what each view shows (UX audit I2, G1):
+ *   public:  995 notice, find care near you, the three nearest EDs, map, a short "About these numbers"
+ *   planner: compact notice, KPI tiles, ED cards (the urgent care row is part of them), top three takeaways
+ *   analyst: compact notice, KPI tiles, ED cards, what changed, takeaways with their evidence, weekday heatmap, how the figures are made
+ */
 export const SECTIONS: readonly SectionSpec[] = [
   // The 995 line and "not medical advice": on every view. Full adds where to go instead of a hospital.
-  { id: "notice", views: { public: "full", planner: "simple", analyst: "simple" } },
-  { id: "finder", views: { public: "full" } },
+  { id: "notice", chapter: "start", views: { public: "full", planner: "simple", analyst: "simple" } },
+  { id: "finder", chapter: "start", views: { public: "full" } },
   // The three nearest EDs, in plain words, after a search. Public only: the full list is on Planner and Analyst.
-  { id: "ednear", views: { public: "full" } },
-  { id: "summary", views: { planner: "full", analyst: "full" } },
-  // Simple: badge, last week's figure and one sentence. Full adds the 12-week line and the change against usual.
-  { id: "hospitals", views: { planner: "full", analyst: "full" } },
-  // Which hospitals' badge moved since the week before: computed from the same weekly figures, never written by hand.
-  { id: "changes", views: { planner: "full", analyst: "full" } },
-  { id: "map", views: { public: "full" } },
-  { id: "takeaways", views: { planner: "full", analyst: "full" } },
-  { id: "weekdays", views: { analyst: "full" } },
-  // Definitions and limits: on every view. Full opens it and adds the statistics behind each takeaway.
-  { id: "methods", views: { public: "simple", planner: "simple", analyst: "full" } },
+  { id: "ednear", chapter: "near", views: { public: "full" } },
+  { id: "map", chapter: "map", views: { public: "full" } },
+  { id: "summary", chapter: "data", views: { planner: "full", analyst: "full" } },
+  // Badge, last week's figure and the change against usual; the urgent care centre is its own full-width row in the same grid.
+  { id: "hospitals", chapter: "data", views: { planner: "full", analyst: "full" } },
+  // Which hospitals' badge moved since the week before, from the same weekly figures. Analyst only: Planner has the top three takeaways.
+  { id: "changes", chapter: "findings", views: { analyst: "full" } },
+  // Planner: the top three. Analyst: the same, with each finding's evidence level and number of data points.
+  { id: "takeaways", chapter: "findings", views: { planner: "simple", analyst: "full" } },
+  { id: "weekdays", chapter: "pattern", views: { analyst: "full" } },
+  // Public: a short "About these numbers". Analyst: how the figures are made, with the statistics. Planner has none (it links to Analyst).
+  { id: "methods", chapter: "methods", views: { public: "simple", analyst: "full" } },
 ];
 
 export interface ShownSection {
   id: SectionId;
   density: Density;
+  chapter: Chapter;
 }
 
 /** The sections a view shows, in page order. */
 export function sectionsFor(view: View, sections: readonly SectionSpec[] = SECTIONS): ShownSection[] {
   return sections.flatMap((s) => {
     const density = s.views[view];
-    return density ? [{ id: s.id, density }] : [];
+    return density ? [{ id: s.id, density, chapter: s.chapter }] : [];
   });
+}
+
+/** The sections of a view grouped into chapters, in page order; chapters alternate page and band tone, starting with "page". */
+export function chaptersFor<T extends { chapter: Chapter }>(shown: readonly T[]): { chapter: Chapter; tone: "page" | "band"; items: T[] }[] {
+  const out: { chapter: Chapter; tone: "page" | "band"; items: T[] }[] = [];
+  for (const s of shown) {
+    const last = out[out.length - 1];
+    if (last && last.chapter === s.chapter) last.items.push(s);
+    else out.push({ chapter: s.chapter, tone: out.length % 2 ? "band" : "page", items: [s] });
+  }
+  return out;
 }
 
 /** A section's density in a view, or null if the view doesn't show it. */
@@ -94,7 +119,7 @@ export const SECTION_LABEL: Record<SectionId, string> = {
   map: "Map",
   takeaways: "Takeaways",
   weekdays: "Weekday pattern",
-  methods: "Definitions and limits",
+  methods: "How the figures are made",
 };
 
 /** The id of the element a section sits in on the page (app/page.tsx), so a link can jump to it. */

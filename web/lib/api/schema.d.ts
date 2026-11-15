@@ -106,6 +106,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dated events that charts mark: public holidays, and hospitals that start part-way through the series */
+        get: operations["events_api_v1_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -611,6 +628,39 @@ export interface components {
             /** Data */
             data?: null;
             error: components["schemas"]["ErrorBody"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Event */
+        Event: {
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** As Of Basis */
+            as_of_basis: string;
+            /**
+             * Event Date
+             * Format: date
+             */
+            event_date: string;
+            /**
+             * Kind
+             * @description 'holiday' (a Singapore public holiday) or 'source_change' (a hospital starts to appear in MOH's figures)
+             */
+            kind: string;
+            /**
+             * Label
+             * @description As published for a holiday, e.g. 'Chinese New Year'; for a source change, '<hospital> starts in MOH's figures'
+             */
+            label: string;
+            /** Source Sha256 */
+            source_sha256: string;
+        };
+        /** EventsResponse */
+        EventsResponse: {
+            /** Data */
+            data: components["schemas"]["Event"][];
             meta: components["schemas"]["Meta"];
         };
         /** Geometry */
@@ -1608,6 +1658,58 @@ export interface operations {
             };
             /** @description Invalid parameter */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    events_api_v1_events_get: {
+        parameters: {
+            query?: {
+                /** @description First day (YYYY-MM-DD). Default: 90 days before `to` */
+                from?: string | null;
+                /** @description Last day (YYYY-MM-DD). Default: the latest day MOH has published */
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventsResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This data release has no event list */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,16 +1,33 @@
 import Link from "next/link";
 
 import type { Hospital } from "@/lib/api/types";
+import { formatAsOf } from "@/lib/dates";
 import { shortNote } from "@/lib/hospitalNotes";
 
 import { Glossed } from "./terms/Glossed";
 import { Term } from "./terms/Term";
 
-/** A plain GET form: works with the keyboard, without JavaScript, and gives shareable URLs. */
+/**
+ * A plain GET form: works with the keyboard, without JavaScript, and gives shareable URLs.
+ * Below 768px it folds behind one line that says what is shown (review N12: 9 hospitals' checkboxes took 688px above the charts);
+ * the phone-fold is CSS only (globals.css), so the page never shifts when it loads.
+ */
 export function EdFilterForm({ hospitals, selected, from, to }: { hospitals: Hospital[]; selected: string[]; from: string; to: string }) {
   const all = selected.length === 0;
+  const count = all ? hospitals.length : selected.length;
   return (
-    <form method="get" action="/ed-trends" className="mb-6 rounded-lg border border-line bg-surface card">
+    <div className="phone-fold mb-6" data-testid="ed-filters">
+    <details className="phone-fold-toggle rounded-lg border border-line bg-surface" data-testid="ed-filters-toggle">
+      <summary className="flex min-h-11 cursor-pointer select-none flex-col justify-center px-4 py-2">
+        <span className="text-small font-semibold text-accent">
+          <span className="when-closed">Change hospitals or dates</span><span className="when-open">Hide hospitals and dates</span>
+        </span>
+        <span className="text-meta text-muted" data-testid="ed-filters-current">
+          {all ? `All ${count} hospitals` : `${count} of ${hospitals.length} hospitals`}, {formatAsOf(from)} to {formatAsOf(to)}
+        </span>
+      </summary>
+    </details>
+    <form method="get" action="/ed-trends" className="phone-fold-hide rounded-lg border border-line bg-surface card max-md:mt-2">
       <fieldset>
         <legend className="text-small font-semibold text-ink">Hospitals</legend>
         <div className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,5 +60,6 @@ export function EdFilterForm({ hospitals, selected, from, to }: { hospitals: Hos
         <p className="w-full text-meta text-muted"><Glossed text="Up to 2 years at a time. Default: the 90 days up to the latest day MOH has published." /></p>
       </div>
     </form>
+    </div>
   );
 }

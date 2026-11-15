@@ -90,6 +90,11 @@ DATAGOV_DATASETS = {
     # register: a polyclinic appears only once HPB lists it for screening. MOH's own
     # "Vaccination_Polyclinics" set has only 8 (a COVID-vaccination subset), so it isn't used.
     "polyclinics": "d_3ca2a28059588f297908b32da4ac3cbe",
+    # MOM (Ministry of Manpower) "Singapore Public Holidays (consolidated)" (CSV: date, day, holiday),
+    # 2020-2027, checked 2026-11-15. Used only for the event marks on time-series charts. Names are as
+    # published, including "(Observed)" days; the per-year sets are d_1840fb46... (2020) to d_0ba69fc6... (2027).
+    # Lookup: https://api-production.data.gov.sg/v2/public/api/collections/691/metadata
+    "public_holidays": "d_8ef23381f9417e4d4254ee8b4dcdb176",
 }
 ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in that CSV
 # Dataset metadata (name, publisher, lastUpdatedAt). lastUpdatedAt is the as_of shown to users

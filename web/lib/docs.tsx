@@ -110,3 +110,14 @@ export async function docWords(file: string, section?: string): Promise<number> 
   const text = extractSection(await readFile(path.join(DOCS_DIR, file), "utf8"), section);
   return text.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
 }
+
+/**
+ * The bullets after `marker`, each rendered on its own (for a row of cards). Each is sentence-cased and loses its
+ * trailing ";" or "." so a fragment reads as a card's text; nothing is added to the wording.
+ */
+export async function renderDocListItems(file: string, marker: string): Promise<ReactNode[]> {
+  const list = extractList(await readFile(path.join(DOCS_DIR, file), "utf8"), marker);
+  const items = list.split(/\n(?=- )/).map((b) => b.replace(/^- /, "").replace(/\s*\n\s+/g, " ").replace(/[;.]$/, "").trim());
+  const sentence = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+  return Promise.all(items.map(async (t) => (await renderMarkdown(sentence(t), file)).content));
+}

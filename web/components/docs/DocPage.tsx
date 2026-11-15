@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { JumpMenu } from "@/components/JumpMenu";
+import { OnThisPage } from "@/components/OnThisPage";
+
 /** Layout for a rendered doc: an optional draft banner, a table of contents, and the content. */
 export function DocPage({ toc, todos = 0, children, aside }: {
   toc: { id: string; text: string }[];
@@ -7,6 +10,7 @@ export function DocPage({ toc, todos = 0, children, aside }: {
   children: ReactNode;
   aside?: ReactNode;
 }) {
+  const items = toc.map((h) => ({ id: h.id, label: h.text }));
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_240px]">
       <article className="doc min-w-0">
@@ -19,17 +23,13 @@ export function DocPage({ toc, todos = 0, children, aside }: {
         {children}
       </article>
       <aside className="order-first lg:order-last">
-        <nav aria-label="On this page" className="text-small lg:sticky lg:top-4">
-          <p className="mb-2 font-semibold">On this page</p>
-          <ul className="space-y-1">
-            {toc.map((h) => (
-              <li key={h.id}>
-                <a href={`#${h.id}`} className="text-muted link-quiet hover:text-ink">{h.text}</a>
-              </li>
-            ))}
-          </ul>
-          {aside ? <div className="mt-4">{aside}</div> : null}
-        </nav>
+        {/* Below 1024px a "Jump to section" menu; from 1024px the sticky list with the section in view marked. */}
+        <JumpMenu items={items} className="lg:hidden" />
+        <div className="hidden lg:sticky lg:top-4 lg:block">
+          <OnThisPage items={items} />
+          {aside ? <div className="mt-4 text-small">{aside}</div> : null}
+        </div>
+        {aside ? <div className="mt-4 text-small lg:hidden">{aside}</div> : null}
       </aside>
     </div>
   );

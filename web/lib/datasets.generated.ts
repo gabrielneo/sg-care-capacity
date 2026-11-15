@@ -104,6 +104,17 @@ export const DATASETS: Record<string, DatasetRule> = {
       "months": 18
     }
   },
+  "datagov_public_holidays": {
+    "label": "Public holidays",
+    "publisher": "data.gov.sg",
+    "cadence": "yearly",
+    "due_after": {
+      "months": 15
+    },
+    "overdue_after": {
+      "months": 18
+    }
+  },
   "insight_findings": {
     "label": "Findings",
     "publisher": "this site's insight engine",

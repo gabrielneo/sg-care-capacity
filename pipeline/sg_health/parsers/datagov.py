@@ -27,6 +27,25 @@ def parse_annual_ae(content: bytes, series: str, stats: ParseStats | None = None
                          "series": series}).reset_index(drop=True)
 
 
+def parse_public_holidays(content: bytes, stats: ParseStats | None = None) -> pd.DataFrame:
+    """The public-holidays CSV (date, day, holiday) -> holiday_date, holiday_name.
+
+    Names are kept exactly as published (including "(Observed)"). A row whose date is not a valid
+    YYYY-MM-DD, or whose name is blank, is dropped and counted: never guessed.
+    """
+    raw = pd.read_csv(io.BytesIO(content), dtype=str, keep_default_na=False, encoding="utf-8-sig")
+    needed = {"date", "holiday"}
+    if not needed <= set(raw.columns):
+        raise ValueError(f"public holidays CSV: expected columns {sorted(needed)}, got {list(raw.columns)}")
+    count_read(stats, len(raw))
+    dates = pd.to_datetime(raw["date"].str.strip(), format="%Y-%m-%d", errors="coerce")
+    names = raw["holiday"].str.strip()
+    ok = dates.notna() & (names != "")
+    if (~ok).any():
+        count_drop(stats, "invalid_date_or_blank_name", int((~ok).sum()))
+    return pd.DataFrame({"holiday_date": dates[ok].dt.date, "holiday_name": names[ok]}).reset_index(drop=True)
+
+
 def parse_datagov_metadata(payload: dict, source_by_id: dict[str, str]) -> pd.DataFrame:
     """One row from a data.gov.sg metadata response. Timestamps are converted to SGT, naive."""
     data = (payload or {}).get("data") or {}

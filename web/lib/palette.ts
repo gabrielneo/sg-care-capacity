@@ -11,8 +11,8 @@
 const data = {
   "map-1": "#FDE725", "map-2": "#5EC962", "map-3": "#21918C", "map-4": "#3B528B", "map-5": "#440154",
   "map-none": "#E2E8F0",
-  "div-1": "#542788", "div-2": "#998EC3", "div-3": "#D8DAEB", "div-4": "#F7F7F7",
-  "div-5": "#FEE0B6", "div-6": "#F1A340", "div-7": "#B35806",
+  "div-1": "#4B3A7A", "div-2": "#6E5CA3", "div-3": "#C9C0E3", "div-4": "#EFEAE1",
+  "div-5": "#F2D3A8", "div-6": "#E0A35A", "div-7": "#A85A14",
   "on-data-dark": "#12141B", "on-data-light": "#FFFCF7",
 } as const;
 
@@ -26,6 +26,7 @@ export const colors = {
   "status-usual": "#4F5563", "status-usual-soft": "#ECE7DE",
   "status-lower": "#5B4A8B", "status-lower-soft": "#E7E2F2",
   danger: "#A8322A", "danger-soft": "#F9E6E2",
+  "cat-1": "#2E4A7D", "cat-2": "#9C4F3D", "cat-3": "#5F636D", "cat-4": "#8A6A12",
   ...data,
 } as const;
 
@@ -41,6 +42,7 @@ export const darkColors = {
   "status-usual": "#B8B2A7", "status-usual-soft": "#383A3E",
   "status-lower": "#B3A3E6", "status-lower-soft": "#383748",
   danger: "#F08A7E", "danger-soft": "#413337",
+  "cat-1": "#8FB0E8", "cat-2": "#E58E7A", "cat-3": "#A9ADB6", "cat-4": "#C9A53A",
 } as const;
 
 export type ColorToken = keyof typeof colors;
@@ -56,6 +58,7 @@ export const TOKEN_VARS: Record<ColorToken, string> = {
   "status-usual": "--status-usual", "status-usual-soft": "--status-usual-fill",
   "status-lower": "--status-lower", "status-lower-soft": "--status-lower-fill",
   danger: "--danger-notice", "danger-soft": "--danger-notice-fill",
+  "cat-1": "--cat-1", "cat-2": "--cat-2", "cat-3": "--cat-3", "cat-4": "--cat-4",
   "map-1": "--map-1", "map-2": "--map-2", "map-3": "--map-3", "map-4": "--map-4", "map-5": "--map-5",
   "map-none": "--map-none",
   "div-1": "--div-1", "div-2": "--div-2", "div-3": "--div-3", "div-4": "--div-4",
@@ -70,6 +73,9 @@ export const cssColors = Object.fromEntries(
 
 /** Map classes from low to high. "No data" is never one of these: it is map-none, hatched. */
 export const mapScale = [colors["map-1"], colors["map-2"], colors["map-3"], colors["map-4"], colors["map-5"]] as const;
+
+/** Compare mode's categories, in order; never status colours. */
+export const categorical = ["cat-1", "cat-2", "cat-3", "cat-4"] as const;
 
 /** Differences from 0, most below first: the middle class (div-4) is centred on 0. */
 export const divergingScale = [colors["div-1"], colors["div-2"], colors["div-3"], colors["div-4"], colors["div-5"],

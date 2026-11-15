@@ -91,7 +91,7 @@ test.describe("CSV downloads", () => {
   });
 
   test("every chart on ED Trends and the Access Map offers its figures, and the links work", async ({ page, request }) => {
-    for (const [path, count] of [["/ed-trends", 3], ["/access-map", 3]] as const) {
+    for (const [path, count] of [["/ed-trends", 4], ["/access-map", 3]] as const) {
       await page.goto(path);
       const links = page.getByTestId("csv-download");
       await expect(links).toHaveCount(count);   // the Access Map shows its map or its table, not both
@@ -101,6 +101,63 @@ test.describe("CSV downloads", () => {
     }
     await page.goto("/findings");
     await expect(page.getByRole("link", { name: "Download every finding (CSV)" })).toHaveAttribute("href", "/export/findings.csv");
+  });
+
+  test("every chart's CSV starts with # rows for its title, date, source, window and definitions, then the table", async ({ page, request }) => {
+    await page.goto("/ed-trends");
+    const hrefs = await page.getByTestId("csv-download").evaluateAll((els) => els.map((e) => e.getAttribute("href")!));
+    expect(hrefs).toHaveLength(4);
+    for (const href of hrefs) {
+      const res = await request.get(href);
+      expect(res.status(), href).toBe(200);
+      const lines = (await res.text()).split("\r\n");
+      const head = lines.filter((l) => l.startsWith("# "));
+      expect(head.length, href).toBeGreaterThanOrEqual(5);
+      for (const key of ["# data_as_of: ", "# source: ", "# window: ", "# definition: "]) expect(head.some((l) => l.startsWith(key)), `${href} ${key}`).toBe(true);
+      expect(head.find((l) => l.startsWith("# data_as_of: "))).toMatch(/^# data_as_of: \d{4}-\d{2}-\d{2}/);
+      expect(lines[head.length]!.endsWith("data_as_of,source"), href).toBe(true);        // then the column row, ending in the usual two columns
+    }
+  });
+
+  test("the new chart files for Live and Data Quality are CSVs with the same header rows", async ({ request }) => {
+    for (const path of ["/export/live.csv", "/export/quality.csv", "/export/freshness.csv", "/export/ed-coverage.csv", "/export/nuhs-vs-moh.csv"]) {
+      const plain = await (await request.get(path)).text();
+      const withContext = await (await request.get(`${path}?context=1`)).text();
+      expect(plain.startsWith("#"), path).toBe(false);                                    // the plain file is only the table
+      expect(withContext.startsWith("# "), path).toBe(true);
+      expect(withContext.endsWith(plain), path).toBe(true);                               // the same table behind the # rows
+      expect(plain.split("\r\n")[0]!.endsWith("data_as_of,source"), path).toBe(true);
+    }
+  });
+
+  test("every chart's Excel file is a workbook of the same table, with its context on an About sheet", async ({ page, request }) => {
+    await page.goto("/ed-trends");
+    const hrefs = await page.getByTestId("xlsx-download").evaluateAll((els) => els.map((e) => e.getAttribute("href")!));
+    expect(hrefs).toHaveLength(4);
+    for (const href of hrefs) {
+      const res = await request.get(href);
+      expect(res.status(), href).toBe(200);
+      expect(res.headers()["content-type"], href).toContain("spreadsheetml.sheet");
+      expect(res.headers()["content-disposition"], href).toMatch(/^attachment; filename="[a-z-]+-[\w.-]+\.xlsx"$/);
+      const body = await res.body();
+      expect(body.subarray(0, 2).toString(), href).toBe("PK");                            // a zip
+      expect(body.toString("latin1"), href).toContain("xl/worksheets/sheet2.xml");
+    }
+    // The same content as the CSV: the about sheet carries the date, source, window and definitions.
+    const xlsx = (await (await request.get("/export/ed-weekly.csv?weeks=10&context=1&format=xlsx")).body()).toString("latin1");
+    for (const word of ["data_as_of", "source", "window", "definition", "hospital_code", "mean_of_daily_median_wait_hours"]) expect(xlsx).toContain(word);
+  });
+
+  test("copy with caption puts the title, source and a link to the chart on the clipboard", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/live");
+    await page.getByTestId("copy-caption").click();
+    await expect(page.getByTestId("copy-status")).toHaveText("Copied");
+    const text = await page.evaluate(() => navigator.clipboard.readText());
+    const lines = text.split("\n");
+    expect(lines[0]).toBe("NUHS estimates by site");
+    expect(lines[2]).toMatch(/^Data as of 1 Nov 2026 · Source: /);
+    expect(lines[3]).toMatch(/\/live#chart-nuhs-estimates$/);
   });
 
   test("the ED Trends links carry the hospitals chosen on the page", async ({ page }) => {

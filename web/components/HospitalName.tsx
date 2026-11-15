@@ -16,8 +16,10 @@ export function HospitalName({ hospital, inControl = false, quietCode = false }:
   const data = { "data-testid": "hospital-name", "data-hospital": hospital.hospital_code };
   if (inControl) {
     return (
-      <span title={full} {...data}>
-        <span aria-hidden="true">{quietCode ? <>{shortName(hospital)} <span className="font-normal text-tertiary">{hospital.hospital_code}</span></> : label}</span>
+      <span title={full} {...data} className={quietCode ? "hn-box" : undefined}>
+        <span aria-hidden="true" className={quietCode ? "hn-row" : undefined}>
+          {quietCode ? <><span className="hn-name">{shortName(hospital)}</span> <span className="hn-code font-normal text-tertiary">{hospital.hospital_code}</span></> : label}
+        </span>
         <span className="sr-only">{full} ({hospital.hospital_code})</span>
       </span>
     );

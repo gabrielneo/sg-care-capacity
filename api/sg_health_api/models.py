@@ -210,6 +210,20 @@ class Clinic(BaseModel):
     as_of_basis: str
 
 
+class Event(BaseModel):
+    event_date: date
+    label: str = Field(description="As published for a holiday, e.g. 'Chinese New Year'; for a source change, '<hospital> starts in MOH's figures'")
+    kind: str = Field(description="'holiday' (a Singapore public holiday) or 'source_change' (a hospital starts to appear in MOH's figures)")
+    source_sha256: str
+    as_of: datetime
+    as_of_basis: str
+
+
+class EventsResponse(BaseModel):
+    data: list[Event]
+    meta: Meta
+
+
 class Polyclinic(BaseModel):
     polyclinic_name: str
     address: str | None

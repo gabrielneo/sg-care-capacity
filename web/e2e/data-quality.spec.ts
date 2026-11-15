@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
+import { expectProvenanceOnEveryFrame, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 test.describe("Data Quality", () => {
   test("summarises the run and groups results by what a failure does", async ({ page }) => {
@@ -22,7 +22,7 @@ test.describe("Data Quality", () => {
     await warn.getByText(/Show 1 passed checks/).click();
     await expect(warn.locator('tr[data-status="pass"]')).toContainText("freshness.population_15_months");
 
-    await expectAsOfOnEveryCard(page, 3);                                    // the three cards; the four tiles share the one line above
+    await expectProvenanceOnEveryFrame(page, 3);                                    // the three cards; the four tiles share the one line above
     await expect(page.getByTestId("kpi-tile")).toHaveCount(4);
     await expect(page.getByTestId("kpi-tile").getByTestId("provenance-line")).toHaveCount(0);
     await expect(page.getByTestId("provenance-line").first()).toContainText("Data as of");
@@ -45,7 +45,7 @@ test.describe("Data Quality", () => {
   test("lists every source with its freshness", async ({ page }) => {
     await page.goto("/data-quality");
     const table = page.getByTestId("freshness-table");
-    await expect(table.locator("tbody tr")).toHaveCount(7);
+    await expect(table.locator("tbody tr")).toHaveCount(8);                  // the public holidays list is one of them
     await expect(table.locator("tbody tr").filter({ hasText: "Clinics" }).filter({ hasText: "data.gov.sg" }).first()).toContainText("6 Jun 2024");
     await expect(table).toContainText("Latest day reported");                // plain basis, no internal names
     await expect(table).not.toContainText("report_date");

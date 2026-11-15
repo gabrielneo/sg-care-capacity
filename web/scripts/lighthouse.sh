@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Lighthouse CI on the Overview (/), on Lighthouse's default mobile emulation: a mid-range phone
 # (4x CPU slowdown) on a throttled 4G connection. Three runs; the median must meet the budgets in
-# lighthouserc.json: LCP <= 2.5 s, CLS <= 0.01, JavaScript <= 200 kB transferred (gzip).
+# lighthouserc.json: LCP <= 2.5 s (target 2.0 s, a warning), CLS <= 0.01, JavaScript <= 200 kB transferred (gzip).
 #
 # It serves what the e2e tests serve: the real API on its fixture snapshot and the production
 # build. Reports stay on disk (web/.lighthouseci/); nothing is uploaded.
@@ -34,7 +34,7 @@ API_BASE_URL="http://127.0.0.1:$API_PORT" npx next start -p "$WEB_PORT" > "$LOGS
 WEB_PID=$!
 wait_for "http://127.0.0.1:$API_PORT/api/v1/health"
 wait_for "http://127.0.0.1:$WEB_PORT/methodology"
-curl -fsS -o /dev/null "http://127.0.0.1:$WEB_PORT/?view=planner"; curl -fsS -o /dev/null "http://127.0.0.1:$WEB_PORT/"          # warm the API cache, as a visitor after the first would see it
+for u in "?view=planner" findings ed-trends; do curl -fsS -o /dev/null "http://127.0.0.1:$WEB_PORT/$u"; done; curl -fsS -o /dev/null "http://127.0.0.1:$WEB_PORT/"          # warm the API cache, as a visitor after the first would see it
 
 # The Chromium the e2e tests use, unless CHROME_PATH says otherwise. It is Chrome for Testing, which
 # Ubuntu 24.04 (GitHub's runners) won't sandbox, so lighthouserc.json passes --no-sandbox: this only

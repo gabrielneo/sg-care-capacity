@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
+import { expectProvenanceOnEveryFrame, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 test.describe("Live", () => {
   test("labels each reading as a NUHS estimate with its own time", async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe("Live", () => {
     expect(await seen(page.getByRole("note"))).toContain("Estimates from the NUHS public page, not live and not Ministry of Health (MOH) statistics");
     const labels = page.getByTestId("reading-label");
     await expect(labels).toHaveCount(4);
-    const card = (title: RegExp) => page.getByTestId("chart-card").filter({ has: page.getByRole("heading", { name: title }) });
+    const card = (title: RegExp) => page.getByTestId("reading").filter({ has: page.getByRole("heading", { name: title }) });
     const nuh = card(/^National University Hospital: Adult Emergency$/);
     expect(await seen(nuh.getByTestId("reading-label"))).toBe("Estimate from NUHS public page, at 1 Nov 2026, 12:01 pm SGT");
     await expect(nuh).toContainText("18");
@@ -23,10 +23,12 @@ test.describe("Live", () => {
     expect(await seen(ah)).toContain("Estimated wait to see a doctor Under 1 hour Estimated wait for a ward bed (NUHS estimate) 1 hour NUHS lists");
     expect(await seen(card(/Children's Emergency$/))).toContain("ward bed (NUHS estimate) Under 1 hour");
     // One date and source for all the readings (each has its own NUHS time above), not one per card.
-    await expect(page.getByTestId("chart-card")).toHaveCount(4);
-    await expect(page.getByTestId("chart-card").getByTestId("provenance-line")).toHaveCount(0);
+    await expect(page.getByTestId("chart-frame")).toHaveCount(1);
+    await expect(page.getByTestId("reading")).toHaveCount(4);
+    await expect(page.getByTestId("reading").getByTestId("provenance-line")).toHaveCount(0);
     await expect(page.getByTestId("provenance-line")).toHaveCount(1);
     await expect(page.getByTestId("provenance-line")).toContainText("Data as of");
+    await expectProvenanceOnEveryFrame(page, 1);
     await expectNoHorizontalScroll(page);
   });
 

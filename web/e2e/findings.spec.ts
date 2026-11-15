@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-import { expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { expectNoA11yViolations, expectNoHorizontalScroll, expectProvenanceOnEveryFrame } from "./helpers";
 
 const API = "http://127.0.0.1:8791/api/v1";
 const AS_OF = /^Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4} · Source: .+/;
@@ -21,36 +21,56 @@ const plain = (locator: Locator) => locator.evaluate((el) => {
   return (copy.textContent ?? "").replace(/\s+/g, " ").trim();
 });
 
-const animations = (page: Page) => page.evaluate(() => document.getAnimations().map((a) => (a as CSSAnimation).animationName ?? "transition"));
-const scrollToStep = (page: Page, i: number) =>
-  page.getByTestId("story-step").nth(i).evaluate((el) => el.scrollIntoView({ block: "center" }));
 
-test.describe("Findings: the scroll story", () => {
-  test("the first screen says what right-siting and the bed wait mean", async ({ page }) => {
+test.describe("Findings: one band per finding", () => {
+  test("the first screen has the title, one sentence and the data's date, and repeats no number", async ({ page }) => {
     await page.goto("/findings");
+    const hero = page.getByTestId("hero");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Findings from the latest data release");
+    await expect(hero.getByTestId("hero-summary")).toHaveText(/^Three findings on emergency department bed waits/);
+    await expect(hero.getByTestId("provenance-line")).toHaveText(AS_OF);
+    await expect(hero.getByTestId("finding-window")).toHaveText(/^ · This finding uses data to \d{1,2} [A-Z][a-z]{2} \d{4}$/);
+    await expect(hero.getByTestId("freshness-badge")).toContainText(/· weekly · as of 31 Oct 2026$/);
+    // The big number is Finding 1's, once: the old hero callout is gone.
+    await expect(page.getByTestId("hero-number")).toHaveCount(0);
+    await expect(page.getByTestId("countup")).toHaveCount(0);
     expect(await plain(page.getByTestId("site-purpose"))).toBe("Right-siting care means treating people in the most suitable place, "
       + "such as a general practitioner (GP) clinic rather than a hospital, when it is safe to do so. "
       + "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.");
-    await expect(page.getByTestId("hero-bed-wait")).toBeInViewport();
-    expect(await plain(page.getByTestId("hero-bed-wait"))).toMatch(/It is not the time to see a doctor\.$/);
   });
 
-  test("the hero number is the top insight's key number, from the API", async ({ page }) => {
-    const [top] = await headline(page);
+  test("the bed wait is defined in the findings section, and is not the time to see a doctor", async ({ page }) => {
     await page.goto("/findings");
-    const number = page.getByTestId("countup");
-    await expect(number).toHaveAttribute("data-value", top!.display.value_text);
-    expect(await number.locator(".countup-digits").textContent()).toBe(top!.display.value_text);
-    await expect(number.locator(".sr-only")).toHaveText(`${top!.display.value_text} ${top!.display.unit_text}`);
-    expect(await plain(page.getByRole("heading", { level: 1 }))).toBe(top!.headline);
-    await expect(page.getByTestId("hero").getByTestId("provenance-line")).toHaveText(AS_OF);
-    // The source's own date and badge; the finding's window is stated separately (audit M-1).
-    const hero = page.getByTestId("hero");
-    await expect(hero.getByTestId("finding-window")).toHaveText(/^ · This finding uses data to \d{1,2} [A-Z][a-z]{2} \d{4}$/);
-    // (Checked by date, not by colour: the colour depends on the day the test runs.)
-    // The badge shows its cadence and MOH's own date, not the window's end (25 Oct) or the release date.
-    await expect(hero.getByTestId("freshness-badge")).toContainText(/· weekly · as of 31 Oct 2026$/);
-    await expect(page.getByTestId("hero").locator("[data-level]")).toBeVisible();          // the freshness badge
+    expect(await plain(page.getByTestId("bed-wait-explainer"))).toMatch(/not the time to see a doctor/i);
+  });
+
+  test("three bands, in the API's rank order, each with its headline and key number", async ({ page }) => {
+    const steps = await headline(page);
+    await page.goto("/findings");
+    const bands = page.getByTestId("finding-band");
+    await expect(bands).toHaveCount(3);
+    for (let i = 0; i < 3; i++) {
+      expect(await plain(bands.nth(i).getByTestId("step-headline"))).toBe(steps[i]!.headline);
+      await expect(bands.nth(i).getByTestId("delta-number")).toContainText(steps[i]!.display.value_text);
+      await expect(bands.nth(i).getByTestId("chart-frame")).toHaveCount(1);
+    }
+    // Chapters alternate band and page.
+    const tones = await page.locator("[data-testid=findings] [data-testid=section]").evaluateAll((els) => els.map((e) => e.getAttribute("data-tone")));
+    expect(tones).toEqual(["band", "page", "band"]);
+  });
+
+  test("text left, chart right from 1024px; stacked below", async ({ page }, info) => {
+    await page.goto("/findings");
+    const band = page.getByTestId("finding-band").first();
+    const text = await band.getByTestId("step-headline").boundingBox();
+    const chart = await band.getByTestId("chart-frame").boundingBox();
+    if (info.project.name === "mobile-375") {
+      expect(chart!.y).toBeGreaterThan(text!.y);
+      expect(Math.abs(chart!.x - text!.x)).toBeLessThan(2);
+    } else {
+      expect(chart!.x).toBeGreaterThan(text!.x + text!.width - 1);
+      expect(chart!.width).toBeGreaterThan(text!.width);        // 7/12 against 5/12
+    }
   });
 
   test("every finding says how strong its evidence is, with n and a 95% range where there is one (B1, B3)", async ({ page }) => {
@@ -58,105 +78,62 @@ test.describe("Findings: the scroll story", () => {
     const lines = page.getByTestId("step-evidence");
     expect(await lines.count()).toBeGreaterThan(0);
     for (const line of await lines.all()) {
-      await expect(line).toHaveText(/^(Observed, not tested|Tested|Tested, with a 95% range that excludes no difference|An association only \(tested\)) · n = [\d,]+ \w/);
+      await expect(line.getByTestId("evidence-chip")).toBeVisible();
+      await expect(line).toContainText(/n = [\d,]+ \w/);
     }
-    // The fixture's top finding is robust, with its interval in hours.
+    await expect(lines.first().getByTestId("evidence-chip")).toHaveAttribute("data-level", "robust");
     await expect(lines.first()).toContainText("95% range 4.6 to 5.4 hours");
     for (const detail of await page.getByTestId("step-detail").all()) {
       await expect(detail).not.toContainText("rarely by chance");
     }
   });
 
-  test("a finding's warnings are only those on the data it uses (audit L-7)", async ({ page }) => {
-    // The fixture has one MOH bed-wait warning and one clinic-list error; ED findings show only the first.
+  test("each band has a one-line method, a quiet caveat and a closed drawer", async ({ page }) => {
     await page.goto("/findings");
-    const ed = page.getByTestId("hero");
+    const band = page.getByTestId("finding-band").nth(1);
+    await expect(band.getByTestId("finding-method")).toContainText("Method:");
+    const caveat = band.getByTestId("finding-caveat");
+    await expect(caveat).toContainText("One unusual week is not a trend.");
+    await expect(caveat).not.toHaveAttribute("role", "alert");
+    const drawer = band.getByTestId("finding-more");
+    await expect(drawer).not.toHaveAttribute("open", "");
+    await drawer.locator("summary").click();
+    await expect(drawer.getByTestId("finding-window-range")).toBeVisible();
+    await expect(band.getByTestId("who-acts")).toHaveCount(0);                              // the site analyses; planners decide (W3)
+  });
+
+  test("a finding's change is an arrow, a word and a colour (a longer wait is worse; neutral has no colour)", async ({ page }) => {
+    await page.goto("/findings");
+    const second = page.getByTestId("finding-band").nth(1);
+    await expect(second.getByTestId("delta-change")).toContainText("▲ higher than usual");
+    await expect(second.getByTestId("delta-change")).toHaveClass(/text-status-much/);
+    await expect(page.getByTestId("finding-band").first().getByTestId("delta-change")).toHaveClass(/text-ink/);
+  });
+
+  test("a finding's warnings are only those on the data it uses (audit L-7)", async ({ page }) => {
+    await page.goto("/findings");
     await expect(page.getByText(/data-quality warnings? appl/).first()).toBeAttached();
     for (const t of await page.getByText(/data-quality warnings? appl/).allTextContents()) {
       expect(t).toMatch(/^1 data-quality warning applies/);
     }
-    await expect(ed).toBeVisible();
   });
 
-  test("without JavaScript the final number is already in the HTML", async ({ browser }) => {
-    const context = await browser.newContext({ javaScriptEnabled: false });
-    const page = await context.newPage();
-    const [top] = await headline(page);
+  test("the findings' date and source are stated once for the section, and every chart is covered by it (review N1)", async ({ page }) => {
     await page.goto("/findings");
-    await expect(page.getByTestId("countup")).toHaveAttribute("data-value", top!.display.value_text);
-    expect(await page.getByTestId("countup").locator(".countup-digits").textContent()).toBe(top!.display.value_text);
-    await expect(page.getByTestId("story-step")).toHaveCount(3);
-    await context.close();
-  });
-
-  test("the three steps switch the chart panel's state", async ({ page }, info) => {
-    test.skip(info.project.name !== "desktop", "the sticky panel is desktop only; phones show each chart under its step");
-    const steps = await headline(page);
-    await page.goto("/findings");
-    const charts = page.getByTestId("story-chart");
-    await expect(charts).toHaveCount(3);
+    const section = page.getByTestId("findings");
+    const cards = section.getByTestId("chart-frame");
+    await expect(cards).toHaveCount(3);
+    await expect(section.getByTestId("section-meta").getByTestId("provenance-line")).toHaveText(AS_OF);
+    await expect(section.getByTestId("section-meta").getByTestId("provenance-line")).toBeVisible();
+    await expect(section.getByTestId("section-meta").getByTestId("freshness-badge")).toBeVisible();
     for (let i = 0; i < 3; i++) {
-      await scrollToStep(page, i);
-      await expect(page.getByTestId("scrolly")).toHaveAttribute("data-active", String(i));
-      for (let j = 0; j < 3; j++) await expect(charts.nth(j)).toHaveAttribute("data-current", String(i === j));
-      await expect(charts.nth(i)).toHaveCSS("opacity", "1");
-      await expect(charts.nth(i).getByTestId("chart-callout")).toBeVisible();
-      expect(await plain(page.getByTestId("story-step").nth(i).getByTestId("step-headline"))).toBe(steps[i]!.headline);
+      await expect(cards.nth(i)).toHaveAttribute("data-provenance", "section");
+      await expect(cards.nth(i).getByTestId("provenance-line")).toHaveCount(0);
+      await expect(cards.nth(i).getByTestId("freshness-badge")).toHaveCount(0);
     }
-  });
-
-  test("with reduced motion, nothing animates", async ({ browser }, info) => {
-    const context = await browser.newContext({ reducedMotion: "reduce", viewport: info.project.use.viewport ?? undefined });
-    const page = await context.newPage();
-    await page.goto("/findings");
-    await expect(page.getByTestId("story-step").first()).toBeVisible();
-    expect(await animations(page)).toEqual([]);
-    for (let i = 0; i < 3; i++) {
-      await scrollToStep(page, i);
-      if (info.project.name === "desktop") {
-        await expect(page.getByTestId("story-chart").nth(i)).toHaveAttribute("data-current", "true");
-        await expect(page.getByTestId("story-chart").nth(i)).toHaveCSS("opacity", "1");     // instantly
-      }
-      expect(await animations(page)).toEqual([]);
-    }
-    await page.getByTestId("why-now").scrollIntoViewIfNeeded();
-    await expect(page.getByTestId("highlight")).toHaveAttribute("data-state", "drawn");
-    expect(await animations(page)).toEqual([]);
-    await context.close();
-  });
-
-  test("with motion allowed, the hero counts up (so the reduced-motion test means something)", async ({ page }) => {
-    await page.goto("/findings");
-    await expect(page.getByTestId("countup")).toBeVisible();
-    expect(await animations(page)).toContain("countup-roll");
-  });
-
-  test("every chart shows Data as of and its source", async ({ page }, info) => {
-    await page.goto("/findings");
-    const cards = page.getByTestId("findings").getByTestId("chart-card");
-    await expect(cards).toHaveCount(6);                                   // each chart twice: under its step and in the panel
-    for (let i = 0; i < 6; i++) await expect(cards.nth(i).getByTestId("provenance-line")).toHaveText(AS_OF);
-    // The ones a reader can see at this width show it visibly.
-    const visible = info.project.name === "desktop" ? page.locator(".story-panel [data-testid=chart-card]")
-                                                   : page.locator(".story-inline [data-testid=chart-card]");
-    for (let i = 0; i < 3; i++) {
-      await scrollToStep(page, i);
-      await expect(visible.nth(i).getByTestId("provenance-line")).toBeVisible();
-    }
+    await expectProvenanceOnEveryFrame(page);
+    await expect(section.getByText(/^Data as of/)).toHaveCount(1);
     await expect(page.getByTestId("why-now").getByTestId("provenance-line")).toHaveText(/^Data as of 30 Jun 2026 · Source: SingStat/);
-  });
-
-  test("each step has its headline, key number, detail and caveat, and suggests no action", async ({ page }) => {
-    const steps = await headline(page);
-    await page.goto("/findings");
-    const step = page.getByTestId("story-step").nth(1);
-    await expect(step.getByTestId("delta-number")).toContainText(steps[1]!.display.value_text);
-    await expect(step.getByTestId("delta-change")).toContainText("▲ higher than usual");
-    await expect(step.getByTestId("delta-change")).toHaveClass(/text-status-much/);                // a longer wait is worse
-    await expect(step.locator("[data-testid=step-detail]")).not.toBeEmpty();
-    await expect(step.getByText("One unusual week is not a trend.")).toBeVisible();
-    await expect(step.getByTestId("who-acts")).toHaveCount(0);                              // the site analyses; planners decide (W3)
-    await expect(page.getByTestId("story-step").first().getByTestId("delta-change")).toHaveClass(/text-ink/);  // neutral: no colour
   });
 
   test("why now: one year of population data is one figure, no trend", async ({ page }) => {
@@ -169,15 +146,16 @@ test.describe("Findings: the scroll story", () => {
     await expect(why.locator('[data-term="super_aged"]')).toBeVisible();
   });
 
-  test("the limits are the case study's own list", async ({ page }) => {
+  test("the limits are the case study's own list, as three calm cards", async ({ page }) => {
     const md = readFileSync(path.resolve(__dirname, "../../docs/case_study.md"), "utf8");
     const after = md.slice(md.indexOf("**What the data can't show**"));
     const items = [...after.matchAll(/^- (.+)$/gm)].slice(0, 3).map((m) => m[1]!);
     await page.goto("/findings");
-    const rendered = page.getByTestId("limits").getByRole("listitem");
-    await expect(rendered).toHaveCount(3);
+    const cards = page.getByTestId("limit-card");
+    await expect(cards).toHaveCount(3);
     for (let i = 0; i < 3; i++) {
-      expect((await plain(rendered.nth(i))).replace(/Emergency Department \(ED\)/g, "ED")).toBe(items[i]);
+      const text = (await plain(cards.nth(i))).replace(/^\d/, "").replace(/Emergency Department \(ED\)/g, "ED");
+      expect(text.toLowerCase()).toBe(items[i]!.replace(/[;.]$/, "").toLowerCase());
     }
   });
 
@@ -191,20 +169,9 @@ test.describe("Findings: the scroll story", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 
-  test("works at this width: no sideways scrolling, and the right chart layout", async ({ page }, info) => {
+  test("works at this width: no sideways scrolling", async ({ page }) => {
     await page.goto("/findings");
     await expectNoHorizontalScroll(page);
-    if (info.project.name === "mobile-375") {
-      await expect(page.getByTestId("story-panel")).toBeHidden();
-      for (let i = 0; i < 3; i++) await expect(page.locator(".story-inline").nth(i)).toBeVisible();
-    } else {
-      await expect(page.getByTestId("story-panel")).toBeVisible();
-      await expect(page.locator(".story-inline").first()).toBeHidden();
-    }
-    for (let i = 0; i < 3; i++) {
-      await scrollToStep(page, i);
-      await expectNoHorizontalScroll(page);
-    }
   });
 
   test("no sideways scrolling with a wider font, as Linux's fallback font is", async ({ page }) => {
@@ -217,25 +184,6 @@ test.describe("Findings: the scroll story", () => {
     await page.goto("/findings");
     await expect(page.getByTestId("why-now")).toBeVisible();
     await expectNoHorizontalScroll(page);
-  });
-
-  test("no layout shift from the count-up", async ({ page }) => {
-    await page.goto("/findings");
-    await expect(page.getByTestId("countup")).toBeVisible();
-    const box = async () => page.getByTestId("hero-number").boundingBox();
-    const first = await box();
-    await page.waitForTimeout(700);                                                         // after the 600 ms roll
-    expect(await box()).toEqual(first);
-    const shift = await page.evaluate(() => new Promise<number>((resolve) => {
-      let total = 0;
-      new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) {
-          if (!e.hadRecentInput) total += e.value;
-        }
-      }).observe({ type: "layout-shift", buffered: true });
-      setTimeout(() => resolve(total), 100);
-    }));
-    expect(shift).toBeLessThan(0.01);
   });
 
   test("passes axe WCAG 2.1 AA checks", async ({ page }) => {

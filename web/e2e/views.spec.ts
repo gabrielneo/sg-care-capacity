@@ -16,14 +16,14 @@ const SECTIONS: Record<string, View[]> = {
   "home-hero": ["public", "planner", "analyst"],
   "clinic-finder": ["public"],
   "summary-strip": ["planner", "analyst"],
-  "what-changed": ["planner", "analyst"],
+  "what-changed": ["analyst"],
   "ed-near": ["public"],
   "status-grid": ["planner", "analyst"],
   "map-section": ["public"],
   "takeaways": ["planner", "analyst"],
   "week-pattern": ["analyst"],
-  "analyst-links": ["public", "planner", "analyst"],
-  "methods": ["public", "planner", "analyst"],
+  "analyst-links": ["analyst"],
+  "methods": ["public", "analyst"],
 };
 
 const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 768;
@@ -139,7 +139,7 @@ test.describe("Home views", () => {
     await expect(tile("above").getByTestId("above-unknown")).toHaveText("1 with no comparison.");
     await expect(strip.getByTestId("summary-ucc-note")).toContainText("The urgent care centre is left out of these four figures.");
     await expect(tile("change")).toContainText("+25%");
-    await expect(tile("change")).toContainText("Biggest change vs usual (previous 8 complete weeks)");
+    await expect(tile("change")).toContainText("Biggest change vs the 8-week usual");
     // Short name and code on the tile; the full name in its tooltip (audit G4).
     await expect(tile("change").getByTestId("hospital-name")).toContainText("Singapore General (SGH)");
     await expect(tile("middle")).toContainText("Needs 3+ emergency departments");   // 2 full EDs here: no middle value, said so
@@ -207,7 +207,7 @@ test.describe("Home views", () => {
   });
 
   test("analyst: the statistics are open, with links to Data Quality and Methodology", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/?view=analyst#section-methods");   // below 768px the methods are an accordion; the fragment opens it
     const links = page.getByTestId("analyst-links");
     await expect(links.getByRole("link", { name: "Data quality" })).toHaveAttribute("href", "/data-quality");
     await expect(links.getByRole("link", { name: "Methodology" })).toHaveAttribute("href", "/methodology");
@@ -217,12 +217,12 @@ test.describe("Home views", () => {
     await expect(page.getByTestId("methods-findings").locator("> li")).toHaveCount(shown);
     if (shown) await expect(page.getByText("Chance of this by luck (adjusted p)").first()).toBeVisible();
 
-    // Planner and public keep the definitions, closed, without the statistics.
-    for (const url of ["/?view=planner", "/"]) {
-      await page.goto(url);
-      await expect(page.getByTestId("methods-drawer")).not.toHaveAttribute("open", "");
-      await expect(page.getByTestId("methods-findings")).toHaveCount(0);
-    }
+    // Public keeps the short "About these numbers", closed, without the statistics; Planner has no methods (it links to Analyst).
+    await page.goto("/");
+    await expect(page.getByTestId("methods-drawer")).not.toHaveAttribute("open", "");
+    await expect(page.getByTestId("methods-findings")).toHaveCount(0);
+    await page.goto("/?view=planner");
+    await expect(page.getByTestId("methods")).toHaveCount(0);
   });
 
   test("the view is in the URL: it survives a reload, and back and forward", async ({ page }) => {

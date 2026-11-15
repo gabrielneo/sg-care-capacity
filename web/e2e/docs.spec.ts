@@ -11,7 +11,10 @@ test.describe("Methodology", () => {
       await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
     }
     await expect(page.getByRole("heading", { level: 3, name: "marts.fct_ed_daily" })).toBeVisible();   // from the data dictionary
-    await page.getByRole("navigation", { name: "On this page" }).getByRole("link", { name: "What this data can't tell you" }).click();
+    // From 1024px the sticky "On this page" list; below it a "Jump to section" menu with the same links.
+    const wide = (page.viewportSize()?.width ?? 1280) >= 1024;
+    if (!wide) await page.getByTestId("jump-menu").locator("summary").click();
+    await (wide ? page.getByRole("navigation", { name: "On this page" }) : page.getByTestId("jump-menu")).getByRole("link", { name: "What this data can't tell you" }).click();
     await expect(page).toHaveURL(/#what-this-data-cant-tell-you$/);
     await expectNoHorizontalScroll(page);
   });

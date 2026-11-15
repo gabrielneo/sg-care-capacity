@@ -15,6 +15,7 @@ export type Hospital = Schemas["Hospital"];
 export type EdDay = Schemas["EdDay"];
 export type EdWeek = Schemas["EdWeek"];
 export type EdSummary = Schemas["EdSummary"];
+export type ApiEvent = Schemas["Event"];
 export type Clinic = Schemas["Clinic"];
 export type Polyclinic = Schemas["Polyclinic"];
 export type ClinicPage = Schemas["ClinicPage"];

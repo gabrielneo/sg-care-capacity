@@ -1,21 +1,69 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://127.0.0.1:3320/", "http://127.0.0.1:3320/?view=planner"],
+      "url": [
+        "http://127.0.0.1:3320/",
+        "http://127.0.0.1:3320/?view=planner",
+        "http://127.0.0.1:3320/findings",
+        "http://127.0.0.1:3320/ed-trends"
+      ],
       "numberOfRuns": 3,
       "settings": {
-        "onlyCategories": ["performance"],
+        "onlyCategories": [
+          "performance"
+        ],
         "chromeFlags": "--no-sandbox --disable-dev-shm-usage",
-        "skipAudits": ["uses-http2", "redirects-http"]
+        "skipAudits": [
+          "uses-http2",
+          "redirects-http"
+        ]
       }
     },
     "assert": {
-      "assertions": {
-        "largest-contentful-paint": ["error", { "maxNumericValue": 2500, "aggregationMethod": "median-run" }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.01, "aggregationMethod": "median-run" }],
-        "resource-summary:script:size": ["error", { "maxNumericValue": 200000, "aggregationMethod": "median-run" }]
-      }
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "largest-contentful-paint": [
+              "error",
+              {
+                "maxNumericValue": 2500,
+                "aggregationMethod": "median-run"
+              }
+            ],
+            "cumulative-layout-shift": [
+              "error",
+              {
+                "maxNumericValue": 0.01,
+                "aggregationMethod": "median-run"
+              }
+            ],
+            "resource-summary:script:size": [
+              "error",
+              {
+                "maxNumericValue": 200000,
+                "aggregationMethod": "median-run"
+              }
+            ]
+          }
+        },
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "largest-contentful-paint": [
+              "warn",
+              {
+                "maxNumericValue": 2000,
+                "aggregationMethod": "median-run"
+              }
+            ]
+          }
+        }
+      ]
     },
-    "upload": { "target": "filesystem", "outputDir": ".lighthouseci" }
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
   }
 }

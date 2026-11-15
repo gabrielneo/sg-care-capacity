@@ -109,6 +109,11 @@ CHAS_V2 = chas_geojson([("15M0211", "JOO KOON CLINIC", "CHAS,CDMP")])          #
 ANNUAL_AE_CSV = (b"year,level_1,value\n2023,Accident & Emergency Departments,1050400.0\n"
                  b"2023,Polyclinics,5000000.0\n2022,Accident & Emergency Departments,1023000.0\n")
 ANNUAL_AE_DOWNLOAD = "https://s3.example.com/annual.csv"
+# Same columns as MOM's consolidated list on data.gov.sg: date, day, holiday. Eight days, the least a year may have.
+HOLIDAYS_CSV = (b"date,day,holiday\n2026-01-01,Thursday,New Year\xe2\x80\x99s Day\n2026-02-17,Tuesday,Chinese New Year\n"
+                b"2026-02-18,Wednesday,Chinese New Year\n2026-03-21,Saturday,Hari Raya Puasa\n2026-04-03,Friday,Good Friday\n"
+                b"2026-05-01,Friday,Labour Day\n2026-08-09,Sunday,National Day\n2026-12-25,Friday,Christmas Day\n")
+HOLIDAYS_DOWNLOAD = f"https://s3.example.com/blobs.data.gov.sg/{config.DATAGOV_DATASETS['public_holidays']}.csv"
 
 
 def singstat_residents_zip(rows=None, columns=("PA", "SZ", "AG", "Sex", "TOD", "Pop", "Time")) -> bytes:
@@ -187,13 +192,17 @@ def source_routes(chas: bytes = CHAS_V1) -> dict[str, tuple[bytes, str]]:
         poll.format(config.DATAGOV_DATASETS["polyclinics"]):
             (json.dumps({"data": {"url": POLYCLINICS_DOWNLOAD}}).encode(), JSON),
         POLYCLINICS_DOWNLOAD: (POLYCLINICS, "application/geo+json"),
+        poll.format(config.DATAGOV_DATASETS["public_holidays"]):
+            (json.dumps({"data": {"url": HOLIDAYS_DOWNLOAD}}).encode(), JSON),
+        HOLIDAYS_DOWNLOAD: (HOLIDAYS_CSV, "text/csv"),
         **{config.DATAGOV_METADATA_URL.format(dataset_id=ds): (json.dumps({"code": 0, "data": {
             "datasetId": ds, "name": name, "managedBy": "Ministry of Health",
             "lastUpdatedAt": updated}}).encode(), JSON)
            for ds, name, updated in [(config.DATAGOV_DATASETS["chas"], "CHAS Clinics", "2024-06-06T14:36:42+08:00"),
                                      (config.DATAGOV_DATASETS["annual_ae"], "Annual", "2026-10-28T08:54:55+08:00"),
                                      (config.DATAGOV_DATASETS["planning_areas"], "MP2025 PA", "2026-02-27T10:07:02+08:00"),
-                                     (config.DATAGOV_DATASETS["polyclinics"], "Cervical Screening Centre", "2026-01-04T10:00:00+08:00")]},
+                                     (config.DATAGOV_DATASETS["polyclinics"], "Cervical Screening Centre", "2026-01-04T10:00:00+08:00"),
+                                     (config.DATAGOV_DATASETS["public_holidays"], "Singapore Public Holidays", "2026-07-03T16:04:00+08:00")]},
         config.SINGSTAT_RESIDENTS_URL: (SINGSTAT_ZIP, "application/zip"),
     }
 

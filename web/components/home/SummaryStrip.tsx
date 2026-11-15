@@ -92,12 +92,14 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
         </Tile>
         <Tile id="longest">
           <KpiTile dense provenance={false} href={cardHref(longest?.code)} hrefHint="Show its hospital card" label="Longest bed wait" value={longest?.latest ?? null} unit="h" format={hours} meta={meta}
-                   detail={longest ? <>{name(longest.code)}.{longestAdultsOnly ? " Adult emergency department only." : ""}</> : "No emergency department has a complete week of figures."} />
+                   detail={longest ? <>{name(longest.code)}{longestAdultsOnly ? <span className="block">Adult emergency department only.</span> : null}</> : "No emergency department has a complete week of figures."} />
         </Tile>
         <Tile id="change">
-          <KpiTile dense provenance={false} href={cardHref(change?.code)} hrefHint="Show its hospital card" label={`Biggest change ${formatWindow({ kind: "usual" })}`} value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
+          {/* The name is a label, not a sentence: no full stop, which could wrap onto a line of its own after the name's tooltip (review N11).
+              "the 8-week usual" names the window in two lines; "vs usual (previous 8 complete weeks)" took three at four columns. */}
+          <KpiTile dense provenance={false} href={cardHref(change?.code)} hrefHint="Show its hospital card" label={<>Biggest change vs the <span className="whitespace-nowrap">{USUAL_WEEKS}-week usual</span></>} value={change?.pct ?? null} format={(v) => formatDelta(v)?.spoken ?? ""}
                    meta={meta}
-                   detail={change ? <>{name(change.code)}.</> : "No emergency department has enough complete weeks to compare."} />
+                   detail={change ? name(change.code) : "No emergency department has enough complete weeks to compare."} />
         </Tile>
         <Tile id="middle">
           <KpiTile dense provenance={false} href={hospitalsHref} hrefHint="Show the hospital cards" label="Typical bed wait across emergency departments" value={middleNow} unit="h" format={hours}

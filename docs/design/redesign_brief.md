@@ -133,7 +133,35 @@ change that depends on it.
   them installed sees them. Everyone else gets system-ui and Iowan Old Style / Georgia. Revisit if the budget is relaxed or the pages get lighter.
 5. **Section header and tile names.** Settled 2026-11-15: every home-page data section states its window, source and date once, in
    `SectionHeader`, as "Data as of {date}" (the wording of `docs/language_rules.md` Rule 6; the UI-metrics count and the section test
-   also accept "Data to"). The summary tiles are named "Emergency departments above usual", "Longest bed wait", "Biggest change vs usual"
-   (still up or down: the data dictionary's definition is unchanged) and "Typical bed wait across emergency departments". "Busier" is
+   also accept "Data to"). The summary tiles are named "Emergency departments above usual", "Longest bed wait", "Biggest change vs the 8-week usual"
+   (renamed 2026-11-16 from "Biggest change vs usual (previous 8 complete weeks)", which took three lines at four columns; still up or
+   down: the data dictionary's definition is unchanged) and "Typical bed wait across emergency departments". "Busier" is
    not used (decision 3). The urgent care centre stays out of all four, with the one line under the tiles saying so.
 
+
+## Charts (2026-11-15)
+
+- **Diverging ramp (heatmap).** `--div-1…7` is now `#4B3A7A #6E5CA3 #C9C0E3 #EFEAE1 #F2D3A8 #E0A35A #A85A14`: violet (shorter) through a warm neutral to orange (longer).
+  Two of the brief's seven colours, `#7E6CB0` and `#B5651D`, reach only 4.4:1 and 4.2:1 with either label colour, so they became `#6E5CA3` and `#A85A14`.
+  Each cell takes whichever of the two label colours has more contrast (`textOn`); `lib/chartColors.test.ts` checks every bin reaches 4.5:1.
+  The data scales are the same in both themes, as before. Every cell carries a 1px `--border-subtle` edge, because the neutral bin is 1.07:1 against the page.
+- **Categories (compare mode, at most four).** `--cat-1…4`: ink blue `#2E4A7D`, rust `#9C4F3D`, slate `#5F636D`, ochre `#8A6A12`; lighter in the dark theme.
+  Ink blue is the one case where the interface accent is also data (decision 4's rule stays: it never means a status).
+  The brief's olive `#6B6F2A` failed the colour-blind check (ΔE 7 from rust under deuteranopia, 10 from slate under tritanopia), so it became ochre.
+  `lib/chartColors.test.ts` simulates protanopia, deuteranopia and tritanopia and requires ΔE ≥ 15 for every pair, and no category is a status colour.
+- **Chart frame.** `ChartFrame` is the one frame for every chart; `ChartCard` is retired (2026-11-15) and `test/no-chartcard.test.ts` plus an ESLint
+  `no-restricted-imports` rule fail if it comes back. Every frame has a required `summary` (read by screen readers, not shown), a required `csv`, and a
+  required `table` choice: the figures behind "Show as table", `"self"` when the chart already is a table, or `{ href }` when the table is another view (the maps).
+  - **Provenance.** A frame shows its own "Data as of … · Source: …" line. Under a `SectionHeader`, `section={meta}` makes it inherit that section's line when the
+    date and sources are the same (`lib/sectionMeta.ts`); if they differ it shows its own. `data-provenance="own|section"` says which. A frame whose meta has no
+    usable date or source is not drawn, and warns in development. `e2e/helpers.ts` `expectProvenanceOnEveryFrame` fails a page where a chart has neither.
+  - **States.** `state="empty"` ("No data for this period"), `state="error"` (a calm message and a "Try again" link, `retryHref`), and the freshness pill. The loading skeleton
+    (`ChartFrameSkeleton`) is hidden for the first second by a CSS delay (`delay-show`), so a fast load never flashes it.
+  - **CSV.** Each chart's CSV starts with `#` lines for its title, `data_as_of`, `source`, `window` and `definition`s, then the table (`?context=1`; `lib/exportRoutes.ts`
+    `csvBody`). New files: `live.csv`, `quality.csv`, `freshness.csv`, `ed-coverage.csv`, `nuhs-vs-moh.csv`.
+    The same table is an Excel workbook with `&format=xlsx` ("About" and "Data" sheets; `lib/xlsx.ts` writes it, no dependency, no formulas). "Copy with caption" is a small client
+    component (`CopyCaption`) that copies the title, summary, date, source and a link as text.
+  - **Dropped on purpose.** `provenance={false}`: a chart could be left with no date at all. `/live` is now one frame, "NUHS estimates by site", with the readings inside it as plain
+    articles (one date and source, one table, one CSV) instead of four charts. The `chart-card` test id is now `chart-frame`.
+- **Main series** are `--text-primary` at 2px; the all-hospital band is `--bg-sunken` with a `--border-subtle` edge; missing days are hatched, never filled.
+- **Event annotations.** The chart supports them (`lib/annotations.ts`, vertical rules and a key) but draws none yet: there is no events table. See the open question on public holidays.

@@ -27,7 +27,9 @@ export function levelSplitLede(counts: Record<Level, number>): string | null {
 }
 
 /** How many hospitals changed badge since the week before. */
-export function changesLede(moved: number, unchanged: number): string {
+export function changesLede(moved: number, unchanged: number, higher: number | null = null): string {
+  // A calm, positive result, not an empty card: no badge moved and none is higher than usual (UX audit E-series).
+  if (moved === 0 && higher === 0) return "No emergency department had a longer bed wait than usual in the latest complete week.";
   if (moved === 0) return "No hospital changed its badge since the week before.";
   const total = moved + unchanged;
   return `${moved} of ${total} ${count(total, "hospital", "hospitals")} changed badge since the week before.`;

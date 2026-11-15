@@ -30,7 +30,7 @@ STEP_SOURCES = {
     "moh": ("moh_bed_waits", "moh_ed_attendances"),
     "live": ("nuhs_live",),
     "opendata": ("datagov_chas", "datagov_annual_ae", "datagov_planning_areas", "datagov_polyclinics",
-                 "datagov_metadata"),
+                 "datagov_public_holidays", "datagov_metadata"),
     "singstat": ("singstat_residents",),
 }
 

@@ -14,7 +14,7 @@ import type { Density } from "@/lib/homeViews";
  *   other medical advice. Then the page's heading and what the site is for.
  * - Simple (Planner, Analyst): the heading, then one compact line (components/Notice995.tsx). The Analyst and Planner views have no CV or LinkedIn line.
  */
-export function HomeNotice({ density = "full" }: { density?: Density }) {
+export function HomeNotice({ density = "full", printHref }: { density?: Density; printHref?: string }) {
   const full = density === "full";
   const notAdvice = (
     <p className={`${full ? "mt-2 text-small text-ink sm:mt-3 sm:text-body" : "text-small text-muted"} max-w-prose`} data-testid="not-advice">
@@ -57,6 +57,11 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
       </h1>
       <Notice995 variant="compact" className="mt-2" />
       <Prose size="small" tone="muted" className="mt-2" data-testid="bed-wait-definition"><Glossed text={BED_WAIT_INTRO} /></Prose>
+      {printHref ? (
+        <p className="print-hide mt-2 text-small">
+          <a href={printHref} data-testid="print-summary-link" className="inline-flex min-h-11 items-center">Print summary</a>
+        </p>
+      ) : null}
       {/* The end of the page's intro: the sticky status strip appears once this has scrolled out of view (components/SiteStrip.tsx). */}
       <div data-strip-sentinel="" aria-hidden="true" />
     </section>

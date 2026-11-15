@@ -16,6 +16,9 @@ from ..models import (
     EdSummaryResponse,
     EdWeek,
     EdWeeklyResponse,
+    ErrorResponse,
+    Event,
+    EventsResponse,
     Hospital,
     HospitalsResponse,
     WeekRef,
@@ -135,6 +138,45 @@ def ed_daily(
                                                           "rows": len(rows),
                                                           "latest_published_day": latest.isoformat() if latest else None}),
                       caveats=ctx.metric_caveats("fct_ed_daily.") + hospital_caveats(ctx, codes), tables=MOH_TABLES))
+
+
+EVENTS_SQL = """
+    SELECT event_date, label, kind, source_sha256, as_of, as_of_basis
+    FROM marts.dim_event WHERE event_date BETWEEN ? AND ? ORDER BY event_date, kind, label
+"""
+HAS_EVENTS_SQL = """
+    SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' AND table_name = 'dim_event'
+"""
+EVENT_SOURCES = ("datagov_public_holidays",)
+
+
+@router.get("/events", response_model=EventsResponse,
+            responses={404: {"model": ErrorResponse, "description": "This data release has no event list"}},
+            summary="Dated events that charts mark: public holidays, and hospitals that start part-way through the series")
+def events(
+    ctx: Context = Depends(get_ctx),
+    from_: date | None = Query(None, alias="from", description=f"First day (YYYY-MM-DD). Default: {DEFAULT_DAYS} days before `to`"),
+    to: date | None = Query(None, description="Last day (YYYY-MM-DD). Default: the latest day MOH has published"),
+) -> EventsResponse:
+    to = to or static(ctx, "latest_day", LATEST_DAY_SQL) or date.today()
+    from_ = from_ or to - timedelta(days=DEFAULT_DAYS - 1)
+    if from_ > to:
+        raise ApiError(400, "invalid_range", f"from ({from_}) is after to ({to})", "from")
+    if to >= add_years(from_, MAX_YEARS):
+        raise ApiError(400, "range_too_long", f"from and to may be at most {MAX_YEARS} years apart", "to")
+    if "has_events" not in ctx.cache:
+        ctx.cache["has_events"] = ctx.snap.query(HAS_EVENTS_SQL)[0]["n"] > 0
+    if not ctx.cache["has_events"]:
+        raise ApiError(404, "not_in_release", "This data release has no event list: it was published before the list existed.")
+    rows = ctx.snap.query(EVENTS_SQL, [from_, to])
+    return EventsResponse(
+        data=[Event(**r) for r in rows],
+        meta=ctx.meta(as_of=ctx.source_as_of(*EVENT_SOURCES), sources=EVENT_SOURCES,
+                      coverage={"from": from_.isoformat(), "to": to.isoformat(), "events": len(rows)},
+                      caveats=["Public holidays are MOM's list on data.gov.sg. A 'source_change' is a hospital that starts to appear in "
+                               "MOH's figures part-way through the series, so totals across hospitals step on that day.",
+                               "These are the only events this site knows of: school holidays, outbreaks and policy changes are not published as data here."],
+                      tables=("public_holidays",)))
 
 
 @router.get("/ed/weekly", response_model=EdWeeklyResponse, summary="ISO-week (Mon-Sun) aggregates")

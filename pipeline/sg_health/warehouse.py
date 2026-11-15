@@ -48,6 +48,11 @@ DDL = [
         year INTEGER NOT NULL, attendances BIGINT, series VARCHAR NOT NULL,
         source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
         PRIMARY KEY (year))""",
+    # Singapore public holidays (MOM, via data.gov.sg), as published: one row per date and name.
+    """CREATE TABLE IF NOT EXISTS public_holidays (
+        holiday_date DATE NOT NULL, holiday_name VARCHAR NOT NULL,
+        source_url VARCHAR NOT NULL, source_sha256 VARCHAR NOT NULL, ingested_at TIMESTAMP NOT NULL,
+        PRIMARY KEY (holiday_date, holiday_name))""",
     # data.gov.sg dataset metadata. last_updated_at is the upstream "as of" for that dataset.
     """CREATE TABLE IF NOT EXISTS source_metadata (
         dataset_id VARCHAR NOT NULL, source VARCHAR NOT NULL, dataset_name VARCHAR, managed_by VARCHAR,
@@ -90,7 +95,7 @@ LINEAGE_COLUMNS = ("source_url", "source_sha256", "ingested_at")
 # Tables rebuilt from data/raw by `reparse` (everything except raw_manifest).
 PARSED_TABLES = ("moh_bed_waits", "moh_ed_attendances", "chas_clinics", "nuhs_live_waits",
                  "pop_65plus_by_area", "pop_65plus_by_subzone", "annual_ae_attendances", "source_metadata",
-                 "planning_area_boundaries", "polyclinics")
+                 "planning_area_boundaries", "polyclinics", "public_holidays")
 # Tables of retired sources. `reparse` drops them; their presence marks a warehouse as stale.
 RETIRED_TABLES = ("has_clinics", "singhealth_xray_waits", "singstat_tabledata", "quarantine_singstat_tabledata")
 
@@ -107,6 +112,7 @@ TABLE_KEYS: dict[str, tuple[str, ...]] = {
     "source_metadata": ("dataset_id",),
     "planning_area_boundaries": ("planning_area_code",),
     "polyclinics": ("facility_name",),
+    "public_holidays": ("holiday_date", "holiday_name"),
 }
 QUARANTINE_TABLES = tuple(f"quarantine_{t}" for t in TABLE_KEYS)
 # Everything `reparse` drops and rebuilds from data/raw. dq_results (a log) is kept.

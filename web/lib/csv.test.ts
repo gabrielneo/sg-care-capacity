@@ -73,3 +73,17 @@ describe("csvResponse", () => {
     expect(await res.text()).toBe("a\r\n");
   });
 });
+
+import { toCsvWithContext } from "./csv";
+
+describe("toCsvWithContext", () => {
+  const meta = { as_of: "2026-10-31", sources: [{ id: "moh", name: "MOH, Waiting Time for Admission to Ward", url: null }] } as never;
+  const body = toCsvWithContext(["a"], [[1]], meta, { title: "Bed wait", definitions: ["Decision to admit\nuntil exit."] });
+  it("starts with comment lines for the title, date, source and each definition", () => {
+    const lines = body.split("\r\n");
+    expect(lines.slice(0, 4)).toEqual(["# Bed wait", "# data_as_of: 2026-10-31", "# source: MOH, Waiting Time for Admission to Ward", "# definition: Decision to admit until exit."]);
+  });
+  it("then the same table as toCsv", () => {
+    expect(body.split("\r\n").slice(4)).toEqual(["a,data_as_of,source", '1,2026-10-31,"MOH, Waiting Time for Admission to Ward"', ""]);
+  });
+});

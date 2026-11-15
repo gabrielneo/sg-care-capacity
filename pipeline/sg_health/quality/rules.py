@@ -293,6 +293,27 @@ def boundary_shapes(df: pd.DataFrame, ctx: GateContext):
 # Polyclinics (HPB screening-centre list, used as a proxy)
 # --------------------------------------------------------------------------- #
 
+MIN_HOLIDAYS_PER_YEAR = 8        # Singapore has 11 gazetted days a year (more with "(Observed)" rows); fewer means a cut file
+
+HOLIDAY_NAME = register(
+    "holiday.name_not_blank", Severity.ERROR, Scope.ROW,
+    "Every holiday row has a name", ("public_holidays",))
+HOLIDAY_YEAR_COUNT = register(
+    "holiday.year_has_enough_days", Severity.WARN, Scope.FILE,
+    f"Every year in the file lists at least {MIN_HOLIDAYS_PER_YEAR} holidays", ("public_holidays",))
+
+
+@rule("public_holidays")
+def holiday_list(df: pd.DataFrame, ctx: GateContext):
+    names = df["holiday_name"].astype(str).str.strip()
+    years = pd.to_datetime(df["holiday_date"], errors="coerce").dt.year
+    per_year = years.value_counts()
+    short = sorted(int(y) for y, n in per_year.items() if n < MIN_HOLIDAYS_PER_YEAR)
+    return [(HOLIDAY_NAME.check_id, names == "", "holiday_name is blank"),
+            (HOLIDAY_YEAR_COUNT.check_id, len(short),
+             f"years with fewer than {MIN_HOLIDAYS_PER_YEAR} holidays: {short}; the file may be cut short")]
+
+
 MIN_POLYCLINICS = 25             # 26 in January 2026; fewer suggests a truncated or changed list
 
 POLY_COORDS = register(

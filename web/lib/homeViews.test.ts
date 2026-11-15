@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { densityOf, parseView, SECTIONS, type SectionSpec, sectionsFor, viewHref, VIEWS } from "./homeViews";
+import { chaptersFor, densityOf, parseView, SECTIONS, type SectionSpec, sectionsFor, viewHref, VIEWS } from "./homeViews";
 
 const ids = (view: Parameters<typeof sectionsFor>[0]) => sectionsFor(view).map((s) => s.id);
 
@@ -28,25 +28,27 @@ describe("sectionsFor", () => {
     expect(densityOf("public", "hospitals")).toBeNull();
   });
 
-  it("planner: summary strip, full hospital cards, takeaways", () => {
-    expect(ids("planner")).toEqual(["notice", "summary", "hospitals", "changes", "takeaways", "methods"]);
+  it("planner: notice, KPI tiles, ED cards, top three takeaways; no methods, no clinics (G1)", () => {
+    expect(ids("planner")).toEqual(["notice", "summary", "hospitals", "takeaways"]);
     expect(densityOf("planner", "hospitals")).toBe("full");
+    expect(densityOf("planner", "takeaways")).toBe("simple");
   });
 
-  it("analyst: everything in planner, plus the weekday pattern and the statistics", () => {
+  it("analyst: planner's sections plus what changed, the weekday heatmap and how the figures are made, in that order", () => {
     expect(ids("analyst")).toEqual(["notice", "summary", "hospitals", "changes", "takeaways", "weekdays", "methods"]);
-    for (const s of sectionsFor("planner")) expect(ids("analyst")).toContain(s.id);
-    expect(densityOf("planner", "methods")).toBe("simple");
+    for (const s of sectionsFor("planner")) if (s.id !== "methods") expect(ids("analyst")).toContain(s.id);
+    expect(densityOf("analyst", "takeaways")).toBe("full");
     expect(densityOf("analyst", "methods")).toBe("full");
   });
 
-  it("keeps the emergency notice and the definitions on every view", () => {
+  it("keeps the emergency notice on every view, and the figures' definitions where a view explains them", () => {
     for (const v of VIEWS) {
       expect(ids(v.id)).toContain("notice");
-      expect(ids(v.id)).toContain("methods");
       // Hospital figures: the full list on Planner and Analyst, the nearest three on Public.
       expect(ids(v.id).some((id) => id === "hospitals" || id === "ednear")).toBe(true);
     }
+    expect(ids("public")).toContain("methods");
+    expect(ids("analyst")).toContain("methods");
   });
 
   it("keeps the config's order, and every section appears in some view", () => {
@@ -57,8 +59,8 @@ describe("sectionsFor", () => {
   });
 
   it("filters any config it is given", () => {
-    const config: SectionSpec[] = [{ id: "map", views: { analyst: "simple" } }, { id: "notice", views: { public: "full" } }];
-    expect(sectionsFor("analyst", config)).toEqual([{ id: "map", density: "simple" }]);
+    const config: SectionSpec[] = [{ id: "map", chapter: "map", views: { analyst: "simple" } }, { id: "notice", chapter: "start", views: { public: "full" } }];
+    expect(sectionsFor("analyst", config)).toEqual([{ id: "map", density: "simple", chapter: "map" }]);
     expect(sectionsFor("planner", config)).toEqual([]);
     expect(densityOf("planner", "map", config)).toBeNull();
   });
@@ -75,5 +77,28 @@ describe("viewHref", () => {
     expect(viewHref("analyst", "sort=hours")).toBe("/?sort=hours&view=analyst");
     expect(viewHref("public", "sort=hours&view=planner")).toBe("/?sort=hours");
     expect(viewHref("planner", new URLSearchParams({ view: "bogus", sort: "name" }))).toBe("/?sort=name&view=planner");
+  });
+});
+
+describe("chaptersFor", () => {
+  const tones = (v: Parameters<typeof sectionsFor>[0]) => chaptersFor(sectionsFor(v)).map((c) => `${c.tone}:${c.items.map((i) => i.id).join("+")}`);
+
+  it("analyst: intro page, KPIs and cards band, takeaways page, heatmap band, methods page", () => {
+    expect(tones("analyst")).toEqual(["page:notice", "band:summary+hospitals", "page:changes+takeaways", "band:weekdays", "page:methods"]);
+  });
+
+  it("planner and public alternate too", () => {
+    expect(tones("planner")).toEqual(["page:notice", "band:summary+hospitals", "page:takeaways"]);
+    expect(tones("public")).toEqual(["page:notice+finder", "band:ednear", "page:map", "band:methods"]);
+  });
+
+  it("never puts two chapters of the same tone side by side", () => {
+    for (const v of VIEWS) chaptersFor(sectionsFor(v.id)).forEach((c, i, all) => { if (i) expect(c.tone).not.toBe(all[i - 1]!.tone); });
+  });
+});
+
+describe("clinic methods (G1)", () => {
+  it("only Public has a methods section that can describe clinics; Planner has none", () => {
+    expect(densityOf("planner", "methods")).toBeNull();
   });
 });

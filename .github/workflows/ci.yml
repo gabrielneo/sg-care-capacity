@@ -153,7 +153,7 @@ jobs:
 
   lighthouse:
     # Lighthouse CI on the Overview: the real API on its fixture snapshot, the production build,
-    # Lighthouse's mobile emulation, three runs. Budgets in web/lighthouserc.json: LCP <= 2.5 s,
+    # Lighthouse's mobile emulation, three runs. Budgets in web/lighthouserc.json: LCP <= 2.5 s (target 2.0 s, a warning),
     # CLS <= 0.01, JavaScript <= 200 kB transferred.
     runs-on: ubuntu-latest
     defaults:

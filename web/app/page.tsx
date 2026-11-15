@@ -13,6 +13,9 @@ import { MethodsDrawer } from "@/components/home/MethodsDrawer";
 import { StatusGrid } from "@/components/home/StatusGrid";
 import { SummaryStrip } from "@/components/home/SummaryStrip";
 import { WhatChanged } from "@/components/home/WhatChanged";
+import { JumpMenu } from "@/components/JumpMenu";
+import { MobileAccordion } from "@/components/MobileAccordion";
+import { OnThisPage } from "@/components/OnThisPage";
 import { SectionHeading } from "@/components/SectionHeading";
 import { SiteStrip } from "@/components/SiteStrip";
 import { Takeaways } from "@/components/home/Takeaways";
@@ -24,10 +27,11 @@ import type { CareRow } from "@/lib/careMapState";
 import { plainError } from "@/lib/copy";
 import { renderDocList } from "@/lib/docs";
 import { coversWindow, findingFor, latestCompleteWeek, type Profile, profileFetchFrom, profileWindow, usualLevels, weekdayProfile } from "@/lib/edCompare";
-import { type Density, densityOf, jumpTargets, parseView, type SectionId, sectionAnchor, sectionsFor, viewHref, VIEWS } from "@/lib/homeViews";
+import { chaptersFor, type Density, densityOf, jumpTargets, parseView, type SectionId, sectionAnchor, sectionsFor, viewHref, VIEWS } from "@/lib/homeViews";
 import { parseSort, sortStatuses } from "@/lib/planner";
 import { shortNote } from "@/lib/hospitalNotes";
 import { isUrgentCare, rankableCodes, splitByCare } from "@/lib/hospitals";
+import { EVIDENCE_LABEL, evidenceOf, sampleText } from "@/lib/evidence";
 import { hospitalStatus, SPARK_WEEKS } from "@/lib/status";
 import { buildStrip } from "@/lib/strip";
 import { takeaways } from "@/lib/takeaways";
@@ -120,7 +124,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   // One builder per section. The view's config decides which run, in what order and at what density.
   const render: Record<SectionId, (density: Density) => ReactNode> = {
-    notice: (density) => <HomeNotice density={density} />,
+    notice: (density) => <HomeNotice density={density} printHref={view === "analyst" ? "/summary" : undefined} />,
 
     // The search, in the browser: the page only supplies the lists' dates and sources.
     finder: () => (
@@ -169,9 +173,14 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       <SummaryStrip statuses={statuses} hospitals={hospitals} meta={weeklyRes.value.meta} latestWeek={latestWeek} />
     ) : null),
 
-    changes: () => (statusOk ? (
-      <WhatChanged changes={weekChanges(weekly, rankableCodes(hospitals), latest, splitByCare(statuses, (st) => st.code, hospitals).rankable)} names={names} meta={weeklyRes.value.meta} latestWeek={latestWeek} />
-    ) : null),
+    changes: () => {
+      if (!statusOk) return null;
+      // Full EDs only (the urgent care centre is never counted). With no comparison for any of them, "none is higher" would say nothing.
+      const rankable = splitByCare(statuses, (st) => st.code, hospitals).rankable;
+      const compared = rankable.filter((st) => st.level !== "unknown");
+      const higher = compared.length ? compared.filter((st) => st.level === "higher" || st.level === "much_higher").length : null;
+      return <WhatChanged changes={weekChanges(weekly, rankableCodes(hospitals), latest, rankable)} names={names} meta={weeklyRes.value.meta} latestWeek={latestWeek} higher={higher} />;
+    },
 
     hospitals: (density) => (statusOk ? (
       <StatusGrid statuses={statuses} hospitals={hospitals} live={live} meta={weeklyRes.value.meta} latestWeek={latestWeek} density={density}
@@ -209,18 +218,52 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       );
     },
 
-    takeaways: () => (insightsRes?.ok ? <Takeaways items={top} meta={insightsRes.value.meta} /> : null),
+    takeaways: (density) => {
+      if (!insightsRes?.ok) return null;
+      const evidence = density === "full"
+        ? Object.fromEntries(insights.filter((i) => top.some((t) => t.id === i.insight_id)).map((i) => [i.insight_id, { level: EVIDENCE_LABEL[evidenceOf(i)], sample: sampleText(i) }]))
+        : {};
+      return <Takeaways items={top} meta={insightsRes.value.meta} density={density} evidence={evidence} />;
+    },
 
-    weekdays: () => (profiles.length && dailyRes?.ok ? (
-      <WeekPattern profiles={profiles} hospitals={hospitals} finding={findingFor(insights, "weekday", hospitals)} meta={dailyRes.value.meta} />
+    // Below 768px the heatmap and the methods are accordions, closed until opened; the fragment (#section-weekdays) keeps the state.
+    weekdays: () => (profiles.length && dailyRes?.ok && window ? (
+      <MobileAccordion anchor={sectionAnchor("weekdays")} label="Show the weekday heatmap">
+        <WeekPattern profiles={profiles} hospitals={hospitals} finding={findingFor(insights, "weekday", hospitals)} meta={dailyRes.value.meta}
+                      from={window.from} to={window.to} />
+      </MobileAccordion>
     ) : null),
 
     // Full (analyst): open, with the statistics behind each takeaway. Simple: closed, definitions and limits only.
-    methods: (density) => (
-      <MethodsDrawer open={density === "full"} limits={limits.content}
-                     findings={density === "full" ? insights.filter((i) => top.some((t) => t.id === i.insight_id)) : []} />
-    ),
+    methods: (density) => {
+      const drawer = (
+        <MethodsDrawer open={density === "full"} limits={limits.content} audience={view === "public" ? "public" : "analyst"}
+                       findings={density === "full" ? insights.filter((i) => top.some((t) => t.id === i.insight_id)) : []} />
+      );
+      return view === "public" ? drawer : <MobileAccordion anchor={sectionAnchor("methods")} label="Show how these figures are made">{drawer}</MobileAccordion>;
+    },
   };
+
+  // Chapters: each run of sections that share a chapter is one block, and the blocks alternate page and band (lib/homeViews.ts).
+  const shown = sectionsFor(view).flatMap(({ id, density, chapter }) => { const el = render[id](density); return el ? [{ id, el, chapter }] : []; });
+  const chapters = chaptersFor(shown);
+  const stops = jumpTargets(view).filter((t) => shown.some((s) => s.id === t.id)).map((t) => ({ id: sectionAnchor(t.id), label: t.label }));
+  // Only Analyst has the "On this page" list (from 1280px) and, below 768px, a "Jump to section" menu (from 768px the strip has one).
+  const rail = view === "analyst" && stops.length > 1;
+
+  const body = (
+    <>
+      {chapters.map((c, i) => (
+        <div key={c.items[0]!.id} data-chapter={c.chapter} data-tone={c.tone}
+             className={`section ${c.tone === "band" ? "section-band" : ""} ${i === 0 ? "section-first" : ""} ${view === "public" && i > 1 ? "" : "section-compact"}`}>
+          {c.items.map((s) => <div key={s.id} id={sectionAnchor(s.id)} data-section={s.id} className={c.items.length > 1 ? "section-in-chapter" : undefined}>{s.el}</div>)}
+          {/* Phones: "Jump to section" sits right under the heading and the notice (from 768px the strip has one). */}
+          {rail && i === 0 ? <JumpMenu items={stops} className="mt-3 md:hidden" /> : null}
+          {rail && c.tone === "band" ? <p className="back-to-top text-small"><a href="#main" data-testid="back-to-top" className="inline-flex min-h-11 items-center">Back to top</a></p> : null}
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <div data-testid="home" data-view={view}>
@@ -231,10 +274,12 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
           {VIEWS.map((v) => <Link key={v.id} href={viewHref(v.id)} aria-current={v.id === view ? "true" : undefined} className="inline-flex min-h-11 items-center">{v.label}</Link>)}
         </nav>
       </noscript>
-      {/* Public view: the heading and the search are one first screen, so they keep the compact rhythm; the chapters after them get the full one. */}
-      {/* Chapters: every second section that renders sits on the band colour (full width, content in the container). */}
-      {sectionsFor(view).flatMap(({ id, density }) => { const el = render[id](density); return el ? [{ id, el }] : []; })
-        .map(({ id, el }, i) => <div key={id} id={sectionAnchor(id)} data-tone={i % 2 ? "band" : "page"} className={`section ${i % 2 ? "section-band" : ""} ${i === 0 ? "section-first" : ""} ${view === "public" && i > 1 ? "" : "section-compact"}`}>{el}</div>)}
+      {rail ? (
+        <div className="rail-layout">
+          <div className="min-w-0">{body}</div>
+          <aside className="rail" aria-label="Page contents"><OnThisPage items={stops} /></aside>
+        </div>
+      ) : body}
     </div>
   );
 }

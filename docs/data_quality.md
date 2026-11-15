@@ -78,7 +78,7 @@ nothing.
 
 Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_waits`,
 `pop_65plus_by_area`, `pop_65plus_by_subzone`, `annual_ae_attendances`, `source_metadata`,
-`planning_area_boundaries`, `polyclinics`.
+`planning_area_boundaries`, `polyclinics`, `public_holidays`.
 
 ### `schema.required_columns`: ERROR, file, blocks
 
@@ -387,6 +387,23 @@ column instead of `TOD`, and it leaves out about 20,000 residents aged 65+.
 How clinics are placed: each clinic's point must be **inside exactly one** area. None, or more
 than one, leaves the area NULL with `planning_area_assignment` = `outside_all` or `ambiguous`; it
 is never assigned to the nearest area. On the real data all 1,192 clinics are inside exactly one.
+
+## Public holiday checks (`public_holidays`)
+
+The holiday list is MOM's *Singapore Public Holidays (consolidated)* on data.gov.sg. It only feeds the event marks on
+time-series charts (`marts.dim_event`), so its checks warn rather than block.
+
+### `holiday.name_not_blank`: ERROR, row
+
+- **Guards against:** a mark on a chart with no name, which a reader could not interpret.
+- **Threshold:** `holiday_name` is empty after trimming. (The parser also drops such rows and an unparseable date, and counts both.)
+- **Why:** the row is withheld, not named by guess.
+
+### `holiday.year_has_enough_days`: WARN, file
+
+- **Guards against:** a file cut short, which would leave part of a chart's range without its holidays.
+- **Threshold:** every year in the file has at least **8** holidays (Singapore gazettes 11; "(Observed)" rows add more).
+- **Why WARN:** an unusual year could be genuine; someone should look before the change is published.
 
 ## Polyclinic checks (`polyclinics`)
 

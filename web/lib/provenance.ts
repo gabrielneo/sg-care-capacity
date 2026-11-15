@@ -50,3 +50,25 @@ export function findingMeta(insight: Pick<Insight, "source_ids" | "as_of" | "dq_
   const dq_warnings = tables.length ? meta.dq_warnings.filter((w) => tables.includes(w.table)) : meta.dq_warnings;
   return { ...meta, sources, dq_warnings, as_of: oldestAsOf(sources) ?? insight.as_of };
 }
+
+/**
+ * What a provenance line prints, as a key: the date and each publisher with its own date (AsOfLine, bySource). Two metas with
+ * the same key print the same "Data as of ... · Source: ..." line, even when they cite different datasets of one publisher
+ * (a finding on bed waits and one on bed waits and attendances both read "MOH, 31 Oct").
+ */
+export function provenanceLineKey(meta: Pick<Meta, "as_of" | "sources">): string {
+  return `${meta.as_of}|${sourceDates(meta.sources).map((d) => `${d.name}@${d.asOf}`).sort().join(",")}`;
+}
+
+/**
+ * The one date and source line for a list of findings (CLAUDE.md data principle 4: once per section), or null when the
+ * findings' lines would differ (then each chart keeps its own). Its sources are every finding's, so its link and freshness
+ * badge cover them all. Its data-quality warnings are empty on purpose: each finding's own warnings stay with its chart.
+ */
+export function sharedFindingMeta(insights: Pick<Insight, "source_ids" | "as_of" | "dq_tables">[], meta: Meta): Meta | null {
+  const metas = insights.map((i) => findingMeta(i, meta));
+  const first = metas[0];
+  if (!first || !metas.every((m) => provenanceLineKey(m) === provenanceLineKey(first))) return null;
+  const used = new Set(metas.flatMap((m) => m.sources.map((src) => src.id)));
+  return { ...first, sources: meta.sources.filter((src) => used.has(src.id)), dq_warnings: [] };
+}

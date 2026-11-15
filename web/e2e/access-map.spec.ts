@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { blockTiles, expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
+import { blockTiles, expectProvenanceOnEveryFrame, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 test.beforeEach(async ({ page }) => blockTiles(page));
 
@@ -23,7 +23,7 @@ test.describe("Access Map", () => {
     await expect(attribution).toContainText("OneMap");
     await expect(attribution).toContainText("Singapore Land Authority");
     await expect(attribution.locator('img[src*="om_logo"]')).toHaveCount(1);
-    await expectAsOfOnEveryCard(page, 1);
+    await expectProvenanceOnEveryFrame(page, 1);
     await expectNoHorizontalScroll(page);
   });
 
@@ -68,13 +68,13 @@ test.describe("Access Map", () => {
     // not missing (audit L-5).
     await expect(table.locator("tbody tr").last()).toContainText("n/a (no residents)");
     await expect(table.locator("tbody tr").last()).not.toContainText("No data");
-    await expectAsOfOnEveryCard(page, 1);
+    await expectProvenanceOnEveryFrame(page, 1);
   });
 
   for (const path of ["/access-map?view=map", "/access-map?view=table"]) {
     test(`passes axe WCAG 2.1 AA checks (${path})`, async ({ page }) => {
       await page.goto(path);
-      await expect(page.getByTestId("chart-card").first()).toBeVisible();
+      await expect(page.getByTestId("chart-frame").first()).toBeVisible();
       await expectNoA11yViolations(page);
     });
   }
@@ -151,10 +151,10 @@ test.describe("Access Map in 3D", () => {
   test("the charts beside the map read the same finding, and every chart shows as of", async ({ page }) => {
     await page.goto("/access-map");
     await expect(page.getByTestId("quadrant-chart")).toBeVisible();
-    await expect(page.locator("[data-testid=chart-card]").filter({ hasText: "Many seniors, few clinics" })
+    await expect(page.locator("[data-testid=chart-frame]").filter({ hasText: "Many seniors, few clinics" })
       .getByTestId("chart-callout")).toHaveText("Bedok: About 1 clinic short of the national rate");
     await expect(page.getByTestId("shortfall-bar")).toHaveText(["Bedokabout 1"]);
-    await expectAsOfOnEveryCard(page, 3);                                              // map, quadrant, shortfall
+    await expectProvenanceOnEveryFrame(page, 3);                                              // map, quadrant, shortfall
   });
 
   test("the 3D layer the browser fetches is in metres, from the site (never the API directly)", async ({ page }) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { firstUseText, type GlossaryEntry, selfNamed, term } from "@/lib/glossary";
 
@@ -66,20 +66,22 @@ export function Tip({ label, children, data = {} }: { label: ReactNode; children
   const wrap = useRef<HTMLSpanElement>(null);
   const tip = useRef<HTMLSpanElement>(null);
 
-  const show = () => {
-    setOpen(true);
-    // Keep the tooltip inside the screen on narrow viewports.
-    requestAnimationFrame(() => {
-      const r = tip.current?.getBoundingClientRect();
-      if (!r) return;
-      const over = r.right - (window.innerWidth - 8);
-      setShift((s) => (over > 0 ? s - over : r.left < 8 ? s + (8 - r.left) : s));
-    });
-  };
+  const show = () => setOpen(true);
   const hide = () => {
     setOpen(false);
     setShift(0);
   };
+
+  // Keep the tooltip inside the screen on narrow viewports. A layout effect runs before the browser paints, so the page is
+  // never one frame wider than the screen (a requestAnimationFrame here let it scroll sideways, intermittently).
+  useLayoutEffect(() => {
+    if (!open) return;
+    const r = tip.current?.getBoundingClientRect();
+    if (!r) return;
+    const over = r.right - (window.innerWidth - 8);
+    if (over > 0) setShift((s) => s - over);
+    else if (r.left < 8) setShift((s) => s + (8 - r.left));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

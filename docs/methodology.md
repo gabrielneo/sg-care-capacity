@@ -19,6 +19,7 @@ populations. **No personal or patient-level data is collected.**
 | Master Plan 2025 Planning Area Boundary (No Sea) | data.gov.sg (URA) | The 55 planning-area polygons | With each Master Plan | data.gov.sg API |
 | Cervical Screening Centres | data.gov.sg (HPB) | Used as the **polyclinic list** (it includes all 26 polyclinics) | Irregular | data.gov.sg API |
 | Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling | SingStat | Residents and residents aged 65+, per planning area and subzone, at end-June | Yearly (published around September) | Downloaded by hand once a year and committed; SingStat refuses automated requests from GitHub's servers |
+| Singapore Public Holidays (consolidated) | data.gov.sg (MOM) | Dates and names of public holidays, 2020–2027; marks time-series charts only | Yearly | data.gov.sg API |
 | Hospital Admissions and Public Sector Outpatient Attendances | data.gov.sg (MOH) | Annual A&E attendances, used **only** to cross-check the daily MOH series | Yearly | data.gov.sg API |
 
 Every figure on the site shows the date its data was current (`as_of`) and its source. The Data

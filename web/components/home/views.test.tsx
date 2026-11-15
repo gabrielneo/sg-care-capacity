@@ -128,7 +128,7 @@ describe("StatusCard densities", () => {
     for (const c of screen.getAllByTestId("status-card")) {
       expect(slots(c)).toEqual(["sc-name", "sc-chips", "sc-label", "sc-value", "sc-delta", "sc-foot"]);
       expect(c.querySelector(".sc-name")!.nextElementSibling).toBe(c.querySelector(".sc-chips"));
-      expect(c.querySelector(".sc-label")).toHaveTextContent("Ward-bed wait, latest complete week");
+      expect(c.querySelector(".sc-label")).toHaveTextContent("Bed wait, latest complete week");
     }
   });
 
@@ -260,19 +260,19 @@ describe("SummaryStrip", () => {
     expect(screen.getByTestId("summary-adults-note")).toHaveTextContent("covers its adult emergency department only");
     expect(tile("longest")).toHaveTextContent("Adult emergency department only.");
     expect(within(tile("above")).queryByTestId("above-unknown")).toBeNull();
-    expect(tile("longest")).toHaveTextContent(/^Longest bed wait\. Show its hospital card7\.5 hNational University \(NUH\)National University Hospital\./);   // label, then its tooltip
+    expect(tile("longest")).toHaveTextContent(/^Longest bed wait\. Show its hospital card7\.5 hNational University \(NUH\)National University HospitalAdult emergency department only\./);   // label, then its tooltip
     expect(tile("middle")).toHaveTextContent(/Typical bed wait across emergency departments\. Show the hospital cards5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
     expect(tile("middle")).toHaveTextContent(/Median.*of 4 emergency departments\./);
     expect(within(tile("middle")).queryByTestId("sparkline")).toBeNull();   // the 12-week trend is in the hospital section's header
     // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; cut, not rounded.
-    expect(tile("change")).toHaveTextContent(/^Biggest change vs usual \(previous 8 complete weeks\)\. Show its hospital card\+31%Singapore General \(SGH\)Singapore General Hospital\./);
+    expect(tile("change")).toHaveTextContent(/^Biggest change vs the 8-week usual\. Show its hospital card\+31%Singapore General \(SGH\)Singapore General Hospital$/);
     // The bed-wait definition is not repeated here (E3): it is in the page intro.
     expect(screen.getByTestId("summary-strip")).not.toHaveTextContent("It is not the time to see a doctor.");
   });
 
   it("a fall can be the largest change, and it is signed", () => {
     render(<SummaryStrip statuses={[at("SGH", 16, 5), at("TTSH", -32.7, 4)]} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
-    expect(tile("change")).toHaveTextContent(/−32%Tan Tock Seng \(TTSH\)Tan Tock Seng Hospital\./);
+    expect(tile("change")).toHaveTextContent(/−32%Tan Tock Seng \(TTSH\)Tan Tock Seng Hospital$/);
   });
 
   it("missing stays missing: no comparison is counted on its own, and nothing is shown as 0", () => {
@@ -280,7 +280,7 @@ describe("SummaryStrip", () => {
                          latestWeek={null} />);
     expect(tile("above")).toHaveTextContent("0 of 2None is 15% or more above its usual week.1 with no comparison.");
     expect(within(tile("above")).queryByRole("button")).toBeNull();
-    expect(tile("longest")).toHaveTextContent(/5\.0 hSingapore General \(SGH\)Singapore General Hospital\./);
+    expect(tile("longest")).toHaveTextContent(/5\.0 hSingapore General \(SGH\)Singapore General Hospital$/);
     // One full ED with a complete week: no middle value, said so, not a number.
     expect(tile("middle")).toHaveTextContent("No dataNeeds 3+ emergency departments with a complete week.");
     expect(within(tile("middle")).queryByTestId("sparkline")).toBeNull();

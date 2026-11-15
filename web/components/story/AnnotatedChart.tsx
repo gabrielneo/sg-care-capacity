@@ -4,7 +4,7 @@ import type { InsightChart, Meta } from "@/lib/api/types";
 import { sortByDate } from "@/lib/dates";
 import { cssColors as colors } from "@/lib/palette";
 
-import { ChartCard } from "../ChartCard";
+import { ChartFrame } from "../ChartFrame";
 
 /**
  * A small chart that labels its own marks, plus one callout arrow pointing at the difference the
@@ -16,7 +16,7 @@ import { ChartCard } from "../ChartCard";
  * - Direct labels: every bar's value; on a line, the highlighted point and the reference line.
  * - Legend: only when there are more than 3 series (direct labels collide beyond that).
  * - A missing value (null) is a gap: no bar, a break in the line. Never 0.
- * - Wrapped in ChartCard, so "Data as of" and the source are always shown.
+ * - Wrapped in ChartFrame, so "Data as of" and the source are always shown, with a table and a CSV.
  */
 
 export interface ChartSeries {
@@ -47,6 +47,10 @@ export interface AnnotatedChartProps {
   /** For a finding's chart: each source's own date, and the finding's data window (see Provenance). */
   bySource?: boolean;
   findingTo?: string | null;
+  /** The section's meta: when its date and sources are this chart's, the section's one line covers the chart (ChartFrame). */
+  section?: Meta;
+  /** The CSV behind the chart (default: every finding). */
+  csv?: string;
   height?: number;
 }
 
@@ -79,25 +83,70 @@ export function fromInsightChart(chart: InsightChart): Pick<AnnotatedChartProps,
 /**
  * Which x labels fit. "always": every label up to 7, else the first, last and highlighted ones plus
  * every k-th (about 4 in all). "wide": the extra labels shown from 640 px up (all of them up to 12).
+ *
+ * edgeAnchored (line charts): the first label starts at the plot's left edge and the last ends at its right edge, so each
+ * reaches about a whole label into its neighbour's space, and a centred neighbour overlaps it ("24 Aug" over "31 Aug",
+ * review N3). The neighbour of each end is dropped; if that neighbour is highlighted, the end label is dropped instead.
  */
-export function visibleLabels(n: number, highlighted: number[]): { always: Set<number>; wide: Set<number> } {
+export function visibleLabels(n: number, highlighted: number[], edgeAnchored = false): { always: Set<number>; wide: Set<number> } {
   const every = (k: number) => Array.from({ length: n }, (_, i) => i).filter((i) => i % k === 0);
-  if (n <= 7) return { always: new Set(every(1)), wide: new Set() };
-  const always = new Set<number>([0, n - 1, ...highlighted, ...every(Math.ceil(n / 4))]);
-  const more = n <= 12 ? every(1) : every(Math.ceil(n / 8));
-  return { always, wide: new Set(more.filter((i) => !always.has(i))) };
+  let always: Set<number>;
+  let wide: Set<number>;
+  if (n <= 7) {
+    always = new Set(every(1));
+    wide = new Set();
+  } else {
+    always = new Set<number>([0, n - 1, ...highlighted, ...every(Math.ceil(n / 4))]);
+    const more = n <= 12 ? every(1) : every(Math.ceil(n / 8));
+    wide = new Set(more.filter((i) => !always.has(i)));
+  }
+  if (edgeAnchored && n > 3) {
+    for (const [end, inner] of [[0, 1], [n - 1, n - 2]] as const) {
+      const drop = highlighted.includes(inner) && !highlighted.includes(end) ? end : inner;
+      always.delete(drop);
+      wide.delete(drop);
+    }
+  }
+  return { always, wide };
 }
 
 /** A white halo behind SVG text, so labels stay legible where they cross a line. */
 const HALO = { stroke: colors.surface, strokeWidth: 3, paintOrder: "stroke" as const, strokeLinejoin: "round" as const };
 
-export function AnnotatedChart(props: AnnotatedChartProps) {
-  const { id, title, description, meta, caveat, headingLevel = 2, bySource, findingTo } = props;
+/** The chart's figures: one row per category, one column per series. A missing value says so. */
+function AnnotatedTable({ categories, series, format }: Pick<AnnotatedChartProps, "categories" | "series" | "format">) {
   return (
-    <ChartCard title={title} slug={id} meta={meta} description={description} caveat={caveat} headingLevel={headingLevel}
-               bySource={bySource} findingTo={findingTo}>
+    <table className="w-full border-separate border-spacing-0 text-meta tabular-nums" data-testid="annotated-table">
+      <caption className="sr-only">The figures behind the chart</caption>
+      <thead>
+        <tr>
+          <th scope="col" className="pr-3 text-left font-semibold text-muted"> </th>
+          {series.map((s) => <th key={s.key} scope="col" className="px-2 text-right font-semibold text-muted">{s.label}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {categories.map((c, i) => (
+          <tr key={c.key}>
+            <th scope="row" className="border-t border-line py-2 pr-3 text-left font-normal">{c.label}</th>
+            {series.map((s) => {
+              const v = s.values[i] ?? null;
+              return <td key={s.key} className="border-t border-line px-2 text-right">{v == null ? <span className="text-muted">no data</span> : format(v)}</td>;
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export function AnnotatedChart(props: AnnotatedChartProps) {
+  const { id, title, description, meta, caveat, headingLevel = 2, bySource, findingTo, section, csv = "/export/findings.csv?context=1" } = props;
+  return (
+    <ChartFrame title={title} slug={id} meta={meta} description={description} caveat={caveat} headingLevel={headingLevel} section={section}
+                bySource={bySource} findingTo={findingTo} csv={csv} table={<AnnotatedTable {...props} />}
+                summary={`A ${props.kind} chart of ${props.series.map((s) => s.label).join(", ")} for ${props.categories.length} ${props.categories.length === 1 ? "point" : "points"}. ${props.callout}`}>
       <Plot {...props} />
-    </ChartCard>
+    </ChartFrame>
   );
 }
 
@@ -126,7 +175,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
   const targetValue = drawn[0]?.values[target] ?? null;
   const zero = y(Math.max(lo, Math.min(hi, 0)));
   const targetTop = targetValue == null ? TOP : kind === "bar" ? Math.min(y(targetValue), zero) : y(targetValue);
-  const labels = visibleLabels(n, marked);
+  const labels = visibleLabels(n, marked, kind === "line");
   const legend = drawn.length > LEGEND_ABOVE;
   const arrowId = `${id}-arrow`;
   const right = x(target) > 50;

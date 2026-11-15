@@ -209,3 +209,40 @@ def test_a_release_from_before_the_places_still_starts(tmp_path):
     assert poly.status_code == 404 and poly.json()["error"]["code"] == "not_in_release"
     assert hospitals.status_code == 200
     assert {(h["latitude"], h["longitude"], h["short_name"]) for h in hospitals.json()["data"]} == {(None, None, None)}
+
+
+# ------------------------------------------------------------------ events #
+
+def test_events_lists_holidays_and_source_changes_in_the_range_in_date_order(client):
+    status, body = get(client, "/events", **{"from": "2026-08-01", "to": "2026-10-31"})
+    assert status == 200
+    assert [(e["event_date"], e["label"], e["kind"]) for e in body["data"]] == [
+        ("2026-08-10", "National Day (Observed)", "holiday"), ("2026-10-20", "Deepavali", "holiday")]
+    assert body["meta"]["coverage"] == {"from": "2026-08-01", "to": "2026-10-31", "events": 2}
+    assert [s["id"] for s in body["meta"]["sources"]] == ["datagov_public_holidays"]
+    assert body["meta"]["as_of"] == "2026-07-03T16:04:00"
+
+
+def test_events_include_a_hospital_that_starts_part_way(client):
+    _, body = get(client, "/events", **{"from": "2024-06-01", "to": "2024-06-30"})
+    assert [(e["event_date"], e["kind"]) for e in body["data"]] == [("2024-06-23", "source_change")]
+
+
+def test_events_default_to_the_ed_daily_window(client):
+    _, body = get(client, "/events")
+    assert body["meta"]["coverage"]["to"] == "2026-10-31"
+    assert [e["label"] for e in body["data"]] == ["National Day (Observed)", "Deepavali"]
+
+
+def test_events_refuse_a_backwards_or_too_long_range(client):
+    assert get(client, "/events", **{"from": "2026-10-31", "to": "2026-08-01"})[0] == 400
+    assert get(client, "/events", **{"from": "2020-01-01", "to": "2026-08-01"})[0] == 400
+
+
+def test_a_release_before_events_says_so(tmp_path):
+    from fixture_snapshot import build
+
+    snap = build(tmp_path / "old", events=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        r = c.get(f"{API}/events")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "not_in_release"

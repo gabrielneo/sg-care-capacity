@@ -11,17 +11,22 @@ export async function blockTiles(page: Page) {
 const AS_OF = /Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4}/;
 
 /**
- * Every chart card and KPI tile shows a visible "Data as of {date}" and a source: on itself, or, for a group
- * that says so (data-provenance="section"), once in the section around it (see expectOneLinePerSection).
+ * Every chart and KPI tile has its date and source in view: its own line, or (data-provenance="section") the section header's,
+ * which must then be on the page. A chart that shows neither fails here, so no figure goes undated.
  */
-export async function expectAsOfOnEveryCard(page: Page, minimum: number) {
-  const cards = page.locator('[data-testid="chart-card"]:not([data-provenance="section"]), [data-testid="kpi-tile"]:not([data-provenance="section"])');
-  await expect(cards.first()).toBeVisible();
-  const n = await cards.count();
+export async function expectProvenanceOnEveryFrame(page: Page, minimum = 1) {
+  const frames = page.locator('[data-testid="chart-frame"], [data-testid="kpi-tile"]');
+  await expect(frames.first()).toBeVisible();
+  const n = await frames.count();
   expect(n).toBeGreaterThanOrEqual(minimum);
   for (let i = 0; i < n; i++) {
-    const line = cards.nth(i).getByTestId("provenance-line");
-    await expect(line, `card ${i + 1} of ${n}`).toBeVisible();
+    const frame = frames.nth(i);
+    if ((await frame.getAttribute("data-provenance")) === "section") {
+      await expect(page.locator('[data-testid=section-meta], [data-testid=provenance-line]:not([data-testid=chart-frame] *)').first(), `frame ${i + 1} of ${n} inherits a section line`).toContainText(AS_OF);
+      continue;
+    }
+    const line = frame.getByTestId("provenance-line");
+    await expect(line, `frame ${i + 1} of ${n}`).toBeVisible();
     await expect(line).toHaveText(AS_OF);
     await expect(line).toContainText("Source:");
   }

@@ -16,5 +16,12 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // ChartCard is retired: every chart is a ChartFrame (components/ChartFrame.tsx). Importing it again fails lint.
+    files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [{ group: ["**/ChartCard", "**/ChartCard.tsx"], message: "ChartCard is retired: use ChartFrame." }] }],
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "lib/api/schema.d.ts"]),
 ]);

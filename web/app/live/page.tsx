@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ChartCard } from "@/components/ChartCard";
-import { Provenance } from "@/components/Provenance";
+import { ChartFrame } from "@/components/ChartFrame";
+import { LiveTable } from "@/components/LiveTable";
 import { PageHeader } from "@/components/PageHeader";
-import { EmptyState, ErrorState } from "@/components/States";
+import { ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
 import type { LiveReading } from "@/lib/api/types";
 import { CAVEAT, plainError } from "@/lib/copy";
@@ -54,29 +54,27 @@ export default async function LivePage() {
           with <Link href="/ed-trends?hospital=NUH&hospital=NTFGH&hospital=AH"><Glossed text="MOH's figures" plain /></Link> only side by side.
         </p>
       </div>
-      {data.length === 0 ? (
-        <EmptyState title={<Glossed text="No NUHS readings in this week's data release" />}
-                    message={<Glossed text="The NUHS page couldn't be read when this week's data release was built." />} />
-      ) : (
-        <>
-        {/* One date and source for every reading below; each reading has its own NUHS time. */}
-        <Provenance meta={meta} compact />
-        <div className="mt-4 card-grid md:grid-cols-2">
+      <ChartFrame title={<Glossed text="NUHS estimates by site" />} slug="nuhs-estimates" meta={meta} caveat={null} csv="/export/live.csv?context=1" table={<LiveTable readings={data} />}
+                  state={data.length === 0 ? "empty" : "ready"}
+                  stateMessage={<Glossed text="The NUHS page couldn't be read when this week's data release was built." />}
+                  summary={`${data.length} readings, one for each site and department: patients waiting, the estimated wait to see a doctor and the estimated wait for a ward bed, each with the time of the reading.`}
+                  description={<Glossed text="One date and source for every reading below; each reading has its own NUHS time." />}>
+        <div className="card-grid md:grid-cols-2">
           {data.map((r) => (
-            <ChartCard key={`${r.site_name}|${r.department}`} title={`${r.site_name}: ${r.department}`} meta={meta} provenance={false}
-                       caveat={r.is_adult_ed === false ? CAVEAT.childrensEmergency : CAVEAT.live}
-                       description={
-                         <span data-testid="reading-label">
-                           <Glossed text="Estimate from NUHS public page, at" />{" "}
-                           <time dateTime={r.snapshot_at}><Glossed text={formatAsOf(r.snapshot_at, { withTime: true })} /></time>
-                         </span>
-                       }>
-              <Reading r={r} />
-            </ChartCard>
+            <article key={`${r.site_name}|${r.department}`} data-testid="reading" className="rounded-lg border border-line bg-page card">
+              <h3 className="text-body font-semibold text-ink">{r.site_name}: {r.department}</h3>
+              <div className="mt-1 text-small text-muted">
+                <span data-testid="reading-label">
+                  <Glossed text="Estimate from NUHS public page, at" />{" "}
+                  <time dateTime={r.snapshot_at}><Glossed text={formatAsOf(r.snapshot_at, { withTime: true })} /></time>
+                </span>
+              </div>
+              <div className="mt-4"><Reading r={r} /></div>
+              <p className="mt-3 text-meta text-muted"><Glossed text={r.is_adult_ed === false ? CAVEAT.childrensEmergency : CAVEAT.live} /></p>
+            </article>
           ))}
         </div>
-        </>
-      )}
+      </ChartFrame>
     </>
   );
 }

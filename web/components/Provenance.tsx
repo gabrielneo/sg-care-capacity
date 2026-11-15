@@ -20,6 +20,14 @@ export function publishers(sources: Source[]): { name: string; url: string | nul
   return [...seen.values()].map((e) => ({ name: e.name, url: e.url, full: e.full.join("; ") }));
 }
 
+/**
+ * The date and source as one plain line: for a caption copied away from the page, or inside a link, where a glossary
+ * popover can't sit (the Explore cards).
+ */
+export function provenanceText(meta: Meta, { withTime = false }: { withTime?: boolean } = {}): string {
+  return `Data as of ${formatAsOf(meta.as_of, { withTime })} · Source: ${publishers(meta.sources).map((p) => p.name).join(", ")}`;
+}
+
 /** Why a meta can't back a figure: no parseable as_of, or no source. Empty list = fine. */
 export function provenanceProblems(meta: Meta | null | undefined): string[] {
   if (!meta) return ["no meta"];
@@ -56,6 +64,7 @@ export function Provenance({
   freshness = true,
   tight = false,
   large = false,
+  inherited = false,
 }: {
   meta: Meta;
   caveat?: string | null;
@@ -72,6 +81,11 @@ export function Provenance({
   tight?: boolean;
   /** 14px instead of 12px: the public view's size for the date and source. */
   large?: boolean;
+  /**
+   * The date and source are the section's (lib/sectionMeta.ts), so no line or badge: only "More about these figures", when this
+   * figure has notes or data-quality warnings of its own. Renders nothing when it has none.
+   */
+  inherited?: boolean;
 }) {
   // Each source is judged by its own rule (docs/datasets.yml). One date for the figure: its badge is the least
   // fresh of its sources. By source: each publisher's own date and badge.
@@ -82,9 +96,11 @@ export function Provenance({
   const warnings = meta.dq_warnings;
   const extra = detail ? meta.caveats : notes;
   const count = extra.length + (detail ? warnings.length : warnings.length ? 1 : 0);
+  if (inherited && (compact || count === 0)) return null;
   return (
-    <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-small" : "text-meta"} text-muted`}>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-small" : "text-meta"} text-muted`}
+            data-testid={inherited ? "provenance-inherited" : undefined}>
+      {inherited ? null : <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <p data-testid="provenance-line">
           Data as of{" "}
           {dates.map((d, i) => (
@@ -118,9 +134,9 @@ export function Provenance({
         {release || !freshness ? null : dates.map((d) => (
           <FreshnessBadge key={d.name || "all"} meta={{ sources: d.sources }} now={now} source={d.name || undefined} />
         ))}
-      </div>
+      </div>}
       {!compact && count > 0 ? (
-        <details className="mt-2">
+        <details className={inherited ? undefined : "mt-2"}>
           <summary className="min-h-11 cursor-pointer select-none py-3 text-accent">More about these figures ({count})</summary>
           <ul className="mt-1 list-disc space-y-1 pl-6">
             {extra.map((n) => (

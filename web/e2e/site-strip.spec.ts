@@ -67,7 +67,7 @@ for (const view of ["planner", "analyst"] as const) {
       const links = list.getByRole("link");
       await expect(links.first()).toBeVisible();
       const hrefs = await links.evaluateAll((els) => els.map((e) => e.getAttribute("href")));
-      expect(hrefs.length).toBeGreaterThanOrEqual(view === "analyst" ? 5 : 4);
+      expect(hrefs.length).toBeGreaterThanOrEqual(view === "analyst" ? 5 : 3);
       for (const href of hrefs) expect(await page.locator(href!).count(), href!).toBe(1);   // every stop exists on the page
       // Jumping lands the section's heading under the strip, not behind it.
       const target = hrefs.at(-1)!;

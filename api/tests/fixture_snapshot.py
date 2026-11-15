@@ -42,6 +42,8 @@ DDL = {
         as_of DATE, as_of_basis VARCHAR""",
     "dim_polyclinic": """polyclinic_name VARCHAR, address VARCHAR, postal_code VARCHAR, latitude DOUBLE, longitude DOUBLE,
         source_url VARCHAR, source_sha256 VARCHAR, fetched_at TIMESTAMP, as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "dim_event": """event_date DATE, label VARCHAR, kind VARCHAR, source_url VARCHAR, source_sha256 VARCHAR,
+        as_of TIMESTAMP, as_of_basis VARCHAR""",
     "fct_ed_daily": """hospital_code VARCHAR, hospital_name VARCHAR, report_date DATE, iso_year INTEGER, iso_week INTEGER,
         median_wait_hours DOUBLE, attendances BIGINT, is_complete_week BOOLEAN, dq_flags VARCHAR,
         wait_source_url VARCHAR, wait_source_sha256 VARCHAR, attendance_source_url VARCHAR,
@@ -188,6 +190,15 @@ HOSPITALS = [
 ]
 NAMES = {h[0]: h[1] for h in HOSPITALS}
 POLY_AS_OF = datetime(2026, 1, 4, 10, 6, 46)
+HOLIDAYS_AS_OF = datetime(2026, 7, 3, 16, 4, 0)
+# Dated events: two holidays inside the fixture's range (24 Aug to 31 Oct 2026), one outside it, and a hospital starting
+# part-way through, in the order the mart sorts them (date, kind, label).
+EVENTS = [
+    (date(2024, 6, 23), "Woodlands starts in MOH's figures", "source_change", "https://example.org/reference", H, datetime(2026, 11, 6), "reference_checked"),
+    (date(2026, 8, 10), "National Day (Observed)", "holiday", "https://data.gov.sg/holidays.csv", H, HOLIDAYS_AS_OF, "source_updated"),
+    (date(2026, 10, 20), "Deepavali", "holiday", "https://data.gov.sg/holidays.csv", H, HOLIDAYS_AS_OF, "source_updated"),
+    (date(2026, 12, 25), "Christmas Day", "holiday", "https://data.gov.sg/holidays.csv", H, HOLIDAYS_AS_OF, "source_updated"),
+]
 # Two polyclinics (name, address, postal code, lat, lon), in the order the mart sorts them.
 POLYCLINICS = [
     ("Bedok Polyclinic", "11 Bedok North Street 1", "469662", 1.326, 103.932),
@@ -327,13 +338,15 @@ def _sha(path: Path) -> str:
 
 
 def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy21: bool = True,
-          live_qualifiers: bool = True, places: bool = True) -> Path:
+          live_qualifiers: bool = True, places: bool = True, events: bool = True) -> Path:
     """Write the fixture snapshot into `out` (created). Returns `out`.
     insights=False builds a release from before the insight engine (no fct_insight);
     insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer;
     live_qualifiers=False one from before NUHS bounds were kept (no *_qualifier columns);
-    places=False one from before 2026-11-09 (no dim_polyclinic, no hospital pins or short names)."""
-    marts = {m: cols for m, cols in DDL.items() if (insights or m != "fct_insight") and (places or m != "dim_polyclinic")}
+    places=False one from before 2026-11-09 (no dim_polyclinic, no hospital pins or short names);
+    events=False one from before the event list (no dim_event)."""
+    marts = {m: cols for m, cols in DDL.items() if (insights or m != "fct_insight") and (places or m != "dim_polyclinic")
+             and (events or m != "dim_event")}
     if not insight_charts:
         marts["fct_insight"] = marts["fct_insight"].replace(INSIGHT_EXTRA_DDL, "")
     out.mkdir(parents=True, exist_ok=True)
@@ -352,6 +365,8 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
         else:
             for col in ("short_name", "postal_code", "latitude", "longitude", "location_source_url", "location_checked"):
                 con.execute(f"ALTER TABLE marts.dim_hospital DROP COLUMN {col}")
+        if events:
+            con.executemany("INSERT INTO marts.dim_event VALUES (?,?,?,?,?,?,?)", EVENTS)
         con.executemany("INSERT INTO marts.fct_ed_daily VALUES (?,?,?,?,?,?,?,NULL,?,?,?,?,?,?,?)", daily_rows())
         # is_complete_week: all 7 days of both metrics in the hospital's ISO week (as the mart does).
         con.execute("""UPDATE marts.fct_ed_daily d SET is_complete_week = w.n = 7 FROM (
@@ -419,6 +434,8 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
                              "last_fetched_at": "2026-11-01T16:34:00"},
             "datagov_planning_areas": {"as_of": "2026-02-27T10:07:02", "as_of_basis": "data.gov.sg lastUpdatedAt",
                                        "last_fetched_at": "2026-11-01T16:34:17"},
+            "datagov_public_holidays": {"as_of": HOLIDAYS_AS_OF.isoformat(), "as_of_basis": "data.gov.sg lastUpdatedAt",
+                                        "last_fetched_at": "2026-11-01T16:34:45"},
             "datagov_polyclinics": {"as_of": "2026-01-04T10:06:46", "as_of_basis": "data.gov.sg lastUpdatedAt",
                                     "last_fetched_at": "2026-11-01T16:34:40"},
             "nuhs_live": {"as_of": "2026-11-01T12:01:49", "as_of_basis": "NUHS 'Last updated at'",

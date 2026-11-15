@@ -23,3 +23,13 @@ it("no 'busy', 'busier', 'busiest' or 'quieter' in the site's code or copy", () 
   });
   expect(hits).toEqual([]);
 });
+
+// Rule 4 (settled 2026-11-16): the bed wait has a long label (charts, captions) and a short one ("Bed wait", tiles, cards, column
+// headers). The old in-between names are gone. NUHS's own "Estimated wait for a ward bed" is a different figure and stays.
+it("the bed wait is never called 'ward-bed wait' or 'wait for a ward bed, <window>'", () => {
+  const hits = ["app", "components", "lib"].flatMap(files).flatMap((f) => {
+    const m = readFileSync(path.join(ROOT, f), "utf8").match(/ward-bed wait|\bwait for a ward bed, (latest|last|week)/gi);
+    return m ? [`${f}: ${[...new Set(m)].join(", ")}`] : [];
+  });
+  expect(hits).toEqual([]);
+});

@@ -5,7 +5,7 @@ import { CaveatChip } from "./CaveatChip";
 import { datasetFreshness } from "@/lib/freshness";
 
 import { FreshnessBadge } from "./FreshnessBadge";
-import { ChartCardSkeleton, EmptyState, ErrorState, Skeleton } from "./States";
+import { ChartFrameSkeleton, EmptyState, ErrorState, Skeleton } from "./States";
 
 describe("FreshnessBadge", () => {
   it.each([
@@ -42,7 +42,7 @@ describe("states", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("The API could not be reached(Reference: unreachable)");
   });
   it("Skeletons are announced as loading, once", () => {
-    render(<><Skeleton /><ChartCardSkeleton title="Bed waits" /></>);
+    render(<><Skeleton /><ChartFrameSkeleton title="Bed waits" /></>);
     expect(screen.getAllByRole("status")).toHaveLength(2);
     expect(screen.getByText("Loading Bed waits")).toBeInTheDocument();
   });

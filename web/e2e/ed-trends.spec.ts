@@ -1,6 +1,6 @@
 import { expect, type Locator, test } from "@playwright/test";
 
-import { expectAsOfOnEveryCard, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
+import { expectProvenanceOnEveryFrame, expectNoA11yViolations, expectNoHorizontalScroll, seen } from "./helpers";
 
 /** Text as read, without glossary tooltips or screen-reader-only text. */
 const plain = (locator: Locator) => locator.evaluate((el) => {
@@ -27,7 +27,7 @@ test.describe("ED Trends: difference-first charts", () => {
       "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed. "
       + "A week's figure averages its daily medians, because MOH publishes only daily medians and a weekly median can't be rebuilt from them.");
     expect(await seen(page.getByTestId("gap-summary"))).toBe("Days with no figure in this range: AH 21, NUH 90, SGH 21.");
-    await expectAsOfOnEveryCard(page, 4);
+    await expectProvenanceOnEveryFrame(page, 4);
     await expectNoHorizontalScroll(page);
   });
 
@@ -63,14 +63,27 @@ test.describe("ED Trends: difference-first charts", () => {
     expect(min).toBe(-max);
     const classes = page.getByTestId("heat-legend-class");
     await expect(classes).toHaveCount(7);
-    await expect(classes.nth(3)).toContainText("0%");
+    await expect(classes.nth(3)).toContainText(/−[\d.]+ to \+[\d.]+%/);                   // the middle class: "−9 to +9%"
     const middle = [Number(await classes.nth(3).getAttribute("data-min")), Number(await classes.nth(3).getAttribute("data-max"))];
     expect(middle[0]! + middle[1]!).toBeCloseTo(0, 10);                                         // the middle class straddles 0
     const zero = page.locator('[data-testid=heat-cell][data-value="0.00"]').first();
-    await expect(zero).toHaveAttribute("data-color", "#F7F7F7");                                 // 0 is the neutral colour
+    await expect(zero).toHaveAttribute("data-color", "#EFEAE1");                                 // 0 is the neutral colour
     await expect(page.locator("[data-testid=heat-cell][data-annotated]")).toHaveCount(1);
-    await expect(page.getByTestId("chart-card").filter({ hasText: "Bed wait by day of the week" }).getByTestId("chart-callout"))
+    await expect(page.getByTestId("chart-frame").filter({ hasText: "Bed wait by day of the week" }).getByTestId("chart-callout"))
       .toContainText("Mondays: 25% above average");
+  });
+
+  test("marks public holidays inside the range, with their source and date, from the API's event list", async ({ page, request }) => {
+    const body = await (await request.get("http://127.0.0.1:8791/api/v1/events?from=2026-08-24&to=2026-10-31")).json() as
+      { data: { event_date: string; label: string }[] };
+    await page.goto("/ed-trends");
+    const key = page.getByTestId("annotation-key");
+    await expect(key).toBeVisible();
+    for (const e of body.data) await expect(key).toContainText(e.label);
+    await expect(key).toContainText("Deepavali");
+    await expect(key).not.toContainText("Christmas");                                       // outside the range: not pinned to an edge
+    expect(await plain(page.getByTestId("annotation-source"))).toMatch(/^Marked days: .*Public Holidays.*data as of 3 Jul 2026\.$/);
+    await expect(page.getByTestId("annotation-rule")).not.toHaveCount(0);
   });
 
   test("the comparison toggle shows raw values, pinning the UCC and adults-only caveats", async ({ page }) => {
@@ -93,7 +106,7 @@ test.describe("ED Trends: difference-first charts", () => {
     await expect(page.getByTestId("slope")).not.toHaveCount(0);
     expect(await plain(page.getByTestId("slope-caveat"))).toMatch(/^Different days and different measures/);
     // Each source's own date and badge, not MOH's date for NUHS's figures (audit H-1).
-    const card = page.getByTestId("chart-card").filter({ has: page.getByTestId("slope-chart") });
+    const card = page.getByTestId("chart-frame").filter({ has: page.getByTestId("slope-chart") });
     expect(await plain(card.getByTestId("provenance-line"))).toMatch(
       /^Data as of 1 Nov 2026, 12:01 pm SGT \(NUHS\) and 31 Oct 2026 \(MOH\) · Source:/);
     await expect(card.getByText(/^NUHS: /)).toBeVisible();
@@ -104,13 +117,15 @@ test.describe("ED Trends: difference-first charts", () => {
 
   test("the weekday table names only chosen hospitals it can't show (audit L-3)", async ({ page }) => {
     await page.goto("/ed-trends?hospital=SGH");
-    const heat = page.getByTestId("chart-card").filter({ has: page.getByTestId("heatmap") });
+    const heat = page.getByTestId("chart-frame").filter({ has: page.getByTestId("heatmap") });
     await expect(heat).toBeVisible();
     await expect(heat.getByText(/^Not shown, with fewer than 4 complete weeks/)).toHaveCount(0);   // NUH etc. weren't chosen
   });
 
   test("filters by hospital through the form, keeping the URL shareable", async ({ page }) => {
     await page.goto("/ed-trends");
+    // Below 768px the form is folded behind one line (review N12): open it first.
+    if ((page.viewportSize()?.width ?? 0) < 768) await page.getByTestId("ed-filters-toggle").locator("summary").click();
     await page.getByRole("checkbox", { name: /Alexandra Hospital/ }).uncheck();
     await page.getByRole("checkbox", { name: /National University Hospital/ }).uncheck();
     await page.getByRole("button", { name: "Show" }).click();
@@ -121,7 +136,7 @@ test.describe("ED Trends: difference-first charts", () => {
   test("a hospital with no figures gets an empty state, not a flat line", async ({ page }) => {
     await page.goto("/ed-trends?hospital=NUH");
     expect(await seen(page.locator("main"))).toContain("No MOH figures for this selection");
-    await expect(page.getByTestId("chart-card")).toHaveCount(0);
+    await expect(page.getByTestId("chart-frame")).toHaveCount(0);
   });
 
   test("a range over 2 years shows the API's reason", async ({ page }) => {
@@ -163,4 +178,33 @@ test.describe("ED Trends: difference-first charts", () => {
       await expectNoA11yViolations(page);
     });
   }
+});
+
+test.describe("ED trends on a phone (review N12)", () => {
+  test("the filters fold behind one line that says what is shown, and open in place; from 768px they are always open", async ({ page }) => {
+    await page.goto("/ed-trends");
+    const form = page.getByTestId("ed-filters").locator("form");
+    const toggle = page.getByTestId("ed-filters-toggle");
+    if ((page.viewportSize()?.width ?? 0) < 768) {
+      await expect(form).toBeHidden();
+      await expect(page.getByTestId("ed-filters-current")).toHaveText(/^All 3 hospitals, \d{1,2} [A-Z][a-z]{2,3} \d{4} to \d{1,2} [A-Z][a-z]{2,3} \d{4}$/);
+      await toggle.locator("summary").click();
+      await expect(form).toBeVisible();
+      await expect(toggle.locator("summary")).toContainText("Hide hospitals and dates");
+    } else {
+      await expect(toggle).toBeHidden();
+      await expect(form).toBeVisible();
+    }
+  });
+
+  test("nothing moves after load: the fold is CSS, not script", async ({ page }) => {
+    await page.goto("/ed-trends", { waitUntil: "networkidle" });
+    const shift = await page.evaluate(() => new Promise<number>((done) => {
+      let total = 0;
+      new PerformanceObserver((l) => { for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) total += e.value; })
+        .observe({ type: "layout-shift", buffered: true });
+      setTimeout(() => done(total), 500);
+    }));
+    expect(shift).toBeLessThan(0.01);
+  });
 });

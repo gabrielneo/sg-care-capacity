@@ -2,32 +2,24 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { Meta, PopulationYear } from "@/lib/api/types";
-import { AVERAGE_VS_TYPICAL, BED_WAIT_EXPLAINER, BED_WAIT_SHORT, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
+import { AVERAGE_VS_TYPICAL, BED_WAIT_EXPLAINER, CAVEAT, CITIZENS_SUPER_AGED, SITE_SCOPE } from "@/lib/copy";
 import { term } from "@/lib/glossary";
 import { formatAsOf } from "@/lib/dates";
-import { EVIDENCE_LABEL, evidenceOf, safeDetail, sampleText } from "@/lib/evidence";
-import { findingMeta, sourceDates } from "@/lib/provenance";
+import { findingMeta, sharedFindingMeta, sourceDates } from "@/lib/provenance";
 import {
-  chartFormat,
-  chartTitle,
   monthYear,
   percentText,
   populationShare,
-  primaryCaveat,
   type StoryInsight,
 } from "@/lib/story";
 
-import { CaveatChip } from "../CaveatChip";
 import { FreshnessBadge } from "../FreshnessBadge";
 import { Provenance, publishers } from "../Provenance";
 import { Glossed } from "../terms/Glossed";
 import { Term } from "../terms/Term";
-import { AnnotatedChart, fromInsightChart } from "./AnnotatedChart";
-import { CountUp } from "./CountUp";
-import { DeltaNumber, deltaFromDisplay } from "./DeltaNumber";
-import { HighlightPhrase } from "./HighlightPhrase";
-import { Scrolly } from "./Scrolly";
+import { FindingBand } from "./FindingBand";
 import { SITE } from "@/lib/site";
+import { HighlightPhrase } from "./HighlightPhrase";
 
 const NUMBER_WORDS = ["no", "one", "two", "three"];
 const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
@@ -66,30 +58,20 @@ export function AsOfLine({ asOf, meta, bySource = false, findingTo }: { asOf: st
   );
 }
 
-/** 1. The top finding's key number, counting up once, and its headline. */
-export function Hero({ insight, meta }: { insight: StoryInsight; meta: Meta }) {
-  const d = insight.display;
+/** 1. The page's opening: the title, one sentence, and the data's date. The top finding is Finding 1 below, not repeated here. */
+export function Hero({ insight, meta, count }: { insight: StoryInsight; meta: Meta; count: number }) {
   const own = findingMeta(insight, meta);       // dated by its sources, not by the end of its window
-  const spoken = d.unit_text ? `${d.value_text} ${d.unit_text}` : d.value_text;
   return (
     <header className="pb-8 pt-2 sm:pt-6" data-testid="hero">
-      <p className="max-w-3xl text-small text-muted" data-testid="site-purpose">
+      <h1 className="max-w-3xl font-semibold leading-snug tracking-tight text-ink text-h1">Findings from the latest data release</h1>
+      <p className="mt-3 max-w-prose text-body text-ink" data-testid="hero-summary">
+        {count === 1 ? "One finding" : `${NUMBER_WORDS[count] ? NUMBER_WORDS[count]!.charAt(0).toUpperCase() + NUMBER_WORDS[count]!.slice(1) : count} findings`}{" "}
+        on emergency department bed waits and clinic access for seniors, each published only after a fixed statistical check.
+      </p>
+      <p className="mt-3 max-w-prose text-small text-muted" data-testid="site-purpose">
         <strong className="font-semibold text-ink">{SITE.name}</strong> means{" "}
         <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
-      <p className="mt-4 text-small font-semibold text-accent">The top finding in the latest weekly data release</p>
-      <p className="mt-3 flex flex-wrap items-baseline gap-x-3 text-ink" data-testid="hero-number">
-        <CountUp value={d.value_text} label={spoken} className="text-kpi font-semibold tracking-tight" />
-        {d.unit_text ? <span className="text-h2 text-muted" aria-hidden="true">{d.unit_text}</span> : null}
-      </p>
-      <p className="mt-2 text-muted" data-testid="hero-label">
-        <Glossed text={d.metric_label} />
-        {d.comparison_label ? <>{" · vs "}<Glossed text={d.comparison_label} /></> : null}
-      </p>
-      <h1 className="mt-6 max-w-3xl font-semibold leading-snug tracking-tight text-ink text-h1">
-        <Glossed text={insight.headline} />
-      </h1>
-      <p className="mt-2 max-w-3xl text-small text-muted" data-testid="hero-bed-wait"><Glossed text={BED_WAIT_SHORT} /></p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-small text-muted">
         <FreshnessBadge meta={own} />
         <AsOfLine asOf={own.as_of} meta={own} bySource findingTo={insight.as_of} />
@@ -130,88 +112,54 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
   );
 }
 
-function StepText({ insight, index, total }: { insight: StoryInsight; index: number; total: number }) {
-  const caveat = primaryCaveat(insight);
-  return (
-    <article id={insight.insight_id} className="story-card rounded-lg border border-line bg-surface card" data-insight={insight.insight_id}>
-      <p className="text-meta font-semibold uppercase tracking-wide text-muted">Finding {index + 1} of {total}</p>
-      <h3 className="mt-1 font-semibold leading-snug text-ink text-h3" data-testid="step-headline">
-        <Glossed text={insight.headline} />
-      </h3>
-      <DeltaNumber {...deltaFromDisplay(insight.display, insight.direction)} />
-      <p className="text-ink" data-testid="step-detail"><Glossed text={safeDetail(insight)} /></p>
-      {/* How strong the evidence is, and the n (and 95% range) behind the number (audit B1, B3). */}
-      <p className="mt-2 text-small text-muted" data-testid="step-evidence">
-        {EVIDENCE_LABEL[evidenceOf(insight)]} · {sampleText(insight)}
-      </p>
-      {caveat ? (
-        <div className="mt-3">
-          <CaveatChip><Glossed text={caveat} /></CaveatChip>
-        </div>
-      ) : null}
-    </article>
-  );
-}
-
-function StoryChart({ insight, meta, where }: { insight: StoryInsight; meta: Meta; where: "inline" | "panel" }) {
-  return (
-    <AnnotatedChart
-      id={`${insight.insight_id}-${where}`}
-      title={chartTitle(insight)}
-      description={insight.chart.y_label}
-      meta={findingMeta(insight, meta)}
-      bySource
-      findingTo={insight.as_of}
-      format={chartFormat(insight)}
-      headingLevel={3}
-      {...fromInsightChart(insight.chart)}
-    />
-  );
-}
-
-/** 3. The findings, one step per headline finding, with the chart panel. */
+/** 3. The findings, one band each, alternating page and band like chapters. */
 export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: Meta }) {
   const n = insights.length;
+  // Once per section: one date and source line here when every finding shares them; each chart then inherits it.
+  const shared = sharedFindingMeta(insights, meta);
   return (
-    <section aria-labelledby="findings" className="border-t border-line py-8" data-testid="findings">
-      <h2 id="findings" className="font-semibold text-ink text-h2">What the data shows</h2>
+    <section aria-labelledby="findings" className="pt-8" data-testid="findings">
+      <h2 id="findings" className="font-semibold text-ink text-h2">What does the data show?</h2>
       <p className="mt-2 max-w-prose text-ink">
-        The {NUMBER_WORDS[n] ?? n} strongest {n === 1 ? "finding" : "findings"} in this week&apos;s data release. Each was published only
-        because it passed a fixed statistical check. <Link href="/docs/insights-method">How findings are tested</Link>
+        The {NUMBER_WORDS[n] ?? n} strongest {n === 1 ? "finding" : "findings"} in this week&apos;s data release.{" "}
+        <Link href="/docs/insights-method">How findings are tested</Link>
         {" · "}<a href="/export/findings.csv" download data-testid="csv-download">Download every finding (CSV)</a>
         {" · "}<Link href="/summary" data-testid="summary-link">One-page summary to print</Link>
       </p>
-      <p className="mb-6 mt-2 max-w-prose text-small text-muted" data-testid="bed-wait-explainer">
+      <p className={`${shared ? "" : "mb-6 "}mt-2 max-w-prose text-small text-muted`} data-testid="bed-wait-explainer">
         <Glossed text={BED_WAIT_EXPLAINER} /> <span data-testid="average-vs-typical">{AVERAGE_VS_TYPICAL}</span>
       </p>
-      {/* Without JavaScript the step can't drive the panel, so each chart sits under its step. */}
-      <noscript>
-        <style>{".story-inline{display:block!important}.story-panel{display:none!important}"}</style>
-      </noscript>
-      <Scrolly
-        steps={insights.map((insight, i) => ({
-          key: insight.insight_id,
-          text: <StepText insight={insight} index={i} total={n} />,
-          inlineChart: <StoryChart insight={insight} meta={meta} where="inline" />,
-          panelChart: <StoryChart insight={insight} meta={meta} where="panel" />,
-        }))}
-      />
+      {shared ? (
+        <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-small text-muted" data-testid="section-meta">
+          <FreshnessBadge meta={shared} />
+          <AsOfLine asOf={shared.as_of} meta={shared} bySource />
+        </div>
+      ) : null}
+      {insights.map((insight, i) => (
+        <FindingBand key={insight.insight_id} insight={insight} index={i} total={n} meta={meta} section={shared}
+                     tone={i % 2 === 0 ? "band" : "page"} />
+      ))}
     </section>
   );
 }
 
-/** 4. What the data can't tell you: the case study's own list, rendered from docs/case_study.md. */
-export function Limits({ list }: { list: ReactNode }) {
+/** 4. What the data can't tell you: the case study's own three limits, as a calm row of cards. */
+export function Limits({ items }: { items: ReactNode[] }) {
   return (
-    <section aria-labelledby="limits" className="border-t border-line py-8" data-testid="limits">
-      <h2 id="limits" className="font-semibold text-ink text-h2">What this data can&apos;t tell you</h2>
-      <p className="mt-2 text-ink">
+    <section aria-labelledby="limits" className="section" data-testid="limits">
+      <h2 id="limits" className="font-semibold text-ink text-h2">What can&apos;t this data tell you?</h2>
+      <p className="mt-2 max-w-prose text-ink">
         From the <Link href="/case-study#problem-statement">case study</Link>. The data can&apos;t show:
       </p>
-      <div className="doc mt-2">{list}</div>
-      <p className="text-small">
-        <Link href="/methodology#what-this-data-cant-tell-you">Every limit, in the methodology</Link>
-      </p>
+      <ul className="mt-4 card-grid md:grid-cols-3">
+        {items.map((item, i) => (
+          <li key={i} className="doc rounded-lg border border-line bg-sunken card text-small" data-testid="limit-card">
+            <span aria-hidden="true" className="text-meta font-semibold text-muted">{i + 1}</span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-small"><Link href="/methodology#what-this-data-cant-tell-you">Every limit, in the methodology</Link></p>
     </section>
   );
 }

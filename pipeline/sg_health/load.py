@@ -23,6 +23,7 @@ from .parsers.datagov import (
     parse_datagov_payload,
     parse_planning_areas,
     parse_polyclinics,
+    parse_public_holidays,
 )
 from .parsers.live import parse_nuhs_live
 from .parsers.moh import parse_moh_workbook
@@ -156,6 +157,15 @@ def load_annual_ae(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseSt
     return _load(wh, "annual_ae_attendances", df, rec, stats)
 
 
+def load_public_holidays(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
+    df = parse_public_holidays(content, stats=stats)
+    if df.empty:
+        LOG.warning("public holidays: no rows parsed from %s", rec.url)
+        stats.files_skipped["no_rows"] += 1
+        return 0
+    return _load(wh, "public_holidays", df, rec, stats)
+
+
 def load_datagov_metadata(wh: Warehouse, rec: RawRecord, content: bytes, stats: ParseStats) -> int:
     from .sources.datagov import DATASET_SOURCES  # dataset key -> raw source name
     source_by_id = {DATAGOV_DATASETS[key]: src for key, src in DATASET_SOURCES}
@@ -198,6 +208,7 @@ LOADERS: dict[str, LoaderFn] = {
     "nuhs_live": load_nuhs_live,
     "datagov_chas": _clinic_loader("chas", "chas_clinics"),
     "datagov_annual_ae": load_annual_ae,
+    "datagov_public_holidays": load_public_holidays,
     "datagov_metadata": load_datagov_metadata,
     "datagov_planning_areas": load_planning_areas,
     "datagov_polyclinics": load_polyclinics,

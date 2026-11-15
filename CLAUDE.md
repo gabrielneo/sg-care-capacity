@@ -98,7 +98,7 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 #               first time: cd web && npm run e2e:install
 # type budget:  cd web && npm run e2e -- e2e/type-scale.spec.ts   # <= 6 font sizes per route, no text under 13px (part of npm run e2e)
 #               cd web && npm run ui:metrics   # before/after report -> docs/design/ui_metrics_*.json (UI_METRICS_OUT=after)
-# lighthouse:   cd web && npm run lighthouse   # Overview and Planner budgets: LCP <= 2.5 s, CLS <= 0.01, JS <= 200 kB (web/lighthouserc.json; make lighthouse)
+# lighthouse:   cd web && npm run lighthouse   # Overview, Planner, Findings and ED trends budgets: LCP <= 2.5 s (target 2.0 s, a warning), CLS <= 0.01, JS <= 200 kB (web/lighthouserc.json; make lighthouse)
 # api types:    cd web && npm run gen:api      # after api/openapi.json changes; CI fails if stale
 # glossary:     docs/glossary.yml (from docs/language_rules.md) -> cd web && npm run gen:glossary
 # wording:      cd web && npm run lint:terms && npm run readability   # both part of npm run lint

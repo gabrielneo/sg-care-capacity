@@ -93,6 +93,20 @@ const rows: CareRow[] = [
 ];
 
 describe("CareList", () => {
+  it("on a phone lists the first four emergency departments and folds the rest; the urgent care centre always shows (review N12)", () => {
+    const ed = (i: number): CareRow => ({ ...rows[0]!, code: `E${i}`, name: `Hospital ${i}` });
+    render(<CareList rows={[...[0, 1, 2, 3, 4, 5, 6, 7].map(ed), rows[1]!]} sort="usual" onSort={() => {}} onOpen={() => {}} />);
+    const all = screen.getAllByTestId("care-row");
+    expect(all).toHaveLength(9);
+    expect(all.map((r) => r.classList.contains("phone-fold-hide"))).toEqual([false, false, false, false, true, true, true, true, false]);
+    expect(screen.getByTestId("more-rows")).toHaveTextContent("Show all 8 emergency departments");
+  });
+
+  it("does not fold a short list", () => {
+    render(<CareList rows={rows} sort="usual" onSort={() => {}} onOpen={() => {}} />);
+    expect(screen.queryByTestId("more-rows")).toBeNull();
+  });
+
   it("is a table of the same hospitals, with the badge, hours and change", () => {
     render(<CareList rows={rows} sort="usual" onSort={() => {}} onOpen={() => {}} />);
     expect(screen.getByRole("table")).toBeInTheDocument();
@@ -109,7 +123,7 @@ describe("CareList", () => {
     const onSort = vi.fn();
     render(<CareList rows={rows} sort="hours" onSort={onSort} onOpen={() => {}} />);
     const headers = screen.getAllByRole("columnheader");
-    expect(headers.find((h) => h.getAttribute("aria-sort") === "descending")).toHaveTextContent("Wait for a ward bed");
+    expect(headers.find((h) => h.getAttribute("aria-sort") === "descending")).toHaveTextContent("Bed wait, latest complete week");
     expect(headers.filter((h) => h.getAttribute("aria-sort") === "none").length).toBe(2);
     fireEvent.click(within(screen.getAllByRole("columnheader")[0]!).getByRole("button"));
     expect(onSort).toHaveBeenCalledWith("name");

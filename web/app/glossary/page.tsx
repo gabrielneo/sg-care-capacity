@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/PageHeader";
 import { GlossaryList } from "@/components/terms/GlossaryList";
+import { REPO_BLOB } from "@/lib/docLinks";
 import { GLOSSARY } from "@/lib/glossary";
 
 export const metadata: Metadata = { title: "Glossary" };
@@ -16,8 +17,8 @@ export default function GlossaryPage() {
         intro={
           <>
             Every abbreviation and term used on this site, in plain words. The list is kept in{" "}
-            <a href="https://github.com/gabrielneo/sg-care-capacity/blob/main/docs/glossary.yml">docs/glossary.yml</a>, following the{" "}
-            <a href="https://github.com/gabrielneo/sg-care-capacity/blob/main/docs/language_rules.md">language rules</a>. See also the{" "}
+            <a href={`${REPO_BLOB}docs/glossary.yml`}>docs/glossary.yml</a>, following the{" "}
+            <a href={`${REPO_BLOB}docs/language_rules.md`}>language rules</a>. See also the{" "}
             <Link href="/methodology">Methodology</Link>.
           </>
         }

@@ -48,9 +48,10 @@ export function Skeleton({ className = "h-4 w-full", label = "Loading" }: { clas
   );
 }
 
-export function ChartCardSkeleton({ title, label }: { title?: ReactNode; label?: string }) {
+/** A chart while its data loads. It appears only if loading takes over a second (`delay-show`), so a quick load never flashes it. */
+export function ChartFrameSkeleton({ title, label }: { title?: ReactNode; label?: string }) {
   return (
-    <section className="rounded-lg border border-line bg-surface card" aria-busy="true">
+    <section className="delay-show rounded-lg border border-line bg-surface card" aria-busy="true" data-testid="chart-skeleton">
       {title ? <h2 className="font-semibold text-h2">{title}</h2> : <Skeleton className="h-5 w-1/3" label="Loading chart" />}
       <div className="mt-4">
         <Skeleton className="h-48 w-full" label={label ?? (typeof title === "string" ? `Loading ${title}` : "Loading")} />

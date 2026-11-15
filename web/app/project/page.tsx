@@ -6,7 +6,6 @@ import { Missing } from "@/components/Missing";
 import { Section } from "@/components/Section";
 
 import { Provenance } from "@/components/Provenance";
-import { CountUp } from "@/components/story/CountUp";
 import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
 import { AUTHOR, AUTHOR_LINKS, BUILD_FACTS, WHAT_I_DID } from "@/lib/author";
@@ -90,7 +89,7 @@ export default async function ProjectPage() {
           <Tile key={f.insight_id} label={`Finding ${i + 1}`} testId="project-finding">
             <Eyebrow>{i === 0 ? "2 · What the data shows" : "\u00a0"}</Eyebrow>
             <BigNumber>
-              {i === 0 ? <CountUp value={f.display.value_text} label={f.display.value_text} /> : f.display.value_text}
+              {f.display.value_text}
               {f.display.unit_text ? <span className="ml-2 text-h3 font-semibold text-muted">{f.display.unit_text}</span> : null}
             </BigNumber>
             <p className="mt-1 text-small text-muted"><Glossed text={f.display.metric_label} /></p>

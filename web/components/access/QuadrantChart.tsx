@@ -2,7 +2,8 @@ import type { Meta } from "@/lib/api/types";
 import type { QuadrantPoint } from "@/lib/accessCharts";
 import { cssColors as colors } from "@/lib/palette";
 
-import { ChartCard } from "../ChartCard";
+import { ChartFrame } from "../ChartFrame";
+import { QuadrantTable } from "./ChartTables";
 import { Glossed } from "../terms/Glossed";
 
 /**
@@ -36,7 +37,8 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
     .map((p) => `${p.rank}. ${p.name}: ${p.seniors.toLocaleString("en-SG")} aged 65+, ${p.rate.toFixed(2)} per 1,000`).join("; ")}.`;
 
   return (
-    <ChartCard title="Many seniors, few clinics" slug="quadrant" meta={meta} headingLevel={3} download="/export/areas.csv"
+    <ChartFrame title="Many seniors, few clinics" slug="quadrant" meta={meta} headingLevel={3} csv="/export/areas.csv?context=1"
+               summary={summary} table={<QuadrantTable points={points} />}
                description={<Glossed text="Each dot is an area with at least 1,000 residents aged 65+. Across: residents aged 65+. Up: CDMP GP clinics per 1,000 of them. The lines mark the middle value of each." />}>
       {callout ? <p className="mb-1 text-small font-semibold text-ink" data-testid="chart-callout">{callout.name}: {callout.text}</p> : null}
       <svg width="100%" height={H} role="img" aria-label={summary} className="block overflow-visible" data-testid="quadrant-chart">
@@ -92,6 +94,6 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
           edge (▲): {off.map((p) => `${p.name} ${p.rate.toFixed(2)}`).join(", ")}.
         </p>
       ) : null}
-    </ChartCard>
+    </ChartFrame>
   );
 }

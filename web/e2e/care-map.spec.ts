@@ -58,7 +58,7 @@ test.describe("Map controls", () => {
     await hydrated(page);
     expect(await rowCodes(page)).toEqual(["NUH", "AH"]);                    // EDs ranked, then the urgent care centre's group
     await expect(page.getByTestId("care-ucc")).toContainText("Urgent care centre · Not compared with full emergency departments");
-    await expect(page.locator('th[aria-sort="descending"]')).toContainText("Wait for a ward bed");
+    await expect(page.locator('th[aria-sort="descending"]')).toContainText("Bed wait, latest complete week");
     await page.getByTestId("cluster-chip").filter({ hasText: "All" }).click();
     await expect(page).not.toHaveURL(/cluster=/);
   });
@@ -254,6 +254,25 @@ test.describe("Accessibility and size", () => {
     const box = page.getByTestId("care-list");
     expect(await box.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await expect(page.getByTestId("care-row").first().getByTestId("status-badge")).toBeVisible();
+  });
+
+  test("below 640px each row is two lines: the name, then the status and the hours (review N2); a table from 640px", async ({ page }) => {
+    await page.goto("/?layout=list");
+    await hydrated(page);
+    const row = page.getByTestId("care-row").first();
+    const [name, badge, hours] = await Promise.all([row.locator("th").boundingBox(), row.getByTestId("status-badge").boundingBox(),
+      row.getByTestId("row-hours").boundingBox()]);
+    if ((page.viewportSize()?.width ?? 0) < 640) {
+      expect(badge!.y).toBeGreaterThan(name!.y + name!.height - 2);              // status under the name
+      expect(Math.abs(hours!.y - badge!.y)).toBeLessThan(16);                      // hours beside the status
+    } else {
+      expect(Math.abs(badge!.y - name!.y)).toBeLessThan(24);                       // one line: three columns
+    }
+    // Still a table to assistive technology, whatever the layout.
+    await expect(page.getByRole("table")).toHaveCount(1);
+    const rows = page.getByTestId("care-row");
+    await expect(rows.getByRole("rowheader")).toHaveCount(await rows.count());                    // one per hospital row
+    await expect(page.getByRole("columnheader", { name: /Bed wait, latest complete week/ })).toBeAttached();
   });
 
   test("axe finds nothing with the drawer open, and each page says it isn't medical advice", async ({ page }) => {

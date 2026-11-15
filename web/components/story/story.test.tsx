@@ -1,16 +1,14 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { InsightChart } from "@/lib/api/types";
 import { insightMeta, storySample } from "@/lib/samples";
 import { chartFormat } from "@/lib/story";
 
 import { AnnotatedChart, fromInsightChart, visibleLabels } from "./AnnotatedChart";
-import { CountUp } from "./CountUp";
 import { DeltaNumber, deltaFromDisplay } from "./DeltaNumber";
 import { HighlightPhrase } from "./HighlightPhrase";
-import { Scrolly } from "./Scrolly";
 
 const [weekday, anomaly, volume] = storySample as [(typeof storySample)[0], (typeof storySample)[0], (typeof storySample)[0]];
 
@@ -47,55 +45,11 @@ describe("DeltaNumber", () => {
   });
 });
 
-describe("CountUp", () => {
-  it("has the final value in the server-rendered HTML, one fixed cell per digit", () => {
-    const html = renderToString(<CountUp value="12.7" label="12.7 hours" />);
-    expect(html).toContain("12.7 hours");
-    render(<CountUp value="12.7" label="12.7 hours" />);
-    const root = screen.getByTestId("countup");
-    expect(root).toHaveAttribute("data-value", "12.7");
-    expect([...root.querySelectorAll(".countup-roll")].map((e) => e.getAttribute("data-digit"))).toEqual(["1", "2", "7"]);
-    expect(root.querySelector(".countup-digits")).toHaveAttribute("aria-hidden", "true");
-    expect(root.querySelector(".countup-digits")?.textContent).toBe("12.7");
-  });
-});
-
 describe("HighlightPhrase", () => {
-  let observed: { cb: IntersectionObserverCallback; disconnect: ReturnType<typeof vi.fn> } | null = null;
-  const reduce = (on: boolean) =>
-    vi.stubGlobal("matchMedia", (q: string) => ({ matches: on && q.includes("reduce"), media: q, addEventListener() {}, removeEventListener() {} }));
-  const offscreen = () => vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ top: 5000, bottom: 5020 } as DOMRect);
-
-  beforeEach(() => {
-    observed = null;
-    vi.stubGlobal("IntersectionObserver", class {
-      disconnect = vi.fn();
-      constructor(cb: IntersectionObserverCallback) { observed = { cb, disconnect: this.disconnect }; }
-      observe() {}
-    });
-  });
-  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
-
-  it("is drawn in the server HTML (correct without JavaScript)", () => {
-    expect(renderToString(<HighlightPhrase>key phrase</HighlightPhrase>)).toContain('data-state="drawn"');
-  });
-
-  it("off screen: waits, then draws once when it scrolls into view", () => {
-    reduce(false);
-    offscreen();
-    render(<HighlightPhrase>key phrase</HighlightPhrase>);
-    expect(screen.getByTestId("highlight")).toHaveAttribute("data-state", "waiting");
-    act(() => observed!.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
-    expect(screen.getByTestId("highlight")).toHaveAttribute("data-state", "drawn");
-    expect(observed!.disconnect).toHaveBeenCalled();
-  });
-
-  it("with reduced motion it never resets", () => {
-    reduce(true);
-    offscreen();
-    render(<HighlightPhrase>key phrase</HighlightPhrase>);
-    expect(screen.getByTestId("highlight")).toHaveAttribute("data-state", "drawn");
-    expect(observed).toBeNull();
+  it("is a static mark in the server HTML: no state, no scroll wait (audit D9)", () => {
+    const html = renderToString(<HighlightPhrase>key phrase</HighlightPhrase>);
+    expect(html).toContain("key phrase");
+    expect(html).not.toContain("data-state");
   });
 });
 
@@ -143,7 +97,7 @@ describe("AnnotatedChart", () => {
                     format: (v: number) => String(v) };
     const { rerender } = render(<AnnotatedChart {...props} series={series(3)} />);
     expect(screen.queryByTestId("chart-legend")).toBeNull();
-    expect(screen.getByText("Hospital 2")).toBeInTheDocument();                        // direct end labels instead
+    expect(screen.getAllByText("Hospital 2").some((e) => e.tagName.toLowerCase() === "text")).toBe(true);   // direct end labels instead (the table has the name too)
     rerender(<AnnotatedChart {...props} id="m2" series={series(4)} />);
     expect(within(screen.getByTestId("chart-legend")).getAllByRole("listitem")).toHaveLength(4);
   });
@@ -158,38 +112,22 @@ describe("AnnotatedChart", () => {
     expect(long.always.size + long.wide.size).toBeLessThan(14);
   });
 
+  it("on a line, drops the label next to each edge-anchored end, so the ends never overlap a neighbour (review N3)", () => {
+    const shown = (l: { always: Set<number>; wide: Set<number> }) => [...l.always, ...l.wide].sort((a, b) => a - b);
+    expect(shown(visibleLabels(9, [8], true))).toEqual([0, 2, 3, 4, 5, 6, 8]);       // not 1 or 7
+    expect(shown(visibleLabels(5, [], true))).toEqual([0, 2, 4]);
+    // A highlighted neighbour wins over the end beside it: its label is the one the callout points at.
+    expect(shown(visibleLabels(9, [7], true))).toEqual([0, 2, 3, 4, 5, 6, 7]);
+    expect(shown(visibleLabels(9, [8]))).toHaveLength(9);                               // bars: centred, nothing dropped
+  });
+
   it("hides the extra labels below 640 px, and keeps the highlighted point's value off the line", () => {
     render(chart(anomaly));
     const labels = screen.getAllByTestId("chart-x-label");
-    expect(labels).toHaveLength(9);
+    expect(labels).toHaveLength(7);                                                  // 31 Aug and 12 Oct sit next to the ends (N3)
     expect(labels.filter((l) => l.getAttribute("class") === "max-sm:hidden").map((l) => l.textContent))
-      .toEqual(["31 Aug", "7 Sep", "21 Sep", "28 Sep", "12 Oct"]);
+      .toEqual(["7 Sep", "21 Sep", "28 Sep"]);
     expect(screen.getByTestId("chart-point-label")).toHaveAttribute("text-anchor", "end");    // left of a point on the right
-  });
-});
-
-describe("Scrolly", () => {
-  let cb: IntersectionObserverCallback | null = null;
-  beforeEach(() => {
-    vi.stubGlobal("IntersectionObserver", class {
-      constructor(c: IntersectionObserverCallback) { cb = c; }
-      observe() {}
-      disconnect() {}
-    });
-  });
-  afterEach(() => vi.unstubAllGlobals());
-
-  it("starts on the first step and switches the panel when a step crosses the middle", () => {
-    const steps = ["a", "b", "c"].map((k) => ({ key: k, text: <p>step {k}</p>, inlineChart: <p>inline {k}</p>, panelChart: <p>panel {k}</p> }));
-    render(<Scrolly steps={steps} />);
-    const states = () => screen.getAllByTestId("story-chart").map((s) => s.getAttribute("data-current"));
-    expect(states()).toEqual(["true", "false", "false"]);
-    expect(screen.getAllByTestId("story-chart")[1]).toHaveAttribute("aria-hidden", "true");
-    const third = screen.getAllByTestId("story-step")[2]!;
-    act(() => cb!([{ isIntersecting: true, target: third } as unknown as IntersectionObserverEntry], {} as IntersectionObserver));
-    expect(states()).toEqual(["false", "false", "true"]);
-    expect(screen.getByTestId("scrolly")).toHaveAttribute("data-active", "2");
-    expect(screen.getByText("inline b")).toBeInTheDocument();                        // every step keeps its own chart for phones
   });
 });
 

@@ -21,6 +21,8 @@ SOURCE_INFO: dict[str, tuple[str, str]] = {
                                "https://data.gov.sg/datasets/d_2cc750190544007400b2cfd5d7f53209/view"),
     "datagov_polyclinics": ("data.gov.sg, HPB Cervical Screening Centres (used as the polyclinic list)",
                             "https://data.gov.sg/datasets/d_3ca2a28059588f297908b32da4ac3cbe/view"),
+    "datagov_public_holidays": ("data.gov.sg, MOM Singapore Public Holidays (consolidated)",
+                                "https://data.gov.sg/datasets/d_8ef23381f9417e4d4254ee8b4dcdb176/view"),
     "datagov_annual_ae": ("data.gov.sg, MOH Hospital Admissions and Public Sector Outpatient Attendances, Annual",
                           "https://data.gov.sg/datasets/d_a5267c58f60b20f8e04576261abfac93/view"),
     "nuhs_live": ("NUHS, Emergency Department wait times",

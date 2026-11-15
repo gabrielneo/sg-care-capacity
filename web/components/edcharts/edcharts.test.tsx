@@ -69,7 +69,7 @@ describe("WeekdayHeatmap", () => {
     expect(Number(legend.getAttribute("data-min"))).toBe(-Number(legend.getAttribute("data-max")));
     const sgh = screen.getAllByTestId("heat-cell").slice(7);
     expect(sgh.every((c) => c.getAttribute("data-color") === divergingScale[3])).toBe(true);
-    expect(screen.getAllByTestId("heat-legend-class")[3]).toHaveTextContent("0%");
+    expect(screen.getAllByTestId("heat-legend-class")[3]).toHaveTextContent(/−[\d.]+ to \+[\d.]+%/);
     expect(divergingClasses(profiles.flatMap((p) => p.values))[3]!.color).toBe(divergingScale[3]);
   });
 
@@ -79,7 +79,41 @@ describe("WeekdayHeatmap", () => {
     expect(cells[1]).toHaveTextContent("+43%");
     expect(cells[1]).toHaveAttribute("data-annotated");
     expect(screen.getByTestId("chart-callout")).toHaveTextContent("Tuesdays: 43% above average");
-    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByTestId("heatmap")).toBeInTheDocument();
+  });
+
+  it("marks the peak cell with ①, linked from the sentence that names it, and says so in both layouts", () => {
+    render(<WeekdayHeatmap profiles={profiles} hospitals={HOSPITALS} mode="usual" finding={finding("weekday", "SKH", "Tuesdays: 43% above average")} />);
+    expect(screen.getByTestId("chart-callout").querySelector("a")).toHaveAttribute("href", "#peak-cell");
+    expect(document.getElementById("peak-cell")).toHaveTextContent("①");
+    expect(document.getElementById("peak-cell")).toHaveClass("outline-ink");
+    const compact = screen.getAllByTestId("heat-cell-compact").filter((c) => c.hasAttribute("class") && c.className.includes("outline-ink"));
+    expect(compact).toHaveLength(1);
+  });
+
+  it("the phone layout has days as rows, hospitals as columns, in a focusable, labelled scroller with a hint", () => {
+    render(<WeekdayHeatmap profiles={profiles} hospitals={HOSPITALS} mode="usual" finding={null} />);
+    const scroller = screen.getByTestId("heat-scroller");
+    expect(scroller).toHaveAttribute("tabindex", "0");
+    expect(scroller).toHaveAccessibleName(/scrolls sideways/);
+    expect(screen.getByTestId("heat-scroll-hint")).toHaveTextContent("Scroll sideways");
+    const rows = within(screen.getByTestId("heatmap-compact")).getAllByRole("row");
+    expect(rows).toHaveLength(8);                                       // a header row and one per weekday
+    expect(within(rows[1]!).getAllByTestId("heat-cell-compact")).toHaveLength(2);   // one per hospital
+  });
+
+  it("the key has seven swatches, each labelled below, with both ends named", () => {
+    render(<WeekdayHeatmap profiles={profiles} hospitals={HOSPITALS} mode="usual" finding={null} />);
+    expect(screen.getAllByTestId("heat-legend-class")).toHaveLength(7);
+    expect(screen.getByTestId("heat-legend")).toHaveTextContent("← Shorter than usualLonger than usual →");
+  });
+
+  it("shows the urgent care centre last, in its own group, whatever order the profiles come in", () => {
+    const p = [{ code: "AH", values: [1, 2, 3, 4, 5, 6, 7], weeks: 26 }, ...profiles];
+    render(<WeekdayHeatmap profiles={p} hospitals={HOSPITALS} mode="usual" finding={null} />);
+    const body = screen.getByTestId("heatmap").querySelectorAll("tbody");
+    expect([...body].map((b) => b.getAttribute("data-group"))).toEqual(["ed", "ucc"]);
+    expect(body[1]).toHaveTextContent("Urgent care centre");
   });
 });
 
@@ -93,9 +127,50 @@ describe("SmallMultiples", () => {
       { hospital: HOSPITALS[0]!, missingUsual: null, series: days.map((date) => ({ date, value: 1.3 })) }]} />);
     const [sgh, ah] = screen.getAllByTestId("multiple");
     expect(sgh!.querySelectorAll("[data-testid=series]")).toHaveLength(2);                   // two runs: the gap isn't joined
-    expect(within(sgh!).getByTestId("gap-count")).toHaveTextContent("1 day missing");
+    expect(within(sgh!).getByTestId("gap-count")).toHaveTextContent("1 missing");
+    expect(within(sgh!).getByTestId("panel-n")).toHaveTextContent("n = 2 days");
+    expect(sgh!.querySelectorAll("[data-testid=gap]")).toHaveLength(1);                       // hatched, not filled
+    expect(screen.getByTestId("nodata-legend")).toHaveTextContent("No data");
+    expect(screen.queryByTestId("ci-legend")).toBeNull();                                     // no interval supplied, none drawn
     expect(within(ah!).getByTestId("pinned-caveat")).toHaveTextContent(/not a full/);       // raw mode pins the UCC caveat
     expect(screen.getByTestId("band-legend")).toHaveTextContent("Middle half of the full emergency departments");
+  });
+
+  it("on a phone shows the first four panels and folds the rest behind 'Show all' (review N12); three panels never fold", () => {
+    const panel = (i: number) => ({ hospital: { ...HOSPITALS[2]!, hospital_code: `H${i}` }, missingUsual: null, series: days.map((date) => ({ date, value: 4 })) });
+    const { unmount } = render(<SmallMultiples mode="raw" bandPoints={bandPoints} finding={null} panels={[0, 1, 2, 3, 4, 5, 6, 7, 8].map(panel)} />);
+    const all = screen.getAllByTestId("multiple");
+    expect(all).toHaveLength(9);                                                          // every panel is in the page: folded, not dropped
+    expect(all.map((li) => li.classList.contains("phone-fold-hide"))).toEqual([false, false, false, false, true, true, true, true, true]);
+    expect(screen.getByTestId("more-panels")).toHaveTextContent("Show all 9 hospitals");
+    unmount();
+    render(<SmallMultiples mode="raw" bandPoints={bandPoints} finding={null} panels={[0, 1, 2].map(panel)} />);
+    expect(screen.queryByTestId("more-panels")).toBeNull();
+    expect(document.querySelectorAll(".phone-fold-hide")).toHaveLength(0);
+  });
+
+  it("draws an interval band and its legend only when the API supplied one", () => {
+    render(<SmallMultiples mode="raw" bandPoints={bandPoints} finding={null} panels={[
+      { hospital: HOSPITALS[2]!, missingUsual: null, series: days.map((date) => ({ date, value: 4 })), ci: days.map((date) => ({ date, lo: 3, hi: 5 })) }]} />);
+    expect(screen.getAllByTestId("ci")).toHaveLength(1);
+    expect(screen.getByTestId("ci-legend")).toHaveTextContent("95% interval");
+  });
+
+  it("draws a rule and a key entry for each annotation inside the range, and none outside it", () => {
+    render(<SmallMultiples mode="raw" bandPoints={bandPoints} finding={null}
+      annotations={[{ date: "2026-10-02", label: "Holiday", kind: "holiday" }, { date: "2027-01-01", label: "Elsewhere", kind: "holiday" }]}
+      panels={[{ hospital: HOSPITALS[2]!, missingUsual: null, series: days.map((date) => ({ date, value: 4 })) }]} />);
+    expect(screen.getAllByTestId("annotation-rule")).toHaveLength(1);
+    expect(screen.getByTestId("annotation-key")).toHaveTextContent("2 Oct: Holiday");
+    expect(screen.getByTestId("annotation-key")).not.toHaveTextContent("Elsewhere");
+    expect(screen.queryByTestId("annotation-source")).toBeNull();                              // no source given, none claimed
+  });
+
+  it("names where the marked days come from, once, under the chart", () => {
+    render(<SmallMultiples mode="raw" bandPoints={bandPoints} finding={null} annotationSource="data.gov.sg, MOM Public Holidays, data as of 3 Jul 2026"
+      annotations={[{ date: "2026-10-02", label: "Holiday", kind: "holiday" }]}
+      panels={[{ hospital: HOSPITALS[2]!, missingUsual: null, series: days.map((date) => ({ date, value: 4 })) }]} />);
+    expect(screen.getByTestId("annotation-source")).toHaveTextContent("Marked days: data.gov.sg, MOM Public Holidays, data as of 3 Jul 2026.");
   });
 
   it("vs usual: a hospital with no usual level says why instead of drawing a line", () => {
