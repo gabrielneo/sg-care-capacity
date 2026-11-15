@@ -367,18 +367,18 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
  */
 .sc-grid { display: grid; gap: var(--card-gap); }
 .sc { display: grid; position: relative; padding: var(--space-3); row-gap: var(--space-2); column-gap: var(--space-3);
-  grid-template-columns: minmax(0, 1fr) minmax(min-content, 10.5rem); grid-template-areas: "name badge" "value delta" "foot foot"; }
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name name" "value badge" "value delta" "foot foot"; }
 .sc[data-edge="true"] { border-left-width: var(--bar-status); padding-left: calc(var(--space-3) - var(--bar-status) + 1px); }
-.sc-name { grid-area: name; min-width: 0; overflow-wrap: break-word; }   /* a phone's name may wrap: the badge needs the room; one line with an ellipsis from 768px */
+.sc-name { grid-area: name; min-width: 0; overflow-wrap: break-word; }   /* a phone's name has the whole first line and may wrap; one line with an ellipsis from 768px */
 .sc-chips { display: contents; }
 .sc-chip { display: none; }
 .sc-badge { grid-area: badge; justify-self: end; white-space: nowrap; }
 .sc-label { display: none; }
-.sc-value { grid-area: value; display: flex; align-items: flex-end; gap: var(--space-3); white-space: nowrap; min-width: 0; }
+.sc-value { grid-area: value; align-self: center; display: flex; align-items: flex-end; gap: var(--space-3); white-space: nowrap; min-width: 0; }
 .sc-delta { grid-area: delta; text-align: right; }
 .sc-foot { grid-area: foot; }
 .sc-short { display: inline; }
-@media (max-width: 24.9375rem) { .sc-spark { display: none; } }   /* under 400px */
+@media (max-width: 29.9375rem) { .sc-spark { display: none; } }   /* under 480px: beside the badge there is no room for it */
 @media (min-width: 48rem) {
   .sc-grid { row-gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: calc(-1 * var(--card-gap)); }
   .sc { grid-row: span 6; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); grid-template-areas: none;

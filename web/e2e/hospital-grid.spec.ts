@@ -9,7 +9,7 @@ import { expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
  * The hospital cards line up (audit D1-D4): 4 columns from 1280px, 2 from 768px, 1 below; every slot of a card (name, chips,
  * label, value, change, footer) starts at the same height as its neighbours' in the row; one focus stop per card; the
  * urgent care centre is one full-width card under the grid and is not among the ranked cards.
- * The 375px project only checks the compact layout; widths are set here, so the desktop project runs the rest.
+ * The 375px project only checks the compact layout (name on its own line, badge and change beside the value); widths are set here, so the desktop project runs the rest.
  */
 const GRID = '[data-testid=status-group][data-group=ed] [data-testid=status-card]';
 const SLOTS = [".sc-name", ".sc-chips", ".sc-label", ".sc-value", ".sc-delta", ".sc-foot"];
@@ -104,8 +104,8 @@ test("only a card above usual has a status-coloured left edge", async ({ page, v
 });
 
 test.describe("compact, at 375px", () => {
-  test.skip(({ viewport }) => (viewport?.width ?? 0) > 400);
-  test("one column, no overflow, two lines and a meta line; no sparkline under 400px", async ({ page }) => {
+  test.skip(({ viewport }) => (viewport?.width ?? 0) > 480);
+  test("one column, no overflow, the name on its own line and a meta line; no sparkline under 480px", async ({ page }) => {
     await open(page, 375);
     const grouped = await rows(page.locator(GRID));
     expect(grouped.every((r) => r.length === 1)).toBe(true);
@@ -116,8 +116,8 @@ test.describe("compact, at 375px", () => {
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });
   });
-  test("the sparkline returns from 400px", async ({ page }) => {
-    await open(page, 400);
+  test("the sparkline returns from 480px", async ({ page }) => {
+    await open(page, 480);
     await expect(page.locator(GRID).first().locator(".sc-spark")).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
