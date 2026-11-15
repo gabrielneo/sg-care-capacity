@@ -120,3 +120,14 @@ change that depends on it.
    are in `web/styles/tokens.css`; `web/lib/tokens.contrast.test.ts` checks every pair in both themes.
    Orange and brown mean longer waits, violet shorter; ink blue is interface only. The access maps keep
    their Viridis data scale (it passes through green): it is data, never interface.
+
+## Fonts and type scale (2026-11-15)
+
+- **Scale.** `web/styles/tokens.css`: `--fs-meta` 13, `--fs-small` 14, `--fs-body` 16 (17 from 1280px), `--fs-h3` 18,
+  `--fs-h2` 22 (24 from 640px), `--fs-h1` 28 (36 from 640px), `--fs-kpi` the same as h1. Tailwind's own sizes are removed, so
+  `text-meta` ... `text-kpi` are the only text sizes, and `web/test/design-tokens.test.ts` fails on any other.
+- **KPI size.** The brief's 34px KPI next to a 36px h1 would make seven sizes on a page that has both. The budget is six
+  (`web/e2e/type-scale.spec.ts`, 13px floor), so the KPI figure uses the h1 size.
+- **Fonts: web fonts not adopted.** Self-hosted Inter (one variable file) took the Overview's LCP to 2.63 s, and Inter plus Source Serif 4
+  to 2.77 s, against a 2.5 s budget that the system fonts meet. The stacks still name Inter and Source Serif 4 first, so a reader who has
+  them installed sees them. Everyone else gets system-ui and Iowan Old Style / Georgia. Revisit if the budget is relaxed or the pages get lighter.

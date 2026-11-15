@@ -72,7 +72,9 @@
   --tracking-tight: -0.01em;
 
   --container-prose: 68ch;   /* prose is never wider than 68 characters */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Radii are literal here (static: emitted even when only plain CSS uses them), so there is one definition. */
@@ -102,10 +104,10 @@
   h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; letter-spacing: -0.01em; }
   h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
   h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; }
-  /* Headlines in a system serif: a voice of its own with nothing to download. (A web font put the LCP over its 2.5 s budget.) */
-  h1, h2 {
-    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-  }
+  /* Source Serif 4 for h1 and h2 only; everything else is Inter. Both are named first but not downloaded: self-hosted web fonts
+     took the Overview's LCP to 2.6-2.8 s against its 2.5 s budget (docs/design/redesign_brief.md, "Fonts"). A reader who has
+     them installed sees them; everyone else gets the system fonts. */
+  h1, h2 { font-family: var(--font-serif); }
   /* Figures line up in columns: tabular numerals everywhere. */
   body { font-feature-settings: "tnum"; }
   /* Links are underlined unless a component opts out (nav, tabs, cards): colour alone must not
@@ -165,7 +167,7 @@
 .doc ol { list-style: decimal; padding-left: 1.25rem; }
 .doc li { margin: 0.2rem 0; }
 .doc li > ul, .doc li > ol { margin: 0.25rem 0; }
-.doc code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--fs-small); background: var(--bg-page);
+.doc code { font-family: var(--font-mono); font-size: var(--fs-small); background: var(--bg-page);
             border: 1px solid var(--border-subtle); border-radius: 4px; padding: 0 0.25em; overflow-wrap: anywhere; }
 .doc pre { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.75rem;
            overflow-x: auto; font-size: var(--fs-small); margin: 0 0 1rem; }
