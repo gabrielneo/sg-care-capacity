@@ -22,7 +22,7 @@ export function parseView(value: string | string[] | null | undefined): View {
   return VIEWS.some((v) => v.id === one) ? (one as View) : DEFAULT_VIEW;
 }
 
-export type SectionId = "notice" | "finder" | "ednear" | "summary" | "changes" | "hospitals" | "map" | "takeaways" | "weekdays" | "links" | "methods";
+export type SectionId = "notice" | "finder" | "ednear" | "summary" | "changes" | "hospitals" | "map" | "takeaways" | "weekdays" | "methods";
 
 /** How much a section shows: "simple" is the short form, "full" adds the detail. */
 export type Density = "simple" | "full";
@@ -48,7 +48,6 @@ export const SECTIONS: readonly SectionSpec[] = [
   { id: "map", views: { public: "full" } },
   { id: "takeaways", views: { planner: "full", analyst: "full" } },
   { id: "weekdays", views: { analyst: "full" } },
-  { id: "links", views: { analyst: "full" } },
   // Definitions and limits: on every view. Full opens it and adds the statistics behind each takeaway.
   { id: "methods", views: { public: "simple", planner: "simple", analyst: "full" } },
 ];
@@ -95,7 +94,6 @@ export const SECTION_LABEL: Record<SectionId, string> = {
   map: "Map",
   takeaways: "Takeaways",
   weekdays: "Weekday pattern",
-  links: "Data and methods",
   methods: "Definitions and limits",
 };
 

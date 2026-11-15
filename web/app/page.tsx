@@ -215,18 +215,6 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       <WeekPattern profiles={profiles} hospitals={hospitals} finding={findingFor(insights, "weekday", hospitals)} meta={dailyRes.value.meta} />
     ) : null),
 
-    links: () => (
-      <section aria-labelledby="links-heading" data-testid="analyst-links">
-        <SectionHeading id="links-heading" lede="Every figure here can be traced to its source, check and definition.">Where can I check the data and the methods?</SectionHeading>
-        <ul className="grid gap-x-6 gap-y-2 text-small sm:grid-cols-2">
-          <li><Link href="/data-quality">Data Quality</Link>: every check, each source&apos;s date and the days with gaps</li>
-          <li><Link href="/methodology">Methodology</Link>: sources, definitions and what the figures can&apos;t tell you</li>
-          <li><Link href="/docs/insights-method">How findings are tested</Link>: the test and the bar each finding has to pass</li>
-          <li><Link href="/ed-trends">Trends by hospital</Link>: each hospital&apos;s daily bed waits, and raw values side by side</li>
-        </ul>
-      </section>
-    ),
-
     // Full (analyst): open, with the statistics behind each takeaway. Simple: closed, definitions and limits only.
     methods: (density) => (
       <MethodsDrawer open={density === "full"} limits={limits.content}

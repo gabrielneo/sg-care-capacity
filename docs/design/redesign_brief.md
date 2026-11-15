@@ -131,3 +131,9 @@ change that depends on it.
 - **Fonts: web fonts not adopted.** Self-hosted Inter (one variable file) took the Overview's LCP to 2.63 s, and Inter plus Source Serif 4
   to 2.77 s, against a 2.5 s budget that the system fonts meet. The stacks still name Inter and Source Serif 4 first, so a reader who has
   them installed sees them. Everyone else gets system-ui and Iowan Old Style / Georgia. Revisit if the budget is relaxed or the pages get lighter.
+5. **Section header and tile names.** Settled 2026-11-15: every home-page data section states its window, source and date once, in
+   `SectionHeader`, as "Data as of {date}" (the wording of `docs/language_rules.md` Rule 6; the UI-metrics count and the section test
+   also accept "Data to"). The summary tiles are named "Emergency departments above usual", "Longest bed wait", "Biggest change vs usual"
+   (still up or down: the data dictionary's definition is unchanged) and "Typical bed wait across emergency departments". "Busier" is
+   not used (decision 3). The urgent care centre stays out of all four, with the one line under the tiles saying so.
+

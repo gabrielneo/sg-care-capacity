@@ -9,7 +9,7 @@ test("D6: notes under the hospital cards are no wider than 68ch", async ({ page 
   await page.goto("/?view=planner");
   const notes = await page.evaluate(() => {
     const out: { id: string; width: number; limit: number }[] = [];
-    for (const id of ["status-definition", "status-key", "status-exclusions", "summary-adults-note", "summary-ucc-note"]) {
+    for (const id of ["status-key", "status-exclusions", "summary-adults-note", "summary-ucc-note"]) {
       const el = document.querySelector<HTMLElement>(`[data-testid="${id}"]`);
       if (!el) continue;
       const probe = document.createElement("span");

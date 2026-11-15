@@ -1,7 +1,9 @@
 
 import { Notice995 } from "@/components/Notice995";
 import { Term } from "@/components/terms/Term";
-import { TRIAGE_EMERGENCY, TRIAGE_GUIDANCE_LABEL, TRIAGE_GUIDANCE_URL, TRIAGE_NEXT } from "@/lib/copy";
+import { Prose } from "@/components/Prose";
+import { Glossed } from "@/components/terms/Glossed";
+import { BED_WAIT_INTRO, TRIAGE_EMERGENCY, TRIAGE_GUIDANCE_LABEL, TRIAGE_GUIDANCE_URL, TRIAGE_NEXT } from "@/lib/copy";
 import type { Density } from "@/lib/homeViews";
 
 /**
@@ -54,6 +56,7 @@ export function HomeNotice({ density = "full" }: { density?: Density }) {
         Hospital emergency departments: the latest complete week against a usual week
       </h1>
       <Notice995 variant="compact" className="mt-2" />
+      <Prose size="small" tone="muted" className="mt-2" data-testid="bed-wait-definition"><Glossed text={BED_WAIT_INTRO} /></Prose>
       {/* The end of the page's intro: the sticky status strip appears once this has scrolled out of view (components/SiteStrip.tsx). */}
       <div data-strip-sentinel="" aria-hidden="true" />
     </section>

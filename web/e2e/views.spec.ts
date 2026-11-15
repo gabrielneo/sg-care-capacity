@@ -22,7 +22,7 @@ const SECTIONS: Record<string, View[]> = {
   "map-section": ["public"],
   "takeaways": ["planner", "analyst"],
   "week-pattern": ["analyst"],
-  "analyst-links": ["analyst"],
+  "analyst-links": ["public", "planner", "analyst"],
   "methods": ["public", "planner", "analyst"],
 };
 
@@ -91,8 +91,11 @@ test.describe("Home views", () => {
       else await expect(page.getByTestId("emergency-note")).toHaveText("✚ Emergency? Call 995. This site shows public statistics, not medical advice.");
       const lines = page.getByTestId("home").getByTestId("provenance-line");
       // Public shows no figure until a search (then each block is dated: e2e/finder.spec.ts); the other views always do.
-      if (view !== "public") expect(await lines.count()).toBeGreaterThan(0);
       for (const line of await lines.all()) await expect(line).toHaveText(AS_OF);
+      // Planner and Analyst: every data section's header states its window, source and date once (components/SectionHeader.tsx).
+      const metas = page.getByTestId("home").getByTestId("section-meta");
+      if (view !== "public") expect(await metas.count()).toBeGreaterThan(2);
+      for (const line of await metas.all()) await expect(line).toContainText(/Source: .+ · Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4}/);
       // What MOH's figures cover stays on the cards (Planner and Analyst); Public shows the nearest three after a search.
       if (view !== "public") {
         await expect(page.locator('[data-testid=status-card][data-hospital="AH"]').getByTestId("status-note")).toHaveText("Urgent care centre");
@@ -125,17 +128,18 @@ test.describe("Home views", () => {
     const tiles = strip.getByTestId("summary-tile");
     expect(await tiles.evaluateAll((els) => els.map((e) => e.getAttribute("data-tile")))).toEqual(["above", "longest", "change", "middle"]);
     // The date and source are stated once for the four tiles, not on each (docs/design/redesign_brief.md, principle 1).
-    await expect(tiles.getByTestId("provenance-line")).toHaveCount(0);
-    await expect(strip.getByTestId("provenance-line")).toHaveCount(1);
-    await expect(strip.getByTestId("provenance-line")).toHaveText(AS_OF);
+    await expect(strip.getByTestId("provenance-line")).toHaveCount(0);
+    await expect(strip.getByTestId("section-meta")).toHaveCount(1);
+    await expect(strip.getByTestId("section-meta")).toContainText(/Source: .+ · Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4}/);
+    await expect(tiles.filter({ hasText: /Data as of|Source:/ })).toHaveCount(0);
     // Fixture: SGH +25% (higher); NUH has no usual level; AH, the urgent care centre, is left out of all four.
     const tile = (id: string) => strip.locator(`[data-tile="${id}"]`);
     await expect(tile("above")).toContainText("Emergency departments above usual");
     await expect(tile("above")).toContainText("1 of 2");
     await expect(tile("above").getByTestId("above-unknown")).toHaveText("1 with no comparison.");
     await expect(strip.getByTestId("summary-ucc-note")).toContainText("The urgent care centre is left out of these four figures.");
-    await expect(tile("change")).toContainText("+25% vs usual");
-    await expect(tile("change")).toContainText("Largest change vs usual (previous 8 complete weeks)");
+    await expect(tile("change")).toContainText("+25%");
+    await expect(tile("change")).toContainText("Biggest change vs usual (previous 8 complete weeks)");
     // Short name and code on the tile; the full name in its tooltip (audit G4).
     await expect(tile("change").getByTestId("hospital-name")).toContainText("Singapore General (SGH)");
     await expect(tile("middle")).toContainText("Needs 3+ emergency departments");   // 2 full EDs here: no middle value, said so
@@ -205,7 +209,7 @@ test.describe("Home views", () => {
   test("analyst: the statistics are open, with links to Data Quality and Methodology", async ({ page }) => {
     await page.goto("/?view=analyst");
     const links = page.getByTestId("analyst-links");
-    await expect(links.getByRole("link", { name: "Data Quality" })).toHaveAttribute("href", "/data-quality");
+    await expect(links.getByRole("link", { name: "Data quality" })).toHaveAttribute("href", "/data-quality");
     await expect(links.getByRole("link", { name: "Methodology" })).toHaveAttribute("href", "/methodology");
     await expect(page.getByTestId("methods-drawer")).toHaveAttribute("open", "");
     await expect(page.getByTestId("limits")).toBeVisible();

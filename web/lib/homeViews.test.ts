@@ -33,8 +33,8 @@ describe("sectionsFor", () => {
     expect(densityOf("planner", "hospitals")).toBe("full");
   });
 
-  it("analyst: everything in planner, plus the weekday pattern, links and the statistics", () => {
-    expect(ids("analyst")).toEqual(["notice", "summary", "hospitals", "changes", "takeaways", "weekdays", "links", "methods"]);
+  it("analyst: everything in planner, plus the weekday pattern and the statistics", () => {
+    expect(ids("analyst")).toEqual(["notice", "summary", "hospitals", "changes", "takeaways", "weekdays", "methods"]);
     for (const s of sectionsFor("planner")) expect(ids("analyst")).toContain(s.id);
     expect(densityOf("planner", "methods")).toBe("simple");
     expect(densityOf("analyst", "methods")).toBe("full");

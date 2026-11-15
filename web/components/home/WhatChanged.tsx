@@ -1,9 +1,9 @@
-import { FreshnessBadge } from "@/components/FreshnessBadge";
 import { Prose } from "@/components/Prose";
-import { SectionHeading } from "@/components/SectionHeading";
+import { SectionHeader } from "@/components/SectionHeader";
 import type { Meta } from "@/lib/api/types";
 import { changesLede } from "@/lib/ledes";
 import { LEVELS } from "@/lib/status";
+import { formatWindow } from "@/lib/windows";
 import { formatWeek, type WeekRange } from "@/lib/weeks";
 import type { WeekChanges } from "@/lib/weekChanges";
 
@@ -19,9 +19,9 @@ export function WhatChanged({ changes, names, meta, latestWeek }: {
   const { moved, unchanged, notCompared } = changes;
   return (
     <section aria-labelledby="changes-heading" className="py-6" data-testid="what-changed">
-      <SectionHeading id="changes-heading" badge={<FreshnessBadge meta={meta} />} lede={changesLede(moved.length, unchanged)} ledeTestId={moved.length ? "changes-lede" : "changes-none"}>
-        What changed since the week before
-      </SectionHeading>
+      <SectionHeader id="changes-heading" title="Which hospitals changed badge since the week before?" meta={meta}
+                     window={formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}
+                     lede={changesLede(moved.length, unchanged)} ledeTestId={moved.length ? "changes-lede" : "changes-none"} />
       {moved.length ? (
         <ul className="space-y-1 text-body text-ink" data-testid="changes-list">
           {moved.map((m) => (

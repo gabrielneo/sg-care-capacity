@@ -31,6 +31,8 @@ export const AVERAGE_VS_TYPICAL =
 // bed wait measured, from the first screen).
 export const SITE_SCOPE = "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.";
 export const BED_WAIT_SHORT = "The bed wait is the time an admitted patient waits in the ED for a ward bed. It is not the time to see a doctor.";
+/** The page intro's one sentence on Planner and Analyst: the definition appears here once; the full version is in "How these figures are made". */
+export const BED_WAIT_INTRO = "Bed wait is the time from a doctor's decision to admit a patient until the patient leaves the ED for a ward. It is not the time to see a doctor.";
 /** Cited on the page (population.gov.sg): the 21% line is crossed by citizens, not yet by all residents. */
 export const CITIZENS_SUPER_AGED = "Among citizens alone, Singapore passed that mark in 2026";
 

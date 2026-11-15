@@ -12,6 +12,13 @@ import { EVIDENCE_LABEL, evidenceOf, safeDetail, sampleText } from "@/lib/eviden
 
 const pText = (p: number | null | undefined) => (p == null ? "not tested" : p < 0.001 ? "below 0.001" : p.toFixed(3));
 
+const CHECK_LINKS = [
+  { href: "/methodology", title: "Methodology", text: "Sources, definitions and what the figures can't tell you." },
+  { href: "/data-quality", title: "Data quality", text: "Every check, each source's date and the days with gaps." },
+  { href: "/docs/insights-method", title: "How findings are tested", text: "The test and the bar each finding has to pass." },
+  { href: "/ed-trends", title: "Trends by hospital", text: "Each hospital's daily bed waits, and raw values side by side." },
+] as const;
+
 /**
  * Everything technical: what each figure means, how the badges are set and what the data can't
  * show. A native <details>, so it opens without JavaScript. Closed unless `open`; the analyst view
@@ -80,12 +87,17 @@ export function MethodsDrawer({ findings, limits, open = false }: { findings: In
             <h3 className="font-semibold text-h3">What the data can&apos;t show</h3>
             <Prose as="div" size="small" className="mt-1">{limits}</Prose>
           </div>
-          <p>
-            <Link href="/methodology">Full methodology</Link> · <Link href="/docs/insights-method">How findings are tested</Link>
-            {" · "}<Link href="/data-quality">Data quality checks</Link>
-          </p>
         </div>
       </details>
+      {/* Where to check the data and the methods: four links, so every figure can be traced (was its own section). */}
+      <ul className="card-grid mt-6 sm:grid-cols-2" data-testid="analyst-links">
+        {CHECK_LINKS.map((l) => (
+          <li key={l.href} className="rounded-xl border border-line bg-surface card relative hover:border-accent">
+            <Link href={l.href} className="font-semibold text-h3 link-quiet after:absolute after:inset-0 after:rounded-xl">{l.title}</Link>
+            <p className="mt-1 text-small text-muted">{l.text}</p>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

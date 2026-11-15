@@ -133,7 +133,10 @@ describe("StatusGrid", () => {
       expect(note("NUH")).toHaveTextContent("Adults only");
       expect(note("SGH")).toBeNull();
       expect(screen.getByTestId("status-exclusions")).toHaveTextContent(/excludes KK Women's and Children's Hospital and .*Children's Emergency/);
-      expect(screen.getByTestId("provenance-line")).toHaveTextContent(/Data as of 31 Oct 2026 · Source: /);
+      // The date and source are the section header's one line; the grid adds none of its own.
+      expect(screen.getByTestId("section-meta")).toHaveTextContent(/Source: .* · Data as of 31 Oct 2026/);
+      expect(screen.queryByTestId("provenance-line")).toBeNull();
+      expect(screen.queryByTestId("status-definition")).toBeNull();
       unmount();
     }
   });
@@ -154,7 +157,9 @@ describe("StatusGrid", () => {
     const links = within(screen.getByRole("navigation", { name: "Order of the hospitals" })).getAllByRole("link");
     expect(links.map((l) => [l.textContent, l.getAttribute("href"), l.getAttribute("aria-current")])).toEqual([
       ["Against usual", "/?view=planner", null], ["Hours", "/?view=planner&sort=hours", "true"], ["A–Z", "/?view=planner&sort=name", null]]);
-    expect(screen.getByTestId("status-definition")).toHaveTextContent("It is not the time to see a doctor.");
+    // The bed-wait definition is in the page intro, not repeated under the cards (E3); the badge legend is a popover in the header.
+    expect(screen.queryByTestId("status-definition")).toBeNull();
+    expect(screen.getByRole("button", { name: "What the badges mean" })).toBeInTheDocument();
     unmount();
     setTestScope(createScope());
     render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week} density="simple" sort="hours" />);
@@ -173,13 +178,22 @@ describe("SummaryStrip", () => {
   it("four tiles from the cards' own figures, with one date and source for all", () => {
     render(<SummaryStrip statuses={statuses} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
     expect(screen.getAllByTestId("summary-tile").map((t) => t.getAttribute("data-tile"))).toEqual(["above", "longest", "change", "middle"]);
-    // Stated once for the section, not on each tile.
-    expect(screen.getAllByTestId("provenance-line")).toHaveLength(1);
-    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/Data as of 31 Oct 2026 · Source: /);
-    for (const t of screen.getAllByTestId("summary-tile")) expect(within(t).queryByTestId("provenance-line")).toBeNull();
+    // Stated once for the section (its header), not on each tile.
+    expect(screen.queryByTestId("provenance-line")).toBeNull();
+    expect(screen.getAllByTestId("section-meta")).toHaveLength(1);
+    expect(screen.getByTestId("section-meta")).toHaveTextContent("Latest complete week (19–25 Oct 2026) · Source: ");
+    expect(screen.getByTestId("section-meta")).toHaveTextContent("Data as of 31 Oct 2026");
+    for (const t of screen.getAllByTestId("summary-tile")) expect(t).not.toHaveTextContent(/Data as of|Source:/);
+    // Every tile is a link to the hospital card it is about, or to the cards.
+    expect(within(tile("above")).getByRole("link")).toHaveAttribute("href", "#section-hospitals");
+    expect(within(tile("longest")).getByRole("link")).toHaveAttribute("href", "#hospital-NUH");
+    expect(within(tile("change")).getByRole("link")).toHaveAttribute("href", "#hospital-SGH");
+    expect(within(tile("middle")).getByRole("link")).toHaveAttribute("href", "#section-hospitals");
+    // None has a micro-visual, so the four are the same shape (D5).
+    expect(screen.queryByTestId("kpi-visual")).toBeNull();
     // Above usual: the higher and much higher badges, with the list in a tooltip a keyboard can reach.
     // The urgent care centre (AH, +45%) is left out of all four (ADR 0012), and one line says so.
-    expect(tile("above")).toHaveTextContent("Emergency departments above usual, latest complete week2 of 4");
+    expect(tile("above")).toHaveTextContent("Emergency departments above usual. Show the hospital cards2 of 4");
     const which = within(tile("above")).getByRole("button", { name: "See which hospitals" });
     expect(document.getElementById(which.getAttribute("aria-describedby")!)).toHaveTextContent(
       // Short name and code; the full name is there for screen readers (audit G4).
@@ -190,19 +204,19 @@ describe("SummaryStrip", () => {
     expect(screen.getByTestId("summary-adults-note")).toHaveTextContent("covers its adult emergency department only");
     expect(tile("longest")).toHaveTextContent("Adult emergency department only.");
     expect(within(tile("above")).queryByTestId("above-unknown")).toBeNull();
-    expect(tile("longest")).toHaveTextContent(/^Longest bed wait, latest complete week7\.5 hNational University \(NUH\)National University Hospital\./);   // label, then its tooltip
-    expect(tile("middle")).toHaveTextContent(/bed wait across emergency departments, latest complete week5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
-    expect(tile("middle")).toHaveTextContent("Last 12 weeks; middle of 4 emergency departments.");
-    expect(within(tile("middle")).getByTestId("sparkline")).toBeInTheDocument();
+    expect(tile("longest")).toHaveTextContent(/^Longest bed wait\. Show its hospital card7\.5 hNational University \(NUH\)National University Hospital\./);   // label, then its tooltip
+    expect(tile("middle")).toHaveTextContent(/Typical bed wait across emergency departments\. Show the hospital cards5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
+    expect(tile("middle")).toHaveTextContent(/Median.*of 4 emergency departments\./);
+    expect(within(tile("middle")).queryByTestId("sparkline")).toBeNull();   // the 12-week trend is in the hospital section's header
     // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; cut, not rounded.
-    expect(tile("change")).toHaveTextContent(/^Largest change vs usual \(previous 8 complete weeks\)\+31% vs usualSingapore General \(SGH\)Singapore General Hospital\. Usual is the median of those weeks\./);
-    expect(screen.getByTestId("summary-strip")).toHaveTextContent("At a glance: latest complete week (19–25 Oct 2026)");
-    expect(screen.getByTestId("summary-strip")).toHaveTextContent("It is not the time to see a doctor.");
+    expect(tile("change")).toHaveTextContent(/^Biggest change vs usual \(previous 8 complete weeks\)\. Show its hospital card\+31%Singapore General \(SGH\)Singapore General Hospital\./);
+    // The bed-wait definition is not repeated here (E3): it is in the page intro.
+    expect(screen.getByTestId("summary-strip")).not.toHaveTextContent("It is not the time to see a doctor.");
   });
 
   it("a fall can be the largest change, and it is signed", () => {
     render(<SummaryStrip statuses={[at("SGH", 16, 5), at("TTSH", -32.7, 4)]} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
-    expect(tile("change")).toHaveTextContent(/−32% vs usualTan Tock Seng \(TTSH\)Tan Tock Seng Hospital\. Usual is the median of those weeks\./);
+    expect(tile("change")).toHaveTextContent(/−32%Tan Tock Seng \(TTSH\)Tan Tock Seng Hospital\./);
   });
 
   it("missing stays missing: no comparison is counted on its own, and nothing is shown as 0", () => {
@@ -244,6 +258,9 @@ describe("HomeNotice", () => {
         // The intro ends in the marker that the status strip waits for; neither density has the CV line any more.
         expect(document.querySelector("[data-strip-sentinel]")).not.toBeNull();
       }
+      // The bed-wait definition is stated once, in the intro of Planner and Analyst (E3); the public view has no cards to define.
+      expect(screen.queryByTestId("bed-wait-definition") != null).toBe(density === "simple");
+      if (density === "simple") expect(screen.getByTestId("bed-wait-definition")).toHaveTextContent("decision to admit");
       expect(screen.queryByTestId("project-link")).toBeNull();
       expect(screen.queryByText(/CV or LinkedIn/)).toBeNull();
       expect(screen.queryByTestId("site-purpose") != null).toBe(density === "full");

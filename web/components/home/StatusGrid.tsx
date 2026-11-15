@@ -1,19 +1,18 @@
 import Link from "next/link";
 
 import { Prose } from "@/components/Prose";
-import { Provenance } from "@/components/Provenance";
-import { SectionHeading } from "@/components/SectionHeading";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Glossed } from "@/components/terms/Glossed";
 import type { Hospital, LiveReading, Meta } from "@/lib/api/types";
-import { BED_WAIT_SHORT } from "@/lib/copy";
 import type { Density } from "@/lib/homeViews";
 import { levelSplitLede } from "@/lib/ledes";
 import { shortNote } from "@/lib/hospitalNotes";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
-import { type Sort, sortHref, SORTS } from "@/lib/planner";
+import { acrossHospitals, type Sort, sortHref, SORTS } from "@/lib/planner";
 import { type HospitalStatus, HIGHER_PCT, levelCounts, MUCH_HIGHER_PCT, SPARK_WEEKS } from "@/lib/status";
 import type { WeekRange } from "@/lib/weeks";
 
+import { Sparkline } from "./Sparkline";
 import { StatusCard } from "./StatusCard";
 import { formatWindow, USUAL_WEEKS } from "@/lib/windows";
 
@@ -49,6 +48,7 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
   statuses: HospitalStatus[]; hospitals: Hospital[]; live: LiveReading[]; meta: Meta; latestWeek: WeekRange | null; density?: Density;
   sort?: Sort; query?: string }) {
   const full = density === "full";
+  const middle = acrossHospitals(statuses, hospitals);
   // The full EDs in the order given; the urgent care centre in its own group below (ADR 0012).
   const { rankable, urgentCare } = splitByCare(statuses, (s) => s.code, hospitals);
   const gridClass = full ? "card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "card-grid sm:grid-cols-2 lg:grid-cols-3";
@@ -63,11 +63,28 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
   return (
     <section aria-labelledby="status-heading" className={full ? "py-2" : "py-8"} data-testid="status-grid" data-density={density}
              data-sort={sort}>
-      <SectionHeading id="status-heading" aside={full && sort ? <SortLinks sort={sort} query={query} /> : null}
-                      lede={full ? levelSplitLede(levelCounts(rankable)) : latestWeek
-                        ? <>{formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}, compared with each hospital&apos;s own usual week.</> : null}>
-        {full ? `Each hospital, ${formatWindow({ kind: "latest_week", week: latestWeek })}` : "How long were bed waits at hospital emergency departments in the latest complete week?"}
-      </SectionHeading>
+      <SectionHeader id="status-heading" title="How did each hospital compare with its own usual week?" meta={meta}
+                     window={formatWindow({ kind: "latest_week", week: latestWeek }, { capital: true })}
+                     lede={levelSplitLede(levelCounts(rankable))}
+                     measureLabel="What the badges mean"
+                     measure={
+                       <span data-testid="status-key">
+                         <span className="block">Usual = the median of the previous {USUAL_WEEKS} complete weeks.</span>
+                         <span className="mt-1 block">Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.</span>
+                         {full ? <span className="mt-1 block">{`The line shows the ${formatWindow({ kind: "weeks", n: SPARK_WEEKS })}. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.`}</span> : null}
+                       </span>
+                     }
+                     aside={full ? (
+                       <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+                         {middle.some((v) => v != null) ? (
+                           <figure className="m-0 flex items-center gap-3" data-testid="median-trend">
+                             <Sparkline values={middle} tone="none" />
+                             <figcaption className="text-meta text-muted">Typical bed wait across emergency departments,<br />{formatWindow({ kind: "weeks", n: SPARK_WEEKS })}</figcaption>
+                           </figure>
+                         ) : null}
+                         {sort ? <SortLinks sort={sort} query={query} /> : null}
+                       </div>
+                     ) : null} />
       <ul className={gridClass} data-testid="status-group" data-group="ed">
         {rankable.map((s) => (
           <StatusCard key={s.code} status={s} hospital={byCode.get(s.code)} note={noteFor(s.code)} live={liveFor(s.code)} weeklyAsOf={meta.as_of} density={density} />
@@ -84,15 +101,9 @@ export function StatusGrid({ statuses, hospitals, live, meta, latestWeek, densit
           </ul>
         </div>
       ) : null}
-      <Prose size={full ? "meta" : "small"} tone="muted" className="mt-3" data-testid="status-definition"><Glossed text={BED_WAIT_SHORT} /></Prose>
-      <Prose size="meta" tone="muted" className="mt-1" data-testid="status-key">
-        Usual = the median of the previous {USUAL_WEEKS} complete weeks. Higher = {HIGHER_PCT}% or more above usual; much higher = {MUCH_HIGHER_PCT}% or more.
-        {full ? ` The line shows the ${formatWindow({ kind: "weeks", n: SPARK_WEEKS })}. The shaded band is the usual range: within ${HIGHER_PCT}% of usual.` : null}
-      </Prose>
       {exclusions ? (
-        <Prose size="meta" tone="muted" className="mt-1" data-testid="status-exclusions"><Glossed text={exclusions} /></Prose>
+        <Prose size="meta" tone="muted" className="mt-3" data-testid="status-exclusions"><Glossed text={exclusions} /></Prose>
       ) : null}
-      <Provenance meta={meta} compact />
     </section>
   );
 }
