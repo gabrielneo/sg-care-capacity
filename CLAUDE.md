@@ -103,7 +103,7 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 # glossary:     docs/glossary.yml (from docs/language_rules.md) -> cd web && npm run gen:glossary
 # wording:      cd web && npm run lint:terms && npm run readability   # both part of npm run lint
 # docs pages:   docs/*.md (methodology, case_study, adr/, ...) are rendered by the site at build time;
-#               TODO(me) marks text only the author can write (never fill it with invented content)
+#               TODO(me) marks text only the author can write; the site shows it highlighted. Never fill it with invented facts or data (none is left in the docs as of 16 Nov 2026)
 
 # Deploy (docs/runbook.md, "Deploying"; every setting: .env.example)
 # API:          Render, from render.yaml (free plan; rebuilds on api/** changes). Health: /api/v1/health

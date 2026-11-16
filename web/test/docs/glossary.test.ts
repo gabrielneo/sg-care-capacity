@@ -51,8 +51,8 @@ describe("glossary.yml", () => {
     expect(publicWording!.startsWith(t!.public_wording!.replace(/\.\.\.$/, ""))).toBe(true);
   });
 
-  it("marks a TODO(me) definition as pending, not finished", () => {
-    expect(GLOSSARY.find((t) => t.id === "has")!.pending).toBe(true);
-    expect(GLOSSARY.filter((t) => t.pending).map((t) => t.id)).toEqual(["has"]);
+  it("has no pending (TODO(me)) definition left: a term whose definition can't be sourced is removed, not guessed", () => {
+    expect(GLOSSARY.filter((t) => t.pending).map((t) => t.id)).toEqual([]);
+    expect(GLOSSARY.map((t) => t.id as string)).not.toContain("has");
   });
 });

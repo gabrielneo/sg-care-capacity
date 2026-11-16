@@ -1,6 +1,6 @@
 # Case study: a calm, clear redesign
 
-Draft written from the repo's own records (`redesign_brief.md`, the UX audit, `review_2026-11-16.md`). Personal reflections are left as TODO(me).
+Draft written from the repo's own records (`redesign_brief.md`, the UX audit, `review_2026-11-16.md`). The reflections come from the same records; the 5-second test has not been run.
 
 ## Problem
 The 14 Nov 2026 UX audit found a site that was not over-full but noisy and inconsistent. The same "Data as of ... Source ..." line repeated on every tile; two type systems competed (8 sizes, 116 text elements under 14px on the Analyst view); card contents did not line up; Alexandra Hospital, an urgent care centre, was ranked in some numbers and not others; and a CV link sat inside the product. At 375px the Analyst view was 6,316px tall.
@@ -57,6 +57,6 @@ Pairs are in `before-after/`; both sides use fixture data (3 hospitals), so they
 See section 6 of `review_2026-11-16.md`. In short: state provenance once on Findings, find what made Public and Findings longer on mobile, unify the name of the bed-wait measure, run the 5-second test, and re-capture on real data.
 
 ## Reflections
-- What surprised me: TODO(me)
-- What I would change about the process: TODO(me)
-- What I learned from the 5-second test: TODO(me)
+- What surprised me: how little of the loading time was the page. React and the Next.js router are 72% of the 153 kB of script, so the landing page measures the same 2.33 s as `/methodology`; and that the Linux fonts on CI are wider than my Mac's, so a header that fit on my machine overflowed to 801 px there.
+- What I would change about the process: test on real data from the start. The fixture has 3 hospitals, so card names cut off, long lists and the 9-card grid only showed up on the real release (N9 to N12 in the review), after the first round was already "done".
+- The 5-second test has not been run yet, so there is nothing to report from it.

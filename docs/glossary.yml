@@ -34,11 +34,6 @@ terms:
     full_name: Chronic Disease Management Programme
     plain_definition: Lets patients with long-term conditions such as diabetes use MediSave at the clinic.
     category: keep_abbreviation
-  - id: has
-    abbreviation: HAS
-    full_name: Health Appointment System
-    plain_definition: "TODO(me): one-sentence definition from the official source"
-    category: keep_abbreviation
   - id: ucc
     abbreviation: UCC
     full_name: Urgent Care Centre

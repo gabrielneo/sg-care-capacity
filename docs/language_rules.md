@@ -22,7 +22,6 @@ After that, show the abbreviation with a hover definition.
 | MOH | Ministry of Health (MOH) | Singapore's health ministry; publishes the bed-wait data |
 | CHAS | Community Health Assist Scheme (CHAS) | Government subsidies at private GP and dental clinics |
 | CDMP | Chronic Disease Management Programme (CDMP) | Lets patients with long-term conditions such as diabetes use MediSave at the clinic |
-| HAS | Health Appointment System (HAS) | TODO(me): one-sentence definition from the official source |
 | UCC | Urgent Care Centre (UCC) | Treats urgent but non-life-threatening cases; Alexandra Hospital runs one instead of a full ED |
 | NUHS | National University Health System (NUHS) | One of the three public healthcare clusters that run the hospitals |
 | NHG Health | NHG Health | One of the three public healthcare clusters that run the hospitals; called National Healthcare Group until July 2025 |

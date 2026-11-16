@@ -60,17 +60,6 @@ export const GLOSSARY = [
     "pending": false
   },
   {
-    "id": "has",
-    "abbreviation": "HAS",
-    "full_name": "Health Appointment System",
-    "plain_definition": "TODO(me): one-sentence definition from the official source",
-    "category": "keep_abbreviation",
-    "source_url": null,
-    "aliases": [],
-    "public_wording": null,
-    "pending": true
-  },
-  {
     "id": "ucc",
     "abbreviation": "UCC",
     "full_name": "Urgent Care Centre",

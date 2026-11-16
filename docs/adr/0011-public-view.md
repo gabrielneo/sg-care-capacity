@@ -19,8 +19,7 @@ stays in the browser.
 - **A triage band comes first**, can't be dismissed and is the page's highest-contrast block: "Life-threatening
   emergency? Call 995." with a call link, one line saying a GP clinic or polyclinic can often help
   when it isn't life-threatening, and a link to the official guidance. The site gives no other medical
-  advice. The guidance URL is `TRIAGE_GUIDANCE_URL` in `web/lib/copy.ts`, a `TODO(me)`: no link is
-  shown until the author sets it. "Not medical advice" stays on every view.
+  advice. "Not medical advice" stays on every view.
 - **The search runs in the browser.** The place lists come from `/places.json`, fetched once and only when
   a search starts; the request has no search text in it. Matching and distances run in the page. The
   search is kept in the address's fragment (`#near=460123&type=gp`), which a browser never sends to a

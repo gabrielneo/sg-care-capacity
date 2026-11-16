@@ -20,10 +20,10 @@ Run with 3-5 people who have not seen the site. Use the live site on a phone (37
 ## Results
 | # | Device | View | Q1 said | Q2 said | Q3 said | Pass (Q1/Q2/Q3) |
 |---|---|---|---|---|---|---|
-| 1 | | | TODO(me) | TODO(me) | TODO(me) | |
-| 2 | | | TODO(me) | TODO(me) | TODO(me) | |
-| 3 | | | TODO(me) | TODO(me) | TODO(me) | |
-| 4 | | | TODO(me) | TODO(me) | TODO(me) | |
-| 5 | | | TODO(me) | TODO(me) | TODO(me) | |
+| 1 | | | | | | |
+| 2 | | | | | | |
+| 3 | | | | | | |
+| 4 | | | | | | |
+| 5 | | | | | | |
 
 Target: at least 2 of 3 questions right for most people. Note any word they used that the site does not use, and any question they could not answer.

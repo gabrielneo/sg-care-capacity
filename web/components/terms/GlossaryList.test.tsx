@@ -25,7 +25,8 @@ describe("GlossaryList", () => {
   });
 
   it("shows a pending definition as TODO(me), and links official sources", () => {
-    render(<GlossaryList terms={GLOSSARY} />);
+    const pending = { ...GLOSSARY[0]!, id: "sample", abbreviation: "SMP", full_name: "Sample term", plain_definition: "TODO(me): one-sentence definition", pending: true };
+    render(<GlossaryList terms={[pending, ...GLOSSARY]} />);
     expect(screen.getByText(/TODO\(me\): one-sentence definition/)).toHaveClass("todo-me");
     const superAged = screen.getByText("Super-aged society").closest("div")!;
     expect(within(superAged).getByRole("link", { name: "Source" })).toHaveAttribute("href", expect.stringContaining("population.gov.sg"));
