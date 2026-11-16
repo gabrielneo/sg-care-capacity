@@ -45,6 +45,8 @@ MODELS: list[tuple[str, str]] = [
     ("marts", "dim_hospital"),
     ("marts", "fct_ed_daily"),
     ("marts", "fct_ed_weekly"),
+    ("marts", "fct_ed_monthly"),
+    ("marts", "fct_ed_system_monthly"),
     ("marts", "dim_clinic"),
     ("marts", "dim_polyclinic"),
     ("marts", "dim_event"),
@@ -145,6 +147,18 @@ RECONCILIATIONS: list[Reconciliation] = [
     Reconciliation("marts.fct_ed_weekly", "marts.fct_ed_daily (attendance days)",
                    "SELECT count(attendances) FROM marts.fct_ed_daily",
                    "SELECT sum(days_reported_attendances) FROM marts.fct_ed_weekly"),
+    # ... and in exactly one calendar month.
+    Reconciliation("marts.fct_ed_monthly", "marts.fct_ed_daily (wait days)",
+                   "SELECT count(median_wait_hours) FROM marts.fct_ed_daily",
+                   "SELECT sum(days_reported_wait) FROM marts.fct_ed_monthly"),
+    Reconciliation("marts.fct_ed_monthly", "marts.fct_ed_daily (attendance days)",
+                   "SELECT count(attendances) FROM marts.fct_ed_daily",
+                   "SELECT sum(days_reported_attendances) FROM marts.fct_ed_monthly"),
+    # One system row per month that any full ED has.
+    Reconciliation("marts.fct_ed_system_monthly", "marts.fct_ed_monthly (months of the full EDs)",
+                   "SELECT count(DISTINCT month_start) FROM marts.fct_ed_monthly m JOIN marts.dim_hospital h "
+                   "USING (hospital_code) WHERE h.facility_type = 'ED' AND h.reported_from IS NULL",
+                   "SELECT count(*) FROM marts.fct_ed_system_monthly"),
 ]
 
 # Rows withheld before staging, by the data-quality gate. Logged so the chain from raw file to

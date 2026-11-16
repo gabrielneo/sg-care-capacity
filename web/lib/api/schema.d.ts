@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ed/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendar-month aggregates per hospital, with year-on-year and month-on-month change */
+        get: operations["ed_monthly_api_v1_ed_monthly_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ed/summary": {
         parameters: {
             query?: never;
@@ -79,8 +96,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Latest complete week per hospital vs the 4 complete weeks before it */
+        /** Latest complete week per hospital vs the median of the 8 complete weeks before it */
         get: operations["ed_summary_api_v1_ed_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ed/system/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendar-month average across the full emergency departments reported throughout */
+        get: operations["ed_system_monthly_api_v1_ed_system_monthly_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -304,7 +338,7 @@ export interface components {
             cdmp_clinics_per_1k_seniors: number | null;
             /**
              * Cdmp Shortfall
-             * @description CDMP clinics the national rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
+             * @description CDMP clinics the benchmark rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
              */
             cdmp_shortfall?: number | null;
             /** Chas Clinics */
@@ -343,18 +377,18 @@ export interface components {
         /** Change */
         Change: {
             /**
-             * Baseline Mean
-             * @description Mean over the 4 complete weeks before it; null if any is missing
+             * Baseline Median
+             * @description Median over the 8 complete weeks before it (the site's usual level); null if any is missing
              */
-            baseline_mean: number | null;
+            baseline_median: number | null;
             /**
              * Change
-             * @description latest - baseline_mean, in the metric's unit
+             * @description latest - baseline_median, in the metric's unit
              */
             change: number | null;
             /**
              * Change Pct
-             * @description change / baseline_mean x 100; null if the baseline is null or 0
+             * @description change / baseline_median x 100; null if the baseline is null or 0
              */
             change_pct: number | null;
             /**
@@ -522,11 +556,80 @@ export interface components {
             /** Wait Source Url */
             wait_source_url: string | null;
         };
+        /** EdMonth */
+        EdMonth: {
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** As Of Basis */
+            as_of_basis: string;
+            /**
+             * Attendances Mom Pct
+             * @description As wait_mom_pct, for visits
+             */
+            attendances_mom_pct: number | null;
+            /**
+             * Attendances Yoy Pct
+             * @description As wait_yoy_pct, for visits
+             */
+            attendances_yoy_pct: number | null;
+            /** Days In Month */
+            days_in_month: number;
+            /** Days Reported Attendances */
+            days_reported_attendances: number;
+            /** Days Reported Wait */
+            days_reported_wait: number;
+            /** Hospital Code */
+            hospital_code: string;
+            /** Hospital Name */
+            hospital_name: string;
+            /** Is Complete Month */
+            is_complete_month: boolean;
+            /**
+             * Mean Of Daily Median Wait Hours
+             * @description Average of daily medians, NOT a monthly median
+             */
+            mean_of_daily_median_wait_hours: number | null;
+            /** Month */
+            month: number;
+            /**
+             * Month Start
+             * Format: date
+             */
+            month_start: string;
+            /** Source Sha256 */
+            source_sha256: string | null;
+            /**
+             * Total Attendances
+             * @description A full-month total only when is_complete_month
+             */
+            total_attendances: number | null;
+            /**
+             * Wait Mom Pct
+             * @description % change vs the month before; null unless both months are complete
+             */
+            wait_mom_pct: number | null;
+            /**
+             * Wait Yoy Pct
+             * @description % change vs the same month a year earlier; null unless both months are complete
+             */
+            wait_yoy_pct: number | null;
+            /** Year */
+            year: number;
+        };
+        /** EdMonthlyResponse */
+        EdMonthlyResponse: {
+            /** Data */
+            data: components["schemas"]["EdMonth"][];
+            meta: components["schemas"]["Meta"];
+        };
         /** EdSummary */
         EdSummary: {
             /**
              * Baseline Weeks
-             * @description week_start of the 4 weeks the baseline averages
+             * @description week_start of the 8 weeks whose median is the baseline
              */
             baseline_weeks: string[];
             /** Facility Type */
@@ -554,6 +657,63 @@ export interface components {
         EdSummaryResponse: {
             /** Data */
             data: components["schemas"]["EdSummary"][];
+            meta: components["schemas"]["Meta"];
+        };
+        /** EdSystemMonth */
+        EdSystemMonth: {
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** As Of Basis */
+            as_of_basis: string;
+            /** Attendances Mom Pct */
+            attendances_mom_pct: number | null;
+            /** Attendances Yoy Pct */
+            attendances_yoy_pct: number | null;
+            /** Is Complete Month */
+            is_complete_month: boolean;
+            /**
+             * Mean Of Hospital Mean Wait Hours
+             * @description Average of the hospitals' monthly averages of daily medians; null unless the month is complete
+             */
+            mean_of_hospital_mean_wait_hours: number | null;
+            /** Month */
+            month: number;
+            /**
+             * Month Start
+             * Format: date
+             */
+            month_start: string;
+            /**
+             * N Complete Hospitals
+             * @description Of them, how many have this month complete
+             */
+            n_complete_hospitals: number;
+            /**
+             * N Hospitals
+             * @description Full emergency departments in the group (those MOH reported throughout)
+             */
+            n_hospitals: number;
+            /** Source Sha256 */
+            source_sha256: string | null;
+            /**
+             * Total Attendances
+             * @description Visits at those hospitals; null unless the month is complete
+             */
+            total_attendances: number | null;
+            /** Wait Mom Pct */
+            wait_mom_pct: number | null;
+            /** Wait Yoy Pct */
+            wait_yoy_pct: number | null;
+            /** Year */
+            year: number;
+        };
+        /** EdSystemMonthlyResponse */
+        EdSystemMonthlyResponse: {
+            /** Data */
+            data: components["schemas"]["EdSystemMonth"][];
             meta: components["schemas"]["Meta"];
         };
         /** EdWeek */
@@ -1369,7 +1529,7 @@ export interface components {
             cdmp_clinics_per_1k_seniors: number | null;
             /**
              * Cdmp Shortfall
-             * @description CDMP clinics the national rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
+             * @description CDMP clinics the benchmark rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
              */
             cdmp_shortfall?: number | null;
             /** Chas Clinics */
@@ -1604,6 +1764,58 @@ export interface operations {
             };
         };
     };
+    ed_monthly_api_v1_ed_monthly_get: {
+        parameters: {
+            query?: {
+                /** @description Hospital code (see /hospitals). Omit for all */
+                hospital?: string | null;
+                /** @description How many of the latest months (1-120) */
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EdMonthlyResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This data release has no monthly figures */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     ed_summary_api_v1_ed_summary_get: {
         parameters: {
             query?: never;
@@ -1629,6 +1841,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ed_system_monthly_api_v1_ed_system_monthly_get: {
+        parameters: {
+            query?: {
+                /** @description How many of the latest months (1-120) */
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EdSystemMonthlyResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description This data release has no monthly figures */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

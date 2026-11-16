@@ -97,6 +97,10 @@ export const api = {
     call(() => client().GET("/api/v1/ed/daily", { params: { query } })),
   edWeekly: (query: Query<"/api/v1/ed/weekly"> = {}) =>
     call(() => client().GET("/api/v1/ed/weekly", { params: { query } })),
+  edMonthly: (query: Query<"/api/v1/ed/monthly"> = {}) =>
+    call(() => client().GET("/api/v1/ed/monthly", { params: { query } })),
+  edSystemMonthly: (query: Query<"/api/v1/ed/system/monthly"> = {}) =>
+    call(() => client().GET("/api/v1/ed/system/monthly", { params: { query } })),
   edSummary: () => call(() => client().GET("/api/v1/ed/summary")),
   clinics: (query: Query<"/api/v1/clinics"> = {}) =>
     call(() => client().GET("/api/v1/clinics", { params: { query } })),

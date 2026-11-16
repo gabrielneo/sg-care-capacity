@@ -34,7 +34,7 @@ export function QuadrantTable({ points }: { points: QuadrantPoint[] }) {
 export function ShortfallTable({ bars }: { bars: ShortfallBar[] }) {
   return (
     <table className="w-full border-separate border-spacing-0 text-meta tabular-nums" data-testid="shortfall-table">
-      <caption className="sr-only">Chronic Disease Management Programme clinics each priority area is short of the national rate</caption>
+      <caption className="sr-only">Chronic Disease Management Programme clinics each priority area is short of the benchmark rate</caption>
       <thead>
         <tr>
           <th scope="col" className="pr-3 text-left font-semibold text-muted">Area</th>

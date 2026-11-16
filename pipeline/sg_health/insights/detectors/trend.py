@@ -60,7 +60,7 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
         value_text, unit_text = hours_parts(abs(slope))
         out.candidates.append(Candidate(
             type="trend", entity=code, variant=direction,
-            method=f"Theil-Sen slope; Mann-Kendall test with Yue-Wang autocorrelation correction (lag-1 r = {mk.lag1:.2f})",
+            method=f"Theil-Sen slope; Mann-Kendall test with an AR(1) autocorrelation correction after Yue-Wang (lag-1 r = {mk.lag1:.2f})",
             n=n, effect_size=mk.tau, effect_norm=abs(mk.tau), metric_value=slope, unit="hours per week",
             comparison_value=float(np.median(y)), direction=direction, p_value=mk.p_value,
             passes_effect=abs(slope) >= float(cfg["min_abs_slope_hours_per_week"]), completeness=min(completeness, 1.0),

@@ -54,6 +54,12 @@ describe("the usual level (as the unusual-week finding defines it)", () => {
     expect(u.pct).toBeCloseTo((2.14 / (u.usual as number) - 1) * 100, 6);
   });
 
+  it("also gives the robust z the engine's anomaly detector uses: AH is 3.57 spreads above usual", () => {
+    const u = usualLevels(weekly, ["AH"], "2026-10-19").AH!;
+    expect(u.z).toBeCloseTo(3.5652, 3);                                            // the published anomaly's effect size
+    expect(u.mad).toBeGreaterThan(0);
+  });
+
   it("needs all 8 weeks: with one incomplete there is no usual level, never a guess", () => {
     const u = usualLevels(weekly, ["SGH", "NUH"], "2026-10-19");
     expect(u.SGH).toMatchObject({ usual: null, diff: null, weeks: 7, latest: 4 });

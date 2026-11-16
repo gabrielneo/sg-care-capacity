@@ -45,7 +45,7 @@ describe("HospitalDrawerBody", () => {
     expect(screen.getByTestId("drawer-usual")).toHaveTextContent("Usual: 4.0 h");
     expect(screen.getByTestId("drawer-delta")).toHaveTextContent("▲ 25%+25% vs usual");
     expect(screen.getByTestId("sparkline")).toBeInTheDocument();
-    expect(screen.getByTestId("drawer-trend")).toHaveAttribute("href", "/ed-trends?hospital=SGH");
+    expect(screen.getByTestId("drawer-trend")).toHaveAttribute("href", "/hospital/SGH");
     expect(screen.getByTestId("drawer-cluster")).toHaveTextContent("SingHealth");
   });
 

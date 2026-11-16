@@ -28,6 +28,23 @@ flags AS (
     FROM main.dq_findings
     WHERE severity = 'WARN' AND scope = 'row' AND table_name IN ('moh_bed_waits', 'moh_ed_attendances')
     GROUP BY 1, 2
+),
+-- Days in a week whose median bed wait is 10x above or below the hospital's trailing 4-week median: the same rule as
+-- the dataset check unit.weekly_shift_10x (Sunday-to-Saturday weeks, trailing 4 weeks; sg_health/quality/validate.py,
+-- SHIFT_RATIO and SHIFT_TRAILING_WEEKS, pinned by a test). A level shift is flagged on its days, so a chart can mark it.
+weekly AS (
+    SELECT hospital_code,
+           CAST(date_trunc('week', report_date + INTERVAL 1 DAY) AS DATE) - 1 AS wk,
+           median(median_wait_hours)                                         AS med
+    FROM joined WHERE median_wait_hours IS NOT NULL GROUP BY 1, 2
+),
+shifted AS (
+    SELECT hospital_code, wk FROM (
+        SELECT hospital_code, wk, med,
+               median(med) OVER trail AS prior_med, count(med) OVER trail AS n
+        FROM weekly
+        WINDOW trail AS (PARTITION BY hospital_code ORDER BY wk ROWS BETWEEN 4 PRECEDING AND 1 PRECEDING)
+    ) WHERE n = 4 AND (med > 10 * prior_med OR med < prior_med / 10)
 )
 SELECT
     j.hospital_code,
@@ -39,7 +56,7 @@ SELECT
     j.attendances,
     (count(j.median_wait_hours) OVER iso_wk = 7
      AND count(j.attendances) OVER iso_wk = 7)               AS is_complete_week,
-    f.dq_flags,
+    nullif(concat_ws(',', f.dq_flags, CASE WHEN sh.wk IS NOT NULL THEN 'unit.weekly_shift_10x' END), '') AS dq_flags,
     j.wait_source_url,
     j.wait_source_sha256,
     j.attendance_source_url,
@@ -48,5 +65,7 @@ SELECT
     'fetched'                                                AS as_of_basis
 FROM joined j
 LEFT JOIN flags f ON f.hospital_name = j.hospital_name AND f.report_date = j.report_date
+LEFT JOIN shifted sh ON sh.hospital_code = j.hospital_code
+                    AND sh.wk = CAST(date_trunc('week', j.report_date + INTERVAL 1 DAY) AS DATE) - 1
 WINDOW iso_wk AS (PARTITION BY j.hospital_code, isoyear(j.report_date), week(j.report_date))
 ORDER BY j.hospital_code, j.report_date;

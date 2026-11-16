@@ -16,7 +16,7 @@ const hospital = (code: string, facility_type: "ED" | "UCC" = "ED", coverage_not
   exclusions_note: null, source_url: "https://www.moh.gov.sg/", as_of: "2026-11-06", as_of_basis: "reference_checked" });
 const HOSPITALS = [hospital("AH", "UCC"), hospital("NUH", "ED", "Adult emergency department only."), hospital("SGH"), hospital("SKH")];
 const usual = (code: string, u: number | null, latest: number | null, weeks = 8): Usual => ({
-  code, usual: u, latest, weeks, diff: u != null && latest != null ? latest - u : null,
+  code, usual: u, latest, weeks, mad: null, z: null, diff: u != null && latest != null ? latest - u : null,
   pct: u != null && latest != null ? ((latest - u) / u) * 100 : null });
 const finding = (type: Insight["type"], entity: string, callout: string, key = "tue") =>
   ({ type, entity, rank_score: 1, chart: { highlight: [key], callout } } as unknown as Insight);

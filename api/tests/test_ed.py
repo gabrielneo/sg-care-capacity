@@ -114,14 +114,14 @@ def summary(client):
     return {s["hospital_code"]: s for s in body["data"]}, body["meta"]
 
 
-def test_summary_compares_the_latest_complete_week_with_the_4_before_it(client):
+def test_summary_compares_the_latest_complete_week_with_the_median_of_the_8_before_it(client):
     rows, meta = summary(client)
     sgh = rows["SGH"]
     assert sgh["latest_complete_week"]["week_start"] == "2026-10-19"                 # not the partial 26 Oct week
-    assert sgh["baseline_weeks"] == ["2026-09-21", "2026-09-28", "2026-10-05", "2026-10-12"]
-    assert sgh["mean_of_daily_median_wait_hours"] == {"unit": "hours", "latest": 5.0, "baseline_mean": 4.0,
+    assert sgh["baseline_weeks"] == [f"2026-{m}" for m in ("08-24", "08-31", "09-07", "09-14", "09-21", "09-28", "10-05", "10-12")]
+    assert sgh["mean_of_daily_median_wait_hours"] == {"unit": "hours", "latest": 5.0, "baseline_median": 4.0,
                                                       "change": 1.0, "change_pct": 25.0}
-    assert sgh["total_attendances"] == {"unit": "patients", "latest": 3150, "baseline_mean": 2800.0,
+    assert sgh["total_attendances"] == {"unit": "patients", "latest": 3150, "baseline_median": 2800.0,
                                         "change": 350.0, "change_pct": 12.5}
     assert sgh["is_current"] and sgh["note"] is None
     assert meta["coverage"]["hospitals_with_a_baseline"] == 1 and meta["as_of"] == "2026-10-31"
@@ -138,3 +138,52 @@ def test_summary_keeps_a_hospital_with_no_data_as_missing(client):
     nuh = summary(client)[0]["NUH"]
     assert nuh["latest_complete_week"] is None and not nuh["is_current"]
     assert nuh["mean_of_daily_median_wait_hours"]["latest"] is None and "No complete week" in nuh["note"]
+
+
+# ------------------------------------------------------------------ monthly #
+
+def test_monthly_gives_a_hospitals_months_with_changes_only_between_complete_months(client):
+    status, body = get(client, "/ed/monthly", hospital="SGH", months=13)
+    assert status == 200
+    rows = {r["month_start"]: r for r in body["data"]}
+    assert list(rows) == ["2025-10-01", "2026-09-01", "2026-10-01"]
+    oct26 = rows["2026-10-01"]
+    assert oct26["is_complete_month"] and oct26["wait_yoy_pct"] == 25.0 and oct26["wait_mom_pct"] == pytest.approx(11.111, abs=1e-3)
+    assert rows["2026-09-01"]["wait_yoy_pct"] is None                    # no Sep 2025: missing, never 0
+    assert body["meta"]["coverage"]["incomplete_months"] == 0
+    assert any("average of that month's daily medians" in c for c in body["meta"]["caveats"])
+
+
+def test_monthly_keeps_a_partial_month_flagged(client):
+    status, body = get(client, "/ed/monthly", hospital="AH")
+    row = body["data"][0]
+    assert status == 200 and not row["is_complete_month"] and row["days_reported_wait"] == 30 and row["days_in_month"] == 31
+    assert row["wait_yoy_pct"] is None and body["meta"]["coverage"]["incomplete_months"] == 1
+
+
+def test_monthly_window_counts_back_from_the_latest_month(client):
+    _, body = get(client, "/ed/monthly", hospital="SGH", months=2)
+    assert [r["month_start"] for r in body["data"]] == ["2026-09-01", "2026-10-01"]
+    assert error(client, "/ed/monthly", hospital="XXX")["code"] == "unknown_hospital"
+
+
+def test_system_monthly_is_the_full_ed_average_and_says_who_is_in_it(client):
+    status, body = get(client, "/ed/system/monthly", months=3)
+    last = body["data"][-1]
+    assert status == 200 and last["month_start"] == "2026-10-01" and last["n_hospitals"] == last["n_complete_hospitals"] == 1
+    assert last["mean_of_hospital_mean_wait_hours"] == 5.0 and last["wait_yoy_pct"] == 25.0
+    assert any("Alexandra Hospital" in c and "Woodlands" in c for c in body["meta"]["caveats"])
+
+
+def test_monthly_is_404_for_a_release_from_before_the_monthly_figures(tmp_path):
+    from fastapi.testclient import TestClient
+    from fixture_snapshot import build
+
+    from sg_health_api.config import Settings
+    from sg_health_api.main import create_app
+
+    snap = build(tmp_path / "old", monthly=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        for path in ("/ed/monthly", "/ed/system/monthly"):
+            r = c.get(f"{API}{path}")
+            assert r.status_code == 404 and r.json()["error"]["code"] == "not_in_release"

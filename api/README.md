@@ -86,7 +86,9 @@ Definitions of every field are in [`docs/data_dictionary.md`](../docs/data_dicti
 | `GET /hospitals` | | The 9 MOH-reported sites, with coverage notes (AH is a UCC) and a map pin (postcode, latitude, longitude; null in releases before 2026-11-09) |
 | `GET /ed/daily` | `hospital`, `from`, `to` | Daily median bed wait and attendances. Default: the 90 days up to the latest published day. At most 2 years |
 | `GET /ed/weekly` | `hospital`, `weeks` (1–104, default 12) | ISO-week aggregates with day counts and a completeness flag |
-| `GET /ed/summary` | | Latest **complete** week per hospital vs the mean of the 4 complete weeks before it (see below) |
+| `GET /ed/monthly` | `hospital`, `months` (1–120, default 36) | Calendar-month aggregates per hospital with day counts, a completeness flag and year-on-year / month-on-month change (only between complete months). 404 `not_in_release` for releases from before it |
+| `GET /ed/system/monthly` | `months` | The same by month for the average of the full EDs MOH reported throughout (Alexandra and Woodlands left out), null until every one has the month complete |
+| `GET /ed/summary` | | Latest **complete** week per hospital vs the median of the 8 complete weeks before it (see below) |
 | `GET /clinics` | `cdmp`, `bbox`, `limit` (≤ 500), `offset` | Active CHAS clinics, paged, with `total` |
 | `GET /polyclinics` | | All polyclinics (26), from HPB's screening-centre list. 404 `not_in_release` for releases from before the list |
 | `GET /areas/access` | | GeoJSON FeatureCollection of the 55 planning areas (access for residents aged 65+) |
@@ -104,7 +106,7 @@ no programme list are excluded from both `true` and `false`.
 - **Latest week:** the most recent ISO week (Monday to Sunday) with all 7 days of both metrics
   for that hospital. MOH's newest week is usually 6 of 7 days, and a partial week is never
   compared.
-- **Baseline:** the mean of the 4 ISO weeks immediately before it, computed only if all 4 are
+- **Baseline:** the median of the 8 ISO weeks immediately before it (the site's usual level), computed only if all 8 are
   complete. Otherwise the baseline is `null`, with a `note` saying which week is short.
 - **Waits** are averages of daily medians, not weekly medians.
 

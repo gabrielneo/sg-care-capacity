@@ -88,22 +88,22 @@ volume_vs_wait:
     detail: "Busier days come with longer bed waits, over {n} days after removing the usual weekday pattern."
     metric_label: "Correlation of ED visits with the bed wait {after_phrase}"
     change_word: "{strength_label} link"
-    callout: "After the busiest days: {diff} {longer_shorter} than after the quietest"
+    callout: "{lead} the busiest days: {diff} {longer_shorter} than {lead_lower} the quietest"
   negative:
     headline: "At {hospital}, bed waits move {strength} against ED visits {lag_phrase}."
     detail: "Busier days come with shorter bed waits, over {n} days after removing the usual weekday pattern."
     metric_label: "Correlation of ED visits with the bed wait {after_phrase}"
     change_word: "{strength_label} link"
-    callout: "After the busiest days: {diff} {longer_shorter} than after the quietest"
+    callout: "{lead} the busiest days: {diff} {longer_shorter} than {lead_lower} the quietest"
 
 access_gap:
   worse:
-    headline: "{area} has about {shortfall} fewer CDMP GP {shortfall_n|clinic|clinics} than the national rate would give its seniors."
-    detail: "It has {actual} {actual_n|clinic|clinics} for {seniors} residents aged 65+, where the national rate suggests {expected}; clinics are counted where they are, not where patients go."
+    headline: "{area} has about {shortfall} fewer CDMP GP {shortfall_n|clinic|clinics} than the benchmark rate would give its seniors."
+    detail: "It has {actual} {actual_n|clinic|clinics} for {seniors} residents aged 65+, where the benchmark rate suggests {expected}; clinics are counted where they are, not where patients go."
     metric_label: "CDMP GP clinics per 1,000 residents aged 65+ in {area}"
-    comparison_label: "{national}, the national rate"
-    change_word: "lower than the national rate"
-    callout: "About {shortfall} {shortfall_n|clinic|clinics} short of the national rate"
+    comparison_label: "{national}, the benchmark rate"
+    change_word: "lower than the benchmark rate"
+    callout: "About {shortfall} {shortfall_n|clinic|clinics} short of the benchmark rate"
 
 source_gap:
   neutral:

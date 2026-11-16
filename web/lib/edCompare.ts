@@ -63,6 +63,10 @@ export interface Usual {
   latest: number | null;
   diff: number | null;
   pct: number | null;
+  /** The spread of the 8 weeks before: their median absolute deviation (hours); null unless all 8 are complete. */
+  mad: number | null;
+  /** Robust z of the latest week against those 8 (0.6745 × diff / MAD), as the insight engine's; null if no MAD or no latest. */
+  z: number | null;
   /** Complete weeks found among the 8 before the latest. */
   weeks: number;
 }
@@ -78,7 +82,9 @@ export function usualLevels(weekly: EdWeek[], codes: string[], latestWeek: strin
     const usual = before.length === USUAL_WEEKS ? median(before) : null;
     const latest = latestWeek ? value(code, latestWeek) : null;
     const diff = usual != null && latest != null ? latest - usual : null;
-    return [code, { code, usual, latest, diff, pct: diff != null && usual ? (diff / usual) * 100 : null, weeks: before.length }];
+    const mad = usual != null ? median(before.map((v) => Math.abs(v - usual))) : null;
+    const z = diff != null && mad ? (0.6745 * diff) / mad : null;
+    return [code, { code, usual, latest, diff, pct: diff != null && usual ? (diff / usual) * 100 : null, mad, z, weeks: before.length }];
   }));
 }
 

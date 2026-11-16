@@ -194,7 +194,7 @@ def test_access_gap_ranks_the_biggest_shortfall_first():
     out = access_gap.detect(areas_frame(), thresholds()["access_gap"], MIN_C)
     first = out.candidates[0]
     assert first.entity == "Big Low" and first.passes_effect
-    national = 55 / 48900                                                 # all clinics / all seniors
+    national = 53 / 48000                                                 # clinics / seniors of the compared areas only
     assert first.values["shortfall"] == f"{round(20000 * national - 5):,d}"
     assert not next(c for c in out.candidates if c.entity == "Big High").passes_effect   # no shortfall
 
@@ -503,7 +503,7 @@ def test_the_volume_chart_groups_days_into_fifths():
     assert [p["label"] for p in bars] == ["Quietest", "Quieter", "Middle", "Busier", "Busiest"]
     assert bars[-1]["value"] > bars[0]["value"] and ins["chart"]["highlight"] == ["q5"]
     assert ins["chart"]["reference"] == {"value": 0.0, "label": "Usual for that weekday"}
-    assert "longer than after the quietest" in ins["chart"]["callout"]
+    assert ins["chart"]["callout"].endswith("longer than after the quietest") or "longer than on the quietest" in ins["chart"]["callout"]
     assert ins["display"]["change"] is None and ins["display"]["change_word"].endswith(" link")
 
 
@@ -511,7 +511,7 @@ def test_the_access_gap_chart_compares_the_area_with_singapore():
     out = access_gap.detect(areas_frame(), thresholds()["access_gap"], MIN_C)
     first = out.candidates[0]
     assert [p["label"] for p in first.chart["points"]] == ["Big Low", "Singapore overall"]
-    assert first.chart["points"][1]["value"] == pytest.approx(1000 * 55 / 48900, abs=1e-4)
+    assert first.chart["points"][1]["value"] == pytest.approx(1000 * 53 / 48000, abs=1e-4)
     assert first.display["change"] == "down"
 
 
@@ -777,3 +777,85 @@ def test_bootstrap_intervals_are_reproducible():
     assert lo < 24.5 < hi
     assert spearman_ci(x, x * 2)[0] == pytest.approx(1.0)
     assert mean_ci(np.array([1.0])) is None
+
+
+# --------------------------------------------------------------------------- #
+# Data-review fixes (16 Nov 2026)
+# --------------------------------------------------------------------------- #
+
+def test_the_national_rate_ignores_areas_that_are_not_compared():
+    # A small city-centre area with many clinics must not lift the yardstick for the areas that are ranked.
+    frame = pd.concat([areas_frame(), pd.DataFrame([{"planning_area": "City", "residents_65plus": 500, "cdmp_clinics": 35,
+                                                     "cdmp_clinics_per_1k_seniors": 70.0, "as_of": pd.Timestamp("2024-06-06")}])])
+    out = access_gap.detect(frame, thresholds()["access_gap"], MIN_C)
+    assert out.extra["national_cdmp_per_1k_seniors"] == round(1000 * 53 / 48000, 4)
+    assert access_gap.national_rate(frame["residents_65plus"], frame["cdmp_clinics"]) == pytest.approx((53 + 35 + 2) / (48000 + 900 + 500))
+    assert any("areas compared" in c for c in out.candidates[0].caveats)
+
+
+def test_the_map_layer_shortfall_uses_the_same_rate_as_the_findings():
+    from sg_health import geo
+    a = areas_frame()
+    cols = geo.access_gap_columns(a[["planning_area", "residents_65plus", "cdmp_clinics"]])
+    big_low = cols.loc[a["planning_area"] == "Big Low", "cdmp_shortfall"].iloc[0]
+    out = access_gap.detect(a, thresholds()["access_gap"], MIN_C)
+    assert big_low == pytest.approx(out.candidates[0].values["shortfall_n"], abs=0.51)
+
+
+def test_a_shared_peak_names_its_days_with_their_own_percentages():
+    # Monday is lower than Tuesday: "Monday–Tuesday" must pair Monday's percentage first, not the peak's.
+    d = daily(lambda rng, c, i, wd: (8 + (4.6 if wd == 1 else 4.5 if wd == 0 else 0) + rng.normal(0, 0.4), 400),
+              codes=("SKH", "CGH"), seed=4)
+    r = next(x for x in published(engine.run(inputs(weekly_from(d), d, hospitals("SKH", "CGH")), NO_FAILS, TODAY), "weekday")
+             if x["entity"] == "SKH")
+    assert "Monday–Tuesday" in r["headline"] and r["chart"]["highlight"] == ["mon", "tue"]
+    import re
+    first, second = (int(x) for x in re.search(r"(\d+)% and (\d+)%", r["headline"]).groups())
+    means = {p["key"]: p["value"] for p in r["chart"]["points"]}
+    mean = r["comparison_value"]
+    assert first == round((means["mon"] / mean - 1) * 100) and second == round((means["tue"] / mean - 1) * 100)
+
+
+def test_a_peak_that_is_clear_week_by_week_is_not_called_shared():
+    # Tuesday is above Wednesday in every week by a steady margin, but the days themselves vary a lot (a wide
+    # spread between weeks). Resampling the days independently would call this a tie; pairing by week does not.
+    from sg_health.insights.detectors.weekday import shared_peak
+    weeks = pd.Series(np.repeat(np.arange(26), 7))
+    weekday = pd.Series(np.tile(np.arange(7), 26))
+    base = pd.Series(np.repeat(np.random.default_rng(1).normal(8, 3, 26), 7))
+    vals = base + np.where(weekday == 1, 0.8, np.where(weekday == 2, 0.0, -1.0)) + np.random.default_rng(2).normal(0, 0.05, 182)
+    means = [float(vals[weekday == k].mean()) for k in range(7)]
+    boot = thresholds()["engine"]["bootstrap"]
+    assert shared_peak(vals, weekday, weeks, means, 1, 0.3, boot) is None
+    flat = vals - np.where(weekday == 1, 0.78, 0)
+    assert shared_peak(flat, weekday, weeks, [float(flat[weekday == k].mean()) for k in range(7)], 1, 0.3, boot) == 2
+
+
+def test_the_unusual_gap_needs_the_week_to_leave_the_hospitals_own_spread():
+    from sg_health.insights.detectors import usual_gap
+    cfg = thresholds()["usual_gap"]
+    hosp = hospitals("SGH")
+    starts = [date(2026, 8, 24) + timedelta(weeks=i) for i in range(9)]
+
+    def weekly_for(values):
+        return pd.DataFrame({"hospital_code": "SGH", "week_start": starts, "week_end": starts, "total_attendances": 1,
+                             "mean_of_daily_median_wait_hours": values, "is_complete_week": True})
+    steady = weekly_for([4.0, 4.1, 3.9, 4.0, 4.2, 3.8, 4.0, 4.1, 5.6])             # +40%, far outside a tight spread
+    noisy = weekly_for([2.0, 6.0, 3.0, 7.0, 2.5, 6.5, 4.0, 5.0, 6.5])              # +40% vs usual 4.5, inside its swings
+    full = float(thresholds()["ranking"]["normalise"]["usual_gap_pct_full"])
+    assert usual_gap.detect(steady, hosp, cfg, MIN_C, full).candidates[0].passes_effect
+    assert not usual_gap.detect(noisy, hosp, cfg, MIN_C, full).candidates[0].passes_effect
+
+
+def test_tiny_p_values_are_kept_not_rounded_to_zero():
+    result, _ = busy_run()
+    ps = [r["p_value"] for r in result.insights if r["p_value"] is not None]
+    assert ps and all(p > 0 for p in ps)
+    assert engine._round_p(4.2e-17) == 4.2e-17 and engine._round_p(0.123456) == 0.1235 and engine._round_p(None) is None
+
+
+def test_a_same_day_correlation_says_on_not_after():
+    result, _ = busy_run()
+    for r in published(result, "volume_vs_wait"):
+        same_day = "same day" in r["headline"]
+        assert r["chart"]["callout"].startswith("On the busiest days") == same_day, r["chart"]["callout"]

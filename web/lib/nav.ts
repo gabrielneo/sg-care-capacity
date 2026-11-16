@@ -12,7 +12,7 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/findings", label: "Findings" },
-  { href: "/explore", label: "Explore", children: ["/find", "/ed-trends", "/access-map", "/live"] },
+  { href: "/explore", label: "Explore", children: ["/find", "/ed-trends", "/hospital", "/access-map", "/live"] },
   { href: "/methodology", label: "Methods", children: ["/data-quality", "/glossary", "/decisions", "/docs"] },
   { href: "/about", label: "About", children: ["/project", "/how-its-built", "/case-study"] },
 ];

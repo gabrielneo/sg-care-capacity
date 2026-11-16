@@ -76,10 +76,10 @@ export function shortfallText(p: Pick<Svy21Props, "cdmp_shortfall" | "excluded_r
   if (p.excluded_reason) return `Not ranked: ${p.excluded_reason}`;
   if (p.cdmp_shortfall == null) return "No shortfall figure";
   const n = Math.round(Math.abs(p.cdmp_shortfall));
-  if (n === 0) return "About the same as the national rate";
+  if (n === 0) return "About the same as the benchmark rate";
   const clinics = `chronic-care ${n === 1 ? "clinic" : "clinics"}`;
-  return p.cdmp_shortfall > 0 ? `About ${n} fewer ${clinics} than the national rate would give`
-    : `About ${n} more ${clinics} than the national rate would give`;
+  return p.cdmp_shortfall > 0 ? `About ${n} fewer ${clinics} than the benchmark rate would give`
+    : `About ${n} more ${clinics} than the benchmark rate would give`;
 }
 
 // ------------------------------------------------------------------ view choice

@@ -145,7 +145,7 @@ export default async function SummaryPage() {
                   <th scope="col" className="py-1 pr-2 font-semibold">Area</th>
                   <th scope="col" className="py-1 pr-2 text-right font-semibold">Residents aged 65+</th>
                   <th scope="col" className="py-1 pr-2 text-right font-semibold"><Glossed text="CDMP clinics per 1,000 aged 65+" plain /></th>
-                  <th scope="col" className="py-1 text-right font-semibold">Clinics short of the national rate</th>
+                  <th scope="col" className="py-1 text-right font-semibold">Clinics short of the benchmark rate</th>
                 </tr>
               </thead>
               <tbody>

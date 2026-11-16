@@ -52,6 +52,15 @@ DDL = {
         week_end DATE, mean_of_daily_median_wait_hours DOUBLE, total_attendances BIGINT, days_reported_wait INTEGER,
         days_reported_attendances INTEGER, is_complete_week BOOLEAN, source_sha256 VARCHAR, as_of TIMESTAMP,
         as_of_basis VARCHAR""",
+    "fct_ed_monthly": """hospital_code VARCHAR, hospital_name VARCHAR, year INTEGER, month INTEGER, month_start DATE,
+        mean_of_daily_median_wait_hours DOUBLE, total_attendances BIGINT, days_reported_wait INTEGER,
+        days_reported_attendances INTEGER, days_in_month INTEGER, is_complete_month BOOLEAN, wait_yoy_pct DOUBLE,
+        attendances_yoy_pct DOUBLE, wait_mom_pct DOUBLE, attendances_mom_pct DOUBLE, source_sha256 VARCHAR,
+        as_of TIMESTAMP, as_of_basis VARCHAR""",
+    "fct_ed_system_monthly": """year INTEGER, month INTEGER, month_start DATE, n_hospitals INTEGER,
+        n_complete_hospitals INTEGER, is_complete_month BOOLEAN, mean_of_hospital_mean_wait_hours DOUBLE,
+        total_attendances BIGINT, wait_yoy_pct DOUBLE, attendances_yoy_pct DOUBLE, wait_mom_pct DOUBLE,
+        attendances_mom_pct DOUBLE, source_sha256 VARCHAR, as_of TIMESTAMP, as_of_basis VARCHAR""",
     "dim_clinic": """clinic_key VARCHAR, hci_code VARCHAR, clinic_name VARCHAR, address VARCHAR, postal_code VARCHAR,
         latitude DOUBLE, longitude DOUBLE, programmes VARCHAR, has_cdmp BOOLEAN, is_active BOOLEAN,
         planning_area_code VARCHAR, planning_area VARCHAR, planning_area_assignment VARCHAR, source_url VARCHAR,
@@ -143,18 +152,18 @@ INSIGHTS = [
      {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None,
      _display("2.2", "hours", "Average of daily median bed waits on Tuesdays", "2.0 hours, its weekly average", "up", "higher than average"),
      _weekday_chart([2.0, 2.2, 2.0, 1.9, 2.0, 1.9, 2.0], "tue", 2.0, "Tuesdays: 10% above average")),
-    # Bedok: 1 CDMP clinic for 61,000 seniors; the national rate (2 clinics / 61,000) would give it 2.
+    # Bedok: 1 CDMP clinic for 61,000 seniors; the benchmark rate (2 clinics / 61,000) would give it 2.
     ("access_gap-eeeeeeeeee", "access_gap", "Bedok",
-     "Bedok has about 1 fewer CDMP GP clinic than the national rate would give its seniors.",
-     "It has 1 clinic for 61,000 residents aged 65+, where the national rate suggests 2. Clinics are counted where they are, not where patients go.",
+     "Bedok has about 1 fewer CDMP GP clinic than the benchmark rate would give its seniors.",
+     "It has 1 clinic for 61,000 residents aged 65+, where the benchmark rate suggests 2. Clinics are counted where they are, not where patients go.",
      0.0164, "CDMP GP clinics per 1,000 residents aged 65+", 0.0328, "worse", 0.25, None, None, 61000,
-     "Expected CDMP clinics at the national rate per senior; priority = seniors percentile x (1 - access percentile)",
+     "Expected CDMP clinics at the benchmark rate per senior; priority = seniors percentile x (1 - access percentile)",
      ["The clinic list dates from June 2024 and residents from June 2026."], None, None,
      {"endpoint": "/api/v1/areas/access", "query": "SELECT 5"}, date(2024, 6, 6), "source_updated", 0.1, None,
      _display("0.02", "per 1,000 residents aged 65+", "CDMP GP clinics per 1,000 residents aged 65+ in Bedok",
-              "0.03, the national rate", "down", "lower than the national rate"),
+              "0.03, the benchmark rate", "down", "lower than the benchmark rate"),
      _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Singapore overall", 0.0328)],
-            ["area"], "About 1 clinic short of the national rate", None)),
+            ["area"], "About 1 clinic short of the benchmark rate", None)),
 ]
 # period_start, period_end and strength sit between headline_rank (column 22) and display (column 25).
 _PERIOD = {"weekday": (date(2026, 4, 27), date(2026, 10, 25), "moderate"), "anomaly": (date(2026, 10, 19), date(2026, 10, 25), "strong"),
@@ -292,7 +301,7 @@ def _square(lon: float, lat: float, d: float = 0.01) -> dict:
     return {"type": "Polygon", "coordinates": [ring]}
 
 
-# The national rate is all CDMP clinics over all residents aged 65+ (2 / 61,000): Bedok is 1 short;
+# The benchmark rate is all CDMP clinics over all residents aged 65+ (2 / 61,000): Bedok is 1 short;
 # Tuas has no residents aged 65+, so it isn't ranked.
 ACCESS_GAP = {"BD": (None, 1.0), "TS": ("no residents aged 65+", None)}
 SVY21_ORIGIN = [29537, 33000]
@@ -338,15 +347,18 @@ def _sha(path: Path) -> str:
 
 
 def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy21: bool = True,
-          live_qualifiers: bool = True, places: bool = True, events: bool = True) -> Path:
+          live_qualifiers: bool = True, places: bool = True, events: bool = True,
+          monthly: bool = True) -> Path:
     """Write the fixture snapshot into `out` (created). Returns `out`.
     insights=False builds a release from before the insight engine (no fct_insight);
     insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer;
     live_qualifiers=False one from before NUHS bounds were kept (no *_qualifier columns);
     places=False one from before 2026-11-09 (no dim_polyclinic, no hospital pins or short names);
-    events=False one from before the event list (no dim_event)."""
+    events=False one from before the event list (no dim_event);
+    monthly=False one from before the monthly figures (no fct_ed_monthly or fct_ed_system_monthly)."""
     marts = {m: cols for m, cols in DDL.items() if (insights or m != "fct_insight") and (places or m != "dim_polyclinic")
-             and (events or m != "dim_event")}
+             and (events or m != "dim_event")
+             and (monthly or m not in ("fct_ed_monthly", "fct_ed_system_monthly"))}
     if not insight_charts:
         marts["fct_insight"] = marts["fct_insight"].replace(INSIGHT_EXTRA_DDL, "")
     out.mkdir(parents=True, exist_ok=True)
@@ -381,6 +393,18 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
                    count(median_wait_hours) = 7 AND count(attendances) = 7, string_agg(DISTINCT wait_source_sha256, ','),
                    max(as_of), 'fetched'
             FROM marts.fct_ed_daily GROUP BY hospital_code, hospital_name, iso_year, iso_week""")
+        if monthly:
+            # SGH: Oct 2025, Sep and Oct 2026 complete (Sep 2025 absent: no year-on-year for Sep 2026). AH: Oct 2026 one day short.
+            as_of = datetime(2026, 11, 1, 16, 34)
+            sgh = [(2025, 10, 4.0, 2800, 31, True, None, None, None, None), (2026, 9, 4.5, 2900, 30, True, None, None, None, None),
+                   (2026, 10, 5.0, 3100, 31, True, 25.0, 3100 / 2800 * 100 - 100, 5.0 / 4.5 * 100 - 100, 3100 / 2900 * 100 - 100)]
+            for y, m, w, a, dim, ok, wy, ay, wm, am in sgh:
+                con.execute("INSERT INTO marts.fct_ed_monthly VALUES ('SGH','Singapore General Hospital',?,?,?,?,?,?,?,?,?,?,?,?,?,'a',?,'fetched')",
+                            [y, m, date(y, m, 1), w, a, dim, dim, dim, ok, wy, ay, wm, am, as_of])
+                con.execute("INSERT INTO marts.fct_ed_system_monthly VALUES (?,?,?,1,1,TRUE,?,?,?,?,?,?,'a',?,'fetched')",
+                            [y, m, date(y, m, 1), w, a, wy, ay, wm, am, as_of])
+            con.execute("INSERT INTO marts.fct_ed_monthly VALUES ('AH','Alexandra Hospital (UCC)',2026,10,DATE '2026-10-01',1.5,700,30,30,31,"
+                        "FALSE,NULL,NULL,NULL,NULL,'a',?,'fetched')", [as_of])
         con.executemany("INSERT INTO marts.dim_clinic VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'inside',?,?,?,?,?)",
                         [(*c, "https://data.gov.sg/chas.geojson", H, datetime(2026, 11, 1, 16, 34), CHAS_AS_OF,
                           "source_updated") for c in CLINICS])

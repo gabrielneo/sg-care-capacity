@@ -19,7 +19,8 @@ from sg_health_api.openapi import render, schema
 
 EXPECTED = {
     "/api/v1/meta": m.MetaResponse, "/api/v1/health": m.HealthResponse, "/api/v1/hospitals": m.HospitalsResponse,
-    "/api/v1/ed/daily": m.EdDailyResponse, "/api/v1/ed/weekly": m.EdWeeklyResponse,
+    "/api/v1/ed/daily": m.EdDailyResponse, "/api/v1/ed/weekly": m.EdWeeklyResponse, "/api/v1/ed/monthly": m.EdMonthlyResponse,
+    "/api/v1/ed/system/monthly": m.EdSystemMonthlyResponse,
     "/api/v1/ed/summary": m.EdSummaryResponse, "/api/v1/clinics": m.ClinicsResponse,
     "/api/v1/polyclinics": m.PolyclinicsResponse, "/api/v1/events": m.EventsResponse,
     "/api/v1/areas/access": m.AreasResponse, "/api/v1/quality": m.QualityResponse,

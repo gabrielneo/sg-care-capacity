@@ -88,7 +88,7 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | `median_wait_hours` | **MOH's definition:** daily median (50th percentile) waiting time for admission to ward, from *"Decision by doctor to admit patient"* to *"Time patient exits EMD"* (to go to the inpatient ward) | hours | staging, unchanged | **Unit inferred, not stated** by MOH (see the MOH metric entry below). Covers only patients admitted that day. NULL if MOH gave no value (e.g. WH before 2024-06-23): missing, never 0. |
 | `attendances` | Patients who presented at the EMD that day, *"regardless of urgency of medical conditions"* (MOH) | patients | staging, renamed from `total_attendances` | Includes non-urgent cases: demand, not acuity. NULL if MOH gave no value. |
 | `is_complete_week` | TRUE if this hospital has all 7 days of **both** metrics in this ISO week | boolean | window count over hospital × ISO week | The newest ISO week is usually FALSE (6 of 7 days) until MOH's next file, because MOH files end on Saturday. |
-| `dq_flags` | Comma-separated WARN checks this row tripped, e.g. `range.bed_wait_over_24h` | text | `dq_findings` (WARN, row) joined on hospital and date | NULL = no warnings. The row is published; show the flag with it. See `docs/data_quality.md`. |
+| `dq_flags` | Comma-separated WARN checks this row tripped, e.g. `range.bed_wait_over_24h`; `unit.weekly_shift_10x` on every day of a week whose median bed wait is 10x above or below the hospital's trailing 4 weeks (a level shift or a unit change, which a chart can mark) | text | `dq_findings` (WARN, row) joined on hospital and date | NULL = no warnings. The row is published; show the flag with it. See `docs/data_quality.md`. |
 | `wait_source_url`, `wait_source_sha256` | The raw MOH bed-waits file this day's `median_wait_hours` came from | text | staging lineage | NULL when `median_wait_hours` is NULL. |
 | `attendance_source_url`, `attendance_source_sha256` | The raw MOH attendances file this day's `attendances` came from | text | staging lineage | Separate from the wait lineage: the two metrics come from different files. |
 | `as_of` | When the later of the two source files was downloaded | timestamp (SGT) | `greatest(wait_fetched_at, attendance_fetched_at)` | MOH gives no per-figure date. MOH restates history weekly; an unchanged file isn't re-parsed, so `as_of` is the first fetch of the file that last changed the row. |
@@ -112,6 +112,45 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | `source_sha256` | Every raw file contributing to the week, comma-separated, sorted | text | distinct wait and attendance hashes | Usually one or two files. |
 | `as_of` | Latest `as_of` of the week's days | timestamp (SGT) | `max(as_of)` | |
 | `as_of_basis` | Always `fetched` | text | constant | |
+
+### `marts.fct_ed_monthly`
+
+**Grain:** one row per hospital per calendar month that has at least one reported day. **Source:**
+`marts.fct_ed_daily`, grouped by hospital and month.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `hospital_code`, `hospital_name` | Site | text | daily | |
+| `year`, `month` | Calendar year and month (1–12) | integer | `month_start` | |
+| `month_start` | First day of the month | date | `date_trunc('month', report_date)` | |
+| `mean_of_daily_median_wait_hours` | **The mean of the daily median waits reported that month.** NOT a monthly median | hours | `avg(median_wait_hours)` over the days reported | Same caveat as the weekly figure: MOH publishes daily medians only. Say "average of daily medians" wherever it is shown. |
+| `total_attendances` | Sum of daily attendances reported that month | patients | `sum(attendances)` | **A full-month total only when `is_complete_month`.** A partial month is an undercount. NULL if no day has attendances. |
+| `days_reported_wait`, `days_reported_attendances` | Days in the month with each metric | days | `count(...)` | Counted separately. |
+| `days_in_month` | Calendar days in the month | days | `last_day(month_start)` | |
+| `is_complete_month` | TRUE if both day counts equal `days_in_month` | boolean | | The newest month is usually FALSE: MOH's files end on a Saturday. |
+| `wait_yoy_pct`, `attendances_yoy_pct` | % change against the same calendar month a year earlier | % | `(this / last year - 1) × 100` | **NULL unless both months are complete** (never 0). Seasonal swings (May is the longest-wait month, August the shortest) make year-on-year the fairer comparison. |
+| `wait_mom_pct`, `attendances_mom_pct` | % change against the month before | % | as above | NULL unless both months are complete. Includes seasonal and calendar effects; not a trend. |
+| `source_sha256` | Every raw file contributing to the month, comma-separated, sorted | text | distinct hashes | |
+| `as_of` | Latest `as_of` of the month's days | timestamp (SGT) | `max(as_of)` | |
+| `as_of_basis` | Always `fetched` | text | constant | |
+
+### `marts.fct_ed_system_monthly`
+
+**Grain:** one row per calendar month. **Source:** `marts.fct_ed_monthly`, for the full emergency departments MOH
+reported throughout (`dim_hospital.facility_type = 'ED'` and no `reported_from`: 7 sites today). Alexandra Hospital
+(urgent care centre) and Woodlands Hospital (reported from 23 Jun 2024) are left out so the series compares like with
+like and does not step when a site joins.
+
+| Column | Definition | Unit | Source → transformation | Caveats |
+|---|---|---|---|---|
+| `year`, `month`, `month_start` | Calendar month | integer, integer, date | | |
+| `n_hospitals` | Hospitals in the group | count | `dim_hospital` | |
+| `n_complete_hospitals` | Of them, how many have this month complete | count | `fct_ed_monthly` | |
+| `is_complete_month` | TRUE if every hospital in the group has the month complete | boolean | `n_complete_hospitals = n_hospitals` | |
+| `mean_of_hospital_mean_wait_hours` | The average of the hospitals' monthly averages of daily medians | hours | `avg(mean_of_daily_median_wait_hours)` | **NULL unless `is_complete_month`.** Every hospital counts equally, whatever its size. Not a median of patients. |
+| `total_attendances` | Visits at those hospitals that month | patients | `sum(total_attendances)` | NULL unless `is_complete_month`. |
+| `wait_yoy_pct`, `attendances_yoy_pct`, `wait_mom_pct`, `attendances_mom_pct` | % change against the same month a year earlier, and against the month before | % | as in `fct_ed_monthly` | NULL unless both months are complete. |
+| `source_sha256`, `as_of`, `as_of_basis` | Lineage, as for the weekly mart | | | |
 
 ### `marts.dim_clinic`
 
@@ -258,7 +297,7 @@ ratios are NULL and the blocking check `completeness.population_present` fails.
 A GeoJSON FeatureCollection written after every successful transform, for the site's choropleth.
 **One feature per planning area (55)**, geometry in **WGS84 (EPSG:4326)**, simplified from the URA
 Master Plan 2025 polygons in SVY21 with shared borders kept (see
-[methodology.md](methodology.md)). Under 1 MB (342 KB at a 5 m tolerance today); coordinates to 5
+[methodology.md](methodology.md)). Under 1 MB (about 345 KB at a 5 m tolerance in the 9 Nov release); coordinates to 5
 decimals (about 1 m).
 
 **Properties** are the `marts.fct_area_access` columns of the same name: `planning_area_code`,
@@ -275,7 +314,7 @@ Two more properties come from the insight engine's own access-gap code
 | Property | Definition | Unit | Caveats |
 |---|---|---|---|
 | `excluded_reason` | Why the area is left out of the access-gap ranking: `no residents aged 65+`, or `fewer than 1,000 residents aged 65+` (`thresholds.yml`); null if it is ranked | text | A clinic or two moves a small area's ratio a lot, so these areas are drawn flat and grey on the 3D map. |
-| `cdmp_shortfall` | CDMP clinics the national rate would give the area's residents aged 65+, minus the CDMP clinics it has. The national rate is all CDMP clinics over all residents aged 65+ | clinics, 2 decimals | **Negative means more than the national rate.** Null for excluded areas and missing counts. Clinics are counted where they are, not where patients go. |
+| `cdmp_shortfall` | CDMP clinics the benchmark rate would give the area's residents aged 65+, minus the CDMP clinics it has. The benchmark rate is the CDMP clinics over the residents aged 65+ of the areas that are compared (those with at least 1,000 such residents; 1.18 per 1,000 in the 9 Nov release, against 1.27 with the city-centre areas that hold 76 of the 1,048 clinics) | clinics, 2 decimals | **Negative means more than the benchmark rate.** Null for excluded areas and missing counts. Clinics are counted where they are, not where patients go. |
 
 Caveat: rounding coordinates after simplification leaves 52 m² of gaps and 49 m² of overlap in total
 across all 55 areas (invisible at map scale; a test fails above 1,000 m²).
@@ -323,10 +362,10 @@ run, published or not, is in `insights.json` (`candidates`). Method per detector
 | `detail` | At most two sentences | text | `templates.yml` | Same checks. |
 | `metric_value` | The measured value (slope, week's value, peak-day mean, correlation, area ratio, median gap) | see `unit` | detector | Rounded to 4 decimals. |
 | `unit` | Unit of `metric_value` and `comparison_value` | text | detector | |
-| `comparison_value` | What `metric_value` is compared with (window median, usual level, weekly mean, national rate) | see `unit` | detector | NULL where there is no comparison. |
+| `comparison_value` | What `metric_value` is compared with (window median, usual level, weekly mean, benchmark rate) | see `unit` | detector | NULL where there is no comparison. |
 | `direction` | `better`, `worse` or `neutral`, for the metric's own sense (a longer wait is worse) | text | detector | |
 | `effect_size` | The detector's effect: Kendall's tau, robust z, epsilon-squared, Spearman rho, priority score, median gap | number | detector | Not comparable across detectors; `rank_score` is. |
-| `p_value` | The test's p-value | probability | scipy | NULL for descriptive detectors (anomaly, access_gap, regional). |
+| `p_value` | The test's p-value, to 4 significant digits (never rounded to exactly 0) | probability | scipy | NULL for descriptive detectors (anomaly, access_gap, regional). |
 | `p_adjusted` | Benjamini-Hochberg adjusted p-value, across every test in the run | probability | engine | Published only below `alpha` (0.05). |
 | `n` | Observations behind the insight; what it counts is in `n_unit` | count | detector | Shown beside every figure on the Findings page, with `n_unit`. |
 | `method` | The method, in words | text | detector | |
@@ -372,15 +411,16 @@ test, so they never become a sentence about a pattern (that is the insight engin
 
 | Indicator | Definition | Unit | Computed in | Caveats |
 |---|---|---|---|---|
-| Hospital status badge | Latest complete week's average of daily median bed waits against the hospital's usual level (median of the 8 complete weeks before it; the same usual level as ED Trends and the unusual-week finding). +30% or more: much higher; +15% to under +30%: higher; over −15% to under +15%: about usual; −15% or less: lower. | category | `web/lib/status.ts` | Thresholds chosen for readability, not tested. Fewer than 8 complete weeks before the latest: "no comparison", never "about usual". |
-| Change against usual | The same comparison as the badge, as a number: the latest complete week's average of daily median bed waits, as a % above or below the hospital's usual level. Shown on the full hospital card (Planner and Analyst views) as "▲ 31% vs usual". | %, whole number | `web/lib/edCompare.ts` (`usualLevels`), `web/lib/planner.ts` (`formatDelta`) | Not shown when there is no usual level. Cut to a whole number towards zero, not rounded, so it always agrees with the badge: +14.6% shows as "▲ 14%" beside "about usual", never 15%. Under 1% either way is "0%" with no arrow. |
-| 12-week trend word | Which way a hospital's 12-week line moved, in a word, for the hospital card's accessible name ("rising over 12 weeks"). The mean of the last 4 known weeks against the mean of the first 4 known weeks: 15% or more up is rising, 15% or more down is falling, otherwise steady. | category | `web/lib/status.ts` (`trendOf`) | Same 15% as the badge, chosen for readability, not tested. Missing weeks are skipped, never filled. Fewer than 8 known weeks, or a first mean of 0: no word, and the name says "too few weeks to describe a trend". Spoken only; the card does not print it. |
+| Hospital status badge | Latest complete week's average of daily median bed waits against the hospital's usual level (median of the 8 complete weeks before it; the same usual level as ED Trends and the unusual-week finding). +30% or more: much higher; +15% to under +30%: higher; −15% or less: lower; anything else: about usual. A badge other than "about usual" also needs the week to be at least 2 robust spreads (z of 2, from the median and MAD of the 8 usual weeks, as the unusual-week finding computes it) from usual, so a hospital whose weeks vary a lot needs a bigger move. If the 8 weeks do not vary at all, the % line alone decides. | category | `web/lib/status.ts` (`levelFor`), `web/lib/edCompare.ts` (`usualLevels`) | Thresholds chosen for readability, not tested. Since 2025, with the spread rule 79% of hospital-weeks read "about usual" (44% on the % lines alone). Fewer than 8 complete weeks before the latest: "no comparison", never "about usual". |
+| Change against usual | The same comparison as the badge, as a number: the latest complete week's average of daily median bed waits, as a % above or below the hospital's usual level. Shown on the full hospital card (Planner and Analyst views) as "▲ 31% vs usual". | %, whole number | `web/lib/edCompare.ts` (`usualLevels`), `web/lib/planner.ts` (`formatDelta`) | Not shown when there is no usual level. Rounded to a whole number, as the findings round their percentages, so a card and its finding give the same figure (Alexandra's +55.8% is 56% in both). The badge also needs the week to leave the hospital's own spread, so a rounded 15% can sit beside "about usual". Under 0.5% either way is "0%" with no arrow. |
 | Summary strip | Four tiles for the latest complete week (Planner and Analyst views), each from the same statuses as the cards below. **Emergency departments above usual:** how many full EDs carry the higher or much higher badge, out of the full EDs the API lists; those with no comparison are counted separately. **Longest bed wait:** the highest weekly average of daily medians, with its hospital. **Biggest change against usual:** the hospital furthest from its own usual level, up or down (the tile's label said "Largest change" before the redesign). **Typical bed wait across emergency departments:** the median of each full ED's weekly average. Its 12-week line is in the hospital section's header, not on the tile. | hospitals; hours; % | `web/lib/planner.ts` | All four leave out Alexandra Hospital's urgent care centre, including the change tile (a ranking of hospitals, though each is compared with itself); one line under the tiles says so ([decision record 0012](adr/0012-urgent-care-centre-out-of-aggregates.md)). The median is across hospitals' weekly averages, not a median of patients. A week with fewer than 3 hospitals having a complete week has no median: a gap, never a guess. "No comparison" is never counted as "not above usual". |
 | Site strip | The 40px bar that follows a Planner or Analyst reader down the home page, from 768px up. It appears only after the page's intro has scrolled away, and is never on the public view, another page or a phone. **Higher than usual:** how many full EDs carry the higher or much higher badge, out of the full EDs the API lists (the urgent care centre is never counted), for the latest complete week, with the week ("1 of 8 emergency departments higher than usual · week of 19–25 Oct 2026"); hospitals with no comparison are said separately. **Freshness:** the bed-wait data's level in a symbol and words (Up to date, Due an update, Overdue; the rules are in [`datasets.yml`](datasets.yml)), with its source and as-of date. It opens one entry per dataset (bed waits from MOH; doctor-wait estimates from NUHS, only when NUHS has a reading), each dated by its own source's `as_of`: the bed-wait entry shows the date and the age; the estimates entry says "some hospitals only" and shows the NUHS update time, not an age. **Jump to section** lists the view's sections. The cluster filter is not in the strip: it is with the hospital map. | hospitals; days | `web/lib/strip.ts` (built by `web/app/page.tsx`), `web/components/SiteStrip.tsx` | Ages are worked out on the server, never from the visitor's clock. The strip's two dates differ by design: MOH's is the latest report date, NUHS's is its own update time. NUHS estimates cover some hospitals only. The count is the same as the "Emergency departments above usual" tile on the page, from the same statuses. |
 | Order of the cards | Planner and Analyst cards can be ordered by change against usual (default; largest first, no comparison last), by hours (longest first, no complete week last), or A–Z by hospital name. Ties go by hospital code. The urgent care centre is never ordered among the EDs: it follows them in its own group, headed "Urgent care centre" with "Not compared with full emergency departments". | order | `web/lib/planner.ts` (`sortStatuses`) | The order is in the URL (`?sort=hours`, `?sort=name`). It changes nothing about a figure. |
-| 12-week line | The last 12 weekly averages of daily median bed waits, on the full card with the usual range shaded: from 15% below to 15% above the hospital's usual level (the "about usual" zone) | hours | `web/lib/status.ts` (`usualBand`) | An incomplete week is a gap, never joined. No usual level, no shaded range. |
+| 12-week line | The last 12 weekly averages of daily median bed waits, on the full card with the usual range shaded: the "about usual" zone: each side is the larger of 15% of the usual level and 2 robust spreads of the 8 usual weeks, so a week outside it can earn a badge | hours | `web/lib/status.ts` (`usualBand`) | An incomplete week is a gap, never joined. No usual level, no shaded range. |
 | Nearest places | Straight-line (great-circle) distance from the searched point to each polyclinic and active CHAS clinic, nearest first, in one list with a filter for GP clinics or polyclinics (public view). The nearest three hospital EDs are shown the same way. | km | `web/lib/nearby.ts`, `web/lib/finder.ts` | The point is a listed place with that postcode, else the mean of listed places in the postcode's 2-digit sector, else the mean of the area's CHAS clinics. Approximate; not travel distance, and no travel time is shown. Computed in the browser: the search text is never sent to a server or saved. No opening-hours field exists, so there is no "open now" filter; every clinic listed is on CHAS, so there is no CHAS filter. |
 | NUHS "to see a doctor" estimate | NUHS's own estimated wait to see a doctor, shown on a hospital's card only where NUHS publishes one (AH, NUH adult ED, NTFGH), labelled "NUHS estimate" with its own time | hours | `web/components/home/EdNearbyCard.tsx` | An estimate from the weekly snapshot, so up to 7 days old: the card says "An estimate, not live". Not MOH's bed wait. |
+| Year so far | Each year's average bed wait (the average of the monthly averages) and total ED visits over the months up to the newest complete month, counting only the months complete in every year shown, and the % change from the year before over the same months. Shown on Month by month and each hospital's page. | hours, patients, % | `web/lib/monthly.ts` (`yearsSoFar`) | A description, not a test. Months missing or partial in any year shown are left out of all of them, so two years are compared like with like. No month in common: nothing is shown. |
+| Month sentence | One sentence on the newest complete month: its average bed wait and, where the API gives one, its change on the same month a year earlier. | text | `web/lib/monthly.ts` (`monthLede`) | The figures are the API's. No cause is given or implied. No complete month: no sentence. |
 
 ## Source tables
 

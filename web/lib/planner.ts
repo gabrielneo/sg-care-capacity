@@ -68,13 +68,14 @@ export interface Delta {
 }
 
 /**
- * The change against usual as text. Cut to a whole number towards zero, not rounded, so it can't
- * disagree with the badge: +14.6% is "▲ 14%" beside "about usual", never 15%. Under 1% either way
- * is "0%" with no arrow. No usual level (null) gives null: nothing is shown, never a 0%.
+ * The change against usual as text, rounded to a whole number the way the findings round their percentages
+ * (insights/wording.py), so a card and its finding give the same figure: Alexandra's +55.8% is "▲ 56%" in both. The
+ * badge no longer turns on this figure alone (it also needs the week to leave the hospital's own spread), so
+ * rounding up to 15% beside "about usual" is consistent. Under 0.5% either way is "0%" with no arrow. No usual level (null) gives null: nothing is shown, never a 0%.
  */
 export function formatDelta(pct: number | null | undefined): Delta | null {
   if (pct == null || !Number.isFinite(pct)) return null;
-  const whole = Math.trunc(pct) || 0; // || 0: never −0
+  const whole = Math.round(pct) || 0; // || 0: never −0
   const size = Math.abs(whole).toLocaleString("en-SG");
   if (whole === 0) return { direction: "level", text: "0%", spoken: "0%", whole };
   return whole > 0

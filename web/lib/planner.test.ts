@@ -50,16 +50,16 @@ describe("parseSort and sortHref", () => {
 
 describe("formatDelta: the change against usual as text", () => {
   it.each([
-    // Cut towards zero, never rounded up: the figure can't cross a badge threshold the hospital hasn't.
-    [31, "▲ 31%", "+31%", "up"], [31.9, "▲ 31%", "+31%", "up"], [14.6, "▲ 14%", "+14%", "up"], [29.99, "▲ 29%", "+29%", "up"],
-    [-18.4, "▼ 18%", "−18%", "down"], [-14.9, "▼ 14%", "−14%", "down"], [-30, "▼ 30%", "−30%", "down"],
-    [1250.7, "▲ 1,250%", "+1,250%", "up"],
+    // Rounded, as the findings' percentages are: Alexandra's +55.8% reads 56% on the card and in its finding.
+    [31, "▲ 31%", "+31%", "up"], [31.9, "▲ 32%", "+32%", "up"], [14.6, "▲ 15%", "+15%", "up"], [55.8, "▲ 56%", "+56%", "up"],
+    [-18.4, "▼ 18%", "−18%", "down"], [-14.9, "▼ 15%", "−15%", "down"], [-30, "▼ 30%", "−30%", "down"],
+    [1250.7, "▲ 1,251%", "+1,251%", "up"],
   ])("%s -> %s", (pct, text, spoken, direction) => {
     expect(formatDelta(pct)).toMatchObject({ text, spoken, direction });
   });
 
-  it("under 1% either way is 0%, with no arrow and no sign", () => {
-    for (const pct of [0, 0.4, 0.99, -0.4, -0.99, -0]) {
+  it("under 0.5% either way is 0%, with no arrow and no sign", () => {
+    for (const pct of [0, 0.2, 0.49, -0.2, -0.49, -0]) {
       const d = formatDelta(pct)!;
       expect(d).toEqual({ direction: "level", text: "0%", spoken: "0%", whole: 0 });
       expect(Object.is(d.whole, -0)).toBe(false);

@@ -288,8 +288,8 @@ def _row(c: Candidate, today: date, forbidden: frozenset[str], dates: dict[str, 
     return {
         "insight_id": c.insight_id, "type": c.type, "entity": c.entity, "headline": headline, "detail": detail,
         "metric_value": _round(c.metric_value), "unit": c.unit, "comparison_value": _round(c.comparison_value),
-        "direction": c.direction, "effect_size": _round(c.effect_size), "p_value": _round(c.p_value, 6),
-        "p_adjusted": _round(c.p_adjusted, 6), "n": c.n, "method": c.method, "caveats": caveats, "who_acts": who,
+        "direction": c.direction, "effect_size": _round(c.effect_size), "p_value": _round_p(c.p_value),
+        "p_adjusted": _round_p(c.p_adjusted), "n": c.n, "method": c.method, "caveats": caveats, "who_acts": who,
         "action": act, "evidence": c.evidence, "as_of": c.as_of,
         "as_of_basis": "source_updated" if c.source == "datagov_chas" else "latest_data",
         "rank_score": ranking.rank_score(c.effect_norm, c.p_adjusted, c.completeness, recency), "headline_rank": None,
@@ -330,6 +330,12 @@ def strength_label(effect_norm: float) -> str:
 
 def _round(v: float | None, digits: int = 4) -> float | None:
     return None if v is None or pd.isna(v) else round(float(v), digits)
+
+
+def _round_p(p: float | None) -> float | None:
+    """A p-value to 4 significant digits. Rounding to 6 decimals turned 4e-17 into exactly 0, which a reader
+    (or the CSV export) takes as a certainty; the sentences say "less than 1 in 1,000" either way."""
+    return None if p is None or pd.isna(p) else float(f"{float(p):.4g}")
 
 
 # --------------------------------------------------------------------------- #
@@ -375,8 +381,8 @@ def to_json(result: InsightRun) -> dict[str, Any]:
         "national_cdmp_per_1k_seniors": result.extra.get("national_cdmp_per_1k_seniors"),
         "skipped": [{"type": s.type, "entity": s.entity, "reason": s.reason} for s in result.skips],
         "candidates": [{"type": c.type, "entity": c.entity, "variant": c.variant, "n": c.n,
-                        "effect_size": _round(c.effect_size), "p_value": _round(c.p_value, 6),
-                        "p_adjusted": _round(c.p_adjusted, 6), "outcome": c.reason or "published"}
+                        "effect_size": _round(c.effect_size), "p_value": _round_p(c.p_value),
+                        "p_adjusted": _round_p(c.p_adjusted), "outcome": c.reason or "published"}
                        for c in sorted(result.candidates, key=lambda c: (c.type, c.entity, c.variant))],
     }
 

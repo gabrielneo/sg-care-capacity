@@ -82,6 +82,22 @@ of urgency of medical conditions"* (MOH). It measures demand, not acuity: it inc
 end on a Saturday, so the newest ISO week (Monday to Sunday) is usually 6 of 7 days. The Overview
 compares only complete weeks.
 
+**Month by month and year on year.** The Month by month page and each hospital's page show the average bed wait and the ED
+visits for each calendar month. A month's wait is the average of its daily medians (not a monthly median), and a month counts
+only when every day of both measures is in; a partial month is a gap, never a figure. Each month is also set against the same
+month a year earlier, and against the month before, but only when both months are complete. A missing change is shown as missing,
+never 0%. Bed waits run longest in May and shortest in August, so the same month a year earlier is the fair comparison.
+
+- **The average across hospitals** uses the 7 full EDs that MOH reported throughout. Alexandra Hospital (an urgent care centre) and
+  Woodlands Hospital (reported from 23 Jun 2024) are left out, so the line does not step when a site joins. Every hospital counts
+  equally, whatever its size; a month has a figure only when all 7 are complete.
+- **The year so far** adds each year's months up to the newest complete month, counting only the months complete in every year
+  shown, so two years are always compared over the same months. The average is of the monthly averages.
+- **What it can't say.** A change from one year to the next describes the data; it is not tested, and it does not show why. The
+  findings on the Findings page are the tested ones.
+- **It follows the data.** These pages, their figures and the sentence at the top are read from the latest data release every
+  time, so they change when the data does. Figures typed into the docs are checked against the data by a test that fails when they drift.
+
 **NUHS estimates are a different measure.** NUHS's page shows its own *estimates* at one moment
 (patients waiting, estimated wait to see a doctor, estimated wait for a bed). They are not MOH's
 daily median of admitted patients and are only ever shown side by side with it, labelled as estimates.
@@ -95,6 +111,10 @@ match the insight engine's, so a chart and its finding agree ([insights_method.m
   the average of its daily medians. All 8 weeks must be complete; otherwise the hospital has no usual
   level, and the charts say so rather than guess.
 - **Latest week against usual:** the latest complete week as hours, or as a % of the usual level.
+- **Status badges and unusual-week findings** need two things, not one: the week is at least 15% (badge) or 30%
+  (finding) away from usual, **and** at least 2 robust spreads away (median and MAD of the same 8 weeks). A hospital
+  whose weeks swing widely then needs a bigger move than a steady one. On the % lines alone, CGH and SGH carried a
+  badge in 83% of weeks since 2025; with the spread rule it is 24%.
 - **Weekday pattern:** each weekday's average of daily medians, as a % above or below the hospital's
   own average. It uses the complete weeks among the 26 up to the latest complete week. A hospital
   with fewer than 4 complete weeks there is not shown.
@@ -201,7 +221,7 @@ result is converted to WGS84 only at the end, because web maps (MapLibre, Leafle
    1,000 residents aged 65+, no CDMP clinic inside, or a centroid outside the area.
 7. **Web layer.** Polygons are simplified in SVY21 with `coverage_simplify`, which keeps neighbouring
    areas meeting exactly. The gentlest tolerance that fits under 1 MB is used (5 m today). The result is
-   reprojected to WGS84 and rounded to about 1 m. The file is 342 KB; total area changes by 0.002%.
+   reprojected to WGS84 and rounded to about 1 m. The file is about 345 KB; total area changes by 0.002%.
 
 ## Limitations
 

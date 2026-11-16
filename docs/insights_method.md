@@ -140,7 +140,7 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
     ISO weeks, up to the latest complete week. Complete weeks only.
   - **Size:** the Theil-Sen slope, in hours per week.
   - **Significance:** the Mann-Kendall test (Kendall's τ between time and value). Its variance is
-    corrected for lag-1 autocorrelation using **Yue and Wang (2004)**: Var(S) is scaled by
+    corrected for lag-1 autocorrelation, in the AR(1) form of **Yue and Wang's (2004)** effective-sample-size idea (their full formula uses every sample lag): Var(S) is scaled by
     n / n* = 1 + 2 Σ (1 − k/n) ρ₁ᵏ. Here ρ₁ is the lag-1 autocorrelation of the series once its
     Theil-Sen trend is removed. The correction is applied only when ρ₁ > 0.
 - **Gate:**
@@ -196,7 +196,9 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - ε² ≥ 0.01 (a "small" effect).
 - **A shared peak:** when the next-highest day's average is within 0.3 hours of the peak's (per
   hospital, `tie_hours`), or the 95% bootstrap interval of their difference includes 0, the finding
-  names both: "bed waits peak on Tuesday–Wednesday", with both percentages. Naming one of two days
+  names both: "bed waits peak on Tuesday–Wednesday", with each day's own percentage in the order the
+  days are named. The difference is taken week by week (both days come from the same weeks), so the
+  interval is for the paired difference; resampling the two days separately made nearly every peak look shared. Naming one of two days
   that the data can't tell apart would overstate it.
 - **Why this method:** Kruskal-Wallis compares ranks, so a few extreme days don't dominate, and it
   makes no assumption of normal waits. ε² reports the size of the difference, not just whether
@@ -234,8 +236,12 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
 
 - **Question:** Which areas have the biggest CDMP clinic shortfall for their seniors?
 - **Method:**
-  - **National rate:** all CDMP GP clinics ÷ all residents aged 65+ (1.27 per 1,000 today).
-  - **Expected** = residents aged 65+ × the national rate.
+  - **Benchmark rate:** the CDMP GP clinics ÷ the residents aged 65+ of the areas that are compared (those
+    with at least 1,000 such residents). Areas left out of the ranking are left out of the yardstick too:
+    their 76 clinics (Downtown Core 35, Orchard 18) lifted the rate from 1.18 to 1.27 per 1,000 and
+    made 22 of 32 areas look short. Today it is 1.18; it replaces the older name "national rate", and every finding says
+    which areas it covers.
+  - **Expected** = residents aged 65+ × the benchmark rate.
   - **Shortfall** = expected − actual.
   - **Priority** = percentile rank of residents aged 65+ × (1 − percentile rank of CDMP clinics
     per 1,000 seniors). Both ranks are among the included areas.
@@ -247,12 +253,12 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - there's no p-value: this is a ranking of measured figures, not a test.
 - **Why this method:** the priority score favours areas that are both **large** (many seniors) and
   **under-served** (low access). A small area with an extreme ratio doesn't top the list, and a
-  large area at the national rate doesn't either.
+  large area at the benchmark rate doesn't either.
 - **Limitations:**
   - **The data are from different dates:** clinics from June 2024, residents from June 2026.
   - **Clinics are counted where they are, not where patients go.**
   - **Area figures don't describe individual people.**
-  - **The "national rate" is a reference point, not a target.**
+  - **The "benchmark rate" is a reference point, not a target.**
 
 ## 6. regional
 
@@ -311,7 +317,9 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - **Size:** the percentage above usual.
 - **Gate:**
   - the latest week and all 8 weeks before it must be complete;
-  - at least **30% above** usual (the badge's "much higher" line, `usual_gap.min_pct_above`);
+  - at least **30% above** usual (the badge's "much higher" line, `usual_gap.min_pct_above`), **and** at
+    least 2 robust spreads above it (`usual_gap.min_z`, the median and MAD of the 8 weeks, as the
+    anomaly detector): a volatile hospital's ordinary weeks clear 30% often;
   - only a rise is published; there is no p-value, so the finding is outside the Benjamini-Hochberg
     correction and is worded as a plain comparison, never as a significant result.
 - **Why this method:** it is the figure a planner already sees on the home page, so a finding and the badge

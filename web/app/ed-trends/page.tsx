@@ -87,6 +87,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
         </p>
       ))}
       <ModeToggle mode={mode} params={params} />
+      <p className="mb-4 text-small" data-testid="monthly-link"><Link href="/ed-trends/monthly" className="font-semibold">See months and years: month by month, and year on year</Link></p>
     </>
   );
 

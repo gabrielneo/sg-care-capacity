@@ -12,15 +12,22 @@ from ..wording import count
 SQL = ("SELECT planning_area, residents_65plus, cdmp_clinics, cdmp_clinics_per_1k_seniors FROM marts.fct_area_access "
        "WHERE planning_area = '{area}'")
 AXIS = "CDMP GP clinics per 1,000 residents aged 65+"
-CAVEATS = ["The clinic list dates from June 2024 and residents from June 2026.",
+CAVEATS = ["The benchmark rate here is the rate across the areas compared, those with at least 1,000 residents aged 65+.",
+           "The clinic list dates from June 2024 and residents from June 2026.",
            "Clinics are counted where they are, not where their patients live.",
            "Area averages don't describe individual people.", "Resident counts are rounded to the nearest 10."]
 
 
-def national_rate(seniors: pd.Series, clinics: pd.Series) -> float | None:
-    """CDMP clinics per resident aged 65+ across all of Singapore (every area; missing counts as 0)."""
-    total = float(seniors.fillna(0).sum())
-    return None if total <= 0 else float(clinics.fillna(0).sum()) / total
+def national_rate(seniors: pd.Series, clinics: pd.Series, min_seniors: int = 0) -> float | None:
+    """CDMP clinics per resident aged 65+ across the areas that are compared (missing counts as 0).
+
+    With `min_seniors`, an area under that many seniors counts in neither the clinics nor the seniors: it is
+    left out of the ranking, so it must not set the yardstick either. The 23 such areas hold 76 clinics, most of
+    them in the city centre (Downtown Core, Orchard), and including them lifted the rate from 1.18 to 1.27.
+    """
+    keep = seniors.fillna(0) >= max(min_seniors, 1) if min_seniors else seniors.notna()
+    total = float(seniors[keep].fillna(0).sum())
+    return None if total <= 0 else float(clinics[keep].fillna(0).sum()) / total
 
 
 def excluded_reason(seniors: Any, min_seniors: int) -> str | None:
@@ -31,7 +38,7 @@ def excluded_reason(seniors: Any, min_seniors: int) -> str | None:
 
 
 def shortfall(seniors: float, clinics: float, national: float) -> float:
-    """Clinics the national rate would give the area's seniors, minus the clinics it has (negative: more)."""
+    """Clinics the benchmark rate would give the area's seniors, minus the clinics it has (negative: more)."""
     return seniors * national - clinics
 
 
@@ -39,11 +46,11 @@ def detect(areas: pd.DataFrame, cfg: dict[str, Any], min_completeness: float) ->
     out = DetectorResult()
     a = areas.copy()
     seniors, clinics = a["residents_65plus"], a["cdmp_clinics"]
-    national = national_rate(seniors, clinics)                         # CDMP clinics per senior, all of Singapore
+    min_seniors = int(cfg["min_seniors"])
+    national = national_rate(seniors, clinics, min_seniors)            # CDMP clinics per senior, across the compared areas
     if national is None:
         out.skips.append(Skip("access_gap", "all", "no resident counts"))
         return out
-    min_seniors = int(cfg["min_seniors"])
     reasons = seniors.map(lambda v: excluded_reason(v, min_seniors))
     small = a[reasons.notna()]
     out.extra["excluded_areas"] = [
@@ -71,7 +78,7 @@ def detect(areas: pd.DataFrame, cfg: dict[str, Any], min_completeness: float) ->
         points = [point("area", str(r["planning_area"]), rate), point("national", "Singapore overall", national * 1000)]
         out.candidates.append(Candidate(
             type="access_gap", entity=str(r["planning_area"]), variant="worse",
-            method="Expected CDMP clinics at the national rate per senior; priority = seniors percentile x (1 - access percentile)",
+            method="Expected CDMP clinics at the benchmark rate per senior; priority = seniors percentile x (1 - access percentile)",
             n=int(r["residents_65plus"]), effect_size=float(r["priority"]), effect_norm=float(r["priority"]),
             metric_value=rate, unit="CDMP GP clinics per 1,000 residents aged 65+",
             comparison_value=national * 1000, direction="worse", p_value=None,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { EdWeek } from "./api/types";
 import { usualLevels } from "./edCompare";
-import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkDomain, sparkPath, sparkWeeks, sparkY, usualBand, trendOf, trendPhrase,
+import { byPressure, hospitalStatus, LEVEL_ORDER, levelCounts, levelFor, LEVELS, sparkDomain, sparkPath, sparkWeeks, sparkY, usualBand,
 } from "./status";
 
 const week = (code: string, start: string, v: number | null, complete = true): EdWeek => ({
@@ -18,6 +18,24 @@ describe("levelFor: the badge thresholds", () => {
     [30, "much_higher"], [29.9, "higher"], [15, "higher"], [14.9, "usual"], [0, "usual"],
     [-14.9, "usual"], [-15, "lower"], [-40, "lower"],
   ] as const)("%s%% vs usual is %s", (pct, level) => expect(levelFor(pct)).toBe(level));
+
+  it("a big % move inside the hospital's own spread is not a badge (z under 2)", () => {
+    expect(levelFor(35, 1.9)).toBe("usual");
+    expect(levelFor(35, 2)).toBe("much_higher");
+    expect(levelFor(20, 2.5)).toBe("higher");
+    expect(levelFor(-20, -1.2)).toBe("usual");
+    expect(levelFor(-20, -2)).toBe("lower");
+  });
+
+  it("a small % move is not a badge however large the z", () => {
+    expect(levelFor(10, 6)).toBe("usual");
+    expect(levelFor(-10, -6)).toBe("usual");
+  });
+
+  it("the 8 weeks not varying at all (no z): the % line alone decides", () => {
+    expect(levelFor(35, null)).toBe("much_higher");
+    expect(levelFor(-20, null)).toBe("lower");
+  });
 
   it("has no usual level: no comparison, never 'about usual'", () => {
     expect(levelFor(null)).toBe("unknown");
@@ -122,20 +140,12 @@ describe("levelCounts", () => {
   });
 });
 
-describe("trendOf", () => {
-  const flat = (n: number, v: number) => Array<number | null>(n).fill(v);
-  it("rising: the last 4 weeks are 15% or more above the first 4", () => {
-    expect(trendOf([...flat(4, 10), ...flat(4, 10), ...flat(4, 11.5)])).toBe("rising");
-    expect(trendPhrase([...flat(4, 10), ...flat(4, 10), ...flat(4, 12)])).toBe("rising over 12 weeks");
-  });
-  it("falling at 15% or more down, steady in between", () => {
-    expect(trendOf([...flat(4, 10), ...flat(4, 10), ...flat(4, 8.5)])).toBe("falling");
-    expect(trendOf([...flat(4, 10), ...flat(4, 10), ...flat(4, 11.4)])).toBe("steady");
-  });
-  it("gaps are skipped, not filled; under 8 known weeks says so instead of guessing", () => {
-    expect(trendOf([null, null, null, null, ...flat(4, 10), ...flat(4, 12)])).toBe("rising");
-    expect(trendOf([null, null, null, null, null, ...flat(7, 10)])).toBeNull();
-    expect(trendPhrase([])).toBe("too few weeks to describe a trend");
-    expect(trendOf(flat(12, 0))).toBeNull();
+describe("the usual band matches the badge rule", () => {
+  it("is at least HIGHER_PCT wide, and widens with a hospital's own spread", () => {
+    expect(usualBand(10)).toEqual([8.5, 11.5]);
+    const [lo, hi] = usualBand(10, 1.5)!;                 // 2 x 1.5 / 0.6745 = 4.45 h each side
+    expect(hi - 10).toBeCloseTo(4.448, 2);
+    expect(10 - lo).toBeCloseTo(4.448, 2);
+    expect(usualBand(10, 0.1)).toEqual([8.5, 11.5]);       // a steady hospital: the % line is the wider one
   });
 });

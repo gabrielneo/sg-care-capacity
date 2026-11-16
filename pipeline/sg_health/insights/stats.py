@@ -1,5 +1,6 @@
 """Statistics for the detectors. scipy does the tests; only the Mann-Kendall variance correction
-for autocorrelation (Yue and Wang, 2004) is written here, on top of scipy's normal distribution."""
+for autocorrelation is written here, on top of scipy's normal distribution. It is the AR(1) form of Yue and
+Wang's (2004) effective-sample-size idea, not their formula with every sample lag."""
 from __future__ import annotations
 
 import math
@@ -21,7 +22,7 @@ class MannKendall:
 
 
 def mann_kendall(y: np.ndarray, *, correct: bool = True) -> MannKendall:
-    """Mann-Kendall trend test with Yue-Wang effective-sample-size correction.
+    """Mann-Kendall trend test with an AR(1) effective-sample-size correction in the spirit of Yue and Wang (2004).
 
     The test statistic S counts concordant minus discordant pairs (time vs value). Positive
     autocorrelation makes S vary more than the independence formula assumes, so p-values come

@@ -13,5 +13,5 @@ export async function GET(request: Request) {
   const rows = res.value.data.features.map((f) => COLUMNS.map((c) => f.properties[c] ?? null));
   return tableResponse(request, "areas", res.value.meta.snapshot_id, [...COLUMNS], rows, res.value.meta, {
     title: "Clinic access by planning area, residents aged 65+", window: "all 55 planning areas; residents at end-June, clinics as listed",
-    definitions: [CAVEAT.clinics, "cdmp_shortfall: the CDMP clinics an area would need to reach the national rate per 1,000 residents aged 65+. An area with excluded_reason is not ranked."] });
+    definitions: [CAVEAT.clinics, "cdmp_shortfall: the CDMP clinics an area would need to reach the benchmark rate per 1,000 residents aged 65+. An area with excluded_reason is not ranked."] });
 }

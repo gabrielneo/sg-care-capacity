@@ -6,7 +6,7 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { Glossed } from "@/components/terms/Glossed";
 import type { Insight } from "@/lib/api/types";
 import { BED_WAIT_EXPLAINER, CAVEAT } from "@/lib/copy";
-import { HIGHER_PCT, MUCH_HIGHER_PCT } from "@/lib/status";
+import { HIGHER_PCT, MIN_Z, MUCH_HIGHER_PCT } from "@/lib/status";
 import { USUAL_WEEKS } from "@/lib/windows";
 import { EVIDENCE_LABEL, evidenceOf, safeDetail, sampleText } from "@/lib/evidence";
 
@@ -48,7 +48,8 @@ export function MethodsDrawer({ findings, limits, open = false, audience = "anal
                 <Prose size="small" className="mt-1">
                   Each hospital is compared with itself. &quot;Usual&quot; is the middle value of its {USUAL_WEEKS} complete weeks before the latest
                   one. A week that is {HIGHER_PCT}% or more above usual is higher; {MUCH_HIGHER_PCT}% or more is much higher;
-                  {" "}{HIGHER_PCT}% or more below is lower. With fewer than {USUAL_WEEKS} complete weeks, there is no comparison.
+                  {" "}{HIGHER_PCT}% or more below is lower. The move must also be at least {MIN_Z} typical swings of that hospital&apos;s own
+                  weeks, so a hospital whose weeks vary a lot needs a bigger move to earn a badge. With fewer than {USUAL_WEEKS} complete weeks, there is no comparison.
                   The badges are a plain comparison, not a statistical test.
                 </Prose>
               </dd>

@@ -66,7 +66,7 @@ async function LiveSnapshot() {
         value={wait?.latest ?? null}
         unit="hours"
         meta={summary.meta}
-        change={{ value: wait?.change_pct ?? null, unit: "%", label: "vs the previous 4-week average" }}
+        change={{ value: wait?.change_pct ?? null, unit: "%", label: "vs the median of the previous 8 weeks" }}
       />
     </div>
   );
@@ -100,11 +100,11 @@ export default function ComponentsPage() {
       <Section title="KpiTile">
         <div className="card-grid sm:grid-cols-3">
           <KpiTile label="Average of daily median bed waits" value={7.82} unit="hours" meta={edMeta} now={SAMPLE_NOW}
-                   change={{ value: -5.7, unit: "%", label: "vs the previous 4-week average" }} />
+                   change={{ value: -5.7, unit: "%", label: "vs the median of the previous 8 weeks" }} />
           <KpiTile label="Attendances (week)" value={4812} unit="patients" meta={edMeta} now={SAMPLE_NOW}
-                   format={(v) => v.toLocaleString("en-SG")} change={{ value: 3.1, unit: "%", label: "vs the previous 4-week average" }} />
+                   format={(v) => v.toLocaleString("en-SG")} change={{ value: 3.1, unit: "%", label: "vs the median of the previous 8 weeks" }} />
           <KpiTile label="Attendances (week)" value={null} unit="patients" meta={edMeta} now={SAMPLE_NOW}
-                   change={{ value: null, label: "vs the previous 4-week average" }} caveat="No complete week yet" />
+                   change={{ value: null, label: "vs the median of the previous 8 weeks" }} caveat="No complete week yet" />
         </div>
       </Section>
 
@@ -174,7 +174,7 @@ export default function ComponentsPage() {
           ))}
           <div className="rounded-lg border border-line bg-surface card">
             <DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" label="Sample: clinics in an area that gained some"
-                         comparison="1.27, the national rate" change="up" word="higher than the national rate" direction="better" />
+                         comparison="1.27, the benchmark rate" change="up" word="higher than the benchmark rate" direction="better" />
           </div>
         </div>
       </Section>

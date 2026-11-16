@@ -263,7 +263,7 @@ import re  # noqa: E402
 
 from sg_health import config  # noqa: E402
 
-MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "dim_clinic", "dim_polyclinic", "fct_live_ed_snapshot",
+MARTS = ["dim_hospital", "fct_ed_daily", "fct_ed_weekly", "fct_ed_monthly", "fct_ed_system_monthly", "dim_clinic", "dim_polyclinic", "fct_live_ed_snapshot",
          "fct_planning_area_population", "fct_area_access", "dim_metric"]
 
 
@@ -416,3 +416,62 @@ def test_access_keeps_every_area_with_empty_ratios_when_population_is_missing(mo
     assert access["cdmp_clinics_per_1k_seniors"].isna().all()
     assert int(access["chas_clinics"].sum()) == 1                    # clinics still counted
     assert set(log["status"]) <= {"ok", "explained"}                        # no transform failure
+
+
+def test_days_in_a_ten_fold_level_shift_week_carry_the_shift_flag(wh):
+    # Sunday-to-Saturday weeks: 4 steady weeks at ~8 h, then a week at 0.5 h (16x lower) for CGH; SGH stays steady.
+    first = date(2026, 1, 4)                                       # a Sunday
+    rows = []
+    for w in range(5):
+        for k in range(7):
+            day = first + timedelta(weeks=w, days=k)
+            rows += [("CGH", day, 0.5 if w == 4 else 8.0), ("SGH", day, 8.0)]
+    put(wh, "moh_bed_waits", "median_wait_hours", rows)
+    run_transform(wh)
+    flagged = q(wh, "SELECT hospital_code, report_date FROM marts.fct_ed_daily "
+                    "WHERE dq_flags LIKE '%unit.weekly_shift_10x%' ORDER BY 2")
+    assert set(flagged["hospital_code"]) == {"CGH"} and len(flagged) == 7
+    assert pd.Timestamp(flagged["report_date"].min()) == pd.Timestamp(first + timedelta(weeks=4))
+
+
+def test_the_sql_shift_rule_is_the_checks_rule():
+    from sg_health.quality.validate import SHIFT_RATIO, SHIFT_TRAILING_WEEKS
+    sql = (transform.SQL_DIR / "marts" / "fct_ed_daily.sql").read_text()
+    assert f"{SHIFT_RATIO} * prior_med" in sql and f"prior_med / {SHIFT_RATIO}" in sql
+    assert f"ROWS BETWEEN {SHIFT_TRAILING_WEEKS} PRECEDING AND 1 PRECEDING" in sql and f"n = {SHIFT_TRAILING_WEEKS}" in sql
+
+
+def _month_rows(codes, months):
+    """Every day of each (year, month) for each hospital: SGH always 8 h, CGH 4 h in 2027 and 8 h before."""
+    rows = []
+    for y, m in months:
+        d = date(y, m, 1)
+        while d.month == m:
+            rows += [(c, d, 4.0 if (c == "CGH" and y == 2027) else 8.0) for c in codes]
+            d += timedelta(days=1)
+    return rows
+
+
+def test_monthly_marts_flag_partial_months_and_only_compare_complete_ones(wh):
+    months = [(2026, 1), (2027, 1)]
+    rows = _month_rows(["CGH", "SGH"], months)
+    rows = [r for r in rows if not (r[0] == "CGH" and r[1] == date(2027, 1, 31))]      # CGH is one day short in Jan 2027
+    put(wh, "moh_bed_waits", "median_wait_hours", rows)
+    put(wh, "moh_ed_attendances", "total_attendances", [(c, d, 100) for c, d, _ in rows], sha="e" * 64)
+    run_transform(wh)
+    m = q(wh, "SELECT * FROM marts.fct_ed_monthly").set_index(["hospital_code", "month_start"])
+    jan27 = m.loc[("CGH", pd.Timestamp("2027-01-01"))]
+    assert jan27["days_reported_wait"] == 30 and jan27["days_in_month"] == 31 and not jan27["is_complete_month"]
+    assert pd.isna(jan27["wait_yoy_pct"])                                   # a partial month is never compared
+    assert m.loc[("SGH", pd.Timestamp("2027-01-01"))]["wait_yoy_pct"] == pytest.approx(0.0)
+    assert pd.isna(m.loc[("SGH", pd.Timestamp("2026-01-01"))]["wait_yoy_pct"])   # no year before: missing, not 0
+
+
+def test_system_monthly_covers_only_the_full_eds_and_is_null_until_all_are_complete(wh):
+    rows = _month_rows(["CGH", "SGH"], [(2026, 1)])
+    put(wh, "moh_bed_waits", "median_wait_hours", rows)
+    run_transform(wh)
+    sysm = q(wh, "SELECT * FROM marts.fct_ed_system_monthly")
+    assert len(sysm) == 1
+    # Only CGH and SGH are loaded, but the group is every full ED in dim_hospital: the month is not complete.
+    assert pd.isna(sysm.iloc[0]["mean_of_hospital_mean_wait_hours"]) and not sysm.iloc[0]["is_complete_month"]

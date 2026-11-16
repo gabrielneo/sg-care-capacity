@@ -1,7 +1,8 @@
-"""/hospitals, /ed/daily, /ed/weekly, /ed/summary. MOH figures; see docs/data_dictionary.md."""
+"""/hospitals, /ed/daily, /ed/weekly, /ed/monthly, /ed/system/monthly, /ed/summary. MOH figures; see docs/data_dictionary.md."""
 from __future__ import annotations
 
 from datetime import date, timedelta
+from statistics import median
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -12,8 +13,12 @@ from ..models import (
     Change,
     EdDailyResponse,
     EdDay,
+    EdMonth,
+    EdMonthlyResponse,
     EdSummary,
     EdSummaryResponse,
+    EdSystemMonth,
+    EdSystemMonthlyResponse,
     EdWeek,
     EdWeeklyResponse,
     ErrorResponse,
@@ -32,7 +37,7 @@ MOH_TABLES = ("moh_bed_waits", "moh_ed_attendances")
 DEFAULT_DAYS = 90
 MAX_YEARS = 2
 DEFAULT_WEEKS, MAX_WEEKS = 12, 104
-BASELINE_WEEKS = 4
+BASELINE_WEEKS = 8             # the site's usual level: the median of the 8 complete weeks before the latest
 
 DAILY_SQL = """
     SELECT hospital_code, hospital_name, report_date, iso_year, iso_week, median_wait_hours, attendances,
@@ -52,6 +57,25 @@ WEEKLY_SQL = """
     ORDER BY hospital_code, week_start
 """
 LATEST_WEEK_SQL = "SELECT max(week_start) AS d FROM marts.fct_ed_weekly"
+DEFAULT_MONTHS, MAX_MONTHS = 36, 120
+MONTHLY_SQL = """
+    SELECT hospital_code, hospital_name, year, month, month_start, mean_of_daily_median_wait_hours, total_attendances,
+           days_reported_wait, days_reported_attendances, days_in_month, is_complete_month, wait_yoy_pct,
+           attendances_yoy_pct, wait_mom_pct, attendances_mom_pct, source_sha256, as_of, as_of_basis
+    FROM marts.fct_ed_monthly
+    WHERE month_start >= ? AND (CAST(? AS VARCHAR) IS NULL OR hospital_code = ?)
+    ORDER BY hospital_code, month_start
+"""
+SYSTEM_MONTHLY_SQL = """
+    SELECT year, month, month_start, n_hospitals, n_complete_hospitals, is_complete_month,
+           mean_of_hospital_mean_wait_hours, total_attendances, wait_yoy_pct, attendances_yoy_pct, wait_mom_pct,
+           attendances_mom_pct, source_sha256, as_of, as_of_basis
+    FROM marts.fct_ed_system_monthly WHERE month_start >= ? ORDER BY month_start
+"""
+LATEST_MONTH_SQL = "SELECT max(month_start) AS d FROM marts.fct_ed_monthly"
+HAS_MONTHLY_SQL = """
+    SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' AND table_name = 'fct_ed_system_monthly'
+"""
 ALL_WEEKS_SQL = """
     SELECT hospital_code, iso_year, iso_week, week_start, week_end, mean_of_daily_median_wait_hours,
            total_attendances, is_complete_week
@@ -179,6 +203,72 @@ def events(
                       tables=("public_holidays",)))
 
 
+def require_monthly(ctx: Context) -> None:
+    if "has_monthly" not in ctx.cache:
+        ctx.cache["has_monthly"] = ctx.snap.query(HAS_MONTHLY_SQL)[0]["n"] > 0
+    if not ctx.cache["has_monthly"]:
+        raise ApiError(404, "not_in_release", "This data release has no monthly figures: it was published before they existed.")
+
+
+def months_back(latest: date, months: int) -> date:
+    """First day of the month `months - 1` months before the month of `latest`."""
+    total = latest.year * 12 + latest.month - 1 - (months - 1)
+    return date(total // 12, total % 12 + 1, 1)
+
+
+MONTHLY_CAVEATS = [
+    "A month's wait is the average of that month's daily medians, not a monthly median: MOH publishes daily medians only.",
+    "Year-on-year and month-on-month changes are given only between two complete months. The newest month is usually "
+    "incomplete until MOH's next file; a partial month's total is an undercount.",
+    "May is usually the longest-wait month and August the shortest, so compare a month with the same month a year earlier.",
+]
+
+
+@router.get("/ed/monthly", response_model=EdMonthlyResponse,
+            responses={404: {"model": ErrorResponse, "description": "This data release has no monthly figures"}},
+            summary="Calendar-month aggregates per hospital, with year-on-year and month-on-month change")
+def ed_monthly(
+    ctx: Context = Depends(get_ctx),
+    hospital: str | None = Query(None, description="Hospital code (see /hospitals). Omit for all"),
+    months: int = Query(DEFAULT_MONTHS, ge=1, le=MAX_MONTHS, description=f"How many of the latest months (1-{MAX_MONTHS})"),
+) -> EdMonthlyResponse:
+    require_monthly(ctx)
+    code = known_hospital(ctx, hospital)
+    latest = static(ctx, "latest_month", LATEST_MONTH_SQL)
+    rows = [] if latest is None else ctx.snap.query(MONTHLY_SQL, [months_back(latest, months), code, code])
+    codes = [code] if code else list(ctx.hospitals)
+    return EdMonthlyResponse(
+        data=[EdMonth(**r) for r in rows],
+        meta=ctx.meta(as_of=ctx.source_as_of(*MOH_SOURCES), sources=MOH_SOURCES,
+                      coverage=ed_coverage(ctx, codes, months=months, rows=len(rows),
+                                           incomplete_months=sum(1 for r in rows if not r["is_complete_month"])),
+                      caveats=MONTHLY_CAVEATS + hospital_caveats(ctx, codes), tables=MOH_TABLES))
+
+
+@router.get("/ed/system/monthly", response_model=EdSystemMonthlyResponse,
+            responses={404: {"model": ErrorResponse, "description": "This data release has no monthly figures"}},
+            summary="Calendar-month average across the full emergency departments reported throughout")
+def ed_system_monthly(
+    ctx: Context = Depends(get_ctx),
+    months: int = Query(DEFAULT_MONTHS, ge=1, le=MAX_MONTHS, description=f"How many of the latest months (1-{MAX_MONTHS})"),
+) -> EdSystemMonthlyResponse:
+    require_monthly(ctx)
+    latest = static(ctx, "latest_month", LATEST_MONTH_SQL)
+    rows = [] if latest is None else ctx.snap.query(SYSTEM_MONTHLY_SQL, [months_back(latest, months)])
+    return EdSystemMonthlyResponse(
+        data=[EdSystemMonth(**r) for r in rows],
+        meta=ctx.meta(as_of=ctx.source_as_of(*MOH_SOURCES), sources=MOH_SOURCES,
+                      coverage={"months": months, "rows": len(rows),
+                                "hospitals": rows[-1]["n_hospitals"] if rows else 0,
+                                "incomplete_months": sum(1 for r in rows if not r["is_complete_month"])},
+                      caveats=[*MONTHLY_CAVEATS,
+                               "Only the full emergency departments MOH reported throughout are included, so the line does not "
+                               "step when a site joins: Alexandra Hospital (an urgent care centre) and Woodlands Hospital "
+                               "(reported from 23 June 2024) are left out.",
+                               "Every hospital counts equally, whatever its size."],
+                      tables=MOH_TABLES))
+
+
 @router.get("/ed/weekly", response_model=EdWeeklyResponse, summary="ISO-week (Mon-Sun) aggregates")
 def ed_weekly(
     ctx: Context = Depends(get_ctx),
@@ -203,11 +293,11 @@ def ed_weekly(
 
 def _change(unit: str, latest: float | None, baseline: list[Any] | None) -> Change:
     if latest is None or baseline is None or any(v is None for v in baseline):
-        return Change(unit=unit, latest=latest, baseline_mean=None, change=None, change_pct=None)
-    mean = sum(v for v in baseline if v is not None) / len(baseline)
-    diff = latest - mean
-    return Change(unit=unit, latest=latest, baseline_mean=mean, change=diff,
-                  change_pct=None if mean == 0 else diff / mean * 100)
+        return Change(unit=unit, latest=latest, baseline_median=None, change=None, change_pct=None)
+    usual = float(median(v for v in baseline if v is not None))
+    diff = latest - usual
+    return Change(unit=unit, latest=latest, baseline_median=usual, change=diff,
+                  change_pct=None if usual == 0 else diff / usual * 100)
 
 
 def build_summary(ctx: Context) -> list[EdSummary]:
@@ -252,7 +342,7 @@ def build_summary(ctx: Context) -> list[EdSummary]:
 
 
 @router.get("/ed/summary", response_model=EdSummaryResponse,
-            summary="Latest complete week per hospital vs the 4 complete weeks before it")
+            summary="Latest complete week per hospital vs the median of the 8 complete weeks before it")
 def ed_summary(ctx: Context = Depends(get_ctx)) -> EdSummaryResponse:
     if "summary" not in ctx.cache:
         ctx.cache["summary"] = build_summary(ctx)
@@ -265,7 +355,7 @@ def ed_summary(ctx: Context = Depends(get_ctx)) -> EdSummaryResponse:
                                            hospitals_with_a_baseline=sum(1 for r in rows if r.baseline_weeks)),
                       caveats=[
                           "Latest week = the most recent ISO week (Monday to Sunday) with all 7 days of both metrics "
-                          "for that hospital; a partial week is never compared. Baseline = the mean of the 4 ISO "
-                          "weeks immediately before it, computed only if all 4 are complete.",
+                          "for that hospital; a partial week is never compared. Baseline = the median of the 8 ISO "
+                          "weeks immediately before it (the site's usual level), computed only if all 8 are complete.",
                           *ctx.metric_caveats("fct_ed_weekly."), *hospital_caveats(ctx, list(ctx.hospitals))],
                       tables=MOH_TABLES))

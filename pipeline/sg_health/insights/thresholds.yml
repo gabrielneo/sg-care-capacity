@@ -57,6 +57,7 @@ source_gap:
 usual_gap:
   trailing_weeks: 8           # the usual level: median of the 8 complete weeks before the latest (as the site's badge)
   min_pct_above: 0.30         # "much higher" line of the site's status badge; a plain comparison, no p-value
+  min_z: 2.0                  # and at least this many robust spreads (|z|, median and MAD of the 8 weeks) above usual: the badge's second line
 
 strength:
   # Label for how strong a finding is, from its normalised effect (0-1; the same cut-offs as the correlation labels).

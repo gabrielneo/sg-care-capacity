@@ -78,7 +78,7 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
 
       <section aria-labelledby={`drawer-line-${status.code}`}>
         <h3 id={`drawer-line-${status.code}`} className="font-semibold text-ink text-h3">{formatWindow({ kind: "weeks", n: SPARK_WEEKS }, { capital: true })}</h3>
-        <div className="mt-1"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} /></div>
+        <div className="mt-1"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual, status.mad)} /></div>
         <p className="mt-1 text-small text-ink tabular-nums" data-testid="drawer-spark-summary">{sparkSummary(status.spark)}</p>
         <p className="mt-1 text-meta text-muted">
           Weekly average of daily medians. The shaded band is the &quot;about usual&quot; range; a week that isn&apos;t complete is a gap.
@@ -106,8 +106,8 @@ export function HospitalDrawerBody({ status, hospital, live, meta, latestWeek }:
         </section>
       ) : null}
 
-      <p><Link href={`/ed-trends?hospital=${status.code}`} className="inline-flex min-h-11 items-center" data-testid="drawer-trend">
-        See {hospital.hospital_code}&apos;s trend over time</Link></p>
+      <p><Link href={`/hospital/${status.code}`} className="inline-flex min-h-11 items-center" data-testid="drawer-trend">
+        See {hospital.hospital_code} month by month and year on year</Link></p>
       <Provenance meta={meta} compact large />
     </div>
   );

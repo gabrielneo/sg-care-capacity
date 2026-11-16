@@ -19,7 +19,7 @@ const X1 = 96;
 
 export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout }: {
   points: QuadrantPoint[]; medianSeniors: number; medianRate: number; meta: Meta;
-  /** The top finding's annotation, e.g. "Hougang: About 13 clinics short of the national rate". */
+  /** The top finding's annotation, e.g. "Hougang: About 13 clinics short of the benchmark rate". */
   callout: { name: string; text: string } | null;
 }) {
   const maxX = Math.max(...points.map((p) => p.seniors)) * 1.08;

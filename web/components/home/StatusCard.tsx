@@ -8,7 +8,7 @@ import { estimateShort, estimateText, NO_DOCTOR_ESTIMATE, nuhsTimingNote } from 
 import type { Density } from "@/lib/homeViews";
 import { formatDelta } from "@/lib/planner";
 import { formatWindow } from "@/lib/windows";
-import { type HospitalStatus, LEVELS, trendPhrase, usualBand } from "@/lib/status";
+import { type HospitalStatus, LEVELS, usualBand } from "@/lib/status";
 import { HospitalName } from "@/components/HospitalName";
 
 import { Sparkline } from "./Sparkline";
@@ -23,9 +23,8 @@ const hrs = (v: number) => `${v.toFixed(1)} h`;
  * - Simple (Public): badge, last week's bed wait and one plain sentence.
  * - Full (Planner, Analyst): six reserved slots (name, badges and caveats, label, value with its 12-week line, change,
  *   footer), so cards line up in a grid (globals.css, ".sc"). Only a hospital above usual has a status-coloured left edge.
- *   The 12-week line has the usual range shaded; and the change against usual is a percentage (the
- *   figure the badge is set from), cut to a whole number towards zero so it can't disagree with the
- *   badge: +14.6% is "▲ 14%", about usual. No usual level: no percentage, never a 0%.
+ *   The 12-week line has the usual range shaded; and the change against usual is a percentage rounded
+ *   to a whole number as the findings round theirs. No usual level: no percentage, never a 0%.
  * The footer is the NUHS doctor-wait estimate with its own time, or says there is none; what "published separately" means is
  * said once in the section's key (StatusGrid), not on every card. `wide` is the urgent care centre's full-width card.
  * `note` says what the figures cover when it isn't a full adult and children's ED (lib/hospitalNotes.ts).
@@ -37,11 +36,11 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
   const full = density === "full";
   const delta = full ? formatDelta(status.pct) : null;
   const title = (
-    <Link href={`/ed-trends?hospital=${status.code}`}
+    <Link href={`/hospital/${status.code}`}
           className="text-ink link-quiet after:absolute after:inset-0 after:rounded-xl">
       {/* Short name and code, with the full name as the title (audit G4); the glossary's full name without a reference. */}
       {hospital ? <HospitalName hospital={hospital} inControl quietCode={full} /> : <Term id={status.code.toLowerCase()} plain standalone />}
-      {full ? <span className="sr-only">, {info.label}, {trendPhrase(status.spark)}</span> : null}
+      {full ? <span className="sr-only">, {info.label}</span> : null}
     </Link>
   );
   const shell = "target-card relative rounded-xl border border-line bg-surface hover:border-control "
@@ -107,7 +106,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
         <p className="text-kpi font-semibold tabular-nums tracking-tight text-ink">
           <span data-testid="status-hours">{status.latest == null ? <Missing /> : <>{status.latest.toFixed(1)} <span className="text-small font-normal text-muted">h</span></>}</span>
         </p>
-        <span className="sc-spark ml-auto"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual)} /></span>
+        <span className="sc-spark ml-auto"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual, status.mad)} /></span>
       </div>
       {delta && status.usual != null ? (
         <p className="sc-delta text-small tabular-nums text-muted">

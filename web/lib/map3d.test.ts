@@ -77,9 +77,9 @@ describe("polygons", () => {
 
 describe("shortfallText", () => {
   it("rounds as the findings do, and says more or fewer", () => {
-    expect(shortfallText({ cdmp_shortfall: 13.46, excluded_reason: null })).toBe("About 13 fewer chronic-care clinics than the national rate would give");
-    expect(shortfallText({ cdmp_shortfall: -1.2, excluded_reason: null })).toBe("About 1 more chronic-care clinic than the national rate would give");
-    expect(shortfallText({ cdmp_shortfall: 0.3, excluded_reason: null })).toBe("About the same as the national rate");
+    expect(shortfallText({ cdmp_shortfall: 13.46, excluded_reason: null })).toBe("About 13 fewer chronic-care clinics than the benchmark rate would give");
+    expect(shortfallText({ cdmp_shortfall: -1.2, excluded_reason: null })).toBe("About 1 more chronic-care clinic than the benchmark rate would give");
+    expect(shortfallText({ cdmp_shortfall: 0.3, excluded_reason: null })).toBe("About the same as the benchmark rate");
     expect(shortfallText({ cdmp_shortfall: null, excluded_reason: "no residents aged 65+" })).toBe("Not ranked: no residents aged 65+");
   });
 });

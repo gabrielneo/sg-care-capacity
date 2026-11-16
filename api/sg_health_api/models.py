@@ -157,6 +157,56 @@ class EdWeeklyResponse(BaseModel):
     meta: Meta
 
 
+class EdMonth(BaseModel):
+    hospital_code: str
+    hospital_name: str
+    year: int
+    month: int
+    month_start: date
+    mean_of_daily_median_wait_hours: float | None = Field(description="Average of daily medians, NOT a monthly median")
+    total_attendances: int | None = Field(description="A full-month total only when is_complete_month")
+    days_reported_wait: int
+    days_reported_attendances: int
+    days_in_month: int
+    is_complete_month: bool
+    wait_yoy_pct: float | None = Field(description="% change vs the same month a year earlier; null unless both months are complete")
+    attendances_yoy_pct: float | None = Field(description="As wait_yoy_pct, for visits")
+    wait_mom_pct: float | None = Field(description="% change vs the month before; null unless both months are complete")
+    attendances_mom_pct: float | None = Field(description="As wait_mom_pct, for visits")
+    source_sha256: str | None
+    as_of: datetime
+    as_of_basis: str
+
+
+class EdMonthlyResponse(BaseModel):
+    data: list[EdMonth]
+    meta: Meta
+
+
+class EdSystemMonth(BaseModel):
+    year: int
+    month: int
+    month_start: date
+    n_hospitals: int = Field(description="Full emergency departments in the group (those MOH reported throughout)")
+    n_complete_hospitals: int = Field(description="Of them, how many have this month complete")
+    is_complete_month: bool
+    mean_of_hospital_mean_wait_hours: float | None = Field(
+        description="Average of the hospitals' monthly averages of daily medians; null unless the month is complete")
+    total_attendances: int | None = Field(description="Visits at those hospitals; null unless the month is complete")
+    wait_yoy_pct: float | None
+    attendances_yoy_pct: float | None
+    wait_mom_pct: float | None
+    attendances_mom_pct: float | None
+    source_sha256: str | None
+    as_of: datetime
+    as_of_basis: str
+
+
+class EdSystemMonthlyResponse(BaseModel):
+    data: list[EdSystemMonth]
+    meta: Meta
+
+
 class WeekRef(BaseModel):
     iso_year: int
     iso_week: int
@@ -167,9 +217,9 @@ class WeekRef(BaseModel):
 class Change(BaseModel):
     unit: str
     latest: int | float | None = Field(description="Value in the latest complete week")
-    baseline_mean: float | None = Field(description="Mean over the 4 complete weeks before it; null if any is missing")
-    change: float | None = Field(description="latest - baseline_mean, in the metric's unit")
-    change_pct: float | None = Field(description="change / baseline_mean x 100; null if the baseline is null or 0")
+    baseline_median: float | None = Field(description="Median over the 8 complete weeks before it (the site's usual level); null if any is missing")
+    change: float | None = Field(description="latest - baseline_median, in the metric's unit")
+    change_pct: float | None = Field(description="change / baseline_median x 100; null if the baseline is null or 0")
 
 
 class EdSummary(BaseModel):
@@ -178,7 +228,7 @@ class EdSummary(BaseModel):
     facility_type: str
     latest_complete_week: WeekRef | None = Field(description="Most recent ISO week with all 7 days of both metrics")
     is_current: bool = Field(description="False if this hospital's latest complete week is older than other hospitals'")
-    baseline_weeks: list[date] = Field(description="week_start of the 4 weeks the baseline averages")
+    baseline_weeks: list[date] = Field(description="week_start of the 8 weeks whose median is the baseline")
     mean_of_daily_median_wait_hours: Change
     total_attendances: Change
     note: str | None = Field(description="Why a value is missing, if one is")
@@ -272,7 +322,7 @@ class AreaProperties(BaseModel):
     as_of_basis: str | None
     excluded_reason: str | None = Field(None, description="Why the area is left out of the access-gap ranking "
                                                           "(too few residents aged 65+); null if it is ranked")
-    cdmp_shortfall: float | None = Field(None, description="CDMP clinics the national rate would give its residents "
+    cdmp_shortfall: float | None = Field(None, description="CDMP clinics the benchmark rate would give its residents "
                                                            "aged 65+, minus those it has; negative = more. Null if excluded")
 
 

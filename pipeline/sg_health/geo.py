@@ -206,14 +206,14 @@ def access_gap_columns(a: pd.DataFrame) -> pd.DataFrame:
     """excluded_reason and cdmp_shortfall for each area, from the insight engine's access-gap code.
 
     excluded_reason: why the area is left out of the ranking (too few seniors), else null.
-    cdmp_shortfall: CDMP clinics the national rate would give its seniors minus the clinics it has
-    (negative = more than the national rate); null for excluded areas and missing counts.
+    cdmp_shortfall: CDMP clinics the benchmark rate (across the compared areas) would give its seniors minus the
+    clinics it has (negative = more than the benchmark rate); null for excluded areas and missing counts.
     """
     from .insights.detectors import access_gap
     from .insights.model import thresholds
 
     min_seniors = int(thresholds()["access_gap"]["min_seniors"])
-    national = access_gap.national_rate(a["residents_65plus"], a["cdmp_clinics"])
+    national = access_gap.national_rate(a["residents_65plus"], a["cdmp_clinics"], min_seniors)
     reasons = [access_gap.excluded_reason(v, min_seniors) for v in a["residents_65plus"]]
     short = [None if r is not None or national is None or pd.isna(s) or pd.isna(c)
              else round(access_gap.shortfall(float(s), float(c), national), 2)

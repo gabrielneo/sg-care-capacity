@@ -5,13 +5,17 @@
  * median of the 8 complete weeks before the latest complete week. The badge is a plain comparison,
  * not a tested finding (docs/data_dictionary.md, "Computed by the site"):
  *
- *   change vs usual       badge
- *   +30% or more          Much higher than usual
- *   +15% to under +30%    Higher than usual
- *   over -15% to +15%     About usual
- *   -15% or less          Lower than usual
- *   no usual level        No comparison (fewer than 8 complete weeks before the latest)
+ *   change vs usual       and the week is       badge
+ *   +30% or more          2+ spreads above      Much higher than usual
+ *   +15% to under +30%    2+ spreads above      Higher than usual
+ *   -15% or less          2+ spreads below      Lower than usual
+ *   anything else                               About usual
+ *   no usual level                              No comparison (fewer than 8 complete weeks before the latest)
  *
+ * "Spreads" is the hospital's own: the robust z of the week against its 8 usual weeks (MAD, as the insight engine's
+ * anomaly detector), so a volatile hospital needs a bigger move than a steady one. Without it, 44% of hospital-weeks
+ * since 2025 read as "usual" and CGH and SGH carried a non-usual badge in 83% of them; with it, 79% and 24%.
+ * If the 8 weeks do not vary at all (MAD 0), the % line alone decides.
  * Missing stays missing: no usual level means no badge colour, never "about usual".
  */
 import type { EdWeek } from "./api/types";
@@ -21,6 +25,8 @@ import { SPARK_WEEKS } from "./windows";
 export { SPARK_WEEKS };
 export const HIGHER_PCT = 15;
 export const MUCH_HIGHER_PCT = 30;
+/** How far outside the hospital's own spread a week must be: |robust z| at or above this. */
+export const MIN_Z = 2;
 
 export type Level = "much_higher" | "higher" | "usual" | "lower" | "unknown";
 
@@ -40,11 +46,14 @@ export const LEVELS: Record<Level, LevelInfo> = {
   unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual." },
 };
 
-export function levelFor(pct: number | null | undefined): Level {
+export function levelFor(pct: number | null | undefined, z: number | null | undefined = null): Level {
   if (pct == null || !Number.isFinite(pct)) return "unknown";
-  if (pct >= MUCH_HIGHER_PCT) return "much_higher";
-  if (pct >= HIGHER_PCT) return "higher";
-  if (pct <= -HIGHER_PCT) return "lower";
+  // No z (the 8 weeks did not vary at all): the % line alone decides.
+  const above = z == null || z >= MIN_Z;
+  const below = z == null || z <= -MIN_Z;
+  if (pct >= MUCH_HIGHER_PCT && above) return "much_higher";
+  if (pct >= HIGHER_PCT && above) return "higher";
+  if (pct <= -HIGHER_PCT && below) return "lower";
   return "usual";
 }
 
@@ -55,6 +64,8 @@ export interface HospitalStatus {
   latest: number | null;
   usual: number | null;
   pct: number | null;
+  /** Spread of the 8 usual weeks (MAD, hours), for the usual band; absent where unknown. */
+  mad?: number | null;
   /** The last SPARK_WEEKS weeks, oldest first; null for a week that isn't complete. */
   spark: (number | null)[];
 }
@@ -75,7 +86,7 @@ export function hospitalStatus(code: string, usual: Usual | undefined, weekly: E
         return w?.is_complete_week && w.mean_of_daily_median_wait_hours != null ? w.mean_of_daily_median_wait_hours : null;
       })
     : [];
-  return { code, level: levelFor(pct), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct, spark };
+  return { code, level: levelFor(pct, usual?.z), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct, mad: usual?.mad ?? null, spark };
 }
 
 /** Largest change against usual first; no comparison last; ties by code. */
@@ -133,34 +144,12 @@ export function sparkPath(values: (number | null)[], width: number, height: numb
 }
 
 /**
- * The "about usual" zone around a usual level: from HIGHER_PCT below it to HIGHER_PCT above it.
- * A week above the band is a week the badge would call higher than usual; no usual level, no band.
+ * The "about usual" zone around a usual level. A week leaves it, and so earns a badge, only when it is both
+ * HIGHER_PCT away and MIN_Z spreads away (MAD × 1/0.6745 is one robust standard deviation), so each side is the
+ * larger of the two distances. No usual level, no band; no spread known, the % line alone.
  */
-export function usualBand(usual: number | null | undefined): [number, number] | null {
+export function usualBand(usual: number | null | undefined, mad: number | null | undefined = null): [number, number] | null {
   if (usual == null || !Number.isFinite(usual)) return null;
-  return [usual * (1 - HIGHER_PCT / 100), usual * (1 + HIGHER_PCT / 100)];
-}
-
-export type Trend = "rising" | "falling" | "steady";
-
-/**
- * How the 12-week line moved, in a word, for the card's accessible name (docs/data_dictionary.md, "Computed by the site").
- * The mean of the last 4 known weeks against the mean of the first 4: HIGHER_PCT or more up is rising, that much down is
- * falling, otherwise steady. Fewer than 8 known weeks, or a first mean of 0: null, never a guess.
- */
-export function trendOf(spark: (number | null)[]): Trend | null {
-  const known = spark.filter((v): v is number => v != null);
-  if (known.length < 8) return null;
-  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
-  const first = mean(known.slice(0, 4));
-  const last = mean(known.slice(-4));
-  if (!(first > 0)) return null;
-  const pct = ((last - first) / first) * 100;
-  return pct >= HIGHER_PCT ? "rising" : pct <= -HIGHER_PCT ? "falling" : "steady";
-}
-
-/** "rising over 12 weeks", or why there is no word. */
-export function trendPhrase(spark: (number | null)[]): string {
-  const t = trendOf(spark);
-  return t ? `${t} over ${SPARK_WEEKS} weeks` : `too few weeks to describe a trend`;
+  const half = Math.max(usual * (HIGHER_PCT / 100), mad ? (MIN_Z * mad) / 0.6745 : 0);
+  return [usual - half, usual + half];
 }

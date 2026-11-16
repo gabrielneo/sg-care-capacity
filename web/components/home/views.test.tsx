@@ -80,9 +80,9 @@ describe("StatusCard densities", () => {
       const { unmount } = render(<ul><StatusCard status={status("SGH", 25)} note={null} live={live} density={density} /></ul>);
       const links = within(screen.getByTestId("status-card")).getAllByRole("link");
       expect(links).toHaveLength(1);
-      expect(links[0]).toHaveAttribute("href", "/ed-trends?hospital=SGH");
+      expect(links[0]).toHaveAttribute("href", "/hospital/SGH");
       expect(links[0]).toHaveAccessibleName(density === "full"
-        ? "Singapore General Hospital (SGH), Higher than usual, too few weeks to describe a trend" : "Singapore General Hospital (SGH)");
+        ? "Singapore General Hospital (SGH), Higher than usual" : "Singapore General Hospital (SGH)");
       expect(links[0]!.className).toContain("after:absolute");                           // stretched over the card
       unmount();
     }
@@ -132,7 +132,7 @@ describe("StatusCard densities", () => {
     }
   });
 
-  it("full: the footer is the NUHS estimate with its own short time, or says there is none, and the trend is in the name", () => {
+  it("full: the footer is the NUHS estimate with its own short time, or says there is none", () => {
     render(<ul>
       <StatusCard status={{ ...status("SGH", 25), spark: [4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 6] }} hospital={hospital("SGH")} note={null} live={live} />
       <StatusCard status={status("NUH", 0)} hospital={hospital("NUH")} note="Adults only" live={null} />
@@ -140,7 +140,7 @@ describe("StatusCard densities", () => {
     const [a, b] = screen.getAllByTestId("status-card");
     expect(within(a!).getByTestId("status-live")).toHaveTextContent(/To see a doctor: under 1 h · .*NUHS.* estimate, 6 Nov 2:00 pm/);
     expect(within(a!).queryByTestId("nuhs-timing")).toBeNull();                          // said once, in the section's key
-    expect(within(a!).getByRole("link")).toHaveAccessibleName("Singapore General Hospital (SGH), Higher than usual, rising over 12 weeks");
+    expect(within(a!).getByRole("link")).toHaveAccessibleName("Singapore General Hospital (SGH), Higher than usual");
     expect(within(b!).getByTestId("status-live-none")).toHaveClass("text-tertiary");
   });
 
@@ -154,8 +154,8 @@ describe("StatusCard densities", () => {
     const shown = screen.getAllByTestId("status-card").map((c) =>
       [within(c).getByTestId("status-badge").textContent, within(c).getByTestId("status-delta").textContent]);
     expect(shown).toEqual([
-      ["●About usual", "▲ 14%+14% vs usual"], ["▲Higher than usual", "▲ 29%+29% vs usual"],
-      ["●About usual", "▼ 14%−14% vs usual"], ["●About usual", "0%0% vs usual"]]);
+      ["●About usual", "▲ 15%+15% vs usual"], ["▲Higher than usual", "▲ 30%+30% vs usual"],
+      ["●About usual", "▼ 15%−15% vs usual"], ["●About usual", "0%0% vs usual"]]);
   });
 });
 
@@ -188,11 +188,11 @@ describe("StatusGrid", () => {
   it("only mentions the line where a line is shown", () => {
     const { unmount } = render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week} density="simple" />);
     expect(screen.getByTestId("status-key")).not.toHaveTextContent("The line shows");
-    expect(screen.getByTestId("status-key")).toHaveTextContent("Higher = 15% or more above usual; much higher = 30% or more.");
+    expect(screen.getByTestId("status-key")).toHaveTextContent("Higher = 15% or more above usual; much higher = 30% or more; both also need a move well outside that hospital's own usual swings.");
     unmount();
     setTestScope(createScope());
     render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week} />);
-    expect(screen.getByTestId("status-key")).toHaveTextContent("The line shows the last 12 weeks. The shaded band is the usual range: within 15% of usual.");
+    expect(screen.getByTestId("status-key")).toHaveTextContent("The line shows the last 12 weeks. The shaded band is the usual range: a week has to leave it to earn a badge.");
   });
 
   it("full: the urgent care centre is one full-width card under the grid, and the key says NUHS publishes separately", () => {
@@ -253,7 +253,7 @@ describe("SummaryStrip", () => {
     const which = within(tile("above")).getByRole("button", { name: "See which hospitals" });
     expect(document.getElementById(which.getAttribute("aria-describedby")!)).toHaveTextContent(
       // Short name and code; the full name is there for screen readers (audit G4).
-      "Singapore General (SGH)Singapore General Hospital (SGH): +31% vs usualChangi General (CGH)Changi General Hospital (CGH): +16% vs usual");
+      "Singapore General (SGH)Singapore General Hospital (SGH): +32% vs usualChangi General (CGH)Changi General Hospital (CGH): +16% vs usual");
     expect(screen.getByTestId("summary-ucc-note")).toHaveTextContent(
       "The urgent care centre is left out of these four figures. Not compared with full emergency departments.");
     // NUH covers adults only: said on the tile where it is the longest wait, and once under the tiles (audit M6).
@@ -264,21 +264,21 @@ describe("SummaryStrip", () => {
     expect(tile("middle")).toHaveTextContent(/Typical bed wait across emergency departments\. Show the hospital cards5\.6 h/);   // 4.0, 5.0, 6.2, 7.5 -> 5.6
     expect(tile("middle")).toHaveTextContent(/Median.*of 4 emergency departments\./);
     expect(within(tile("middle")).queryByTestId("sparkline")).toBeNull();   // the 12-week trend is in the hospital section's header
-    // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; cut, not rounded.
-    expect(tile("change")).toHaveTextContent(/^Biggest change vs the 8-week usual\. Show its hospital card\+31%Singapore General \(SGH\)Singapore General Hospital$/);
+    // Largest change: a ranking of hospitals, so the urgent care centre's +45% is left out; rounded as the findings are.
+    expect(tile("change")).toHaveTextContent(/^Biggest change vs the 8-week usual\. Show its hospital card\+32%Singapore General \(SGH\)Singapore General Hospital$/);
     // The bed-wait definition is not repeated here (E3): it is in the page intro.
     expect(screen.getByTestId("summary-strip")).not.toHaveTextContent("It is not the time to see a doctor.");
   });
 
   it("a fall can be the largest change, and it is signed", () => {
     render(<SummaryStrip statuses={[at("SGH", 16, 5), at("TTSH", -32.7, 4)]} hospitals={hospitals} meta={edMeta} latestWeek={week} />);
-    expect(tile("change")).toHaveTextContent(/−32%Tan Tock Seng \(TTSH\)Tan Tock Seng Hospital$/);
+    expect(tile("change")).toHaveTextContent(/−33%Tan Tock Seng \(TTSH\)Tan Tock Seng Hospital$/);
   });
 
   it("missing stays missing: no comparison is counted on its own, and nothing is shown as 0", () => {
     render(<SummaryStrip statuses={[at("NUH", null, null), at("AH", null, 1.2), at("SGH", 2, 5)]} hospitals={hospitals} meta={edMeta}
                          latestWeek={null} />);
-    expect(tile("above")).toHaveTextContent("0 of 2None is 15% or more above its usual week.1 with no comparison.");
+    expect(tile("above")).toHaveTextContent("0 of 2None is clearly above its usual week.1 with no comparison.");
     expect(within(tile("above")).queryByRole("button")).toBeNull();
     expect(tile("longest")).toHaveTextContent(/5\.0 hSingapore General \(SGH\)Singapore General Hospital$/);
     // One full ED with a complete week: no middle value, said so, not a number.

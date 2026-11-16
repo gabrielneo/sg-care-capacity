@@ -9,8 +9,8 @@ const DOT = { much: "fill-status-much", higher: "fill-status-higher", usual: "fi
 
 /**
  * Twelve weeks of a bed wait as a small line, drawn on the server (no chart library).
- * Decorative: the card's accessible name says which way it moved (lib/status.ts, trendPhrase), so the line is hidden from
- * screen readers. A missing week is a gap; the last week is a dot in the status colour (the line itself is always the
+ * Decorative: the card's badge carries the reading (lib/status.ts), so the line is hidden from
+ * screen readers; it makes no claim about a trend of its own. A missing week is a gap; the last week is a dot in the status colour (the line itself is always the
  * secondary text colour). `band` shades the usual range (usualBand) on the line's own scale.
  */
 export function Sparkline({ values, tone, band = null }: {

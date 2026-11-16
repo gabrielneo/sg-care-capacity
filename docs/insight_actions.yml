@@ -102,7 +102,7 @@ detectors:
     action: >-
       Prioritise CDMP clinic recruitment and Healthier SG enrolment drives in {area}
       and the other {n_areas} priority areas.
-    measure_of_success: "CDMP clinics per 1,000 seniors in priority areas rises toward the national rate"
+    measure_of_success: "CDMP clinics per 1,000 seniors in priority areas rises toward the benchmark rate"
     moscow: Must
     synapxe_angle: >-
       HealthHub could show seniors in priority areas the nearest CDMP clinic and
