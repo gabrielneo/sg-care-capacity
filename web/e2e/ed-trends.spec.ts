@@ -93,7 +93,7 @@ test.describe("ED Trends: difference-first charts", () => {
     const pinned = page.getByTestId("small-multiples").getByTestId("pinned-caveat");
     await expect(pinned).toHaveCount(2);
     // The EDs' panels first, the urgent care centre's last (ADR 0012).
-    expect(await plain(pinned.first())).toMatch(/^i ?Adults only/);
+    expect(await plain(pinned.first())).toMatch(/^Adults only/);
     expect(await plain(pinned.nth(1))).toMatch(/not a full .*so its waits are shorter/);
     await expect(page.getByTestId("dumbbell-row").first().getByTestId("delta-number")).toContainText(/5\.0 hours\s*vs 4\.0 usual/);
     await expect(page.locator('[data-testid=multiple][data-hospital="AH"] [data-testid=series]')).not.toHaveCount(0);
