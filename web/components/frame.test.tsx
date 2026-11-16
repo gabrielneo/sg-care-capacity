@@ -8,7 +8,6 @@ import { SITE } from "@/lib/site";
 vi.mock("next/navigation", () => ({ usePathname: () => "/", useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn() }) }));
 vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }));
 vi.mock("@/components/DataStatus", () => ({ DataStatus: () => null }));
-vi.mock("@/components/ThemeToggle", () => ({ ThemeToggle: () => null }));
 
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";

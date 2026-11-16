@@ -95,8 +95,11 @@ export function densityOf(view: View, id: SectionId, sections: readonly SectionS
   return sections.find((s) => s.id === id)?.views[view] ?? null;
 }
 
+/** Where the three views live. "/" is the landing page (app/page.tsx); the clinic finder and the Planner and Analyst views are here. */
+export const FIND_PATH = "/find";
+
 /**
- * The home page's address for a view, keeping everything else in the query string. The public view
+ * The address of a view, keeping everything else in the query string. The public view
  * is the plain address: no ?view= at all. The clinic search isn't in the query string: it is in the
  * fragment, which the browser keeps to itself, so changing view starts without it.
  */
@@ -105,7 +108,7 @@ export function viewHref(view: View, current: string | URLSearchParams = ""): st
   q.delete("view");
   if (view !== DEFAULT_VIEW) q.set("view", view);
   const s = q.toString();
-  return s ? `/?${s}` : "/";
+  return s ? `${FIND_PATH}?${s}` : FIND_PATH;
 }
 
 /** What each section is called in the "Jump to section" list (the strip's menu). The notice is the page's intro, so it is not a stop. */

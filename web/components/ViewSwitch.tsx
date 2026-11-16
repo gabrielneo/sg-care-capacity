@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 
-import { type View, viewHref, VIEWS } from "@/lib/homeViews";
+import { FIND_PATH, type View, viewHref, VIEWS } from "@/lib/homeViews";
 
 /**
  * Who the home page is laid out for: Public, Planner or Analyst (lib/homeViews.ts).
@@ -20,7 +20,7 @@ import { type View, viewHref, VIEWS } from "@/lib/homeViews";
  * A header slot keeps its last page when a link is followed, so the control checks the path itself
  * and renders nothing anywhere else (`home` is for /dev/components, which shows it off the home page).
  */
-export function ViewSwitch({ view: current, home = "/", placement = "bar", onChoose }: { view: View; home?: string; placement?: "bar" | "sheet"; onChoose?: () => void }) {
+export function ViewSwitch({ view: current, home = FIND_PATH, placement = "bar", onChoose }: { view: View; home?: string; placement?: "bar" | "sheet"; onChoose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   // Show the new choice at once; the page follows when the server has rendered it.
@@ -40,7 +40,7 @@ export function ViewSwitch({ view: current, home = "/", placement = "bar", onCho
   const bar = placement === "bar";
   return (
     <div data-testid={bar ? "view-switch" : "view-switch-sheet"} data-view={view} className={bar ? "hidden lg:block" : ""}>
-      <form action="/" method="get" className="flex items-center">
+      <form action={home} method="get" className="flex items-center">
         <div role="radiogroup" aria-label="View" data-testid={bar ? "view-radios" : "view-radios-sheet"}
              className={bar ? "inline-flex control-h overflow-hidden rounded-md border border-control bg-surface" : "flex w-full flex-col rounded-md border border-control bg-surface"}>
           {VIEWS.map((v) => (

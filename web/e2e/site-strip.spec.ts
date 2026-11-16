@@ -15,7 +15,7 @@ for (const view of ["planner", "analyst"] as const) {
   test.describe(`${view} view`, () => {
     test("appears only after the intro has scrolled away, and goes again at the top", async ({ page }) => {
       test.skip(!wide(page), "never on a phone: see the next test");
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       const strip = page.getByTestId("site-strip");
       await expect(strip).toBeHidden();                 // at the top, the intro is in view
       await scrollPastIntro(page);
@@ -27,7 +27,7 @@ for (const view of ["planner", "analyst"] as const) {
 
     test("never shows on a phone, however far the page is scrolled", async ({ page }) => {
       test.skip(wide(page), "a phone-width test");
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       await scrollPastIntro(page);
       await page.mouse.wheel(0, 1200);
       await expect(page.getByTestId("site-strip")).toBeHidden();
@@ -35,7 +35,7 @@ for (const view of ["planner", "analyst"] as const) {
 
     test("says how many EDs are higher than usual and which week, as plain text, with the dataset's freshness", async ({ page }) => {
       test.skip(!wide(page), "desktop only");
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       await scrollPastIntro(page);
       const summary = page.getByTestId("strip-summary");
       await expect(summary).toContainText(/\d+ of \d+ emergency departments higher than usual · week of |No comparison with usual yet/);
@@ -59,7 +59,7 @@ for (const view of ["planner", "analyst"] as const) {
 
     test("Jump to section lists the view's sections, jumps to one below the strip, and closes with Esc", async ({ page }) => {
       test.skip(!wide(page), "desktop only");
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       await scrollPastIntro(page);
       const jump = page.getByTestId("strip-jump");
       await jump.click();
@@ -85,7 +85,7 @@ for (const view of ["planner", "analyst"] as const) {
     });
 
     test("fits the screen and passes the accessibility checks, with the strip showing", async ({ page }) => {
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       await scrollPastIntro(page);
       await expectNoHorizontalScroll(page);
       await expectNoA11yViolations(page, { wcag22: true });
@@ -94,7 +94,7 @@ for (const view of ["planner", "analyst"] as const) {
 }
 
 test("the public view has no strip", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/find");
   await scrollPastIntro(page);
   await expect(page.getByTestId("site-strip")).toHaveCount(0);
 });

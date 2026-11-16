@@ -5,8 +5,8 @@ import { expectNoHorizontalScroll } from "./helpers";
 /** UX audit D9: nothing is hidden behind motion or JavaScript, and the page prints as a clean light-theme document. */
 
 const ROUTES = [
-  { path: "/?view=planner", name: "Planner" },
-  { path: "/?view=analyst", name: "Analyst" },
+  { path: "/find?view=planner", name: "Planner" },
+  { path: "/find?view=analyst", name: "Analyst" },
   { path: "/findings", name: "Findings" },
   { path: "/ed-trends", name: "ED trends" },
 ];
@@ -30,7 +30,7 @@ test.describe("data is on the page on first paint", () => {
   }
 
   test("nothing in a long page starts transparent, before any scrolling", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     const transparent = await page.locator("main *").evaluateAll((els) =>
       els.filter((e) => {
         const cs = getComputedStyle(e);
@@ -63,16 +63,16 @@ test.describe("motion", () => {
 
 test.describe("print", () => {
   test("Analyst has a Print summary link to the one-page summary; Planner and Public do not", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     await expect(page.getByTestId("print-summary-link")).toHaveAttribute("href", "/summary");
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     await expect(page.getByTestId("print-summary-link")).toHaveCount(0);
   });
 
   test("printed Analyst: light theme even if dark is chosen, no chrome, section meta lines stay, no overflow", async ({ page }) => {
     await page.addInitScript(() => { try { localStorage.setItem("theme", "dark"); } catch { /* storage blocked */ } });
     await page.emulateMedia({ colorScheme: "dark" });
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
     await page.emulateMedia({ media: "print", colorScheme: "dark" });
     const page_bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
@@ -91,7 +91,7 @@ test.describe("print", () => {
 
   test("a hospital card is not split across print pages", async ({ page }) => {
     await page.emulateMedia({ media: "print" });
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     const breaks = await page.locator('[data-testid="status-card"]').first().evaluate((e) => getComputedStyle(e).breakInside);
     expect(breaks).toBe("avoid");
   });

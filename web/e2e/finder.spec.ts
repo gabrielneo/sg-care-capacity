@@ -16,13 +16,13 @@ test.describe("Public finder", () => {
   test("a postcode lists places nearest first, with straight-line distances and a Nearest badge", async ({ page }) => {
     const requests: string[] = [];
     page.on("request", (r) => requests.push(r.url()));
-    await page.goto("/");
+    await page.goto("/find");
     await page.getByLabel("Your postcode or area").fill("460002");
     await page.getByRole("button", { name: "Find clinics" }).click();
 
     const nearby = page.getByTestId("nearby");
     await expect(nearby.getByRole("heading", { level: 2 })).toHaveText("Near 460002");
-    await expect(page).toHaveURL(/\/#near=460002$/);
+    await expect(page).toHaveURL(/\/find#near=460002$/);
     await expect(nearby.getByTestId("nearby-basis")).toContainText("Distances from that postcode, in a straight line.");
 
     const cards = nearby.getByTestId("nearby-place");
@@ -51,7 +51,7 @@ test.describe("Public finder", () => {
   });
 
   test("the type filter narrows the list and is announced", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await page.getByLabel("Your postcode or area").fill("460002");
     await page.getByRole("button", { name: "Find clinics" }).click();
     await expect(page.getByTestId("nearby-place").first()).toBeVisible();
@@ -70,7 +70,7 @@ test.describe("Public finder", () => {
   });
 
   test("the three nearest EDs show plain badges, the full bed-wait label and the NUHS estimate where there is one", async ({ page }) => {
-    await page.goto("/#near=460002");
+    await page.goto("/find#near=460002");
     const list = page.getByTestId("ed-list");
     await expect(page.getByTestId("ed-item")).toHaveCount(3);
     await expect(page.getByRole("heading", { level: 2, name: /^How long were bed waits at (Emergency Departments \(EDs\)|EDs) near you in the latest complete week\?$/ })).toBeVisible();
@@ -94,11 +94,11 @@ test.describe("Public finder", () => {
     expect(await page.getByTestId("ed-near").innerText()).not.toMatch(/wait time/i);
     await expect(page.getByTestId("status-exclusions")).toContainText("Children's Emergency");
     for (const line of await page.getByTestId("ed-near").getByTestId("provenance-line").all()) await expect(line).toHaveText(AS_OF);
-    await expect(page.getByTestId("ed-near").getByRole("link", { name: /Analyst view/ })).toHaveAttribute("href", "/?view=analyst");
+    await expect(page.getByTestId("ed-near").getByRole("link", { name: /Analyst view/ })).toHaveAttribute("href", "/find?view=analyst");
   });
 
   test("the bed-wait help opens on keyboard focus, explains it isn't time to see a doctor, and closes on Escape", async ({ page }) => {
-    await page.goto("/#near=460002");
+    await page.goto("/find#near=460002");
     const help = page.locator('[data-testid=ed-card][data-hospital="SGH"]').getByRole("button", { name: "What does this wait mean?" });
     await help.focus();
     const tip = page.locator('[data-testid=ed-card][data-hospital="SGH"]').getByRole("tooltip");
@@ -112,7 +112,7 @@ test.describe("Public finder", () => {
   });
 
   test("an area name works, and a postcode it can't place says how to recover", async ({ page }) => {
-    await page.goto("/#near=bedok");
+    await page.goto("/find#near=bedok");
     await expect(page.getByTestId("nearby").getByRole("heading", { level: 2 })).toHaveText("Near Bedok");
     await expect(page.getByTestId("nearby-basis")).toContainText("approximate");
 
@@ -127,7 +127,7 @@ test.describe("Public finder", () => {
   });
 
   test("a shared link opens the search, and back and forward follow it", async ({ page }) => {
-    await page.goto("/#near=460002");
+    await page.goto("/find#near=460002");
     await expect(page.getByTestId("nearby").getByRole("heading", { level: 2 })).toHaveText("Near 460002");
     await page.getByLabel("Your postcode or area").fill("bedok");
     await page.getByRole("button", { name: "Find clinics" }).click();
@@ -138,13 +138,13 @@ test.describe("Public finder", () => {
   });
 
   test("fully usable by keyboard, with 16px body text and 44px targets", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await page.getByLabel("Your postcode or area").focus();
     await page.keyboard.type("460002");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("nearby-place").first()).toBeVisible();
     for (const target of [page.getByLabel("Your postcode or area"), page.getByRole("button", { name: "Find clinics" }),
-      page.getByTestId("type-filter").locator("label").first(), page.getByTestId("directions").first(), page.getByTestId("emergency-note").getByRole("link", { name: "Call 995" })]) {
+      page.getByTestId("type-filter").locator("label").first(), page.getByTestId("directions").first(), page.getByTestId("footer-notice").getByRole("link", { name: "Call 995" })]) {
       const box = (await target.boundingBox())!;
       expect(box.height, "target height").toBeGreaterThanOrEqual(44);
     }
@@ -158,10 +158,10 @@ test.describe("Public finder", () => {
   });
 
   test("no sideways scrolling, and passes axe (WCAG 2.2 AA), before and after a search", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });
-    await page.goto("/#near=460002");
+    await page.goto("/find#near=460002");
     await expect(page.getByTestId("ed-item")).toHaveCount(3);
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });
@@ -169,7 +169,7 @@ test.describe("Public finder", () => {
 
   test("fits a 768 px tablet", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto("/#near=460002");
+    await page.goto("/find#near=460002");
     await expect(page.getByTestId("ed-item")).toHaveCount(3);
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });

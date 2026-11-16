@@ -73,7 +73,7 @@ export function Hero({ insight, meta, count }: { insight: StoryInsight; meta: Me
         <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-small text-muted">
-        <FreshnessBadge meta={own} />
+        <FreshnessBadge meta={own} dateInLine />
         <AsOfLine asOf={own.as_of} meta={own} bySource findingTo={insight.as_of} />
       </div>
     </header>
@@ -131,7 +131,7 @@ export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: M
       </p>
       {shared ? (
         <div className="mb-6 mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-small text-muted" data-testid="section-meta">
-          <FreshnessBadge meta={shared} />
+          <FreshnessBadge meta={shared} dateInLine />
           <AsOfLine asOf={shared.as_of} meta={shared} bySource />
         </div>
       ) : null}
@@ -179,13 +179,11 @@ export function DepthCards({ cards }: { cards: DepthCard[] }) {
       <h2 id="depth" className="font-semibold text-ink text-h2">Go further</h2>
       <ul className="mt-4 card-grid md:grid-cols-3">
         {cards.map((c) => (
-          <li key={c.href} data-testid="depth-card">
-            <Link href={c.href} className="flex h-full flex-col rounded-lg border border-line bg-surface card link-quiet hover:border-accent">
-              <span className="text-meta font-semibold uppercase tracking-wide text-muted">{c.budget}</span>
-              <span className="mt-1 font-semibold text-accent"><Glossed text={c.title} plain /> →</span>
-              <span className="mt-1 flex-1 text-small text-muted"><Glossed text={c.text} plain /></span>
-              <span className="mt-3 text-meta text-muted" data-testid="depth-estimate">{c.estimate}</span>
-            </Link>
+          <li key={c.href} data-testid="depth-card" className="flex h-full flex-col rounded-lg border border-line bg-surface card">
+            <p className="text-meta font-semibold uppercase tracking-wide text-muted">{c.budget}</p>
+            <Link href={c.href} className="mt-1 inline-flex min-h-11 items-center font-semibold"><Glossed text={c.title} plain />{" "}→</Link>
+            <p className="flex-1 text-small text-muted"><Glossed text={c.text} plain /></p>
+            <p className="mt-3 text-meta text-muted" data-testid="depth-estimate">{c.estimate}</p>
           </li>
         ))}
       </ul>

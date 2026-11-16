@@ -29,7 +29,7 @@ export const AUTHOR_LINKS: readonly AuthorLink[] = [
  * so no API call backs them. Update them when the README changes; lib/author.test.ts checks the README still says them.
  */
 export const BUILD_FACTS = {
-  tests: "1,000+",
+  tests: "2,000+",
   cadence: "Weekly",
   auditSampled: 20,
 } as const;

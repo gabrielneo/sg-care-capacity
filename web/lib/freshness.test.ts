@@ -56,6 +56,7 @@ describe("one freshness function, per dataset (docs/datasets.yml)", () => {
   it("shows the label, the cadence and the as-of date, in words", () => {
     const f = datasetFreshness("moh_bed_waits", "2026-10-31", at("2026-11-14T12:00:00+08:00"));
     expect(freshnessText(f)).toBe("Due an update · weekly · as of 31 Oct 2026");
+    expect(freshnessText(f, { withDate: false })).toBe("Due an update · weekly");
     expect(f.age).toBe("2 weeks");
     const nuhs = datasetFreshness("nuhs_live", "2026-11-08T22:00:44", at("2026-11-09T12:00:00+08:00"));
     expect(freshnessText(nuhs)).toBe("Up to date · a reading at one moment · as of 8 Nov 2026, 10:00 pm SGT");

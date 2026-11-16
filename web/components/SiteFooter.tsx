@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 import { DataStatus } from "@/components/DataStatus";
 import { Notice995 } from "@/components/Notice995";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Glossed } from "@/components/terms/Glossed";
 import { AUTHOR, AUTHOR_LINKS } from "@/lib/author";
 
@@ -73,7 +72,6 @@ export function SiteFooter() {
               {item("/glossary", "Glossary")}
               {item("/styleguide", "Style guide")}
             </Links>
-            <div className="mt-3"><ThemeToggle /></div>
           </Column>
         </div>
         <p className="mt-8 border-t border-line pt-4" data-testid="footer-credits">

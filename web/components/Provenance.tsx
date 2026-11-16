@@ -100,7 +100,7 @@ export function Provenance({
   return (
     <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-small" : "text-meta"} text-muted`}
             data-testid={inherited ? "provenance-inherited" : undefined}>
-      {inherited ? null : <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      {inherited ? null : (
         <p data-testid="provenance-line">
           Data as of{" "}
           {dates.map((d, i) => (
@@ -131,34 +131,38 @@ export function Provenance({
           ) : null}
           {caveat && !compact ? <>{" · "}<Glossed text={caveat} /></> : null}
         </p>
-        {release || !freshness ? null : dates.map((d) => (
-          <FreshnessBadge key={d.name || "all"} meta={{ sources: d.sources }} now={now} source={d.name || undefined} />
+      )}
+      {/* The freshness badge and "More about these figures" share one row (review, open item 5). The badge leaves out the date,
+          which the line above already gives. An open list takes the whole row, below the toggle. */}
+      <div className={inherited ? undefined : "mt-1 flex flex-wrap items-center gap-x-4"}>
+        {inherited || release || !freshness ? null : dates.map((d) => (
+          <FreshnessBadge key={d.name || "all"} meta={{ sources: d.sources }} now={now} source={d.name || undefined} dateInLine />
         ))}
-      </div>}
-      {!compact && count > 0 ? (
-        <details className={inherited ? undefined : "mt-2"}>
-          <summary className="min-h-11 cursor-pointer select-none py-3 text-accent">More about these figures ({count})</summary>
-          <ul className="mt-1 list-disc space-y-1 pl-6">
-            {extra.map((n) => (
-              <li key={n}>{detail ? n : <Glossed text={n} />}</li>
-            ))}
-            {detail
-              ? warnings.map((w) => (
-                  <li key={`${w.check_id}:${w.table}`}>
-                    Data-quality {w.severity === "ERROR" ? "issue" : "warning"} <code>{w.check_id}</code>
-                    {` (${w.failing_rows} ${w.failing_rows === 1 ? "row" : "rows"})`}
-                    {w.details ? `: ${w.details}` : null}
-                  </li>
-                ))
-              : warnings.length ? (
-                  <li>
-                    {warnings.length} data-quality {warnings.length === 1 ? "warning applies" : "warnings apply"} to these figures.{" "}
-                    <Link href="/data-quality">See Data Quality</Link>
-                  </li>
-                ) : null}
-          </ul>
-        </details>
-      ) : null}
+        {!compact && count > 0 ? (
+          <details className="open:basis-full">
+            <summary className="min-h-11 cursor-pointer select-none py-3 text-accent">More about these figures ({count})</summary>
+            <ul className="mt-1 list-disc space-y-1 pl-6">
+              {extra.map((n) => (
+                <li key={n}>{detail ? n : <Glossed text={n} />}</li>
+              ))}
+              {detail
+                ? warnings.map((w) => (
+                    <li key={`${w.check_id}:${w.table}`}>
+                      Data-quality {w.severity === "ERROR" ? "issue" : "warning"} <code>{w.check_id}</code>
+                      {` (${w.failing_rows} ${w.failing_rows === 1 ? "row" : "rows"})`}
+                      {w.details ? `: ${w.details}` : null}
+                    </li>
+                  ))
+                : warnings.length ? (
+                    <li>
+                      {warnings.length} data-quality {warnings.length === 1 ? "warning applies" : "warnings apply"} to these figures.{" "}
+                      <Link href="/data-quality">See Data Quality</Link>
+                    </li>
+                  ) : null}
+            </ul>
+          </details>
+        ) : null}
+      </div>
     </footer>
   );
 }

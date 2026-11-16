@@ -2,6 +2,8 @@
 
 **Status:** Accepted · **Date:** 2026-11-09
 
+*Partly replaced by [0013](0013-landing-page.md) on 2026-11-16: the public page is now at `/find`; `/` is a landing page.*
+
 ## Context
 
 The home page was a scroll story of the insight engine's findings. Each step had a headline, a key

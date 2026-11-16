@@ -68,15 +68,15 @@ describe("sectionsFor", () => {
 
 describe("viewHref", () => {
   it("leaves the view out of the address for public", () => {
-    expect(viewHref("public")).toBe("/");
-    expect(viewHref("public", "view=analyst")).toBe("/");
-    expect(viewHref("planner")).toBe("/?view=planner");
+    expect(viewHref("public")).toBe("/find");
+    expect(viewHref("public", "view=analyst")).toBe("/find");
+    expect(viewHref("planner")).toBe("/find?view=planner");
   });
 
   it("keeps the rest of the query string", () => {
-    expect(viewHref("analyst", "sort=hours")).toBe("/?sort=hours&view=analyst");
-    expect(viewHref("public", "sort=hours&view=planner")).toBe("/?sort=hours");
-    expect(viewHref("planner", new URLSearchParams({ view: "bogus", sort: "name" }))).toBe("/?sort=name&view=planner");
+    expect(viewHref("analyst", "sort=hours")).toBe("/find?sort=hours&view=analyst");
+    expect(viewHref("public", "sort=hours&view=planner")).toBe("/find?sort=hours");
+    expect(viewHref("planner", new URLSearchParams({ view: "bogus", sort: "name" }))).toBe("/find?sort=name&view=planner");
   });
 });
 

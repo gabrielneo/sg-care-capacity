@@ -125,7 +125,7 @@ test.describe("compact, at 375px", () => {
 
 test("no horizontal overflow at 375, 768, 1280 and 1440; axe is clean in both themes", async ({ page }) => {
   for (const width of [375, 768, 1280, 1440]) {
-    await open(page, width, "light", "/?view=planner");   // the real page, on the fixture
+    await open(page, width, "light", "/find?view=planner");   // the real page, on the fixture
     await expectNoHorizontalScroll(page);
     await open(page, width);
     await expectNoHorizontalScroll(page);

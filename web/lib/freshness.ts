@@ -110,8 +110,12 @@ export function metaFreshness(meta: Pick<Meta, "sources">, now: Date = new Date(
   return sourcesFreshness(meta.sources, now);
 }
 
-/** "Due an update · weekly · as of 31 Oct 2026": the label, the cadence and the as-of date, in that order. */
-export function freshnessText(f: Freshness): string {
+/**
+ * "Due an update · weekly · as of 31 Oct 2026": the label, the cadence and the as-of date, in that order.
+ * withDate false: "Due an update · weekly", for a badge beside a line that already states the date (stated once).
+ */
+export function freshnessText(f: Freshness, { withDate = true }: { withDate?: boolean } = {}): string {
   if (f.level === "unknown") return f.label;
-  return `${f.label} · ${CADENCE_TEXT[f.cadence]} · as of ${formatAsOf(f.asOf, { withTime: f.cadence === "moment" })}`;
+  const base = `${f.label} · ${CADENCE_TEXT[f.cadence]}`;
+  return withDate ? `${base} · as of ${formatAsOf(f.asOf, { withTime: f.cadence === "moment" })}` : base;
 }

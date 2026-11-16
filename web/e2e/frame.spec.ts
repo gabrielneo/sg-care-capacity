@@ -45,7 +45,7 @@ test.describe("header", () => {
   });
 
   for (const width of [375, 768, 1280, 1440]) {
-    for (const path of ["/", "/?view=analyst", "/about", "/findings"]) {
+    for (const path of ["/", "/find", "/find?view=analyst", "/about", "/findings"]) {
       test(`${path} has no sideways scrolling at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
@@ -61,7 +61,7 @@ test.describe("header fits its row (CI 2026-11-16)", () => {
   for (const width of [768, 1023, 1024, 1280]) {
     test(`at ${width}px with a wide font: one-line wordmark, nothing past the edge`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/");
+      await page.goto("/find");
       await page.addStyleTag({ content: "*{font-family:Verdana,'DejaVu Sans',sans-serif !important}" });
       const name = page.getByTestId("wordmark").locator("span").first();
       const box = (await name.boundingBox())!;
@@ -77,7 +77,7 @@ test.describe("menu sheet (below 1024px)", () => {
   test.skip(({ page }) => wide(page), "a phone-width flow");
 
   test("keyboard: opens, traps focus, closes with Esc, and returns focus to Menu", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     const button = page.getByTestId("menu-button");
     const sheet = page.getByTestId("menu-sheet");
     await expect(sheet).toBeHidden();
@@ -111,7 +111,7 @@ test.describe("menu sheet (below 1024px)", () => {
   });
 
   test("holds the five sections, the view choice (on Home) and a tel:995 link; following a link closes it", async ({ page }) => {
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     await page.getByTestId("menu-button").click();
     const sheet = page.getByTestId("menu-sheet");
     await expect(sheet.getByRole("navigation", { name: "Menu" }).getByRole("link")).toHaveCount(5);
@@ -129,11 +129,11 @@ test.describe("menu sheet (below 1024px)", () => {
     await expect(sheet).toBeHidden();
     // Off the home page there is no view choice in the sheet.
     await page.getByTestId("menu-button").click();
-    await expect(page.getByTestId("view-radios-sheet")).toHaveCount(0);
+    await expect(page.getByTestId("menu-sheet").getByTestId("view-radios-sheet")).toHaveCount(0);
   });
 
   test("passes the accessibility checks while open", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await page.getByTestId("menu-button").click();
     await expectNoA11yViolations(page, { wcag22: true });
   });
@@ -144,25 +144,25 @@ test.describe("view switch", () => {
     if (wide(page)) await page.getByTestId("view-radios").getByText(label, { exact: true }).click();
     else {
       await page.getByTestId("menu-button").click();
-      await page.getByTestId("view-radios-sheet").getByText(label, { exact: true }).click();
+      await page.getByTestId("menu-sheet").getByTestId("view-radios-sheet").getByText(label, { exact: true }).click();
     }
   };
   const checked = async (page: Page, label: string) => {
     if (wide(page)) await expect(page.getByRole("radio", { name: label, exact: true })).toBeChecked();
     else {
       await page.getByTestId("menu-button").click();
-      await expect(page.getByTestId("view-radios-sheet").getByRole("radio", { name: label, exact: true })).toBeChecked();
+      await expect(page.getByTestId("menu-sheet").getByTestId("view-radios-sheet").getByRole("radio", { name: label, exact: true })).toBeChecked();
       await page.keyboard.press("Escape");
     }
   };
 
   test("round-trips through the URL: choose, reload, back and forward", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await pick(page, "Planner");
-    await expect(page).toHaveURL(/\/\?view=planner$/);
+    await expect(page).toHaveURL(/\/find\?view=planner$/);
     await expect(page.getByTestId("home")).toHaveAttribute("data-view", "planner");
     await pick(page, "Analyst");
-    await expect(page).toHaveURL(/\/\?view=analyst$/);
+    await expect(page).toHaveURL(/\/find\?view=analyst$/);
     await expect(page.getByTestId("home")).toHaveAttribute("data-view", "analyst");
 
     await page.reload();                                               // the URL is the state
@@ -170,25 +170,25 @@ test.describe("view switch", () => {
     await checked(page, "Analyst");
 
     await page.goBack();
-    await expect(page).toHaveURL(/\/\?view=planner$/);
+    await expect(page).toHaveURL(/\/find\?view=planner$/);
     await expect(page.getByTestId("home")).toHaveAttribute("data-view", "planner");
     await checked(page, "Planner");
     await page.goForward();
     await expect(page.getByTestId("home")).toHaveAttribute("data-view", "analyst");
 
     await pick(page, "Public");                                        // the plain address, no ?view=
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/find$/);
     await expect(page.getByTestId("home")).toHaveAttribute("data-view", "public");
   });
 
   test("opens straight onto a shared link's view", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     await checked(page, "Analyst");
   });
 
   test("a 36px segmented control from 1024px", async ({ page }) => {
     test.skip(!wide(page), "the header's control");
-    await page.goto("/");
+    await page.goto("/find");
     const box = (await page.getByTestId("view-radios").boundingBox())!;
     expect(box.height).toBeCloseTo(36, 0);
     const selected = page.getByTestId("view-radios").locator("label", { has: page.getByRole("radio", { name: "Public", exact: true }) });
@@ -201,7 +201,7 @@ test.describe("first screen on a phone (I1)", () => {
   test.skip(({ page }) => wide(page), "a phone-width measure");
 
   test("the first heading is within 120px of the top and the first KPI number is in view at 375×812", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     const h1 = page.getByRole("heading", { level: 1 });
     expect((await h1.boundingBox())!.y).toBeLessThan(120);
     await expect(h1).toBeInViewport({ ratio: 1 });
@@ -214,13 +214,12 @@ test.describe("first screen on a phone (I1)", () => {
 });
 
 test.describe("notices (E5)", () => {
-  test("public: the full 995 card is first; planner and analyst: one compact line under the H1", async ({ page }) => {
-    await page.goto("/");
-    const card = page.getByTestId("emergency-note");
-    await expect(card).toContainText("Call 995");
-    expect(await card.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(168, 50, 42)");   // --danger-notice
+  test("public: no 995 banner (the footer has the number); planner and analyst: one compact line under the H1", async ({ page }) => {
+    await page.goto("/find");
+    await expect(page.getByTestId("emergency-note")).toHaveCount(0);
+    await expect(page.getByTestId("footer-notice").getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
     for (const view of ["planner", "analyst"]) {
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       const note = page.getByTestId("emergency-note");
       await expect(note).toContainText("✚ Emergency? Call 995. This site shows public statistics, not medical advice.");
       await expect(note.getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");

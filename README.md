@@ -2,15 +2,29 @@
 
 **Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
 the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from
-public MOH, data.gov.sg and SingStat data. Its home page shows how long bed waits were at each emergency department
-was last week and finds the nearest polyclinics and GP clinics for any postcode.**
+public MOH, data.gov.sg and SingStat data. The site opens on two pictures, each with a one-line note:
+each hospital's latest bed wait against its own usual level, and clinics per senior by planning area.
+A separate page finds the nearest polyclinics and GP clinics for any postcode.**
 
 **Live site: [sg-care-capacity-web.vercel.app](https://sg-care-capacity-web.vercel.app/)** ·
 [Case study](https://sg-care-capacity-web.vercel.app/case-study) ·
 [One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
 [Independent audit](docs/audit_report.md)
 
-[![The home page: a search for Tampines lists the nearest polyclinics, CHAS GP clinics and hospital emergency departments with distances, above status cards showing how long bed waits were at each emergency department was last week](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+[![The landing page: a short claim and two buttons, then a chart of each hospital's latest bed wait against its usual level, with the date and source under it](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+
+## The site
+
+| Page | What it is for |
+|---|---|
+| **Home** `/` | The claim, then two pictures with a short note each: bed waits against each hospital's usual, and clinics per 1,000 residents aged 65+ by planning area (plain SVG, no map script). Each has its date and source, a table and CSV/Excel downloads |
+| **Find a clinic** `/find` | A postcode search for the nearest polyclinics, CHAS GP clinics and emergency departments. The search runs in the browser and is never sent to a server. `?view=planner` and `?view=analyst` show the same figures for a planner and an analyst |
+| **Findings** | What the latest data release shows, each finding computed by code and shown with how sure it is |
+| **Explore** | ED trends, the Access Map (3D, 2D and table) and the NUHS live estimates |
+| **Methods, About** | Where each number comes from and what it can't tell you; the case study and the decisions behind the build |
+
+It follows the device's light or dark setting, has no theme switch, and has no red banner: the 995
+emergency number is in the footer of every page. Links underline only their own words.
 
 ## What the data shows
 
@@ -70,9 +84,10 @@ number with its "Data as of" date and source.
   to the exact raw cells: 19 matched; the 20th is an external citation. It rebuilt two tables from
   scratch, which matched. It found 1 critical, 1 high and 5 medium issues. All are fixed, each with
   a test ([audit report](docs/audit_report.md)).
-- **Tests on every push.** Over 1,000 automated tests run in CI. They cover the pipeline, the API's
-  contract, the website, and end-to-end checks of every page at 1280 and 375 px wide, including
-  WCAG 2.1 AA accessibility and Lighthouse performance budgets.
+- **Tests on every push.** Over 2,000 automated tests run in CI: about 1,100 website unit tests, about
+  780 browser checks, and the pipeline, API and real-data suites. The browser checks cover every page at
+  1280 and 375 px wide (with overflow checks at 768 and 1440 px), WCAG 2.2 AA accessibility with axe, and
+  Lighthouse budgets for loading time and layout shift.
 
 ## Tech stack
 
@@ -80,7 +95,7 @@ number with its "Data as of" date and source.
 |---|---|
 | Pipeline | Python 3.12, DuckDB, pandas, geopandas/shapely |
 | API | FastAPI, served from a verified, read-only data release |
-| Website | Next.js (App Router), TypeScript, Tailwind; server-rendered SVG charts; Leaflet (2D) and three.js (3D) maps |
+| Website | Next.js (App Router), TypeScript, Tailwind; server-rendered SVG charts and a server-rendered area map on the home page; Leaflet (2D) and three.js (3D) maps on the finder and the Access Map |
 | Hosting and automation | GitHub Actions (weekly pipeline, CI), GitHub Releases (data), Render (API), Vercel (website) |
 | Testing | pytest, Vitest, Playwright with axe, Lighthouse CI |
 
@@ -121,5 +136,6 @@ make test                                                         # pipeline, AP
 | [Data quality](docs/data_quality.md) | Every check, its threshold and why |
 | [Audit report](docs/audit_report.md) | The independent audit and how each finding was resolved |
 | [Decisions](docs/adr/) | Architecture decision records |
+| [Redesign brief](docs/design/redesign_brief.md) and [review](docs/design/review_2026-11-16.md) | The "calm & clear" redesign: principles, measurements before and after, and what is still open |
 | [Pipeline guide](docs/pipeline.md) | Installing and running the pipeline, the raw zone and the history backfill |
 | [Runbook](docs/runbook.md) | Deploying, rolling back a data release, rotating keys, failed runs |

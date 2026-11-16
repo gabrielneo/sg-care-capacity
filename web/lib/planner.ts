@@ -7,6 +7,7 @@
  */
 import type { Hospital } from "./api/types";
 import { median } from "./edCompare";
+import { FIND_PATH } from "./homeViews";
 import { splitByCare } from "./hospitals";
 import { byPressure, type HospitalStatus } from "./status";
 
@@ -32,7 +33,7 @@ export function sortHref(sort: Sort, current: string | URLSearchParams = ""): st
   q.delete("sort");
   if (sort !== DEFAULT_SORT) q.set("sort", sort);
   const s = q.toString();
-  return s ? `/?${s}` : "/";
+  return s ? `${FIND_PATH}?${s}` : FIND_PATH;
 }
 
 /**

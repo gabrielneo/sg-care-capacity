@@ -2,6 +2,8 @@
 
 **Status:** Accepted · **Date:** 2026-11-12
 
+*Partly replaced by [0013](0013-landing-page.md) on 2026-11-16: the red triage band was removed and the public view moved from `/` to `/find`. The browser-only search and the result cards stand.*
+
 ## Context
 
 The site's thesis is right-siting: when it is safe to, care is best given in the most suitable place,

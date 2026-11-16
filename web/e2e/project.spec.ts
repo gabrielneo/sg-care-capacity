@@ -48,7 +48,7 @@ test.describe("The project page", () => {
   });
 
   test("no product view has the CV or LinkedIn line (E2): it lives in the footer and on /about", async ({ page }) => {
-    for (const path of ["/", "/?view=planner", "/?view=analyst"]) {
+    for (const path of ["/find", "/find?view=planner", "/find?view=analyst"]) {
       await page.goto(path);
       await expect(page.getByTestId("home")).not.toContainText("Here from a CV or LinkedIn");
       await expect(page.getByTestId("project-link")).toHaveCount(0);

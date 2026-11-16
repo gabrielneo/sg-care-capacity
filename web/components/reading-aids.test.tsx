@@ -39,7 +39,7 @@ describe("Takeaways densities", () => {
   const item = { id: "i1", entity: "SGH", isHospital: false, title: "Tuesdays: 43% above average", numbers: null, headline: "h", sourceIds: [], dqTables: [] };
   it("planner: links to the Analyst view and shows no evidence", () => {
     render(<Takeaways items={[item]} meta={edMeta} density="simple" evidence={{ i1: { level: "Tested", sample: "n = 5" } }} />);
-    expect(screen.getByTestId("to-analyst")).toHaveAttribute("href", "/?view=analyst#section-takeaways");
+    expect(screen.getByTestId("to-analyst")).toHaveAttribute("href", "/find?view=analyst#section-takeaways");
     expect(screen.queryByTestId("takeaway-evidence")).toBeNull();
   });
   it("analyst: shows evidence level and n, and no link to itself", () => {

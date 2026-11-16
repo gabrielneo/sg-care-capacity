@@ -100,7 +100,7 @@ function Fit({ hospitals, here, focus }: Pick<CareMapProps, "hospitals" | "here"
 export default function CareMapLeaflet({ hospitals, polyclinics, gps, here, focus, onOpen }: CareMapProps) {
   return (
     <MapContainer center={[1.3521, 103.8198]} zoom={11} minZoom={10} maxZoom={19} maxBounds={MAX_BOUNDS}
-                  scrollWheelZoom={false} className="h-map w-full rounded-xl" attributionControl>
+                  scrollWheelZoom className="h-map w-full rounded-xl" attributionControl>
       <TileLayer url={ONEMAP_TILES} attribution={ONEMAP_ATTRIBUTION} detectRetina maxZoom={19} minZoom={11} />
       <Fit hospitals={hospitals} here={here} focus={focus} />
       {polyclinics.map((p) => (

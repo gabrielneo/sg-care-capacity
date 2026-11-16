@@ -30,7 +30,7 @@ export function SectionHeader({ id, title, lede, ledeTestId, meta, window, measu
     <header className="section-head" data-actions={actions ? "true" : undefined} data-testid={testId ?? "section-header"}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h2 id={id} className="min-w-0 font-semibold text-ink">{title}</h2>
-        <FreshnessBadge meta={meta} now={now} />
+        <FreshnessBadge meta={meta} now={now} dateInLine />
       </div>
       {lede || aside ? (
         <div className="lede-row flex flex-wrap items-end justify-between gap-x-6 gap-y-3">

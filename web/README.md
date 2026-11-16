@@ -10,8 +10,8 @@ calls the API, so the site needs no CORS settings.
 
 | Page | What it shows |
 |---|---|
-| **Overview** `/` | A scroll story driven by `/api/v1/insights`. The top finding's key number counts up, with its headline as the page title. Then the share of residents aged 65+ (`/api/v1/population`) and the top findings as steps beside a sticky chart panel; on phones each chart sits under its step. Then the case study's limits, read from `docs/case_study.md`, and links by reading time. No finding text or number is written in the site's code (`lib/story.ts`, `components/story/`) |
-| **Home views** `/?view=planner`, `/?view=analyst` | The home page for three readers, from the same figures ([ADR 0010](../docs/adr/0010-home-page-views.md)). **Public** (the default): the emergency line, the clinic finder, simple hospital cards and the map. **Planner summary**: a count of hospitals per status badge, hospital cards with the 12-week line and the change against usual, and the takeaways. **Analyst detail**: the planner view plus the weekday pattern, the statistics behind each takeaway, and links to Data Quality and Methodology. `lib/homeViews.ts` lists each section's views and density; the page renders that list, so there are no page variants. The control in the header (`components/ViewSwitch.tsx`, `app/@viewbar`) is a radio group from 640 px and a select below; an unknown `view` is Public |
+| **Home** `/` | The landing page (`app/page.tsx`): a short claim, then two pictures with one short note each. Bed waits: every hospital's latest complete week against its usual level (the same dumbbell as ED Trends). Access: the planning areas as server-rendered SVG shaded by CDMP clinics per 1,000 residents aged 65+ (`lib/staticMap.ts`, `components/landing/`; no Leaflet, no tiles, no script). Every note is the engine's own headline or a count of what is drawn; a picture that can't be drawn shows an error, never a stand-in. An old address with a finder parameter (`/?view=planner`, `?sort=`, `?cluster=`, `?layout=`, `?hospital=`) is sent to `/find` |
+| **Find a clinic** `/find`, `/find?view=planner`, `/find?view=analyst` | What `/` showed before the landing page: three views of the same figures ([ADR 0010](../docs/adr/0010-home-page-views.md), [ADR 0013](../docs/adr/0013-landing-page.md)). **Public** (the default): the clinic finder, simple hospital cards and the map. **Planner summary**: a count of hospitals per status badge, hospital cards with the 12-week line and the change against usual, and the takeaways. **Analyst detail**: the planner view plus the weekday pattern, the statistics behind each takeaway, and links to Data Quality and Methodology. `lib/homeViews.ts` lists each section's views and density; the page renders that list, so there are no page variants. The view control is a radio group in the header from 1024 px and in the Menu sheet below it (`components/ViewSwitch.tsx`, `app/@viewbar/find`); an unknown `view` is Public. The search is kept in the address fragment and never reaches the server |
 | **ED Trends** `/ed-trends` | Difference-first charts, drawn on the server as SVG and HTML (no chart library):
 <br>• small multiples of daily bed waits per hospital over the middle half of the full EDs;
 <br>• the latest week against each hospital's usual level (a dumbbell, largest difference first);
@@ -27,22 +27,27 @@ calls the API, so the site needs no CORS settings.
 | **Data Quality** `/data-quality` | The checks behind this snapshot, grouped by what a failure does: block publishing, quarantine rows, or warn. Failures come first; each check links to its explanation. Also a coverage grid (hospital × day, 13/26/52 weeks) with five states told apart by pattern, plus missing dates as text, and freshness for each source |
 | **Methodology** `/methodology` | `docs/methodology.md` plus the data dictionary's metric definitions: sources, how data gets from download to the site, ED and access measures, the geospatial method, limitations, and what this data can't tell you |
 | **Case Study** `/case-study` | `docs/case_study.md`: problem, stakeholders, personas, as-is and to-be patient flow (Mermaid), MoSCoW, success metrics, decision log, limitations. Shows a draft banner while `TODO(me)` items remain |
-| **Summary** `/summary` | The latest findings on one printable A4 page: the top findings, the five priority areas and what the data can't show, each with its date and source. Linked from the Overview; print styles drop the site's header, nav and footer |
+| **Summary** `/summary` | The latest findings on one printable A4 page: the top findings, the five priority areas and what the data can't show, each with its date and source. Linked from the Analyst view; print styles drop the site's header, nav and footer |
 | **CSV downloads** `/export/ed-daily.csv`, `/export/ed-weekly.csv`, `/export/areas.csv`, `/export/findings.csv` | The figures behind each chart, linked under it. Every row carries `data_as_of` and `source`; a missing value is an empty cell. The ED files follow the page's hospital and date filters |
 | **Decisions** `/decisions` | The architecture decision records in `docs/adr/` |
 | **Docs** `/docs/data-dictionary`, `/docs/data-quality`, `/docs/runbook`, `/docs/insights-method` | The rest of `docs/`, rendered |
 
 ## Performance budget (Lighthouse CI)
 
-`npm run lighthouse` (or `make lighthouse` from the repo root) runs Lighthouse three times on the
-Overview, as CI does. It uses the production build and the API on its fixture snapshot, on
-Lighthouse's default mobile emulation (a mid-range phone, 4× CPU slowdown, throttled 4G). The
-median run must meet the budgets in `lighthouserc.json`:
+`npm run lighthouse` (or `make lighthouse` from the repo root) runs Lighthouse three times on `/`,
+`/find`, `/find?view=planner`, `/findings` and `/ed-trends`, as CI does. It uses the production build
+and the API on its fixture snapshot, on Lighthouse's default mobile emulation (a mid-range phone, 4×
+CPU slowdown, throttled 4G). The median run must meet the budgets in `lighthouserc.json`. The 2.0 s
+LCP target is a warning, not a failure.
 
-| Budget | Limit | Last measured |
+| Budget | Limit | Last measured (16 Nov 2026) |
 |---|---|---|
-| Largest Contentful Paint | ≤ 2.5 s | 2.2 s (the headline; it paints as soon as the page arrives, and Lighthouse's estimate adds the scripts loading alongside it) |
-| Cumulative Layout Shift | ≤ 0.01 | 0 (the count-up uses fixed-width digits; the hero is in the first HTML) |
-| JavaScript transferred | ≤ 200 kB | 149 kB, almost all of it Next.js and React |
+| Largest Contentful Paint | ≤ 2.5 s (target 2.0 s) | 2.33 s on every URL. The element is the page heading, which paints as soon as the page arrives; Lighthouse's estimate adds the scripts loading beside it |
+| Cumulative Layout Shift | ≤ 0.01 | 0.000 |
+| JavaScript transferred | ≤ 200 kB | 153 kB on `/` and `/ed-trends`, 169 kB on `/find` |
+
+Where the 153 kB goes on `/`: React DOM 66 kB and the Next.js router 45 kB (72% together), a 12 kB
+shell chunk (navigation, analytics, glossary terms) and about 30 kB of small framework chunks. The
+page's own code is a few kB, so reaching 2.0 s means shipping less framework code, not trimming pages.
 
 Reports are written to `web/.lighthouseci/` (git-ignored). Nothing is uploaded.

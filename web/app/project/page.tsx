@@ -146,7 +146,7 @@ export default async function ProjectPage() {
         <Tile label="Try it" testId="project-tools" className="sm:col-span-2 lg:col-span-4">
           <Eyebrow>4 · Try it</Eyebrow>
           <ul className="mt-2 grid gap-x-6 gap-y-1 text-body sm:grid-cols-2 lg:grid-cols-4">
-            <li><Link href="/">Find a clinic near you</Link></li>
+            <li><Link href="/find">Find a clinic near you</Link></li>
             <li><Link href="/findings">Read the findings</Link></li>
             <li><Link href="/access-map">Explore the access map</Link></li>
             <li><Link href="/case-study">Read the case study</Link></li>

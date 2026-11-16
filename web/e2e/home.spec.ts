@@ -13,15 +13,13 @@ import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll, expectPro
 test.beforeEach(async ({ page }) => blockTiles(page));
 
 test.describe("Home", () => {
-  test("the first screen leads with the emergency number, then the search", async ({ page }) => {
-    await page.goto("/");
-    const band = page.getByTestId("emergency-note");
-    await expect(band).toHaveText(/Life-threatening emergency\? Call 995\./);
-    await expect(band).toBeInViewport();
-    // The band is the first thing on the page, ahead of the heading, and can't be dismissed.
-    const firstInHero = await page.getByTestId("home-hero").evaluate((el) => el.firstElementChild?.getAttribute("data-testid"));
-    expect(firstInHero).toBe("emergency-note");
-    await expect(band.getByRole("button")).toHaveCount(0);
+  test("the first screen leads with the heading, then the search, with no red 995 banner", async ({ page }) => {
+    await page.goto("/find");
+    // The banner was removed (16 Nov 2026): the heading is the first thing in the hero. The number stays in the footer.
+    await expect(page.getByTestId("emergency-note")).toHaveCount(0);
+    const firstInHero = await page.getByTestId("home-hero").evaluate((el) => el.firstElementChild?.tagName);
+    expect(firstInHero).toBe("H1");
+    await expect(page.getByTestId("footer-notice").getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Find a clinic near you");
     // Wholly in view, with the machine's fonts: a half-visible box would pass `toBeInViewport()` and fail on CI's wider fonts.
     await expect(page.getByLabel("Your postcode or area")).toBeInViewport({ ratio: 1 });
@@ -37,21 +35,21 @@ test.describe("Home", () => {
       style.textContent = "html, body, * { font-family: Verdana, 'DejaVu Sans', sans-serif !important; }";
       document.head.append(style);
     }));
-    await page.goto("/");
-    await expect(page.getByTestId("emergency-note")).toBeInViewport();
+    await page.goto("/find");
+    await expect(page.getByRole("heading", { level: 1 })).toBeInViewport();
     await expect(page.getByLabel("Your postcode or area")).toBeInViewport({ ratio: 1 });
   });
 
   test("it says it isn't medical advice, and that a search stays in the browser", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
     await expect(page.getByTestId("search-privacy")).toHaveText(/stays in this browser/);
-    await page.goto("/#near=460002");
+    await page.goto("/find#near=460002");
     await expect(page.getByTestId("nearby-basis")).toContainText("the newest list data.gov.sg publishes");
   });
 
   test("a shared link gets a preview image and the new description", async ({ page, request }) => {
-    await page.goto("/");
+    await page.goto("/find");
     const image = await page.locator('meta[property="og:image"]').getAttribute("content");
     expect(image).toMatch(/\/opengraph-image/);
     const res = await request.get(new URL(image!).pathname + new URL(image!).search);
@@ -60,11 +58,11 @@ test.describe("Home", () => {
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /analytics project by Gabriel Neo.*find a clinic near you/);
   });
 
-  test("without JavaScript the emergency band is still there, and the finder says it needs JavaScript", async ({ browser }) => {
+  test("without JavaScript the 995 number is still in the footer, and the finder says it needs JavaScript", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto("/");
-    await expect(page.getByTestId("emergency-note")).toHaveText(/Call 995/);
+    await page.goto("/find");
+    await expect(page.getByTestId("footer-notice")).toContainText("Call 995");
     await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
     await expect(page.getByTestId("needs-js")).toContainText("needs JavaScript");
     await context.close();
@@ -72,7 +70,7 @@ test.describe("Home", () => {
 
   test("the map loads when scrolled to, with every hospital and polyclinic", async ({ page }) => {
     // ?layout=map: below 640px the default layout is the list, which has no map to load.
-    await page.goto("/?layout=map#near=460001");
+    await page.goto("/find?layout=map#near=460001");
     await expect(page.locator(".leaflet-container")).toHaveCount(0);                // not before it's needed
     await page.getByTestId("care-map").scrollIntoViewIfNeeded();
     await expect(page.locator(".leaflet-container")).toHaveCount(1);
@@ -85,7 +83,7 @@ test.describe("Home", () => {
     const body = await (await request.get("http://127.0.0.1:8791/api/v1/insights")).json() as
       { data: { insight_id: string; headline_rank: number | null; chart: { callout: string } | null }[] };
     const top = body.data.filter((i) => i.headline_rank != null && i.chart).sort((a, b) => a.headline_rank! - b.headline_rank!);
-    await page.goto("/?view=analyst#section-weekdays");   // below 768px the heatmap is an accordion; the fragment opens it
+    await page.goto("/find?view=analyst#section-weekdays");   // below 768px the heatmap is an accordion; the fragment opens it
     // Wide: the hospital-by-weekday table; phone: the transposed one (days as rows).
     await expect(page.getByTestId("week-pattern").locator("[data-testid=heatmap]:visible, [data-testid=heatmap-compact]:visible")).toHaveCount(1);
     // The chart sits under the section's header: it inherits that line and adds none of its own.
@@ -103,7 +101,7 @@ test.describe("Home", () => {
   });
 
   test("definitions and limits are in a closed drawer that opens", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     const drawer = page.getByTestId("methods-drawer");
     await expect(drawer).not.toHaveAttribute("open", "");
     await expect(page.getByText("Chance of this by luck (adjusted p)").first()).toBeHidden();
@@ -113,7 +111,7 @@ test.describe("Home", () => {
   });
 
   test("works at this width with no sideways scrolling, and passes axe", async ({ page }) => {
-    await page.goto("/#near=460001");
+    await page.goto("/find#near=460001");
     await expect(page.getByTestId("nearby-place").first()).toBeVisible();
     await expect(page.getByTestId("ed-item")).toHaveCount(3);
     await expectNoHorizontalScroll(page);

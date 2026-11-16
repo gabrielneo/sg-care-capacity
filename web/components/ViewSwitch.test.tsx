@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const nav = vi.hoisted(() => ({ pathname: "/", push: vi.fn() }));
+const nav = vi.hoisted(() => ({ pathname: "/find", push: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname, useRouter: () => ({ push: nav.push }) }));
 
 import { ViewSwitch } from "./ViewSwitch";
@@ -10,7 +10,7 @@ const at = (search: string) => window.history.replaceState(null, "", `/${search 
 
 beforeEach(() => {
   at("");
-  nav.pathname = "/";
+  nav.pathname = "/find";
   nav.push.mockClear();
 });
 
@@ -47,14 +47,14 @@ describe("ViewSwitch", () => {
   it("puts the choice in the URL", () => {
     render(<ViewSwitch view="public" />);
     fireEvent.click(screen.getByRole("radio", { name: "Planner" }));
-    expect(nav.push).toHaveBeenCalledWith("/?view=planner", { scroll: false });
+    expect(nav.push).toHaveBeenCalledWith("/find?view=planner", { scroll: false });
   });
 
   it("goes back to the plain address for Public, and keeps other query parameters", () => {
     at("view=planner&sort=name");
     render(<ViewSwitch view="planner" />);
     fireEvent.click(screen.getByRole("radio", { name: "Public" }));
-    expect(nav.push).toHaveBeenCalledWith("/?sort=name", { scroll: false });
+    expect(nav.push).toHaveBeenCalledWith("/find?sort=name", { scroll: false });
   });
 
   it("does nothing when the current view is chosen again", () => {
@@ -74,7 +74,7 @@ describe("ViewSwitch", () => {
     const forms = [...container.querySelectorAll("form")];
     expect(forms).toHaveLength(1);
     expect(forms[0]).toHaveAttribute("method", "get");
-    expect(forms[0]!.getAttribute("action")).toBe("/");
+    expect(forms[0]!.getAttribute("action")).toBe("/find");
     expect(new FormData(forms[0]!).has("near")).toBe(false);
     expect(new FormData(forms[0]!).get("view")).toBe("public");
   });

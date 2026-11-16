@@ -42,9 +42,9 @@ describe("parseSort and sortHref", () => {
   });
 
   it("keeps the view in the link, and leaves the default order out of it", () => {
-    expect(sortHref("hours", "view=planner")).toBe("/?view=planner&sort=hours");
-    expect(sortHref("usual", "view=planner&sort=name")).toBe("/?view=planner");
-    expect(sortHref("usual")).toBe("/");
+    expect(sortHref("hours", "view=planner")).toBe("/find?view=planner&sort=hours");
+    expect(sortHref("usual", "view=planner&sort=name")).toBe("/find?view=planner");
+    expect(sortHref("usual")).toBe("/find");
   });
 });
 

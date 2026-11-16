@@ -116,7 +116,7 @@ Public view tab order after the skip link: logo, view switch, 8 nav links, strip
 
 No page overflow at 375, 768 or 1280px on any of the 14 routes. No clipped text found by the scripted check. Screenshots: `home_375/768/1280`, `planner_375/768/1280`, `near_375/1280`, `hospital_375/1280` (drawer), `ed_trends_375`, `strip_open_375`.
 
-At 375px the emergency band fills most of the first screen on the public view, which is intentional. The drawer is a bottom sheet at 85% height with a 44px Close button.
+At 375px the emergency band filled most of the first screen on the public view, which was intentional (the band was removed on 16 Nov 2026, [ADR 0013](adr/0013-landing-page.md): the number stays in the footer and the menu). The drawer is a bottom sheet at 85% height with a 44px Close button.
 
 ## Performance: current tree vs baseline (3 Lighthouse runs, median, mobile emulation, `/`)
 

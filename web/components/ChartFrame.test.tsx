@@ -21,8 +21,19 @@ describe("ChartFrame", () => {
     expect(link).toHaveAttribute("href", "/export/x.csv?context=1");
     expect(link).toHaveAttribute("download");
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · A plain caveat.");
-    expect(screen.getByText(/Up to date · weekly · as of 31 Oct 2026/)).toBeInTheDocument();           // the freshness pill
+    // The freshness pill leaves out the date the line already gives; the date stays in its tooltip (review, open item 5).
+    expect(screen.getByTestId("freshness-badge")).toHaveTextContent(/^Up to date · weekly$/);
+    expect(screen.getByTestId("freshness-badge").getAttribute("title")).toMatch(/^As of 31 Oct 2026\. /);
     expect(screen.getByTestId("chart-frame")).toHaveAttribute("data-provenance", "own");
+  });
+
+  it("puts the freshness pill and 'More about these figures' in one row, under the line", () => {
+    const own = { ...meta, dq_warnings: [] };
+    render(<ChartFrame {...base} meta={own} notes={["A note."]}><p>chart</p></ChartFrame>);
+    const badge = screen.getByTestId("freshness-badge");
+    const more = screen.getByText(/More about these figures/).closest("details")!;
+    expect(badge.parentElement).toBe(more.parentElement);
+    expect(badge.parentElement!.previousElementSibling).toBe(screen.getByTestId("provenance-line"));
   });
 
   it("is described by its summary, which is not shown", () => {
@@ -114,13 +125,13 @@ describe("ChartFrame", () => {
                    as_of_basis: "NUHS 'Last updated at'", last_fetched_at: null, licence: null };
     render(<ChartFrame {...base} meta={{ ...meta, sources: [nuhs, ...meta.sources] } as typeof meta} bySource><p>chart</p></ChartFrame>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent(/^Data as of 6 Nov 2026, 12:01 pm SGT \(NUHS\) and 31 Oct 2026 \(MOH\) · Source: /);
-    expect(screen.getByText(/^NUHS: Up to date · a reading at one moment · as of 6 Nov 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/^NUHS: Up to date · a reading at one moment$/)).toBeInTheDocument();
   });
 
   it("names the right publisher, and shows an old irregular list as the latest published, not an alarm", () => {
     render(<ChartFrame {...base} meta={clinicMeta}><p>map</p></ChartFrame>);
     expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 6 Jun 2024 · Source: data.gov.sg");
-    expect(screen.getByText(/Latest published · updated irregularly · as of 6 Jun 2024/)).toHaveAttribute("data-level", "overdue");
+    expect(screen.getByText(/^Latest published · updated irregularly$/)).toHaveAttribute("data-level", "overdue");
     expect(screen.queryByText(/Overdue/)).toBeNull();
   });
 

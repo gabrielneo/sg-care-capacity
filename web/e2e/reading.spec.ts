@@ -6,7 +6,7 @@ import { blockTiles } from "./helpers";
 
 test("D6: notes under the hospital cards are no wider than 68ch", async ({ page }) => {
   await blockTiles(page);
-  await page.goto("/?view=planner");
+  await page.goto("/find?view=planner");
   const notes = await page.evaluate(() => {
     const out: { id: string; width: number; limit: number }[] = [];
     for (const id of ["status-key", "status-exclusions", "summary-adults-note", "summary-ucc-note"]) {
@@ -27,7 +27,7 @@ test("D6: notes under the hospital cards are no wider than 68ch", async ({ page 
 
 test("every lede is secondary text, one block, and no wider than 68ch", async ({ page }) => {
   await blockTiles(page);
-  await page.goto("/?view=planner");
+  await page.goto("/find?view=planner");
   const ledes = page.locator(".section-head .lede");
   expect(await ledes.count()).toBeGreaterThan(2);
   for (const lede of await ledes.all()) {
@@ -39,7 +39,7 @@ test("every lede is secondary text, one block, and no wider than 68ch", async ({
 test.describe("D7: the methods drawer", () => {
   test("the definitions sit in two columns from 1024px, one column below", async ({ page }) => {
     await blockTiles(page);
-    await page.goto("/?view=analyst#section-methods");   // below 768px the methods are an accordion; the fragment opens it
+    await page.goto("/find?view=analyst#section-methods");   // below 768px the methods are an accordion; the fragment opens it
     const items = page.getByTestId("methods-definitions").locator("> div");
     await expect(items).toHaveCount(3);   // bed wait, badges, doctor wait: the clinic definition is on Public only (G1)
     const box = async (i: number) => (await items.nth(i).boundingBox())!;

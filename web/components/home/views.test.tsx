@@ -212,7 +212,7 @@ describe("StatusGrid", () => {
                                            sort="hours" query="view=planner" />);
     const links = within(screen.getByRole("navigation", { name: "Order of the hospitals" })).getAllByRole("link");
     expect(links.map((l) => [l.textContent?.replace("✓", ""), l.getAttribute("href"), l.getAttribute("aria-current")])).toEqual([
-      ["Change vs usual", "/?view=planner", null], ["Hours", "/?view=planner&sort=hours", "true"], ["A–Z", "/?view=planner&sort=name", null]]);
+      ["Change vs usual", "/find?view=planner", null], ["Hours", "/find?view=planner&sort=hours", "true"], ["A–Z", "/find?view=planner&sort=name", null]]);
     // The bed-wait definition is in the page intro, not repeated under the cards (E3); the badge legend is a popover in the header.
     expect(screen.queryByTestId("status-definition")).toBeNull();
     expect(screen.getByRole("button", { name: "What the badges mean" })).toBeInTheDocument();
@@ -304,11 +304,13 @@ describe("HomeNotice", () => {
       setTestScope(createScope());
       const { unmount } = render(<HomeNotice density={density} />);
       expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-      expect(screen.getByTestId("emergency-note")).toHaveTextContent(density === "full" ? "Life-threatening emergency? Call 995." : "Emergency? Call 995.");
-      // Full: the card says it in two sentences. Simple: one line under the heading, with 995 as a tel: link.
-      if (density === "full") expect(screen.getByTestId("not-advice")).toHaveTextContent("isn't medical advice");
+      // Full: no 995 banner (the footer carries the number); "not medical advice" is its own line. Simple: one line under the heading, with 995 as a tel: link.
+      if (density === "full") {
+        expect(screen.queryByTestId("emergency-note")).toBeNull();
+        expect(screen.getByTestId("not-advice")).toHaveTextContent("isn't medical advice");
+      }
       else {
-        expect(screen.getByTestId("emergency-note")).toHaveTextContent("This site shows public statistics, not medical advice.");
+        expect(screen.getByTestId("emergency-note")).toHaveTextContent("Emergency? Call 995. This site shows public statistics, not medical advice.");
         expect(screen.queryByTestId("not-advice")).toBeNull();
         expect(screen.getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
         // The intro ends in the marker that the status strip waits for; neither density has the CV line any more.

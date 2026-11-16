@@ -11,7 +11,9 @@ export function Notice995({ variant, className = "" }: { variant: "compact" | "f
     <p className={`text-small ${variant === "compact" ? "text-ink" : "text-muted"} ${className}`.trim()}
        data-testid={variant === "compact" ? "emergency-note" : "footer-notice"}>
       <span aria-hidden="true">✚ </span>
-      <span className="font-semibold text-ink">Emergency? <a href="tel:995">Call 995</a>.</span>{" "}
+      <span className="font-semibold text-ink">Emergency?{" "}
+        {/* The footer's link is the only 995 control on the public view: a 44px target there (the compact line stays one line). */}
+        <a href="tel:995" className={variant === "footer" ? "inline-flex min-h-11 items-center" : undefined}>Call 995</a>.</span>{" "}
       {NOTICE_995_LINE}
     </p>
   );

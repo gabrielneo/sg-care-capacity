@@ -226,7 +226,8 @@
 /* The map's own controls follow the type scale too: Leaflet's defaults are 12px (attribution) and 22px (zoom buttons). */
 .leaflet-container { font-family: inherit; font-size: var(--fs-small); }
 .leaflet-control-attribution { font-size: var(--fs-meta); }
-.leaflet-bar a, .leaflet-control-zoom a, .leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out { font-size: var(--fs-h3); }   /* Leaflet's touch rule sets 22px */
+.leaflet-bar a, .leaflet-control-zoom a, .leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out,
+.leaflet-touch .leaflet-bar a.leaflet-control-zoom-in, .leaflet-touch .leaflet-bar a.leaflet-control-zoom-out { font-size: var(--fs-h3); }   /* Leaflet's touch rule sets 22px, and its stylesheet loads after ours: the extra selectors win on specificity, not order */
 
 /* Tailwind's base styles make images block-level; Leaflet's attribution logo must stay inline. */
 .leaflet-control-attribution img {

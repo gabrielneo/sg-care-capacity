@@ -32,7 +32,7 @@ const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;
 async function choose(page: Page, view: View) {
   if (narrow(page)) {
     await page.getByTestId("menu-button").click();
-    await page.getByTestId("view-radios-sheet").getByText(LABEL[view], { exact: true }).click();   // picking a view closes the sheet
+    await page.getByTestId("menu-sheet").getByTestId("view-radios-sheet").getByText(LABEL[view], { exact: true }).click();   // picking a view closes the sheet
     await expect(page.getByTestId("menu-sheet")).toBeHidden();
   } else await page.getByTestId("view-radios").getByText(LABEL[view], { exact: true }).click();
 }
@@ -41,7 +41,7 @@ async function expectView(page: Page, view: View) {
   await expect(page.getByTestId("home")).toHaveAttribute("data-view", view);
   if (narrow(page)) {
     await page.getByTestId("menu-button").click();
-    await expect(page.getByTestId("view-radios-sheet").getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
+    await expect(page.getByTestId("menu-sheet").getByTestId("view-radios-sheet").getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("menu-sheet")).toBeHidden();
   } else await expect(page.getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
@@ -60,13 +60,13 @@ test.beforeEach(async ({ page }) => blockTiles(page));
 
 test.describe("Home views", () => {
   test("the default is Public, and the control suits the width", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await expectView(page, "public");
     if (narrow(page)) {
       // Below 1024 px the choice lives in the menu sheet, not in the header.
       await expect(page.getByTestId("view-radios")).toBeHidden();
       await page.getByTestId("menu-button").click();
-      const group = page.getByTestId("view-radios-sheet");
+      const group = page.getByTestId("menu-sheet").getByTestId("view-radios-sheet");
       await expect(group).toBeVisible();
       expect((await group.locator("label").allInnerTexts()).map((t) => t.replace("✓", "").trim())).toEqual(Object.values(LABEL));
     } else {
@@ -79,16 +79,16 @@ test.describe("Home views", () => {
 
   for (const view of Object.keys(LABEL) as View[]) {
     test(`${view}: renders its sections and no others`, async ({ page }) => {
-      await page.goto(view === "public" ? "/" : `/?view=${view}`);
+      await page.goto(view === "public" ? "/find" : `/find?view=${view}`);
       await expectView(page, view);
       for (const [testId, views] of Object.entries(SECTIONS)) {
         await expect(page.getByTestId(testId), testId).toHaveCount(views.includes(view) ? 1 : 0);
       }
       // On every view: one page heading, the emergency line, "not medical advice", and a dated source on every block.
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-      await expect(page.getByTestId("emergency-note")).toHaveText(/call 995/i);
-      // Public: the full card says it in two sentences. Planner and Analyst: one compact line, with the same words as the footer.
-      if (view === "public") await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/);
+      // Public: no red banner; the footer carries the number. Planner and Analyst: one compact line, with the same words as the footer.
+      await expect(page.getByTestId("footer-notice").getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
+      if (view === "public") { await expect(page.getByTestId("emergency-note")).toHaveCount(0); await expect(page.getByTestId("not-advice")).toHaveText(/isn't medical advice/); }
       else await expect(page.getByTestId("emergency-note")).toHaveText("✚ Emergency? Call 995. This site shows public statistics, not medical advice.");
       const lines = page.getByTestId("home").getByTestId("provenance-line");
       // Public shows no figure until a search (then each block is dated: e2e/finder.spec.ts); the other views always do.
@@ -107,12 +107,12 @@ test.describe("Home views", () => {
   }
 
   test("public has no list of every hospital; planner and analyst have the full cards with the line and the change", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await expect(page.getByTestId("status-grid")).toHaveCount(0);
     await expect(page.getByTestId("status-card")).toHaveCount(0);
     const sgh = page.locator('[data-testid=status-card][data-hospital="SGH"]');
     for (const view of ["planner", "analyst"] as const) {
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       await expect(page.getByTestId("status-grid")).toHaveAttribute("data-density", "full");
       await expect(sgh.getByTestId("status-badge")).toHaveText("▲Higher than usual");
       await expect(sgh.getByTestId("status-hours")).toHaveText("5.0 h");
@@ -124,7 +124,7 @@ test.describe("Home views", () => {
   });
 
   test("the summary strip: four tiles from the cards figures, dated and sourced once", async ({ page }) => {
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     const strip = page.getByTestId("summary-strip");
     const tiles = strip.getByTestId("summary-tile");
     expect(await tiles.evaluateAll((els) => els.map((e) => e.getAttribute("data-tile")))).toEqual(["above", "longest", "change", "middle"]);
@@ -147,7 +147,7 @@ test.describe("Home views", () => {
   });
 
   test("the list behind 'above usual' opens on keyboard focus and closes on Escape", async ({ page }) => {
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     const trigger = page.getByTestId("above-list").getByRole("button");
     await trigger.focus();
     const tip = page.getByTestId("above-list").getByRole("tooltip");
@@ -159,7 +159,7 @@ test.describe("Home views", () => {
 
   test("the cards' order is in the URL: against usual, hours, A–Z", async ({ page }) => {
     const order = async () => page.getByTestId("status-card").evaluateAll((els) => els.map((e) => e.getAttribute("data-hospital")));
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     // The EDs in order, then the urgent care centre in its own group (ADR 0012).
     expect(await order()).toEqual(["SGH", "NUH", "AH"]);                                   // no usual level last, then by code
     await expect(page.locator('[data-testid="status-group"][data-group="ucc"] [data-testid="status-card"]')).toHaveCount(1);
@@ -171,14 +171,14 @@ test.describe("Home views", () => {
     await nav.getByRole("link", { name: "Hours" }).click();
     await expect(page).toHaveURL(/sort=hours$/);
     expect((await order())[0]).toBe("SGH");                                                // the only hospital with a complete week
-    await page.goto("/?view=planner&sort=bogus");                                          // unknown order: the default
+    await page.goto("/find?view=planner&sort=bogus");                                          // unknown order: the default
     expect(await order()).toEqual(["SGH", "NUH", "AH"]);
-    await page.goto("/");                                                                  // Public has no order control
+    await page.goto("/find");                                                                  // Public has no order control
     await expect(page.getByTestId("sort-links")).toHaveCount(0);
   });
 
   test("the whole card links to the hospital's trends", async ({ page }) => {
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     const card = page.locator('[data-testid=status-card][data-hospital="SGH"]');
     const box = (await card.boundingBox())!;
     await card.click({ position: { x: box.width - 8, y: box.height - 8 } });              // a corner, away from the title text
@@ -188,7 +188,7 @@ test.describe("Home views", () => {
   test("planner at 1280×800: the summary strip is above the fold and the first row of cards starts within a screen and a half", async ({ page }) => {
     test.skip(narrow(page), "the fold is a desktop measure");
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     // Text wraps differently with each machine's fonts (CI's Linux fonts made a card ~100px taller than a Mac's), so a card's
     // exact bottom is not a stable measure. What matters: the summary strip is entirely in view, and each first-row card
     // starts early enough (CARDS_START_BY). CI's fonts put the cards
@@ -208,7 +208,7 @@ test.describe("Home views", () => {
   });
 
   test("analyst: the statistics are open, with links to Data Quality and Methodology", async ({ page }) => {
-    await page.goto("/?view=analyst#section-methods");   // below 768px the methods are an accordion; the fragment opens it
+    await page.goto("/find?view=analyst#section-methods");   // below 768px the methods are an accordion; the fragment opens it
     const links = page.getByTestId("analyst-links");
     await expect(links.getByRole("link", { name: "Data quality" })).toHaveAttribute("href", "/data-quality");
     await expect(links.getByRole("link", { name: "Methodology" })).toHaveAttribute("href", "/methodology");
@@ -219,57 +219,57 @@ test.describe("Home views", () => {
     if (shown) await expect(page.getByText("Chance of this by luck (adjusted p)").first()).toBeVisible();
 
     // Public keeps the short "About these numbers", closed, without the statistics; Planner has no methods (it links to Analyst).
-    await page.goto("/");
+    await page.goto("/find");
     await expect(page.getByTestId("methods-drawer")).not.toHaveAttribute("open", "");
     await expect(page.getByTestId("methods-findings")).toHaveCount(0);
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     await expect(page.getByTestId("methods")).toHaveCount(0);
   });
 
   test("the view is in the URL: it survives a reload, and back and forward", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/find");
     await choose(page, "planner");
-    await expect(page).toHaveURL(/\/\?view=planner$/);
+    await expect(page).toHaveURL(/\/find\?view=planner$/);
     await expectView(page, "planner");
     await choose(page, "analyst");
-    await expect(page).toHaveURL(/\/\?view=analyst$/);
+    await expect(page).toHaveURL(/\/find\?view=analyst$/);
     await expectView(page, "analyst");
 
     await page.reload();
     await expectView(page, "analyst");
     await page.goBack();
-    await expect(page).toHaveURL(/\/\?view=planner$/);
+    await expect(page).toHaveURL(/\/find\?view=planner$/);
     await expectView(page, "planner");
     await page.goBack();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/find$/);
     await expectView(page, "public");
     await page.goForward();
     await expectView(page, "planner");
 
     await choose(page, "public");
-    await expect(page).toHaveURL(/\/$/);                                  // Public is the plain address
+    await expect(page).toHaveURL(/\/find$/);                                  // Public is the plain address
     await expectView(page, "public");
   });
 
   test("a shared link opens its view, and an unknown view is Public", async ({ page }) => {
-    await page.goto("/?view=analyst");
+    await page.goto("/find?view=analyst");
     await expectView(page, "analyst");
     for (const bad of ["bogus", "", "PLANNER", "x&view=analyst"]) {          // repeated: the first value counts
-      await page.goto(`/?view=${bad}`);
+      await page.goto(`/find?view=${bad}`);
       await expectView(page, "public");
       await expect(page.getByTestId("clinic-finder")).toHaveCount(1);
     }
-    await page.goto("/?view=public");                                     // spelled out is fine too
+    await page.goto("/find?view=public");                                     // spelled out is fine too
     await expectView(page, "public");
   });
 
   test("the clinic search is never sent to the server, however the views are switched", async ({ page }) => {
     const urls: string[] = [];
     page.on("request", (r) => urls.push(r.url()));
-    await page.goto("/#near=460001");
+    await page.goto("/find#near=460001");
     await expect(page.getByTestId("nearby-place").first()).toBeVisible();
     await choose(page, "planner");
-    await expect(page).toHaveURL(/\/\?view=planner$/);
+    await expect(page).toHaveURL(/\/find\?view=planner$/);
     await expect(page.getByTestId("nearby")).toHaveCount(0);              // the planner view has no clinic finder
     await choose(page, "public");
     await expect(page.getByTestId("home")).toHaveAttribute("data-view", "public");
@@ -280,7 +280,7 @@ test.describe("Home views", () => {
 
   test("keyboard: Tab reaches the group once, arrow keys move the choice, focus is visible", async ({ page }) => {
     test.skip(narrow(page), "the header's segmented control is the wide layout; the menu sheet has its own keyboard test (e2e/frame.spec.ts)");
-    await page.goto("/");
+    await page.goto("/find");
     let onRadio = false;
     for (let i = 0; i < 10 && !onRadio; i++) {
       await page.keyboard.press("Tab");
@@ -313,7 +313,7 @@ test.describe("Home views", () => {
   test("works without JavaScript: the link, and the control as a form", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     await expect(page.getByTestId("summary-strip")).toHaveCount(1);
     await expect(page.getByTestId("status-card")).toHaveCount(3);
     // Without JavaScript the header's control is a plain form; below 1024px the page has the three views as links.
@@ -333,19 +333,21 @@ test.describe("Home views", () => {
     await expect(narrow(page) ? page.getByTestId("menu-button") : page.getByRole("navigation", { name: "Main" })).toBeVisible();
 
     // Following links, without a full page load: it goes when leaving the home page and returns with it.
-    await page.goto("/?view=planner");
+    await page.goto("/find?view=planner");
     await expect(page.getByTestId("view-switch")).toHaveCount(1);
     await goNav(page, "Methods");
     await expect(page.getByRole("heading", { level: 1, name: "Methodology" })).toBeVisible();
     await expect(page.getByTestId("view-switch")).toHaveCount(0);
     await goNav(page, "Home");
+    await expect(page.getByTestId("landing")).toBeVisible();
+    await page.getByTestId("cta-find").click();
     await expectView(page, "public");
     await expect(page.getByTestId("view-switch")).toHaveCount(1);
   });
 
   for (const view of Object.keys(LABEL) as View[]) {
     test(`${view}: no sideways scrolling, and passes axe (WCAG 2.2 AA)`, async ({ page }) => {
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       await expectView(page, view);
       await expectNoHorizontalScroll(page);
       await expectNoA11yViolations(page, { wcag22: true });
@@ -353,7 +355,7 @@ test.describe("Home views", () => {
 
     test(`${view}: fits a 768 px tablet`, async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.goto(`/?view=${view}`);
+      await page.goto(`/find?view=${view}`);
       // Below 1024px the header can't hold the nav and the switch (components/SiteHeader.tsx): the choice is in the Menu sheet.
       await expect(page.getByTestId("view-switch")).toBeHidden();
       await page.getByTestId("menu-button").click();

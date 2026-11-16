@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
 
-const ROUTES = ["/", "/ed-trends", "/access-map", "/live", "/data-quality"];
+const ROUTES = ["/", "/find", "/ed-trends", "/access-map", "/live", "/data-quality"];
 
 for (const scheme of ["light", "dark"] as const) {
   test.describe(`${scheme} theme`, () => {
@@ -23,37 +23,20 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
-test.describe("theme toggle", () => {
-  test.use({ colorScheme: "light" });
-
-  test("cycles Auto, Light, Dark, is saved, and is applied before first paint on reload", async ({ page }) => {
+test.describe("no theme switch", () => {
+  test("the footer has no theme control, and nothing is saved or forced on <html>", async ({ page }) => {
     await page.goto("/methodology");
-    const toggle = page.getByTestId("theme-toggle");
-    await expect(toggle).toContainText("Theme: Auto");
-    await toggle.click();
-    await expect(toggle).toContainText("Theme: Light");
-    await toggle.click();
-    await expect(toggle).toContainText("Theme: Dark");
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(21, 23, 28)");
-
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");     // the head script, not a late effect
-    await page.getByTestId("theme-toggle").click();                              // dark -> auto
+    await expect(page.getByTestId("theme-toggle")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /theme/i })).toHaveCount(0);
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
-    expect(await page.evaluate(() => localStorage.getItem("theme"))).toBeNull();
   });
 
-  test("works when localStorage is blocked", async ({ page }) => {
-    await page.addInitScript(() => {
-      Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked"); } });
-    });
-    const errors: string[] = [];
-    page.on("pageerror", (e) => errors.push(e.message));
+  test("a theme saved by the old toggle is ignored: the page follows the device", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("theme", "dark"));
+    await page.emulateMedia({ colorScheme: "light" });
     await page.goto("/methodology");
-    await page.getByTestId("theme-toggle").click();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    expect(errors).toEqual([]);
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(246, 241, 232)");
   });
 });
 
@@ -92,7 +75,7 @@ test.describe("widths", () => {
     test(`no horizontal overflow at ${width}px on the redesigned pages`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await blockTiles(page);
-      for (const route of ["/project", "/styleguide", "/"]) {
+      for (const route of ["/project", "/styleguide", "/", "/find"]) {
         await page.goto(route);
         await expectNoHorizontalScroll(page);
       }

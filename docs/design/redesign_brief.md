@@ -59,10 +59,11 @@ Tailwind theme). Components use no raw hex values and no arbitrary Tailwind valu
 
 | Route | Page |
 |---|---|
-| `/` | Home (public view by default) |
-| `/?view=public` | Home, public view |
-| `/?view=planner` | Home, planner view |
-| `/?view=analyst` | Home, analyst view |
+| `/` | Landing page |
+| `/find` | Clinic finder (public view by default) |
+| `/find?view=public` | Finder, public view |
+| `/find?view=planner` | Finder, planner view |
+| `/find?view=analyst` | Finder, analyst view |
 | `/project` | The project |
 | `/findings` | Findings |
 | `/explore` | Explore hub |

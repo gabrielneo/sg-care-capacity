@@ -7,7 +7,7 @@ describe("FigureCadenceNote", () => {
   it("says the case study moves with published data, not weekly, and links to the weekly summary", () => {
     render(<FigureCadenceNote kind="case-study" />);
     expect(screen.getByTestId("cadence-note")).toHaveTextContent("not every week");
-    expect(screen.getByRole("link", { name: "weekly summary" })).toHaveAttribute("href", "/?view=planner");
+    expect(screen.getByRole("link", { name: "weekly summary" })).toHaveAttribute("href", "/find?view=planner");
   });
 
   it("says findings are recomputed every Sunday and can repeat in a quiet week", () => {

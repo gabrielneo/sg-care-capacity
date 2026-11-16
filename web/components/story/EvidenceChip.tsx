@@ -12,7 +12,7 @@ const CHIP: Record<EvidenceLevel, { symbol: string; word: string }> = {
 export function EvidenceChip({ level }: { level: EvidenceLevel }) {
   const { symbol, word } = CHIP[level];
   return (
-    <span className="inline-flex items-center gap-1 rounded-sm border border-control bg-sunken px-2 py-1 text-meta font-semibold text-ink"
+    <span className="inline-flex items-center gap-1 rounded-sm border border-control px-2 py-1 text-meta font-semibold text-ink"
           title={EVIDENCE_LABEL[level]} data-testid="evidence-chip" data-level={level}>
       <span aria-hidden="true">{symbol}</span>
       <span>{word}</span>

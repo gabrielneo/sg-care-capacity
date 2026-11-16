@@ -15,7 +15,7 @@ const resolve = (page: Page, token: string) => page.evaluate((t) => {
 
 test("a glossary term is dotted, in the tertiary colour, never the accent", async ({ page }) => {
   await blockTiles(page);
-  await page.goto("/?view=planner");
+  await page.goto("/find?view=planner");
   const term = page.locator("button.term").first();
   await expect(term).toBeVisible();
   const style = await term.evaluate((el) => { const s = getComputedStyle(el); return { line: s.textDecorationLine, kind: s.textDecorationStyle, decoration: s.textDecorationColor, colour: s.color }; });
@@ -38,7 +38,7 @@ test("a link in running text is accent and always underlined", async ({ page }) 
 test("navigation links are underlined only on hover or focus, and the strip's plain text never is", async ({ page }) => {
   test.skip((page.viewportSize()?.width ?? 0) < 500, "hover is a desktop measure");
   await blockTiles(page);
-  await page.goto("/?view=planner");
+  await page.goto("/find?view=planner");
   const line = (loc: ReturnType<Page["locator"]>) => loc.evaluate((el) => getComputedStyle(el).textDecorationLine);
   const nav = page.getByRole("navigation").getByRole("link", { name: "Findings" }).first();
   expect(await line(nav)).toBe("none");

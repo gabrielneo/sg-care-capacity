@@ -182,17 +182,12 @@ describe("EdNearby", () => {
   });
 });
 
-describe("HomeNotice: the triage band", () => {
-  it("is first, says to call 995 and where else to go, and gives no other advice", () => {
+describe("HomeNotice: the public view", () => {
+  it("opens with the page heading, has no red 995 banner, and still says it isn't medical advice", () => {
     const { container } = render(<HomeNotice density="full" />);
-    const first = container.querySelector("section")!.firstElementChild!;
-    expect(first).toBe(screen.getByTestId("emergency-note"));                              // before the heading
-    expect(screen.getByTestId("triage-emergency")).toHaveTextContent("Life-threatening emergency? Call 995.");
-    expect(screen.getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
-    expect(screen.getByTestId("triage-next")).toHaveTextContent("A GP clinic or polyclinic can often help instead of an emergency department.");
+    expect(container.querySelector("section")!.firstElementChild).toBe(screen.getByRole("heading", { level: 1 }));
+    expect(screen.queryByTestId("emergency-note")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Call 995" })).toBeNull();
     expect(screen.getByTestId("not-advice")).toHaveTextContent("isn't medical advice");
-    expect(screen.queryByRole("button", { name: /dismiss|close|hide/i })).toBeNull();        // not dismissible
-    // The guidance URL is a TODO(me): no link until it is set, and none is guessed.
-    expect(screen.queryByTestId("triage-link")).toBeNull();
   });
 });
