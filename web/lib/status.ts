@@ -5,17 +5,18 @@
  * median of the 8 complete weeks before the latest complete week. The badge is a plain comparison,
  * not a tested finding (docs/data_dictionary.md, "Computed by the site"):
  *
- *   change vs usual       and the week is       badge
- *   +30% or more          2+ spreads above      Much higher than usual
- *   +15% to under +30%    2+ spreads above      Higher than usual
- *   -15% or less          2+ spreads below      Lower than usual
- *   anything else                               About usual
- *   no usual level                              No comparison (fewer than 8 complete weeks before the latest)
+ *   change vs usual       and the week is                          badge
+ *   +30% or more          higher than all of the 8 weeks before    Much higher than usual
+ *   +15% to under +30%    higher than all of the 8 weeks before    Higher than usual
+ *   -15% or less          lower than all of the 8 weeks before     Lower than usual
+ *   anything else                                                  About usual
+ *   no usual level                                                 No comparison (fewer than 8 complete weeks before the latest)
  *
- * "Spreads" is the hospital's own: the robust z of the week against its 8 usual weeks (MAD, as the insight engine's
- * anomaly detector), so a volatile hospital needs a bigger move than a steady one. Without it, 44% of hospital-weeks
- * since 2025 read as "usual" and CGH and SGH carried a non-usual badge in 83% of them; with it, 79% and 24%.
- * If the 8 weeks do not vary at all (MAD 0), the % line alone decides.
+ * A week has to be clearly away from usual (15%) and also outside the range its hospital has shown in the 8 weeks before, so a
+ * hospital whose weeks swing widely needs a bigger move than a steady one. Without the second test, 44% of hospital-weeks since
+ * 2025 read as "usual" and CGH and SGH carried a badge in 83% of them; with it, 76% and 30%. (A first version used a robust z of 2;
+ * it called Sengkang's week at 62% below its usual "about usual", because its swings were wide, though no week in the 8 before was so low.)
+ *
  * Missing stays missing: no usual level means no badge colour, never "about usual".
  */
 import type { EdWeek } from "./api/types";
@@ -25,8 +26,6 @@ import { SPARK_WEEKS } from "./windows";
 export { SPARK_WEEKS };
 export const HIGHER_PCT = 15;
 export const MUCH_HIGHER_PCT = 30;
-/** How far outside the hospital's own spread a week must be: |robust z| at or above this. */
-export const MIN_Z = 2;
 
 export type Level = "much_higher" | "higher" | "usual" | "lower" | "unknown";
 
@@ -46,11 +45,11 @@ export const LEVELS: Record<Level, LevelInfo> = {
   unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual." },
 };
 
-export function levelFor(pct: number | null | undefined, z: number | null | undefined = null): Level {
+export function levelFor(pct: number | null | undefined, position: -1 | 0 | 1 | null | undefined = null): Level {
   if (pct == null || !Number.isFinite(pct)) return "unknown";
-  // No z (the 8 weeks did not vary at all): the % line alone decides.
-  const above = z == null || z >= MIN_Z;
-  const below = z == null || z <= -MIN_Z;
+  // No position given (a caller with only a %): the % line alone decides.
+  const above = position == null || position === 1;
+  const below = position == null || position === -1;
   if (pct >= MUCH_HIGHER_PCT && above) return "much_higher";
   if (pct >= HIGHER_PCT && above) return "higher";
   if (pct <= -HIGHER_PCT && below) return "lower";
@@ -64,8 +63,9 @@ export interface HospitalStatus {
   latest: number | null;
   usual: number | null;
   pct: number | null;
-  /** Spread of the 8 usual weeks (MAD, hours), for the usual band; absent where unknown. */
-  mad?: number | null;
+  /** The lowest and highest of the 8 usual weeks (hours), for the usual band; absent where unknown. */
+  low?: number | null;
+  high?: number | null;
   /** The last SPARK_WEEKS weeks, oldest first; null for a week that isn't complete. */
   spark: (number | null)[];
 }
@@ -86,7 +86,8 @@ export function hospitalStatus(code: string, usual: Usual | undefined, weekly: E
         return w?.is_complete_week && w.mean_of_daily_median_wait_hours != null ? w.mean_of_daily_median_wait_hours : null;
       })
     : [];
-  return { code, level: levelFor(pct, usual?.z), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct, mad: usual?.mad ?? null, spark };
+  return { code, level: levelFor(pct, usual?.position), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct,
+           low: usual?.low ?? null, high: usual?.high ?? null, spark };
 }
 
 /** Largest change against usual first; no comparison last; ties by code. */
@@ -144,12 +145,10 @@ export function sparkPath(values: (number | null)[], width: number, height: numb
 }
 
 /**
- * The "about usual" zone around a usual level. A week leaves it, and so earns a badge, only when it is both
- * HIGHER_PCT away and MIN_Z spreads away (MAD × 1/0.6745 is one robust standard deviation), so each side is the
- * larger of the two distances. No usual level, no band; no spread known, the % line alone.
+ * The "about usual" zone around a usual level. A week leaves it, and so earns a badge, only when it is both HIGHER_PCT away and
+ * outside the range of the 8 weeks before, so each side is the wider of the two. No usual level, no band; no range known, the % line alone.
  */
-export function usualBand(usual: number | null | undefined, mad: number | null | undefined = null): [number, number] | null {
+export function usualBand(usual: number | null | undefined, low: number | null | undefined = null, high: number | null | undefined = null): [number, number] | null {
   if (usual == null || !Number.isFinite(usual)) return null;
-  const half = Math.max(usual * (HIGHER_PCT / 100), mad ? (MIN_Z * mad) / 0.6745 : 0);
-  return [usual - half, usual + half];
+  return [Math.min(usual * (1 - HIGHER_PCT / 100), low ?? Infinity), Math.max(usual * (1 + HIGHER_PCT / 100), high ?? -Infinity)];
 }

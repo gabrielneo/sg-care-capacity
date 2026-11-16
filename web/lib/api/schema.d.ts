@@ -1049,7 +1049,7 @@ export interface components {
              * Type
              * @enum {string}
              */
-            type: "trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap";
+            type: "trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "monthly_yoy" | "access_gap" | "regional" | "source_gap";
             /** Unit */
             unit: string;
             /**
@@ -2043,7 +2043,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description Only this detector */
-                type?: ("trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "access_gap" | "regional" | "source_gap") | null;
+                type?: ("trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "monthly_yoy" | "access_gap" | "regional" | "source_gap") | null;
                 /** @description Only this hospital code or planning area (case-insensitive) */
                 entity?: string | null;
                 /** @description The N highest rank_score */

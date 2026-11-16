@@ -232,7 +232,7 @@ test.describe("The details drawer", () => {
     await expect(body.getByTestId("sparkline")).toBeVisible();
     await expect(body.getByTestId("provenance-line")).toContainText("Data as of");
     await expect(body.getByTestId("provenance-line")).toContainText("Source:");
-    await expect(body.getByTestId("drawer-trend")).toHaveAttribute("href", "/ed-trends?hospital=SGH");
+    await expect(body.getByTestId("drawer-trend")).toHaveAttribute("href", "/hospital/SGH");
     await expect(body.getByTestId("drawer-live")).toHaveCount(0);                 // no NUHS estimate for SGH: nothing is shown
     await page.goto("/find?layout=list&hospital=AH");
     await hydrated(page);

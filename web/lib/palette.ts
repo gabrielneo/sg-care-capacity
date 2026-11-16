@@ -13,36 +13,38 @@ const data = {
   "map-none": "#E2E8F0",
   "div-1": "#4B3A7A", "div-2": "#6E5CA3", "div-3": "#C9C0E3", "div-4": "#EFEAE1",
   "div-5": "#F2D3A8", "div-6": "#E0A35A", "div-7": "#A85A14",
-  "on-data-dark": "#12141B", "on-data-light": "#FFFCF7",
+  "on-data-dark": "#12141B", "on-data-light": "#FFFFFF",
 } as const;
 
 export const colors = {
-  page: "#F6F1E8", band: "#EEE7DA", surface: "#FFFCF7", sunken: "#F1EBE0",
-  line: "#DDD3C2", control: "#857A69",
-  ink: "#1F2330", muted: "#4F5563", tertiary: "#5F636D",
-  accent: "#2E4A7D", "accent-strong": "#22385F", "accent-soft": "#E3E8F2",
+  page: "#F7FBFA", band: "#E3F4F1", surface: "#FFFFFF", sunken: "#EEF6F5",
+  line: "#CFE3E0", control: "#5E8280",
+  ink: "#0F2B33", muted: "#37535B", tertiary: "#4A666E",
+  accent: "#07707C", "accent-strong": "#054F59", "accent-soft": "#D6F0F2",
   "status-much": "#A8322A", "status-much-soft": "#F7E1DC",
   "status-higher": "#8F5A12", "status-higher-soft": "#F5E7CF",
   "status-usual": "#4F5563", "status-usual-soft": "#ECE7DE",
   "status-lower": "#5B4A8B", "status-lower-soft": "#E7E2F2",
   danger: "#A8322A", "danger-soft": "#F9E6E2",
-  "cat-1": "#2E4A7D", "cat-2": "#9C4F3D", "cat-3": "#5F636D", "cat-4": "#8A6A12",
+  pop: "#E8512B", "pop-soft": "#FFE6DD", sun: "#FFB703",
+  "cat-1": "#07707C", "cat-2": "#9C4F3D", "cat-3": "#7B4CA6", "cat-4": "#8A6A12",
   ...data,
 } as const;
 
 /** The dark theme's values for every token that differs from light (the data scales do not). */
 export const darkColors = {
   ...colors,
-  page: "#15171C", band: "#1B1E24", surface: "#20232A", sunken: "#191C21",
-  line: "#2E323A", control: "#7A766E",
-  ink: "#EDE7DC", muted: "#B8B2A7", tertiary: "#9A958C",
-  accent: "#8FB0E8", "accent-strong": "#B0C8F0", "accent-soft": "#243149",
+  page: "#08141C", band: "#0D1F2B", surface: "#122A38", sunken: "#0B1923",
+  line: "#23455A", control: "#6E93A3",
+  ink: "#EAF7F6", muted: "#B2CCD0", tertiary: "#8FB0B6",
+  accent: "#2DD4BF", "accent-strong": "#5EEAD4", "accent-soft": "#0F3C45",
   "status-much": "#F08A7E", "status-much-soft": "#413337",
   "status-higher": "#E0A955", "status-higher-soft": "#3F3831",
   "status-usual": "#B8B2A7", "status-usual-soft": "#383A3E",
   "status-lower": "#B3A3E6", "status-lower-soft": "#383748",
   danger: "#F08A7E", "danger-soft": "#413337",
-  "cat-1": "#8FB0E8", "cat-2": "#E58E7A", "cat-3": "#A9ADB6", "cat-4": "#C9A53A",
+  pop: "#FF7A59", "pop-soft": "#3A2320", sun: "#FFC83D",
+  "cat-1": "#2DD4BF", "cat-2": "#E58E7A", "cat-3": "#C3A6F5", "cat-4": "#C9A53A",
 } as const;
 
 export type ColorToken = keyof typeof colors;
@@ -58,6 +60,7 @@ export const TOKEN_VARS: Record<ColorToken, string> = {
   "status-usual": "--status-usual", "status-usual-soft": "--status-usual-fill",
   "status-lower": "--status-lower", "status-lower-soft": "--status-lower-fill",
   danger: "--danger-notice", "danger-soft": "--danger-notice-fill",
+  pop: "--pop", "pop-soft": "--pop-soft", sun: "--sun",
   "cat-1": "--cat-1", "cat-2": "--cat-2", "cat-3": "--cat-3", "cat-4": "--cat-4",
   "map-1": "--map-1", "map-2": "--map-2", "map-3": "--map-3", "map-4": "--map-4", "map-5": "--map-5",
   "map-none": "--map-none",

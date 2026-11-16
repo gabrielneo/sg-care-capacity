@@ -417,7 +417,7 @@ def test_fct_insight_columns_are_in_the_data_dictionary():
     assert documented == set(engine.COLUMNS)
 
 
-@pytest.mark.parametrize("detector", ["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"])
+@pytest.mark.parametrize("detector", ["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap", "monthly_yoy"])
 def test_every_detector_is_documented(detector):
     import re
 
@@ -831,7 +831,7 @@ def test_a_peak_that_is_clear_week_by_week_is_not_called_shared():
     assert shared_peak(flat, weekday, weeks, [float(flat[weekday == k].mean()) for k in range(7)], 1, 0.3, boot) == 2
 
 
-def test_the_unusual_gap_needs_the_week_to_leave_the_hospitals_own_spread():
+def test_the_unusual_gap_needs_the_week_to_be_higher_than_all_8_weeks_before():
     from sg_health.insights.detectors import usual_gap
     cfg = thresholds()["usual_gap"]
     hosp = hospitals("SGH")
@@ -840,8 +840,8 @@ def test_the_unusual_gap_needs_the_week_to_leave_the_hospitals_own_spread():
     def weekly_for(values):
         return pd.DataFrame({"hospital_code": "SGH", "week_start": starts, "week_end": starts, "total_attendances": 1,
                              "mean_of_daily_median_wait_hours": values, "is_complete_week": True})
-    steady = weekly_for([4.0, 4.1, 3.9, 4.0, 4.2, 3.8, 4.0, 4.1, 5.6])             # +40%, far outside a tight spread
-    noisy = weekly_for([2.0, 6.0, 3.0, 7.0, 2.5, 6.5, 4.0, 5.0, 6.5])              # +40% vs usual 4.5, inside its swings
+    steady = weekly_for([4.0, 4.1, 3.9, 4.0, 4.2, 3.8, 4.0, 4.1, 5.6])             # +40%, above every one of the 8 weeks
+    noisy = weekly_for([2.0, 6.0, 3.0, 7.0, 2.5, 6.5, 4.0, 5.0, 6.5])              # +40% vs usual 4.5, but 6.5 is below its own 7.0 high
     full = float(thresholds()["ranking"]["normalise"]["usual_gap_pct_full"])
     assert usual_gap.detect(steady, hosp, cfg, MIN_C, full).candidates[0].passes_effect
     assert not usual_gap.detect(noisy, hosp, cfg, MIN_C, full).candidates[0].passes_effect
@@ -859,3 +859,83 @@ def test_a_same_day_correlation_says_on_not_after():
     for r in published(result, "volume_vs_wait"):
         same_day = "same day" in r["headline"]
         assert r["chart"]["callout"].startswith("On the busiest days") == same_day, r["chart"]["callout"]
+
+
+# --------------------------------------------------------------------------- #
+# monthly_yoy: visits and bed waits, each against the same month a year before
+# --------------------------------------------------------------------------- #
+
+def monthly_frame(n: int = 36, link: float = 0.0, seed: int = 5, partial_last: bool = False) -> pd.DataFrame:
+    """n months ending Oct 2026: the change in visits is a slow wave plus noise; the change in wait follows it by `link`."""
+    rng = np.random.default_rng(seed)
+    months = pd.date_range(end="2026-10-01", periods=n + 12, freq="MS")
+    visits = 3 * np.sin(np.arange(n + 12) / 4) + rng.normal(0, 0.5, n + 12)
+    wait = link * 10 * visits + rng.normal(0, 3, n + 12)
+    df = pd.DataFrame({"month_start": months, "is_complete_month": True, "wait_yoy_pct": wait, "attendances_yoy_pct": visits})
+    df.loc[:11, ["wait_yoy_pct", "attendances_yoy_pct"]] = np.nan                  # no year before the first 12 months
+    if partial_last:
+        df.loc[df.index[-1], ["is_complete_month", "wait_yoy_pct", "attendances_yoy_pct"]] = [False, np.nan, np.nan]
+    return df
+
+
+def monthly_run(frame):
+    from sg_health.insights.detectors import monthly_yoy
+    return monthly_yoy.detect(frame, thresholds()["monthly_yoy"], MIN_C)
+
+
+def test_a_planted_link_between_visits_and_waits_year_on_year_is_found():
+    out = monthly_run(monthly_frame(link=1.0))
+    c = out.candidates[0]
+    assert c.type == "monthly_yoy" and c.entity == "All hospitals" and c.effect_size > 0.7 and c.n == 36 and c.n_unit == "months"
+    assert c.p_value <= 0.05 and c.passes_effect and c.p_value >= 1 / c.n                  # a rotation test can't go below 1 in n
+    assert [p["label"] for p in c.chart["points"]] == ["Lowest", "Lower", "Middle", "Higher", "Highest"]
+    assert c.chart["points"][4]["value"] > c.chart["points"][0]["value"] and c.chart["highlight"] == ["q5"]
+
+
+def test_unrelated_series_are_not_published():
+    result = engine.run({**inputs(weekly({"SGH": [4.0] * 12})), "monthly": monthly_frame(link=0.0, seed=9)}, NO_FAILS, TODAY)
+    assert not published(result, "monthly_yoy")
+
+
+def test_the_finding_is_worded_as_an_association_and_is_never_a_headline():
+    result = engine.run({**inputs(weekly({"SGH": [4.0] * 12})), "monthly": monthly_frame(link=1.0)}, NO_FAILS, TODAY)
+    r = published(result, "monthly_yoy")[0]
+    assert r["evidence_level"] == "association-only" and "association only" in r["detail"]
+    assert r["headline_rank"] is None and r["scope"] == "system" and r["ci_low"] is not None and r["ci_low"] < r["effect_size"] < r["ci_high"]
+    assert not wording.CAUSAL.search(r["headline"] + " " + r["detail"] + " " + r["chart"]["callout"])
+    assert r["period_end"] <= r["as_of"]
+
+
+def test_too_few_months_or_no_monthly_figures_is_a_skip_with_a_reason():
+    thin = monthly_frame(n=36, link=1.0).tail(20)
+    out = monthly_run(thin)
+    assert not out.candidates and "needs 24" in out.skips[0].reason
+    for nothing in (None, pd.DataFrame(columns=["month_start", "is_complete_month", "wait_yoy_pct", "attendances_yoy_pct"])):
+        assert "no monthly figures" in monthly_run(nothing).skips[0].reason
+
+
+def test_a_partial_latest_month_is_left_out_not_filled():
+    out = monthly_run(monthly_frame(link=1.0, partial_last=True))
+    assert out.candidates[0].n == 35 and out.candidates[0].as_of == date(2026, 9, 30)
+
+
+def test_a_missing_monthly_mart_leaves_the_other_detectors_working():
+    result = engine.run({**inputs(weekly({"SGH": [4.0] * 26})), "monthly": None}, NO_FAILS, TODAY)
+    assert any(s.type == "monthly_yoy" for s in result.skips) and result.tests >= 1
+
+
+def test_the_rotation_test_never_gives_a_p_below_one_in_n_and_keeps_the_sign():
+    x = np.arange(30, dtype=float)
+    rho, p = stats.circular_shift_spearman(x, x * 2)
+    assert rho == pytest.approx(1.0) and p == pytest.approx(1 / 30)
+    rho, p = stats.circular_shift_spearman(x, -x)
+    assert rho == pytest.approx(-1.0) and p == pytest.approx(1 / 30)
+    assert stats.circular_shift_spearman(x, np.sin(np.arange(30) * 2.4))[1] > 0.1
+
+
+def test_the_block_bootstrap_interval_is_reproducible_and_needs_enough_months():
+    x = np.arange(40, dtype=float)
+    y = x + np.random.default_rng(1).normal(0, 4, 40)
+    a = stats.block_bootstrap_spearman_ci(x, y, block=6)
+    assert a == stats.block_bootstrap_spearman_ci(x, y, block=6) and a[0] < stats.spearman(x, y)[0] < a[1]
+    assert stats.block_bootstrap_spearman_ci(x[:10], y[:10], block=6) is None

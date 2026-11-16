@@ -46,6 +46,7 @@ const MEASURE: Record<Insight["type"], "bed_wait" | "clinics"> = {
   usual_gap: "bed_wait",
   weekday: "bed_wait",
   volume_vs_wait: "bed_wait",
+  monthly_yoy: "bed_wait",
   source_gap: "bed_wait",
   regional: "bed_wait",
   access_gap: "clinics",
@@ -73,7 +74,7 @@ export function chartFormat(i: StoryInsight): (v: number) => string {
     return `${v > 0 ? "+" : "−"}${text}`;
   };
   const values = [...new Set(i.chart.points.map((p) => p.value).filter((v): v is number => v != null))];
-  let digits = i.unit.startsWith("hours") || i.type === "volume_vs_wait" || i.type === "source_gap" ? 1 : 2;
+  let digits = i.unit.startsWith("hours") || i.type === "volume_vs_wait" || i.type === "monthly_yoy" || i.type === "source_gap" ? 1 : 2;
   // Bars are compared with each other by their labels; a line's neighbouring weeks are read by their shape.
   while (i.chart.kind === "bar" && digits < 3 && new Set(values.map(fmt(digits))).size < values.length) digits += 1;
   return fmt(digits);

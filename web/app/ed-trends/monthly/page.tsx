@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Callouts } from "@/components/edcharts/Callouts";
 import { HospitalName } from "@/components/HospitalName";
 import { MONTHLY_CAVEAT, MonthlyCharts } from "@/components/monthly/MonthlyCharts";
 import { PageHeader } from "@/components/PageHeader";
@@ -18,8 +19,9 @@ const INTRO = "The average bed wait and ED visits for each calendar month, for t
 const MONTHS_SHOWN = 48;
 
 export default async function MonthlyPage() {
-  const [systemRes, hospitalsRes, monthlyRes] = await Promise.all([
+  const [systemRes, hospitalsRes, monthlyRes, insightsRes] = await Promise.all([
     settle(api.edSystemMonthly({ months: MONTHS_SHOWN })), settle(api.hospitals()), settle(api.edMonthly({ months: 24 })),
+    settle(api.insights({ type: "monthly_yoy" })),
   ]);
   if (!systemRes.ok || !hospitalsRes.ok) {
     const err = !systemRes.ok ? systemRes.error : (hospitalsRes as { ok: false; error: Parameters<typeof plainError>[0] }).error;
@@ -86,7 +88,8 @@ export default async function MonthlyPage() {
         {!monthlyRes.ok ? <p className="mt-2 text-small text-muted">The hospital figures can&apos;t be shown right now.</p> : null}
         <p className="mt-2 text-small"><Link href="/ed-trends">See daily figures on ED Trends</Link></p>
       </section>
-      <MonthlyCharts points={points} meta={systemRes.value.meta} subject="Full emergency departments" csv="/export/ed-system-monthly.csv?months=48&context=1" caveat={MONTHLY_CAVEAT} />
+      <MonthlyCharts points={points} meta={systemRes.value.meta} subject="Full emergency departments" csv="/export/ed-system-monthly.csv?months=48&context=1" caveat={MONTHLY_CAVEAT}
+                     findings={insightsRes.ok ? <Callouts insights={insightsRes.value.data} types={["monthly_yoy"]} codes={[]} hospitals={hospitals} meta={insightsRes.value.meta} label="visits and bed waits, year on year" /> : null} />
     </>
   );
 }

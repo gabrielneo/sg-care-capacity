@@ -17,6 +17,11 @@
   --dur-accordion: 180ms;  /* an accordion's height */
   --dur-drawer: 200ms;     /* a drawer or sheet sliding in */
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  /* Landing-page motion (owner request, 16 Nov 2026). Used only in the landing block of globals.css, only with no-preference, and
+     never to hide data: see test/motion.test.ts for the rules. */
+  --dur-reveal: 700ms;     /* a block rising into place, a dot sliding to its value */
+  --dur-draw: 1600ms;      /* the hero line drawing itself */
+  --dur-drift: 18s;        /* the hero's slow background drift */
 
   --space-1: 0.25rem;  --space-2: 0.5rem;  --space-3: 0.75rem; --space-4: 1rem;  --space-5: 1.5rem;
   --space-6: 2rem;     --space-7: 3rem;    --space-8: 4rem;    --space-9: 6rem;
@@ -62,14 +67,15 @@
 
 
 /*
- * Design tokens: "Paper & Ink" (docs/design/redesign_brief.md). The ONE place colours are written as hex
- * (besides lib/palette.ts, which a test keeps identical to this file).
+ * Design tokens: "Fresh teal" (16 Nov 2026; before that "Paper & Ink", docs/design/redesign_brief.md). The ONE place colours are
+ * written as hex (besides lib/palette.ts, which a test keeps identical to this file).
  *
  * Rules:
  *  - Orange/brown family = longer bed waits, violet family = shorter, everywhere.
- *  - Ink blue (--accent) is interface only (links, selection, focus), never data meaning.
- *  - Dark applies from the OS setting, or from <html data-theme="dark|light"> (the footer toggle). Any element can
- *    carry data-theme too: /styleguide shows both themes side by side that way.
+ *  - Teal (--accent) is interface only (links, selection, focus, buttons), never data meaning. Coral (--pop) and sun (--sun) are
+ *    decoration and large figures only: never body text, never a status.
+ *  - Light is a bright, cool white; dark is a deep ink-navy with the same accents lifted. Both follow the OS setting only (there is no
+ *    switch). Any element can carry data-theme: /styleguide shows both themes side by side that way.
  *    The dark block appears twice because CSS cannot share one block between a media query and a selector;
  *    web/lib/tokens.test.ts checks the two copies are identical.
  */
@@ -77,18 +83,21 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-page: #F6F1E8;
-  --bg-band: #EEE7DA;
-  --bg-surface: #FFFCF7;
-  --bg-sunken: #F1EBE0;
-  --border-subtle: #DDD3C2;
-  --border-control: #857A69;
-  --text-primary: #1F2330;
-  --text-secondary: #4F5563;
-  --text-tertiary: #5F636D;
-  --accent: #2E4A7D;
-  --accent-hover: #22385F;
-  --accent-soft: #E3E8F2;
+  --bg-page: #F7FBFA;
+  --bg-band: #E3F4F1;
+  --bg-surface: #FFFFFF;
+  --bg-sunken: #EEF6F5;
+  --border-subtle: #CFE3E0;
+  --border-control: #5E8280;
+  --text-primary: #0F2B33;
+  --text-secondary: #37535B;
+  --text-tertiary: #4A666E;
+  --accent: #07707C;
+  --accent-hover: #054F59;
+  --accent-soft: #D6F0F2;
+  --pop: #E8512B;
+  --pop-soft: #FFE6DD;
+  --sun: #FFB703;
   --status-much: #A8322A;
   --status-much-fill: #F7E1DC;
   --status-higher: #8F5A12;
@@ -106,9 +115,9 @@
   --div-1: #4B3A7A; --div-2: #6E5CA3; --div-3: #C9C0E3; --div-4: #EFEAE1;
   --div-5: #F2D3A8; --div-6: #E0A35A; --div-7: #A85A14;
   /* Compare mode's categories (max 4); never status colours. lib/chartColors.test.ts checks colour-blind distinguishability. */
-  --cat-1: #2E4A7D; --cat-2: #9C4F3D; --cat-3: #5F636D; --cat-4: #8A6A12;
+  --cat-1: #07707C; --cat-2: #9C4F3D; --cat-3: #7B4CA6; --cat-4: #8A6A12;
   --on-data-dark: #12141B;   /* label on a light data cell */
-  --on-data-light: #FFFCF7;  /* label on a dark data cell */
+  --on-data-light: #FFFFFF;  /* label on a dark data cell */
 
   /* Radii (6 / 10 / 14px) are defined once, in app/globals.css (@theme static). */
   --shadow-float: 0 8px 24px rgba(31, 35, 48, 0.10);
@@ -118,16 +127,19 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg-page: #15171C; --bg-band: #1B1E24; --bg-surface: #20232A; --bg-sunken: #191C21;
-    --border-subtle: #2E323A; --border-control: #7A766E;
-    --text-primary: #EDE7DC; --text-secondary: #B8B2A7; --text-tertiary: #9A958C;
-    --accent: #8FB0E8; --accent-hover: #B0C8F0; --accent-soft: #243149;
+    --bg-page: #08141C; --bg-band: #0D1F2B; --bg-surface: #122A38; --bg-sunken: #0B1923;
+    --border-subtle: #23455A; --border-control: #6E93A3;
+    --text-primary: #EAF7F6; --text-secondary: #B2CCD0; --text-tertiary: #8FB0B6;
+    --accent: #2DD4BF; --accent-hover: #5EEAD4; --accent-soft: #0F3C45;
+  --pop: #FF7A59;
+  --pop-soft: #3A2320;
+  --sun: #FFC83D;
     --status-much: #F08A7E; --status-much-fill: #413337;
     --status-higher: #E0A955; --status-higher-fill: #3F3831;
     --status-usual: #B8B2A7; --status-usual-fill: #383A3E;
     --status-lower: #B3A3E6; --status-lower-fill: #383748;
     --danger-notice: #F08A7E; --danger-notice-fill: #413337;
-    --cat-1: #8FB0E8; --cat-2: #E58E7A; --cat-3: #A9ADB6; --cat-4: #C9A53A;
+    --cat-1: #2DD4BF; --cat-2: #E58E7A; --cat-3: #C3A6F5; --cat-4: #C9A53A;
     --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
     --scrim: rgba(0, 0, 0, 0.6);
   }
@@ -136,16 +148,19 @@
 :root[data-theme="dark"],
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg-page: #15171C; --bg-band: #1B1E24; --bg-surface: #20232A; --bg-sunken: #191C21;
-  --border-subtle: #2E323A; --border-control: #7A766E;
-  --text-primary: #EDE7DC; --text-secondary: #B8B2A7; --text-tertiary: #9A958C;
-  --accent: #8FB0E8; --accent-hover: #B0C8F0; --accent-soft: #243149;
+  --bg-page: #08141C; --bg-band: #0D1F2B; --bg-surface: #122A38; --bg-sunken: #0B1923;
+  --border-subtle: #23455A; --border-control: #6E93A3;
+  --text-primary: #EAF7F6; --text-secondary: #B2CCD0; --text-tertiary: #8FB0B6;
+  --accent: #2DD4BF; --accent-hover: #5EEAD4; --accent-soft: #0F3C45;
+  --pop: #FF7A59;
+  --pop-soft: #3A2320;
+  --sun: #FFC83D;
   --status-much: #F08A7E; --status-much-fill: #413337;
   --status-higher: #E0A955; --status-higher-fill: #3F3831;
   --status-usual: #B8B2A7; --status-usual-fill: #383A3E;
   --status-lower: #B3A3E6; --status-lower-fill: #383748;
   --danger-notice: #F08A7E; --danger-notice-fill: #413337;
-  --cat-1: #8FB0E8; --cat-2: #E58E7A; --cat-3: #A9ADB6; --cat-4: #C9A53A;
+  --cat-1: #2DD4BF; --cat-2: #E58E7A; --cat-3: #C3A6F5; --cat-4: #C9A53A;
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
   --scrim: rgba(0, 0, 0, 0.6);
 }
@@ -158,18 +173,21 @@
   [data-theme="dark"] {
   color-scheme: light;
 
-  --bg-page: #F6F1E8;
-  --bg-band: #EEE7DA;
-  --bg-surface: #FFFCF7;
-  --bg-sunken: #F1EBE0;
-  --border-subtle: #DDD3C2;
-  --border-control: #857A69;
-  --text-primary: #1F2330;
-  --text-secondary: #4F5563;
-  --text-tertiary: #5F636D;
-  --accent: #2E4A7D;
-  --accent-hover: #22385F;
-  --accent-soft: #E3E8F2;
+  --bg-page: #F7FBFA;
+  --bg-band: #E3F4F1;
+  --bg-surface: #FFFFFF;
+  --bg-sunken: #EEF6F5;
+  --border-subtle: #CFE3E0;
+  --border-control: #5E8280;
+  --text-primary: #0F2B33;
+  --text-secondary: #37535B;
+  --text-tertiary: #4A666E;
+  --accent: #07707C;
+  --accent-hover: #054F59;
+  --accent-soft: #D6F0F2;
+  --pop: #E8512B;
+  --pop-soft: #FFE6DD;
+  --sun: #FFB703;
   --status-much: #A8322A;
   --status-much-fill: #F7E1DC;
   --status-higher: #8F5A12;
@@ -187,9 +205,9 @@
   --div-1: #4B3A7A; --div-2: #6E5CA3; --div-3: #C9C0E3; --div-4: #EFEAE1;
   --div-5: #F2D3A8; --div-6: #E0A35A; --div-7: #A85A14;
   /* Compare mode's categories (max 4); never status colours. lib/chartColors.test.ts checks colour-blind distinguishability. */
-  --cat-1: #2E4A7D; --cat-2: #9C4F3D; --cat-3: #5F636D; --cat-4: #8A6A12;
+  --cat-1: #07707C; --cat-2: #9C4F3D; --cat-3: #7B4CA6; --cat-4: #8A6A12;
   --on-data-dark: #12141B;   /* label on a light data cell */
-  --on-data-light: #FFFCF7;  /* label on a dark data cell */
+  --on-data-light: #FFFFFF;  /* label on a dark data cell */
 
   /* Radii (6 / 10 / 14px) are defined once, in app/globals.css (@theme static). */
   --shadow-float: 0 8px 24px rgba(31, 35, 48, 0.10);

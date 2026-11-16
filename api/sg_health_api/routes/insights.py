@@ -11,7 +11,7 @@ from . import ERRORS, get_ctx
 
 router = APIRouter(tags=["insights"], responses=ERRORS)
 
-InsightType = Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
+InsightType = Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "monthly_yoy", "access_gap", "regional", "source_gap"]
 
 INSIGHTS_SQL = "SELECT * FROM marts.fct_insight ORDER BY rank_score DESC, insight_id"
 # Columns added over time. A release from before one of them still serves its insights, with nulls there.
@@ -22,6 +22,7 @@ COLUMNS_SQL = "SELECT column_name FROM information_schema.columns WHERE table_sc
 SOURCES_BY_TYPE = {
     "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "usual_gap": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
+    "monthly_yoy": ("moh_bed_waits", "moh_ed_attendances"),
     "access_gap": ("datagov_chas", "singstat_residents", "datagov_planning_areas"),
     "regional": ("moh_bed_waits", "datagov_chas", "singstat_residents"), "source_gap": ("nuhs_live", "moh_bed_waits"),
 }
@@ -30,6 +31,7 @@ SOURCES_BY_TYPE = {
 TABLES_BY_TYPE = {
     "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "usual_gap": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
+    "monthly_yoy": ("moh_bed_waits", "moh_ed_attendances"),
     "access_gap": ("chas_clinics", "pop_65plus_by_area", "planning_area_boundaries"),
     "regional": ("moh_bed_waits", "chas_clinics", "pop_65plus_by_area"),
     "source_gap": ("nuhs_live_waits", "moh_bed_waits"),

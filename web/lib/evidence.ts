@@ -23,7 +23,7 @@ type Stats = Pick<Insight, "type" | "p_adjusted" | "n" | "unit"> &
 export function evidenceOf(i: Stats): EvidenceLevel {
   if (i.evidence_level) return i.evidence_level;
   if (i.p_adjusted == null) return "observed";
-  return i.type === "volume_vs_wait" ? "association-only" : "tested";
+  return i.type === "volume_vs_wait" || i.type === "monthly_yoy" ? "association-only" : "tested";
 }
 
 

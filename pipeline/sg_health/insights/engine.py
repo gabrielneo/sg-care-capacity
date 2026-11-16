@@ -24,16 +24,19 @@ import pandas as pd
 from .. import config
 from ..warehouse import Warehouse
 from . import actions, ranking, wording
-from .detectors import access_gap, anomaly, regional, source_gap, trend, usual_gap, volume_vs_wait, weekday
+from .detectors import access_gap, anomaly, monthly_yoy, regional, source_gap, trend, usual_gap, volume_vs_wait, weekday
 from .model import Candidate, Skip, thresholds, thresholds_sha256
 from .stats import benjamini_hochberg
 
 ENGINE_VERSION = 1
+# Findings that are a correlation: tested, but they say nothing about why (evidence level "association-only").
+ASSOCIATION_TYPES = ("volume_vs_wait", "monthly_yoy")
 
 # Raw tables behind each detector's marts: a blocking check on any of them skips the detector.
 INPUT_TABLES = {
     "trend": ("moh_bed_waits",), "anomaly": ("moh_bed_waits",), "usual_gap": ("moh_bed_waits",), "weekday": ("moh_bed_waits",),
     "volume_vs_wait": ("moh_bed_waits", "moh_ed_attendances"),
+    "monthly_yoy": ("moh_bed_waits", "moh_ed_attendances"),
     "access_gap": ("chas_clinics", "pop_65plus_by_area", "planning_area_boundaries"),
     "regional": ("moh_bed_waits", "chas_clinics", "pop_65plus_by_area"),
     "source_gap": ("nuhs_live_waits", "moh_bed_waits"),
@@ -78,6 +81,14 @@ def _q(wh: Warehouse, sql: str) -> pd.DataFrame:
     return wh.query(sql)
 
 
+def _monthly(wh: Warehouse) -> pd.DataFrame | None:
+    """The system monthly series, or None for a warehouse built before it existed (the detector then says so and is skipped)."""
+    have = wh.query("SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'marts' "
+                    "AND table_name = 'fct_ed_system_monthly'")["n"][0]
+    return None if not have else wh.query("SELECT month_start, is_complete_month, wait_yoy_pct, attendances_yoy_pct "
+                                          "FROM marts.fct_ed_system_monthly ORDER BY month_start")
+
+
 def load_inputs(wh: Warehouse) -> dict[str, pd.DataFrame]:
     return {
         "hospitals": _q(wh, "SELECT hospital_code, hospital_name, cluster, facility_type, reported_from, coverage_note "
@@ -85,6 +96,7 @@ def load_inputs(wh: Warehouse) -> dict[str, pd.DataFrame]:
         "weekly": _q(wh, "SELECT hospital_code, week_start, week_end, mean_of_daily_median_wait_hours, total_attendances, "
                          "is_complete_week FROM marts.fct_ed_weekly"),
         "daily": _q(wh, "SELECT hospital_code, report_date, median_wait_hours, attendances, is_complete_week FROM marts.fct_ed_daily"),
+        "monthly": _monthly(wh),
         "areas": _q(wh, "SELECT planning_area, residents_65plus, cdmp_clinics, cdmp_clinics_per_1k_seniors, clinics_as_of AS as_of "
                         "FROM marts.fct_area_access"),
         "live": _q(wh, "SELECT hospital_code, is_adult_ed, est_bed_wait_hours, est_bed_wait_qualifier, snapshot_at "
@@ -151,6 +163,7 @@ def run(inputs: dict[str, pd.DataFrame], failed: pd.DataFrame, today: date,
         "usual_gap": lambda: usual_gap.detect(w, h, cfg["usual_gap"], min_c, float(norm["usual_gap_pct_full"])),
         "weekday": lambda: weekday.detect(d, w, h, cfg["weekday"], min_c, float(norm["weekday_eps2_full"])),
         "volume_vs_wait": lambda: volume_vs_wait.detect(d, w, h, cfg["volume_vs_wait"], min_c),
+        "monthly_yoy": lambda: monthly_yoy.detect(inputs.get("monthly"), cfg["monthly_yoy"], min_c),
         "access_gap": lambda: access_gap.detect(inputs["areas"], cfg["access_gap"], min_c),
         "regional": lambda: regional.detect(cfg["regional"]),
         "source_gap": lambda: source_gap.detect(inputs["live"], d, cfg["source_gap"], float(norm["source_gap_hours_full"])),
@@ -240,7 +253,7 @@ def evidence_level(c: Candidate) -> str:
     effect excludes no difference) / tested (B1, docs/insights_method.md)."""
     if c.p_adjusted is None:
         return "observed"
-    if c.type == "volume_vs_wait":
+    if c.type in ASSOCIATION_TYPES:
         return "association-only"
     if c.ci is not None and c.ci_null is not None and (c.ci[0] > c.ci_null or c.ci[1] < c.ci_null):
         return "robust"

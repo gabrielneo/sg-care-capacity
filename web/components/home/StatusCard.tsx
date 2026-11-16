@@ -106,7 +106,7 @@ export function StatusCard({ status, hospital, note, live, weeklyAsOf, density =
         <p className="text-kpi font-semibold tabular-nums tracking-tight text-ink">
           <span data-testid="status-hours">{status.latest == null ? <Missing /> : <>{status.latest.toFixed(1)} <span className="text-small font-normal text-muted">h</span></>}</span>
         </p>
-        <span className="sc-spark ml-auto"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual, status.mad)} /></span>
+        <span className="sc-spark ml-auto"><Sparkline values={status.spark} tone={info.tone} band={usualBand(status.usual, status.low, status.high)} /></span>
       </div>
       {delta && status.usual != null ? (
         <p className="sc-delta text-small tabular-nums text-muted">

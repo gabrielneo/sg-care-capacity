@@ -78,7 +78,7 @@ test.describe("print", () => {
     const page_bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(page_bg).toBe("rgb(255, 255, 255)");
     const ink = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg-page").trim().toUpperCase());
-    expect(ink).toBe("#F6F1E8");
+    expect(ink).toBe("#F7FBFA");
     for (const hidden of ["body > header", "body > footer", '[data-testid="site-strip"]', '[data-testid="view-switch"]']) {
       await expect(page.locator(hidden).first()).toBeHidden();
     }

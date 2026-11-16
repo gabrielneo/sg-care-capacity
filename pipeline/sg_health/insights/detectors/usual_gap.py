@@ -2,8 +2,8 @@
 
 The same comparison as the site's status badge (web/lib/status.ts): the latest complete week's average of
 daily medians against the median of the 8 complete weeks before it. Published only at or above the
-"much higher" line (30% by default) and at least `min_z` (2) robust spreads above it, the badge's own rule. A volatile
-hospital's ordinary weeks clear 30% often (CGH and SGH did in 37% of weeks since 2025), so the % line alone
+"much higher" line (30% by default) and higher than every one of the 8 weeks before it, the badge's own rule. A
+volatile hospital's ordinary weeks clear 30% often (CGH and SGH did in 37% of weeks since 2025), so the % line alone
 would flag noise. It has no p-value, so it is outside the Benjamini-Hochberg correction.
 """
 from __future__ import annotations
@@ -14,7 +14,6 @@ from typing import Any
 import pandas as pd
 
 from ..model import Candidate, DetectorResult, Skip, chart, point
-from ..stats import robust_z
 from ..wording import hours, percent
 from .anomaly import SQL
 from .common import (
@@ -55,15 +54,14 @@ def detect(weekly: pd.DataFrame, hospitals: pd.DataFrame, cfg: dict[str, Any], m
             out.skips.append(Skip("usual_gap", code, "the usual level is not above zero"))
             continue
         ratio = x / usual - 1
-        z = robust_z(x, rows[have].to_numpy())             # None when the 8 weeks do not vary: the % line alone decides
-        steady_enough = z is None or z[0] >= float(cfg.get("min_z", 0))
+        beyond = x > float(rows[have].max()) if cfg.get("beyond_range", True) else True     # above all 8 weeks before
         points = [point(s.isoformat(), short_date(s), float(rows[s])) for s in [*trailing, latest]]
         value_text, unit_text = hours_parts(x)
         out.candidates.append(Candidate(
             type="usual_gap", entity=code, variant="worse",
-            method="Latest complete week against the median of the 8 complete weeks before it, and outside that hospital's own spread (no test)",
+            method="Latest complete week against the median of the 8 complete weeks before it, and higher than all 8 of them (no test)",
             n=k + 1, effect_size=ratio, effect_norm=min(max(ratio, 0.0) / full_effect, 1.0), metric_value=x, unit="hours",
-            comparison_value=usual, direction="worse", p_value=None, passes_effect=ratio >= line and steady_enough,
+            comparison_value=usual, direction="worse", p_value=None, passes_effect=ratio >= line and beyond,
             completeness=(len(have) + 1) / (k + 1), as_of=latest + timedelta(days=6), source="moh_bed_waits",
             values={"hospital": hospital_name(h), "week": week_text(latest), "value": hours(x), "usual": hours(usual),
                     "pct": percent(ratio * 100), "trailing": k, "window": latest.isoformat()},

@@ -15,7 +15,7 @@ for (const scheme of ["light", "dark"] as const) {
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(400);       // a drawer or story step still fading in would be read half transparent
         const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-        expect(bg).toBe(scheme === "light" ? "rgb(246, 241, 232)" : "rgb(21, 23, 28)");
+        expect(bg).toBe(scheme === "light" ? "rgb(247, 251, 250)" : "rgb(8, 20, 28)");
         await expectNoA11yViolations(page, { wcag22: true });
         await expectNoHorizontalScroll(page);
       });
@@ -36,7 +36,7 @@ test.describe("no theme switch", () => {
     await page.emulateMedia({ colorScheme: "light" });
     await page.goto("/methodology");
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
-    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(246, 241, 232)");
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(247, 251, 250)");
   });
 });
 
@@ -49,7 +49,7 @@ test.describe("/styleguide", () => {
     await expect(page.getByTestId("sample-chart").first()).toBeVisible();
     await expect(page.getByTestId("footer-notice")).toContainText("995");
     const bgs = await page.evaluate(() => ["light", "dark"].map((t) => getComputedStyle(document.querySelector(`[data-testid="specimen-${t}"]`)!).backgroundColor));
-    expect(bgs).toEqual(["rgb(246, 241, 232)", "rgb(21, 23, 28)"]);
+    expect(bgs).toEqual(["rgb(247, 251, 250)", "rgb(8, 20, 28)"]);
     await expectNoHorizontalScroll(page);
   });
 

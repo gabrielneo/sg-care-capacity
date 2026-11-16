@@ -1,3 +1,5 @@
+> **16 Nov 2026 update.** The colour scheme below ('Paper & Ink': warm paper, ink blue) was replaced at the owner's request because the first screen felt dead: the tokens are now a bright cool white with teal as the interface colour, coral and sun as decoration, and a deep ink-navy dark theme (`web/styles/tokens.css` is the source of truth). The landing page also gained motion (a hero that builds itself, blocks that rise in on scroll, figures that count up, bed-wait dots that slide to their values, a scroll-progress bar), all off with reduced motion and never hiding data (`web/test/motion.test.ts` keeps the rules). The rest of this brief (type scale, layout, wording) still holds.
+
 # Redesign brief: "Paper & Ink"
 
 The "calm & clear" redesign of the web app. This page is the reference for every redesign change:

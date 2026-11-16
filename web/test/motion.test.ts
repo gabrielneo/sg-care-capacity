@@ -4,8 +4,12 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Motion rules (UX audit D9). Data is never hidden behind a reveal. The only motion is a 120 ms colour change on hover and focus,
- * a 200 ms drawer or sheet slide, and a 180 ms accordion height, all from tokens and all off under prefers-reduced-motion.
+ * Motion rules. UX audit D9 allowed only a 120 ms colour change on hover and focus, a 200 ms drawer or sheet slide, and a 180 ms
+ * accordion height. On 16 Nov 2026 the owner asked for a livelier landing page ("it feels dead"), so the landing page now also has:
+ * a hero that builds itself on load, blocks that rise in as they scroll into view, figures that count up, the bed-wait dots sliding
+ * to their values, and a scroll-progress bar. The safeguards below are what keeps that from becoming a place data can hide:
+ * everything is under prefers-reduced-motion: no-preference, from duration tokens, only on the landing page, visible without JavaScript,
+ * never hidden by the server, shown in print, and shown at the latest after a fail-safe.
  */
 const root = path.join(__dirname, "..");
 const read = (rel: string) => readFileSync(path.join(root, rel), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -21,21 +25,42 @@ function tsx(dir: string): string[] {
 }
 
 describe("motion", () => {
-  it("only three keyframes exist: the drawer, the sheet and the delayed loading placeholder", () => {
-    expect([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]).sort()).toEqual(["care-drawer-in", "care-sheet-in", "show-after-delay"]);
+  it("the keyframes are the drawer, the sheet, the loading placeholder and the landing page's own", () => {
+    expect([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]).sort()).toEqual([
+      "care-drawer-in", "care-sheet-in", "landing-cue", "landing-draw", "landing-drift", "landing-fade", "landing-grow",
+      "landing-progress", "landing-pulse", "landing-rise", "landing-slide", "show-after-delay"]);
+  });
+
+  it("every landing keyframe sits inside a prefers-reduced-motion: no-preference block", () => {
+    const start = css.indexOf("@media (prefers-reduced-motion: no-preference) {\n  @keyframes landing-rise");
+    expect(start).toBeGreaterThan(-1);
+    const block = css.slice(start, css.indexOf("\n}\n", start));
+    for (const k of ["landing-rise", "landing-draw", "landing-fade", "landing-drift", "landing-pulse", "landing-slide", "landing-grow", "landing-cue", "landing-progress"]) {
+      expect(block).toContain(`@keyframes ${k}`);
+    }
+    expect(css.slice(0, start)).not.toMatch(/animation:\s*landing-/);          // nothing outside it starts a landing animation
   });
 
   it("every transition and animation duration is a motion token", () => {
     const bad = [...css.matchAll(/(?<![-\w])(?:transition|animation)(?:-duration)?\s*:\s*([^;}]+)/g)]
       .map((m) => m[1]!.trim())
-      .filter((v) => v !== "none" && !/var\(--dur-(hover|accordion|drawer)\)/.test(v) && !/^show-after-delay 0s linear 1s forwards$/.test(v) && !/^none !important$/.test(v));
+      .filter((v) => v !== "none" && !/var\(--dur-(hover|accordion|drawer|reveal|draw|drift)\)/.test(v) && v !== "landing-progress linear both" && !/^show-after-delay 0s linear 1s forwards$/.test(v) && !/^none !important$/.test(v));
     expect(bad).toEqual([]);
   });
 
-  it("the three durations are 120, 180 and 200 ms", () => {
+  it("the interface durations are 120, 180 and 200 ms, and the landing page's are 700 ms, 1.6 s and 18 s", () => {
     expect(tokens).toMatch(/--dur-hover:\s*120ms/);
     expect(tokens).toMatch(/--dur-accordion:\s*180ms/);
     expect(tokens).toMatch(/--dur-drawer:\s*200ms/);
+    expect(tokens).toMatch(/--dur-reveal:\s*700ms/);
+    expect(tokens).toMatch(/--dur-draw:\s*1600ms/);
+    expect(tokens).toMatch(/--dur-drift:\s*18s/);
+  });
+
+  it("only transform, opacity and the hero stroke are animated, so nothing shifts the layout", () => {
+    const keyframes = [...css.matchAll(/@keyframes\s+landing-[\w-]+\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g)].map((m) => m[1]!);
+    const props = new Set(keyframes.flatMap((b) => [...b.matchAll(/([\w-]+)\s*:/g)].map((m) => m[1]!)));
+    expect([...props].sort()).toEqual(["opacity", "stroke-dashoffset", "transform"]);
   });
 
   it("prefers-reduced-motion switches every animation and transition off", () => {
@@ -48,7 +73,7 @@ describe("motion", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: no-preference\)\s*\{\s*@supports[\s\S]*?::details-content/);
   });
 
-  it("no component hides content until it scrolls into view", () => {
+  it("no component hides content with a utility class, and none uses Tailwind's animation or transition classes", () => {
     const hits = tsx("components").concat(tsx("app")).flatMap((f) => {
       const src = readFileSync(path.join(root, f), "utf8");
       const out: string[] = [];
@@ -59,10 +84,34 @@ describe("motion", () => {
     expect(hits).toEqual([]);
   });
 
-  it("IntersectionObserver is only used for page chrome and the lazy map, never for data", () => {
+  it("a block is hidden only by [data-reveal=armed], only in no-preference, and only the browser sets that after load", () => {
+    expect(css.match(/\[data-reveal="armed"\]\s*\{[^}]*opacity:\s*0/g)).toHaveLength(1);
+    const noPref = css.indexOf("@media (prefers-reduced-motion: no-preference) {\n  @keyframes landing-rise");
+    expect(css.indexOf('[data-reveal="armed"] { opacity: 0')).toBeGreaterThan(noPref);
+    const armedBy = tsx("components").concat(tsx("app")).filter((f) => /dataset\.reveal\s*=\s*"armed"/.test(readFileSync(path.join(root, f), "utf8")))
+      .map((f) => f.replace(/\\/g, "/"));
+    expect(armedBy).toEqual(["components/motion/Reveal.tsx"]);
+    const reveal = readFileSync(path.join(root, "components/motion/Reveal.tsx"), "utf8");
+    expect(reveal).toMatch(/prefers-reduced-motion: reduce/);       // left alone with reduced motion
+    expect(reveal).toMatch(/getBoundingClientRect\(\)\.top < window\.innerHeight/);   // never hides what is already on screen
+    expect(reveal).toMatch(/FAILSAFE_MS = 6000/);
+    expect(reveal).not.toMatch(/data-reveal="armed"/);                // the server never renders the hidden state
+  });
+
+  it("print shows every block, with no hidden state and no moving parts", () => {
+    expect(css).toMatch(/@media print \{ \[data-reveal\] \{ opacity: 1 !important; transform: none !important; \}/);
+  });
+
+  it("only the landing page and the motion folder use the landing motion", () => {
+    const users = tsx("components").concat(tsx("app")).filter((f) => /\b(Reveal|CountUp|HeroLine|ScrollProgress|landing-rise)\b/.test(readFileSync(path.join(root, f), "utf8")))
+      .map((f) => f.replace(/\\/g, "/")).filter((f) => !f.startsWith("components/motion/")).sort();
+    expect(users).toEqual(["app/page.tsx"]);
+  });
+
+  it("IntersectionObserver is only used for page chrome, the lazy map and the landing page's reveals and counters, never for data", () => {
     const used = tsx("components").concat(tsx("app")).filter((f) => /IntersectionObserver/.test(readFileSync(path.join(root, f), "utf8")))
       .map((f) => f.replace(/\\/g, "/")).sort();
-    expect(used).toEqual(["components/OnThisPage.tsx", "components/SiteStrip.tsx", "components/home/CareMap.tsx"]);
+    expect(used).toEqual(["components/OnThisPage.tsx", "components/SiteStrip.tsx", "components/home/CareMap.tsx", "components/motion/CountUp.tsx", "components/motion/Reveal.tsx"]);
   });
 });
 

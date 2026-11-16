@@ -68,7 +68,7 @@ export function SummaryStrip({ statuses, hospitals, meta, latestWeek }: {
                      lede={aboveUsualLede(above.map((s) => (() => { const h = hospitals.find((x) => x.hospital_code === s.code); return h ? fullName(h) : s.code; })()), rankable.length - noComparison)} ledeTestId="summary-lede"
                      measure={<>
                        <span className="block">Usual is the median of a hospital&apos;s previous {USUAL_WEEKS} complete weeks.</span>
-                       <span className="mt-1 block">Above usual means the badge is higher ({HIGHER_PCT}% or more above usual) or much higher ({MUCH_HIGHER_PCT}% or more), and the week is also well outside that hospital&apos;s own usual swings.</span>
+                       <span className="mt-1 block">Above usual means the badge is higher ({HIGHER_PCT}% or more above usual) or much higher ({MUCH_HIGHER_PCT}% or more), and the week is also beyond every one of that hospital&apos;s previous {USUAL_WEEKS} weeks.</span>
                        <span className="mt-1 block">The typical bed wait is the median of the full emergency departments&apos; weekly averages.</span>
                        <span className="mt-1 block">The urgent care centre is in none of the four.</span>
                      </>} />

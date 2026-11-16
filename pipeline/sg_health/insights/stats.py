@@ -142,3 +142,47 @@ def mean_difference_ci(a: np.ndarray, b: np.ndarray, **kw) -> tuple[float, float
 def spearman_ci(x: np.ndarray, y: np.ndarray, **kw) -> tuple[float, float] | None:
     """CI of Spearman's rho, resampling (x, y) pairs together."""
     return bootstrap_ci((x, y), lambda a, b: stats.spearmanr(a, b).statistic, paired=True, **kw)
+
+
+def circular_shift_spearman(x: np.ndarray, y: np.ndarray) -> tuple[float, float]:
+    """Spearman's rho of two time-ordered series, and a p-value that allows for their autocorrelation.
+
+    Year-on-year changes of neighbouring months share most of their make-up and the two series drift together, so the
+    usual p-value (which assumes independent pairs) is too small. Here the null is built from the data itself: y is
+    rotated against x by every shift 1 .. n-1, which keeps each series' own serial pattern and breaks only their
+    alignment. p = (1 + shifts with |rho| at least as large) / n. With n months the smallest p is 1/n.
+    """
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    n = len(x)
+    rho = float(stats.spearmanr(x, y).statistic)
+    rx = stats.rankdata(x)
+    ry = stats.rankdata(y)
+    def r(a: np.ndarray, b: np.ndarray) -> float:
+        return float(np.corrcoef(a, b)[0, 1])
+    # Rotating before ranking would change the ranks; ranks are rotation-invariant as a set, so rotate the ranks.
+    obs = abs(r(rx, ry))
+    hits = sum(1 for s in range(1, n) if abs(r(rx, np.roll(ry, s))) >= obs - 1e-12)
+    return rho, (1 + hits) / n
+
+
+def block_bootstrap_spearman_ci(x: np.ndarray, y: np.ndarray, *, block: int = 6, resamples: int = 2000, level: float = 0.95,
+                                seed: int = 20261114) -> tuple[float, float] | None:
+    """Percentile interval of Spearman's rho from a moving-block bootstrap: runs of `block` consecutive months are drawn with
+    replacement (keeping the serial pattern inside each run) until the series is as long as the original. None if it can't be computed."""
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    n = len(x)
+    if n < 2 * block:
+        return None
+    rng = np.random.default_rng(seed)
+    starts = np.arange(n - block + 1)
+    per = -(-n // block)
+    out = []
+    for _ in range(resamples):
+        idx = np.concatenate([np.arange(s, s + block) for s in rng.choice(starts, per)])[:n]
+        v = stats.spearmanr(x[idx], y[idx]).statistic
+        if math.isfinite(v):
+            out.append(v)
+    if len(out) < resamples // 2:
+        return None
+    lo, hi = np.percentile(out, [100 * (1 - level) / 2, 100 * (1 + level) / 2])
+    return float(lo), float(hi)

@@ -112,9 +112,10 @@ match the insight engine's, so a chart and its finding agree ([insights_method.m
   level, and the charts say so rather than guess.
 - **Latest week against usual:** the latest complete week as hours, or as a % of the usual level.
 - **Status badges and unusual-week findings** need two things, not one: the week is at least 15% (badge) or 30%
-  (finding) away from usual, **and** at least 2 robust spreads away (median and MAD of the same 8 weeks). A hospital
-  whose weeks swing widely then needs a bigger move than a steady one. On the % lines alone, CGH and SGH carried a
-  badge in 83% of weeks since 2025; with the spread rule it is 24%.
+  (finding) away from usual, **and** beyond every one of the 8 weeks before it (higher than all of them, or lower than all
+  of them). A hospital whose weeks swing widely then needs a bigger move than a steady one. On the % lines alone, CGH and SGH
+  carried a badge in 83% of weeks since 2025; with the second rule it is 30%. The chart of the latest week against usual uses the
+  same words as the badge, so a move too small or too ordinary to earn a badge reads "about usual" there too.
 - **Weekday pattern:** each weekday's average of daily medians, as a % above or below the hospital's
   own average. It uses the complete weeks among the 26 up to the latest complete week. A hospital
   with fewer than 4 complete weeks there is not shown.

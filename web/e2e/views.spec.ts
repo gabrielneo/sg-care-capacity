@@ -177,12 +177,12 @@ test.describe("Home views", () => {
     await expect(page.getByTestId("sort-links")).toHaveCount(0);
   });
 
-  test("the whole card links to the hospital's trends", async ({ page }) => {
+  test("the whole card links to the hospital's month-by-month page", async ({ page }) => {
     await page.goto("/find?view=planner");
     const card = page.locator('[data-testid=status-card][data-hospital="SGH"]');
     const box = (await card.boundingBox())!;
     await card.click({ position: { x: box.width - 8, y: box.height - 8 } });              // a corner, away from the title text
-    await expect(page).toHaveURL(/\/ed-trends\?hospital=SGH/);
+    await expect(page).toHaveURL(/\/hospital\/SGH/);
   });
 
   test("planner at 1280×800: the summary strip is above the fold and the first row of cards starts within a screen and a half", async ({ page }) => {

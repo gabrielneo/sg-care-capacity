@@ -40,6 +40,24 @@ export async function expectNoA11yViolations(page: Page, { wcag22 = false }: { w
   expect(summary).toEqual([]);
 }
 
+/**
+ * Let the landing page's motion finish before a reader's view is measured: scroll to the bottom and back so every block has arrived, then wait for
+ * each finite animation to end. (Axe reads the colour it finds, so it must not run while text is still fading in.)
+ */
+export async function settleMotion(page: Page) {
+  await page.evaluate(async () => {
+    for (let y = 0; y < document.documentElement.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)); }
+    window.scrollTo(0, 0);
+    // A block that has not yet been reached holds its animations paused: wait until every one has arrived (the fail-safe is 6 s).
+    for (let i = 0; i < 80 && document.querySelectorAll('[data-reveal="armed"]').length; i += 1) await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 300));
+    await Promise.all(document.getAnimations()
+      .filter((a) => a.timeline instanceof DocumentTimeline && a.effect?.getComputedTiming().iterations !== Infinity)   // not the scroll-linked bar, which only finishes at the bottom
+      .map((a) => a.finished.catch(() => undefined)));
+  });
+  await page.waitForTimeout(900);          // the reveal transitions (700 ms) that were started by the last scroll
+}
+
 /** No sideways scrolling of the page itself. */
 export async function expectNoHorizontalScroll(page: Page) {
   const { scroll, viewport } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, viewport: window.innerWidth }));

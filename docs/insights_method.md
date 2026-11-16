@@ -68,6 +68,7 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
      - anomaly: |z| / 7, capped at 1;
      - weekday: ε² / 0.14 (a "large" effect), capped at 1;
      - visits vs waits: |ρ|;
+     - monthly year on year: |ρ|;
      - access gap: the priority score;
      - source gap: |gap| / 4 hours, capped at 1;
      - usual gap: the % above usual / 60%, capped at 1.
@@ -121,6 +122,35 @@ the engine, so the website writes no finding text and computes no finding number
   names), and are phrases of at most 12 words.
 - **The first caveat** is the finding's own, for example "One unusual week is not a trend." The site
   shows it beside the finding.
+
+## 9. monthly_yoy
+
+- **Question:** Do months with more ED visits than a year before also have longer bed waits than a year before?
+- **Method:**
+  - **Data:** the full emergency departments MOH reported throughout, together (`marts.fct_ed_system_monthly`): each
+    complete month's change in visits and in average bed wait against the same month a year earlier, over the latest
+    36 months. A month counts only when it and the month a year before are both complete.
+  - **Statistic:** Spearman's correlation between the two changes. Strength labels as for `volume_vs_wait`.
+  - **Why year on year:** setting each month against the same month a year earlier removes the yearly pattern (May
+    runs long, August short), which would otherwise make visits and waits look linked.
+  - **Significance:** neighbouring months' changes overlap and drift together, so the usual p-value, which assumes
+    independent pairs, would be too small. The test rotates one series against the other by every possible shift
+    and counts how often a rotation links them as strongly as the real months do. That keeps each series' own serial
+    pattern. With 34 months the smallest possible p is 1 in 34, so this finding passes only with a strong link.
+  - **Interval:** a moving-block bootstrap (blocks of 6 months, 2,000 resamples, the same seed), so each block keeps
+    its serial pattern.
+- **Gate:**
+  - at least 24 months with both changes, and 80% of the months that could have one;
+  - adjusted p < 0.05 (it joins the same Benjamini-Hochberg correction as every other test);
+  - not "negligible" (|ρ| of 0.1 or more).
+  - It is published but **never a headline finding**: its months overlap, so it is the weakest test here.
+- **Why this method:** it asks the system-wide question the daily test per hospital can't, with a null that matches how
+  the months are built.
+- **Limitations:**
+  - **An association, not a mechanism:** both can follow a third thing, such as a change in how beds are managed.
+  - **34 months is short,** and one unusual month moves a rank correlation: it can pass in one release and not the next.
+  - **Every hospital counts equally** in the average, whatever its size, and the group excludes Alexandra and Woodlands.
+  - **Visits include non-urgent cases,** while the bed wait covers admitted patients only.
 
 ## Why scipy
 
@@ -317,9 +347,9 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - **Size:** the percentage above usual.
 - **Gate:**
   - the latest week and all 8 weeks before it must be complete;
-  - at least **30% above** usual (the badge's "much higher" line, `usual_gap.min_pct_above`), **and** at
-    least 2 robust spreads above it (`usual_gap.min_z`, the median and MAD of the 8 weeks, as the
-    anomaly detector): a volatile hospital's ordinary weeks clear 30% often;
+  - at least **30% above** usual (the badge's "much higher" line, `usual_gap.min_pct_above`), **and** higher
+    than every one of the 8 weeks before it (`usual_gap.beyond_range`, the badge's second line): a volatile
+    hospital's ordinary weeks clear 30% often;
   - only a rise is published; there is no p-value, so the finding is outside the Benjamini-Hochberg
     correction and is worded as a plain comparison, never as a significant result.
 - **Why this method:** it is the figure a planner already sees on the home page, so a finding and the badge

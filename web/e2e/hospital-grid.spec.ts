@@ -89,7 +89,7 @@ test("a card is one focus stop, with a visible ring, named with its trend", asyn
   await expect(card.getByRole("button")).toHaveCount(0);
   await card.getByRole("link").focus();
   await expect(card).toHaveCSS("outline-style", "solid");
-  await expect(card.getByRole("link")).toHaveAccessibleName(/, (rising|falling|steady) over 12 weeks|, too few weeks to describe a trend$/);
+  await expect(card.getByRole("link")).toHaveAccessibleName(/\([A-Z]+\)( , .+)?$/);   // the hospital, then its badge
 });
 
 test("only a card above usual has a status-coloured left edge", async ({ page, viewport }) => {

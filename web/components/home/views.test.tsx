@@ -188,7 +188,7 @@ describe("StatusGrid", () => {
   it("only mentions the line where a line is shown", () => {
     const { unmount } = render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week} density="simple" />);
     expect(screen.getByTestId("status-key")).not.toHaveTextContent("The line shows");
-    expect(screen.getByTestId("status-key")).toHaveTextContent("Higher = 15% or more above usual; much higher = 30% or more; both also need a move well outside that hospital's own usual swings.");
+    expect(screen.getByTestId("status-key")).toHaveTextContent("Higher = 15% or more above usual; much higher = 30% or more; both also need the week to be beyond all of that hospital's previous 8 weeks.");
     unmount();
     setTestScope(createScope());
     render(<StatusGrid statuses={statuses} hospitals={hospitals} live={[]} meta={edMeta} latestWeek={week} />);

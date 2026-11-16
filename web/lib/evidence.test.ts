@@ -11,6 +11,7 @@ describe("evidence levels (audit B1)", () => {
     expect(evidenceOf({ ...base, evidence_level: "robust" })).toBe("robust");
     expect(evidenceOf({ ...base, evidence_level: null, p_adjusted: null })).toBe("observed");
     expect(evidenceOf({ ...base, evidence_level: null, p_adjusted: 0.001, type: "volume_vs_wait" })).toBe("association-only");
+    expect(evidenceOf({ ...base, evidence_level: null, p_adjusted: 0.001, type: "monthly_yoy" })).toBe("association-only");
     expect(evidenceOf({ ...base, evidence_level: null, p_adjusted: 0.001, type: "trend" })).toBe("tested");
     expect(EVIDENCE_LABEL.observed).toBe("Observed, not tested");
   });

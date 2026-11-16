@@ -43,6 +43,9 @@
   --color-div-5: var(--div-5);
   --color-div-6: var(--div-6);
   --color-div-7: var(--div-7);
+  --color-pop: var(--pop);
+  --color-pop-soft: var(--pop-soft);
+  --color-sun: var(--sun);
   --color-cat-1: var(--cat-1);
   --color-cat-2: var(--cat-2);
   --color-cat-3: var(--cat-3);
@@ -141,6 +144,60 @@
     }
   }
 }
+
+/*
+ * Landing-page motion (owner request, 16 Nov 2026: "more alive"). The rules, kept by test/motion.test.ts:
+ *  - Only the landing page uses it, only under prefers-reduced-motion: no-preference, and never for data the reader must wait for:
+ *    a block is plain and visible until the page has loaded in the browser, and the fail-safe in components/motion/Reveal.tsx shows
+ *    anything still hidden after 6 seconds. Print shows everything.
+ *  - Only transform and opacity move (plus the hero line's stroke), so nothing shifts the layout.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes landing-rise { from { opacity: 0; transform: translateY(1.5rem); } }
+  @keyframes landing-draw { from { stroke-dashoffset: 1; } }
+  @keyframes landing-fade { from { opacity: 0; } }
+  @keyframes landing-drift { to { transform: translate3d(3rem, 2rem, 0) scale(1.15); } }
+  @keyframes landing-pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.2); opacity: 0; } }
+  @keyframes landing-slide { from { transform: translateX(calc(var(--dx, 0) * 1cqw)); } }
+  @keyframes landing-grow { from { transform: scaleX(0); } }
+  @keyframes landing-cue { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(0.5rem); } }
+  @keyframes landing-progress { to { transform: scaleX(1); } }
+
+  /* The hero builds itself on load, one piece after another (--delay). */
+  .landing-rise { animation: landing-rise var(--dur-reveal) var(--ease-out) both; animation-delay: var(--delay, 0ms); }
+  .hero-stroke { stroke-dasharray: 1; animation: landing-draw var(--dur-draw) var(--ease-out) both; animation-delay: 400ms; }
+  .hero-area { animation: landing-fade var(--dur-draw) var(--ease-out) both; animation-delay: 900ms; }
+  .hero-pulse { transform-box: fill-box; transform-origin: center; animation: landing-pulse var(--dur-draw) ease-out infinite; animation-delay: 1600ms; }
+  .hero-blob { animation: landing-drift var(--dur-drift) ease-in-out infinite alternate; }
+  .hero-cue { animation: landing-cue var(--dur-draw) ease-in-out infinite; }
+
+  /* Blocks below the fold rise in as they arrive (components/motion/Reveal.tsx arms them after load, so the server never hides anything). */
+  [data-reveal] { transition: opacity var(--dur-reveal) var(--ease-out), transform var(--dur-reveal) var(--ease-out); transition-delay: var(--delay, 0ms); }
+  [data-reveal="armed"] { opacity: 0; transform: translateY(1.5rem); }
+  [data-reveal="in"] { opacity: 1; transform: none; }
+
+  /* The bed-wait dots slide from "usual" to this week's value, and their lines grow, when the chart arrives. */
+  [data-animate] .dumbbell-track { container-type: inline-size; }
+  [data-animate] .dumbbell-dot { animation: landing-slide var(--dur-reveal) var(--ease-out) both; animation-delay: var(--delay, 0ms); }
+  [data-animate] .dumbbell-bar { animation: landing-grow var(--dur-reveal) var(--ease-out) both; animation-delay: var(--delay, 0ms); }
+  [data-reveal="armed"] [data-animate] .dumbbell-dot, [data-reveal="armed"] [data-animate] .dumbbell-bar,
+  [data-reveal="armed"] .dumbbell-dot, [data-reveal="armed"] .dumbbell-bar { animation-play-state: paused; }
+
+  /* The scroll-progress bar fills as the page scrolls: a scroll timeline, where the browser has them. */
+  @supports (animation-timeline: scroll()) {
+    .scroll-progress { animation: landing-progress linear both; animation-timeline: scroll(root block); }
+  }
+}
+.hero-blob { position: absolute; border-radius: 9999px; pointer-events: none; }
+.scroll-progress { position: fixed; inset: 0 0 auto 0; z-index: 60; height: var(--bar-status); transform: scaleX(0); transform-origin: left;
+  background: linear-gradient(90deg, var(--accent), var(--pop), var(--sun)); }
+/* Print and reduced motion: everything is shown, nothing moves. */
+@media print { [data-reveal] { opacity: 1 !important; transform: none !important; } .scroll-progress, .hero-blob { display: none; } }
+
+.cta-primary { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); box-shadow: var(--shadow-float);
+  transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
+.cta-primary:hover { transform: translateY(-0.125rem); }
+.text-gradient { background: linear-gradient(100deg, var(--accent), var(--pop)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* Links in navigation, tabs and cards: no underline until hover or keyboard focus. Links in running text keep the base rule (always underlined). */
 @utility link-quiet {

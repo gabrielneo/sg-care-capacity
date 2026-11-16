@@ -32,10 +32,11 @@ def headline_ranks(rows: list[dict]) -> dict[str, int]:
     """insight_id -> 1..N: the highest rank_score, at most one per detector. An urgent-care finding is
     never a headline: the headlines are the system-wide takeaways, and the UCC isn't compared with EDs (ADR 0012)."""
     n = int(thresholds()["engine"]["headline_count"])
+    never = set(thresholds()["engine"].get("never_headline") or [])
     out: dict[str, int] = {}
     used: set[str] = set()
     for r in sorted(rows, key=order):
-        if r.get("scope") == URGENT_CARE or r["type"] in used:
+        if r.get("scope") == URGENT_CARE or r["type"] in used or r["type"] in never:
             continue
         used.add(r["type"])
         out[r["insight_id"]] = len(out) + 1

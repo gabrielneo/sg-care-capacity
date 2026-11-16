@@ -480,7 +480,7 @@ class InsightChart(BaseModel):
 
 class Insight(BaseModel):
     insight_id: str
-    type: Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "access_gap", "regional", "source_gap"]
+    type: Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "monthly_yoy", "access_gap", "regional", "source_gap"]
     source_ids: list[str] = Field(default_factory=list, description=(
         "The sources this finding is computed from (keys of meta.sources, each with its own as_of). An ED "
         "finding uses MOH only; an access finding uses the CHAS clinic list, SingStat and the area boundaries"))

@@ -19,20 +19,25 @@ describe("levelFor: the badge thresholds", () => {
     [-14.9, "usual"], [-15, "lower"], [-40, "lower"],
   ] as const)("%s%% vs usual is %s", (pct, level) => expect(levelFor(pct)).toBe(level));
 
-  it("a big % move inside the hospital's own spread is not a badge (z under 2)", () => {
-    expect(levelFor(35, 1.9)).toBe("usual");
-    expect(levelFor(35, 2)).toBe("much_higher");
-    expect(levelFor(20, 2.5)).toBe("higher");
-    expect(levelFor(-20, -1.2)).toBe("usual");
-    expect(levelFor(-20, -2)).toBe("lower");
+  it("a big % move inside the range of the 8 weeks before is not a badge", () => {
+    expect(levelFor(35, 0)).toBe("usual");
+    expect(levelFor(35, 1)).toBe("much_higher");
+    expect(levelFor(20, 1)).toBe("higher");
+    expect(levelFor(-20, 0)).toBe("usual");
+    expect(levelFor(-20, -1)).toBe("lower");
   });
 
-  it("a small % move is not a badge however large the z", () => {
-    expect(levelFor(10, 6)).toBe("usual");
-    expect(levelFor(-10, -6)).toBe("usual");
+  it("a move the wrong way is not a badge: above all 8 weeks does not make a fall 'lower'", () => {
+    expect(levelFor(-20, 1)).toBe("usual");
+    expect(levelFor(35, -1)).toBe("usual");
   });
 
-  it("the 8 weeks not varying at all (no z): the % line alone decides", () => {
+  it("a small % move is not a badge however far outside the range", () => {
+    expect(levelFor(10, 1)).toBe("usual");
+    expect(levelFor(-10, -1)).toBe("usual");
+  });
+
+  it("no position given: the % line alone decides", () => {
     expect(levelFor(35, null)).toBe("much_higher");
     expect(levelFor(-20, null)).toBe("lower");
   });
@@ -141,11 +146,9 @@ describe("levelCounts", () => {
 });
 
 describe("the usual band matches the badge rule", () => {
-  it("is at least HIGHER_PCT wide, and widens with a hospital's own spread", () => {
+  it("is at least HIGHER_PCT wide, and widens to the range of the 8 weeks before", () => {
     expect(usualBand(10)).toEqual([8.5, 11.5]);
-    const [lo, hi] = usualBand(10, 1.5)!;                 // 2 x 1.5 / 0.6745 = 4.45 h each side
-    expect(hi - 10).toBeCloseTo(4.448, 2);
-    expect(10 - lo).toBeCloseTo(4.448, 2);
-    expect(usualBand(10, 0.1)).toEqual([8.5, 11.5]);       // a steady hospital: the % line is the wider one
+    expect(usualBand(10, 6, 14)).toEqual([6, 14]);                 // a swinging hospital: its own range is wider than 15%
+    expect(usualBand(10, 9.5, 10.6)).toEqual([8.5, 11.5]);         // a steady one: the % line is the wider
   });
 });

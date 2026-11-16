@@ -96,6 +96,20 @@ volume_vs_wait:
     change_word: "{strength_label} link"
     callout: "{lead} the busiest days: {diff} {longer_shorter} than {lead_lower} the quietest"
 
+monthly_yoy:
+  positive:
+    headline: "Across the full EDs, months with higher visits than a year before tend to have longer bed waits."
+    detail: "Each month is set against the same month a year before, over {n} months, so the usual yearly pattern is removed."
+    metric_label: "Correlation of the change in visits with the change in bed wait"
+    change_word: "{strength_label} link"
+    callout: "Highest-visit months: wait change {diff} points {higher_lower} than lowest"
+  negative:
+    headline: "Across the full EDs, months with higher visits than a year before tend to have shorter bed waits."
+    detail: "Each month is set against the same month a year before, over {n} months, so the usual yearly pattern is removed."
+    metric_label: "Correlation of the change in visits with the change in bed wait"
+    change_word: "{strength_label} link"
+    callout: "Highest-visit months: wait change {diff} points {higher_lower} than lowest"
+
 access_gap:
   worse:
     headline: "{area} has about {shortfall} fewer CDMP GP {shortfall_n|clinic|clinics} than the benchmark rate would give its seniors."

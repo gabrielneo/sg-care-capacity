@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll, settleMotion } from "./helpers";
 
 /*
  * The landing page ("/", 16 Nov 2026): a short claim, two pictures each with one short note, and three ways on. The clinic
@@ -80,9 +80,41 @@ test.describe("Landing", () => {
       await page.goto("/");
       await expect(page).toHaveTitle(/\S/);       // Next streams a dynamic page's <title>; axe must not look before it is in the head
       await expectNoHorizontalScroll(page);
+      await settleMotion(page);
       await expectNoA11yViolations(page, { wcag22: true });
     });
   }
+
+  test("with reduced motion nothing animates, nothing is hidden, and axe passes at once", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await expect(page).toHaveTitle(/\S/);
+    expect(await page.evaluate(() => document.querySelectorAll('[data-reveal="armed"]').length)).toBe(0);
+    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+    await expect(page.getByTestId("landing-stat").first()).toBeVisible();
+    await expectNoA11yViolations(page, { wcag22: true });
+  });
+
+  test("blocks below the first screen rise in as they arrive, and are all shown once reached", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 700 });
+    await page.goto("/");
+    await expect(page).toHaveTitle(/\S/);
+    // Hidden only after the page has loaded in the browser, and only what starts below the fold: the hero is never hidden.
+    await expect(page.getByTestId("landing-hero")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.querySelectorAll('[data-reveal="armed"]').length)).toBeGreaterThan(0);
+    await settleMotion(page);
+    expect(await page.evaluate(() => document.querySelectorAll('[data-reveal="armed"]').length)).toBe(0);
+    await expect(page.getByTestId("landing-waits")).toBeVisible();
+  });
+
+  test("the hero line and the three figures are drawn from the data, each with its date and source", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("hero-line")).toHaveAttribute("aria-label", /average bed wait.*hours/);
+    await expect(page.getByTestId("hero-source")).toHaveText(/^Data as of \d{1,2} [A-Z][a-z]{2} \d{4} · Source: /);
+    await settleMotion(page);
+    for (const stat of await page.getByTestId("landing-stat").all()) await expect(stat).toContainText(/\d/);
+  });
 
   test("Home is the current page here, and Explore is current on the finder", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });

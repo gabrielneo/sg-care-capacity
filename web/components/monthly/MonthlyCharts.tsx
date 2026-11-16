@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { ChartFrame } from "@/components/ChartFrame";
 import { Chapters } from "@/components/Section";
 import { Glossed } from "@/components/terms/Glossed";
@@ -13,8 +15,10 @@ import { YearSoFarTable } from "./YearSoFarTable";
 const YEAR_COLORS = ["cat-3", "cat-2", "cat-1"] as const;
 
 /** The month-by-month charts, the same for the whole system and for one hospital: only the points and the words differ. */
-export function MonthlyCharts({ points, meta, subject, csv, caveat }: {
+export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = null }: {
   points: Point[]; meta: Meta; subject: string; csv: string; caveat: string;
+  /** Findings shown above the change bars (the engine's own; nothing is written here). Renders nothing when there are none. */
+  findings?: ReactNode;
 }) {
   const wait = timeSeries(points, "wait");
   const labels = wait.map((p) => `${p.label.slice(0, 3)} ${p.label.slice(-2)}`);
@@ -55,6 +59,7 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat }: {
                   summary="Bars of the percentage change in the average bed wait, and in ED visits, against the same month a year earlier. A month with no complete month a year before has no bar."
                   table="self"
                   description={<Glossed text="Bars above 0 mean a longer wait (or more visits) than a year before. Only months complete in both years are drawn. This describes change; it does not show why." />}>
+        {findings}
         <ChangeBars labels={labels} every={6} values={waitYoy.map((p) => p.value)} tone="wait" unit="Bed wait, % change on the same month a year before"
                     summary="Percentage change in the average bed wait against the same month a year before." testId="change-bars-wait" />
         <div className="mt-6">
