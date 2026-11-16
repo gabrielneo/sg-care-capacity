@@ -5,6 +5,7 @@ import { Callouts } from "@/components/edcharts/Callouts";
 import { HospitalName } from "@/components/HospitalName";
 import { MONTHLY_CAVEAT, MonthlyCharts } from "@/components/monthly/MonthlyCharts";
 import { PageHeader } from "@/components/PageHeader";
+import { Glossed } from "@/components/terms/Glossed";
 import { ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
@@ -86,7 +87,7 @@ export default async function MonthlyPage() {
           </table>
         </div>
         {!monthlyRes.ok ? <p className="mt-2 text-small text-muted">The hospital figures can&apos;t be shown right now.</p> : null}
-        <p className="mt-2 text-small"><Link href="/ed-trends">See daily figures on ED Trends</Link></p>
+        <p className="mt-2 text-small"><Link href="/ed-trends"><Glossed text="See daily figures on ED Trends" /></Link></p>
       </section>
       <MonthlyCharts points={points} meta={systemRes.value.meta} subject="Full emergency departments" csv="/export/ed-system-monthly.csv?months=48&context=1" caveat={MONTHLY_CAVEAT}
                      findings={insightsRes.ok ? <Callouts insights={insightsRes.value.data} types={["monthly_yoy"]} codes={[]} hospitals={hospitals} meta={insightsRes.value.meta} label="visits and bed waits, year on year" /> : null} />

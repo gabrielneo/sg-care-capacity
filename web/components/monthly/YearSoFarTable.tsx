@@ -9,13 +9,13 @@ export function YearSoFarTable({ rows }: { rows: YearSoFar[] }) {
   const span = monthsText(rows[0]!.months);
   return (
     <table className="w-full border-separate border-spacing-0 text-small tabular-nums" data-testid="year-so-far">
-      <caption className="sr-only">{`Each year's average bed wait and total ED visits over the same months (${span}), and the change from the year before`}</caption>
+      <caption className="sr-only">{`Each year's average bed wait and total emergency department visits over the same months (${span}), and the change from the year before`}</caption>
       <thead>
         <tr>
           <th scope="col" className="pr-3 text-left font-semibold text-muted">{span}</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">Bed wait (hours)</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">vs year before</th>
-          <th scope="col" className="px-2 text-right font-semibold text-ink">ED visits</th>
+          <th scope="col" className="px-2 text-right font-semibold text-ink">Visits</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">vs year before</th>
         </tr>
       </thead>

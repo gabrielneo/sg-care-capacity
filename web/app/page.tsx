@@ -122,7 +122,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           </div>
           {showHero ? (
             <div className="landing-rise rounded-xl border border-line bg-surface p-4 shadow-popover sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
-              <p className="text-small font-semibold text-ink">Average bed wait at the full EDs, month by month</p>
+              <p className="text-small font-semibold text-ink">Average bed wait at the full emergency departments, month by month</p>
               <HeroLine points={heroLine} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
               <p className="mt-1 flex justify-between text-meta text-muted" data-testid="hero-range">
                 <span>{heroLine.find((p) => p.value != null)?.label}</span>
@@ -140,7 +140,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           <Reveal className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
             {[
               { id: "wait", figure: <CountUp value={newest.wait ?? 0} decimals={1} />, unit: "hours", label: `average bed wait, ${newestName}` },
-              { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, unit: "", label: `ED visits at the full EDs, ${newestName}` },
+              { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, unit: "", label: `emergency department visits, ${newestName}` },
               ...(newest.waitYoy != null
                 ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />, unit: "", label: `change in bed wait, against ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
             ].map((t) => (

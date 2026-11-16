@@ -51,12 +51,12 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                    summary={`Average bed wait by month for ${years.join(", ")}, in hours.`} />
         <div className="mt-6">
           <LineChart labels={[...MONTHS]} unit="ED visits in the month" series={yearSeries("visits")} testId="year-lines-visits"
-                     summary={`ED visits by month for ${years.join(", ")}.`} />
+                     summary={`Emergency department visits by month for ${years.join(", ")}.`} />
         </div>
       </ChartFrame>
 
       <ChartFrame title={`${subject}: change against the same month a year before`} slug="monthly-change" meta={meta} caveat={caveat} csv={csv}
-                  summary="Bars of the percentage change in the average bed wait, and in ED visits, against the same month a year earlier. A month with no complete month a year before has no bar."
+                  summary="Bars of the percentage change in the average bed wait, and in emergency department visits, against the same month a year earlier. A month with no complete month a year before has no bar."
                   table="self"
                   description={<Glossed text="Bars above 0 mean a longer wait (or more visits) than a year before. Only months complete in both years are drawn. This describes change; it does not show why." />}>
         {findings}
@@ -64,7 +64,7 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                     summary="Percentage change in the average bed wait against the same month a year before." testId="change-bars-wait" />
         <div className="mt-6">
           <ChangeBars labels={labels} every={6} values={visitsYoy.map((p) => p.value)} tone="visits" unit="ED visits, % change on the same month a year before"
-                      summary="Percentage change in ED visits against the same month a year before." testId="change-bars-visits" />
+                      summary="Percentage change in emergency department visits against the same month a year before." testId="change-bars-visits" />
         </div>
       </ChartFrame>
     </Chapters>

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { MONTHLY_CAVEAT, MonthlyCharts } from "@/components/monthly/MonthlyCharts";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorState } from "@/components/States";
+import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
 import { fullName, isUrgentCare, URGENT_CARE_NOTE } from "@/lib/hospitals";
@@ -41,7 +42,7 @@ export default async function HospitalPage({ params }: { params: Params }) {
   const monthlyRes = await settle(api.edMonthly({ hospital: code, months: MONTHS_SHOWN }));
   const back = (
     <p className="mt-2 flex flex-wrap gap-x-4 text-small">
-      <Link href={`/ed-trends?hospital=${code}`}>Daily figures on ED Trends</Link>
+      <Link href={`/ed-trends?hospital=${code}`}><Glossed text="Daily figures on ED Trends" /></Link>
       <Link href="/ed-trends/monthly">All hospitals, month by month</Link>
     </p>
   );
@@ -61,7 +62,7 @@ export default async function HospitalPage({ params }: { params: Params }) {
   const note = hospital.coverage_note;
   return (
     <>
-      <PageHeader title={name} intro="Bed wait and ED visits by month, and this month against the same month a year before." />
+      <PageHeader title={name} intro="Bed wait and emergency department visits by month, and this month against the same month a year before." />
       {isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="ucc-note">{URGENT_CARE_NOTE}. It is an urgent care centre, not a full emergency department.</p> : null}
       {note && !isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="coverage-note">{note}</p> : null}
       {lede ? <p className="max-w-prose text-ink" data-testid="monthly-lede">{lede}</p> : null}

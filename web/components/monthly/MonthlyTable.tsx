@@ -14,7 +14,7 @@ export function MonthlyTable({ points, caption }: { points: Point[]; caption: st
         <tr>
           <th scope="col" className="sticky left-0 bg-surface pr-3 text-left font-semibold text-muted">Month</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">Bed wait (hours)</th>
-          <th scope="col" className="px-2 text-right font-semibold text-ink">ED visits</th>
+          <th scope="col" className="px-2 text-right font-semibold text-ink">Visits</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">Wait vs a year before</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">Visits vs a year before</th>
           <th scope="col" className="px-2 text-right font-semibold text-ink">Wait vs month before</th>
