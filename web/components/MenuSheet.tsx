@@ -14,7 +14,7 @@ function SheetViews({ onChoose }: { onChoose: () => void }) {
 }
 
 /**
- * The phone's menu (below 768px): a "Menu" button that opens a full-height sheet with the navigation, the view choice
+ * The menu below 1024px (phones and tablets): a "Menu" button that opens a full-height sheet with the navigation, the view choice
  * (Home only) and the 995 link.
  *
  * It is a native modal <dialog>: the browser makes the rest of the page inert, closes it on Esc and puts focus back on the
@@ -31,9 +31,9 @@ export function MenuSheet() {
 
   // Following a link (or any route change) closes the sheet.
   useEffect(closeSheet, [pathname]);
-  // From 768px the header's own nav and view switch take over.
+  // From 1024px the header's own nav and view switch take over.
   useEffect(() => {
-    const wide = window.matchMedia("(min-width: 48rem)");
+    const wide = window.matchMedia("(min-width: 64rem)");
     const close = () => { if (wide.matches) closeSheet(); };
     wide.addEventListener("change", close);
     return () => wide.removeEventListener("change", close);
@@ -51,7 +51,7 @@ export function MenuSheet() {
   };
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button type="button" data-testid="menu-button" aria-haspopup="dialog" aria-expanded={open}
               onClick={() => { dialog.current?.showModal(); setOpen(true); }}
               className="inline-flex min-h-11 items-center rounded-md border border-control bg-surface px-4 text-small font-semibold text-ink hover:border-accent">

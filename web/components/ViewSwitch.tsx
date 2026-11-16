@@ -10,7 +10,7 @@ import { type View, viewHref, VIEWS } from "@/lib/homeViews";
  * The choice is the URL's ?view=, so it can be shared and back and forward work.
  *
  * Both layouts are real radio buttons, so Tab reaches the group once and the arrow keys move the choice, as the platform does it:
- * - "bar": a 36px segmented control in the header, from 768px (hidden below it).
+ * - "bar": a 36px segmented control in the header, from 1024px (hidden below it).
  * - "sheet": a column of 44px rows, inside the phone's menu sheet.
  * `onChoose` lets the sheet close itself once a view is picked (the address changes, but the path doesn't, so a route change can't do it).
  * Without JavaScript each is a plain GET form with a button, like the postcode search.
@@ -39,7 +39,7 @@ export function ViewSwitch({ view: current, home = "/", placement = "bar", onCho
 
   const bar = placement === "bar";
   return (
-    <div data-testid={bar ? "view-switch" : "view-switch-sheet"} data-view={view} className={bar ? "hidden md:block" : ""}>
+    <div data-testid={bar ? "view-switch" : "view-switch-sheet"} data-view={view} className={bar ? "hidden lg:block" : ""}>
       <form action="/" method="get" className="flex items-center">
         <div role="radiogroup" aria-label="View" data-testid={bar ? "view-radios" : "view-radios-sheet"}
              className={bar ? "inline-flex control-h overflow-hidden rounded-md border border-control bg-surface" : "flex w-full flex-col rounded-md border border-control bg-surface"}>

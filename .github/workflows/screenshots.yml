@@ -1,0 +1,48 @@
+name: Update screenshot baselines
+
+# Screenshot tests compare against a reference image per platform, because fonts differ between macOS and Linux.
+# CI runs on Linux, so its references must be made on the same runner. Run this by hand (Actions -> Update screenshot
+# baselines -> Run workflow), download the "linux-screenshots" artifact, unzip it into web/e2e/, review the images, commit.
+# It never commits or pushes anything itself.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: api/pyproject.toml
+      - name: Install the API
+        run: pip install -e ../api
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Write the Linux references for every screenshot test
+        run: npx playwright test --update-snapshots=all e2e/heatmap.spec.ts
+        env:
+          E2E_PYTHON: python
+      - name: Keep the Linux images
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-screenshots
+          path: web/e2e/**/*-linux.png
+          if-no-files-found: error
+          retention-days: 14

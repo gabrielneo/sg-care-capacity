@@ -270,7 +270,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       {strip ? <SiteStrip strip={strip} targets={jumpTargets(view)} /> : null}
       {/* Without JavaScript, a phone has no view control (it is in the menu sheet): the three views as plain links. */}
       <noscript>
-        <nav aria-label="View (no script)" className="mb-3 flex flex-wrap gap-x-4 md:hidden">
+        <nav aria-label="View (no script)" className="mb-3 flex flex-wrap gap-x-4 lg:hidden">
           {VIEWS.map((v) => <Link key={v.id} href={viewHref(v.id)} aria-current={v.id === view ? "true" : undefined} className="inline-flex min-h-11 items-center">{v.label}</Link>)}
         </nav>
       </noscript>

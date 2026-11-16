@@ -6,7 +6,8 @@ import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./
  * The site's frame, kept quiet so the content leads (audit E2, E4, E5, I1): header, menu sheet, view switch, notices and footer.
  * Both projects run this file (1280 and 375 px); tests say which they are for.
  */
-const wide = (page: Page) => (page.viewportSize()?.width ?? 1280) >= 768;
+/** The header's row (nav and view switch) starts at 1024px; below it, the Menu sheet (components/SiteHeader.tsx). */
+const wide = (page: Page) => (page.viewportSize()?.width ?? 1280) >= 1024;
 
 test.beforeEach(async ({ page }) => blockTiles(page));
 
@@ -38,7 +39,7 @@ test.describe("header", () => {
     expect(css.bg).toBe("rgba(0, 0, 0, 0)");                           // no filled pill
   });
 
-  test("has no menu button from 768px, and a Menu button below it", async ({ page }) => {
+  test("has no menu button from 1024px, and a Menu button below it", async ({ page }) => {
     await page.goto("/findings");
     if (wide(page)) await expect(page.getByTestId("menu-button")).toBeHidden(); else await expect(page.getByTestId("menu-button")).toBeVisible();
   });
@@ -54,7 +55,25 @@ test.describe("header", () => {
   }
 });
 
-test.describe("menu sheet (below 768px)", () => {
+test.describe("header fits its row (CI 2026-11-16)", () => {
+  // On CI's Linux fonts the 768px header scrolled the page sideways (801px): wordmark, nav and view switch need about 822px.
+  // A wide font (Verdana, wider than the Mac's system font, like Linux's fallback) stands in for those fonts here.
+  for (const width of [768, 1023, 1024, 1280]) {
+    test(`at ${width}px with a wide font: one-line wordmark, nothing past the edge`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await page.addStyleTag({ content: "*{font-family:Verdana,'DejaVu Sans',sans-serif !important}" });
+      const name = page.getByTestId("wordmark").locator("span").first();
+      const box = (await name.boundingBox())!;
+      const line = await name.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
+      expect(box.height, "the wordmark is one line").toBeLessThan(line * 1.5);
+      await expectNoHorizontalScroll(page);
+      await expect(page.getByTestId(width >= 1024 ? "view-switch" : "menu-button")).toBeVisible();
+    });
+  }
+});
+
+test.describe("menu sheet (below 1024px)", () => {
   test.skip(({ page }) => wide(page), "a phone-width flow");
 
   test("keyboard: opens, traps focus, closes with Esc, and returns focus to Menu", async ({ page }) => {
@@ -167,7 +186,7 @@ test.describe("view switch", () => {
     await checked(page, "Analyst");
   });
 
-  test("a 36px segmented control from 768px", async ({ page }) => {
+  test("a 36px segmented control from 1024px", async ({ page }) => {
     test.skip(!wide(page), "the header's control");
     await page.goto("/");
     const box = (await page.getByTestId("view-radios").boundingBox())!;

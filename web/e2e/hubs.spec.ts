@@ -17,8 +17,8 @@ for (const hub of HUBS) {
     test("every page in it has a working link, and the section stays marked in the nav", async ({ page, request }) => {
       for (const href of hub.links) expect((await request.get(href)).status(), href).toBe(200);
       await page.goto(hub.links[0]!);
-      // From 768px the header's nav; below it the same links are in the menu sheet.
-      const phone = page.viewportSize()!.width < 768;
+      // From 1024px the header's nav; below it the same links are in the menu sheet.
+      const phone = page.viewportSize()!.width < 1024;
       if (phone) await page.getByTestId("menu-button").click();
       await expect(page.getByRole("navigation", { name: phone ? "Menu" : "Main" }).locator('a[aria-current="page"]')).toHaveCount(1);
     });

@@ -28,9 +28,9 @@ describe("ViewSwitch", () => {
     expect(screen.getByTestId("view-switch")).toHaveAttribute("data-view", "public");
   });
 
-  it("is a 36px control from 768px, hidden below it; the sheet's copy is a column of rows with no hiding", () => {
+  it("is a 36px control from 1024px, hidden below it; the sheet's copy is a column of rows with no hiding", () => {
     const { rerender } = render(<ViewSwitch view="analyst" />);
-    expect(screen.getByTestId("view-switch").className).toContain("hidden md:block");
+    expect(screen.getByTestId("view-switch").className).toContain("hidden lg:block");
     expect(screen.getByTestId("view-radios").className).toContain("control-h");
     rerender(<ViewSwitch view="analyst" placement="sheet" />);
     expect(screen.getByTestId("view-switch-sheet").className).not.toContain("hidden");

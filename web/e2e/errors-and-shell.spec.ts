@@ -51,9 +51,9 @@ test.describe("shell", () => {
     expect(down).toEqual({ ok: false });
   });
 
-  test("the nav has five sections and marks the current one; below 768px the same links are in the menu sheet", async ({ page }) => {
+  test("the nav has five sections and marks the current one; below 1024px the same links are in the menu sheet", async ({ page }) => {
     await page.goto("/methodology");
-    const wide = page.viewportSize()!.width >= 768;
+    const wide = page.viewportSize()!.width >= 1024;   // the header row starts at 1024px (components/SiteHeader.tsx)
     if (!wide) {
       await expect(page.getByRole("navigation", { name: "Main" })).toBeHidden();
       await page.getByTestId("menu-button").click();
@@ -72,7 +72,7 @@ test.describe("shell", () => {
   test("the pages that moved under About are still there and mark About", async ({ page }) => {
     for (const path of ["/about", "/project", "/how-its-built", "/case-study"]) {
       await page.goto(path);
-      if (page.viewportSize()!.width >= 768) await expect(page.getByRole("navigation", { name: "Main" }).locator('a[aria-current="page"]')).toHaveText("About");
+      if (page.viewportSize()!.width >= 1024) await expect(page.getByRole("navigation", { name: "Main" }).locator('a[aria-current="page"]')).toHaveText("About");
     }
   });
 

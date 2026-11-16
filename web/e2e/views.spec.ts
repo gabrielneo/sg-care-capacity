@@ -5,7 +5,7 @@ import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./
 /*
  * The home page's three views (lib/homeViews.ts), on the API's fixture snapshot:
  * SGH is +25% ("higher than usual"); AH and NUH have no usual level ("no comparison").
- * Both projects run this file: from 768 px the control is a segmented radio group in the header; below it, a radio group in the menu sheet.
+ * Both projects run this file: from 1024 px the control is a segmented radio group in the header; below it, a radio group in the menu sheet.
  */
 const AS_OF = /^Data as of \d{1,2} [A-Z][a-z]{2,3} \d{4} · Source: .+/;
 const LABEL = { public: "Public", planner: "Planner", analyst: "Analyst" } as const;
@@ -26,7 +26,8 @@ const SECTIONS: Record<string, View[]> = {
   "methods": ["public", "analyst"],
 };
 
-const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 768;
+/** Below 1024px the header has no nav or view switch: they are in the Menu sheet (components/SiteHeader.tsx). */
+const narrow = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;
 
 async function choose(page: Page, view: View) {
   if (narrow(page)) {
@@ -46,7 +47,7 @@ async function expectView(page: Page, view: View) {
   } else await expect(page.getByRole("radio", { name: LABEL[view], exact: true })).toBeChecked();
 }
 
-/** Follow a section's link: in the header's nav from 768 px, in the menu sheet below it. */
+/** Follow a section's link: in the header's nav from 1024 px, in the menu sheet below it. */
 async function goNav(page: Page, label: string) {
   if (narrow(page)) {
     await page.getByTestId("menu-button").click();
@@ -62,7 +63,7 @@ test.describe("Home views", () => {
     await page.goto("/");
     await expectView(page, "public");
     if (narrow(page)) {
-      // Below 768 px the choice lives in the menu sheet, not in the header.
+      // Below 1024 px the choice lives in the menu sheet, not in the header.
       await expect(page.getByTestId("view-radios")).toBeHidden();
       await page.getByTestId("menu-button").click();
       const group = page.getByTestId("view-radios-sheet");
@@ -315,7 +316,7 @@ test.describe("Home views", () => {
     await page.goto("/?view=planner");
     await expect(page.getByTestId("summary-strip")).toHaveCount(1);
     await expect(page.getByTestId("status-card")).toHaveCount(3);
-    // Without JavaScript the header's control is a plain form; below 768px the page has the three views as links.
+    // Without JavaScript the header's control is a plain form; below 1024px the page has the three views as links.
     if (narrow(page)) await page.getByRole("navigation", { name: "View (no script)" }).getByRole("link", { name: "Analyst" }).click();   // a phone: plain links
     else {
       await page.getByTestId("view-radios").getByText("Analyst", { exact: true }).click();
@@ -353,7 +354,12 @@ test.describe("Home views", () => {
     test(`${view}: fits a 768 px tablet`, async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
       await page.goto(`/?view=${view}`);
-      await expect(page.getByRole("radiogroup", { name: "View" })).toBeVisible();
+      // Below 1024px the header can't hold the nav and the switch (components/SiteHeader.tsx): the choice is in the Menu sheet.
+      await expect(page.getByTestId("view-switch")).toBeHidden();
+      await page.getByTestId("menu-button").click();
+      await expect(page.getByTestId("menu-sheet").getByRole("radiogroup", { name: "View" })).toBeVisible();
+      await expect(page.getByTestId("menu-sheet").getByRole("radio", { name: new RegExp(`^${view}$`, "i") })).toBeChecked();
+      await page.keyboard.press("Escape");
       await expectNoHorizontalScroll(page);
       await expectNoA11yViolations(page, { wcag22: true });
     });

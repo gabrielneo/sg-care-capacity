@@ -9,7 +9,7 @@ from __future__ import annotations
 import calendar
 import json
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import date
 
@@ -164,7 +164,7 @@ HOSPITAL_CLUSTER_CHECK = register(
     "Every hospital belongs to a known cluster (the site's cluster filter has no blank or unknown group)", ("ref_hospital",))
 
 
-def hospital_cluster_problems(reference: dict[str, object], clusters: dict[str, str]) -> list[str]:
+def hospital_cluster_problems(reference: Mapping[str, object], clusters: Mapping[str, str]) -> list[str]:
     """What is wrong with the cluster of each site in config, one line per problem (empty = fine)."""
     problems = []
     for code in sorted(reference):

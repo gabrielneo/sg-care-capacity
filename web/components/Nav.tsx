@@ -7,7 +7,7 @@ import { isCurrent, NAV_ITEMS } from "@/lib/nav";
 
 /**
  * The site's navigation, in one component with two layouts:
- * - "bar": the header's row from 768px. The current page is accent text with a 2px accent underline (no filled pill),
+ * - "bar": the header's row from 1024px. The current page is accent text with a 2px accent underline (no filled pill),
  *   and the link fills the header's height, so the underline sits on the header's bottom border.
  * - "sheet": a column of full-width rows inside the phone's menu sheet (components/MenuSheet.tsx).
  * `onNavigate` lets the sheet close itself when a link is followed.
@@ -16,7 +16,7 @@ export function Nav({ variant = "bar", onNavigate }: { variant?: "bar" | "sheet"
   const pathname = usePathname() ?? "/";
   const bar = variant === "bar";
   return (
-    <nav aria-label={bar ? "Main" : "Menu"} className={bar ? "hidden h-full md:block" : ""} data-testid={bar ? "nav-bar" : "nav-sheet"}>
+    <nav aria-label={bar ? "Main" : "Menu"} className={bar ? "hidden h-full lg:block" : ""} data-testid={bar ? "nav-bar" : "nav-sheet"}>
       <ul className={bar ? "flex h-full items-stretch gap-1 lg:gap-4" : "flex flex-col"}>
         {NAV_ITEMS.map((item) => {
           const current = isCurrent(pathname, item.href, item.children);
