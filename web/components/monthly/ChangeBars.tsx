@@ -10,7 +10,7 @@ const XR = 98;
 
 /**
  * Percentage changes as bars up and down from 0, one per month, drawn on the server. A month with no figure (partial, or nothing a
- * year before) is no bar. `tone` "wait": above 0 is a longer wait, in the status colours (orange up, violet down); "visits": one
+ * year before) is no bar. `tone` "wait": above 0 is a longer wait, in the status colours (amber up, teal down); "visits": one
  * neutral colour, since more visits is not better or worse by itself. A value is never drawn as 0 when it is missing.
  */
 export function ChangeBars({ labels, values, unit, summary, tone, every = 1, testId = "change-bars" }: {
@@ -30,7 +30,7 @@ export function ChangeBars({ labels, values, unit, summary, tone, every = 1, tes
   const x = (i: number) => XL + i * slot;
   const ticks: number[] = [];
   for (let t = -downTop; t <= upTop + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100);
-  const fill = (v: number) => (tone === "visits" ? colors.accent : v > 0 ? colors["status-higher"] : colors["status-lower"]);
+  const fill = (v: number) => (tone === "visits" ? colors["data-mark"] : v > 0 ? colors["status-higher"] : colors["status-lower"]);
   return (
     <div>
       <p className="text-meta text-muted">{unit}</p>

@@ -8,7 +8,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       title="Something went wrong"
       error={{ message: "This page couldn't be shown.", code: error.digest }}
       action={
-        <button type="button" onClick={reset} className="rounded-md bg-accent px-3 py-2 text-small font-semibold text-surface">
+        <button type="button" onClick={reset} className="rounded-md bg-primary px-3 py-2 text-small font-semibold text-on-primary">
           Try again
         </button>
       }

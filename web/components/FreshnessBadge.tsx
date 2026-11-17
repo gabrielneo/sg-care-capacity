@@ -5,7 +5,7 @@ import { type Freshness, freshnessText, type Level, metaFreshness, ruleText } fr
 /**
  * No fill: the border (solid, dashed or heavy) and the symbol carry the level, and a fill that is one shade off the page was a
  * background colour more for no meaning (review N6).
- * Freshness is not status: it never uses the status colours (brick, amber, violet) and has its own square-cornered
+ * Freshness is not status: it never uses the status colours (crimson, amber, teal) and has its own square-cornered
  * shape. The level shows as a symbol, words and the border: solid when up to date, dashed when due, heavy when overdue (audit L5).
  */
 export const LEVEL_STYLE: Record<Level, string> = {

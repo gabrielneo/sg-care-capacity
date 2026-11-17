@@ -72,9 +72,9 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
         <line x1={pct(XR)} x2={pct(XR)} y1={TOP} y2={H - BOTTOM} stroke={colors.line} />
         {both.map((p, i) => (
           <g key={p.code} data-testid="slope" data-hospital={p.code}>
-            <line x1={pct(XL)} x2={pct(XR)} y1={y(p.moh.value)} y2={y(p.nuhs.value)} stroke={colors.accent} strokeWidth={2} />
-            <circle cx={pct(XL)} cy={y(p.moh.value)} r={4} fill={colors.accent} />
-            <circle cx={pct(XR)} cy={y(p.nuhs.value)} r={4} fill={colors.accent} />
+            <line x1={pct(XL)} x2={pct(XR)} y1={y(p.moh.value)} y2={y(p.nuhs.value)} stroke={colors["data-mark"]} strokeWidth={2} />
+            <circle cx={pct(XL)} cy={y(p.moh.value)} r={4} fill={colors["data-mark"]} />
+            <circle cx={pct(XR)} cy={y(p.nuhs.value)} r={4} fill={colors["data-mark"]} />
             <text x={pct(XL)} dx={-8} y={(left[i] as number) + 4} textAnchor="end" fontSize="13" fill={colors.ink}>{p.code} {hours(p.moh.value)} h</text>
             <text x={pct(XR)} dx={8} y={(right[i] as number) + 4} fontSize="13" fill={colors.ink}>{hours(p.nuhs.value)} h {p.code}</text>
           </g>

@@ -58,7 +58,7 @@ export function QuadrantChart({ points, medianSeniors, medianRate, meta, callout
               </text>
             ) : (
               <circle cx={pct(x(p.seniors))} cy={y(p.rate)} r={p.rank ? 5 : 3.5}
-                      fill={p.rank ? colors.accent : colors.muted} fillOpacity={p.rank ? 1 : 0.45}
+                      fill={p.rank ? colors["data-mark"] : colors.muted} fillOpacity={p.rank ? 1 : 0.45}
                       stroke={colors.surface} strokeWidth={1} data-testid="quadrant-dot" data-rank={p.rank ?? undefined}>
                 <title>{`${p.name}: ${p.seniors.toLocaleString("en-SG")} residents aged 65+, ${p.rate.toFixed(2)} per 1,000`}</title>
               </circle>

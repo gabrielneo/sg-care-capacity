@@ -12,7 +12,7 @@ for any postcode.**
 [One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
 [Independent audit](docs/audit_report.md)
 
-[![The landing page: the claim, a "Find a clinic near you" button and a "Read the findings" button on a soft teal glow, the 995 line, then each hospital's latest bed wait against its usual level on a common hour scale](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+[![The landing page: the claim, a "Find a clinic near you" button and a "Read the findings" button on a deep-purple hero with a royal-blue glow, the 995 line, then each hospital's latest bed wait against its usual level on a common hour scale](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
 
 ## The site
 
@@ -26,7 +26,8 @@ for any postcode.**
 
 It follows the device's light or dark setting and has no theme switch. There is no red banner: the 995
 emergency number and "not medical advice" share one small line on the home page's first screen, and
-the 995 number is in the footer of every page. One accent colour, no gradient text; a status is always
+the 995 number is in the footer of every page. Purple, electric violet and royal blue for the brand; status colours (teal lower,
+grey about usual, amber higher, crimson much higher) never use a brand hue, and a status is always
 an arrow and a word as well as a colour. Links underline only their own words.
 
 ## What the data shows

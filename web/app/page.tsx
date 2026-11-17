@@ -97,42 +97,42 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
   return (
     <div data-testid="landing">
       <ScrollProgress />
-      {/* The soft light behind the claim is .hero-glow (app/globals.css): full window width, faded out before the hero's edges. */}
-      <section aria-labelledby="landing-title" data-testid="landing-hero" className="hero-glow relative isolate pb-8 pt-8 sm:pb-12 sm:pt-12">
-        <div className={`mx-auto grid items-center gap-x-12 gap-y-8 ${showHero ? "max-w-6xl lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]" : "max-w-3xl"}`}>
-          <div className={showHero ? "text-center lg:text-left" : "text-center"}>
-            <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight text-ink">
-              Emergency waits and clinic access for Singapore&apos;s seniors.
-            </h1>
-            <p className="landing-rise mt-4 text-body text-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows about bed waits and clinic access.</p>
-            <p className={`landing-rise mt-8 flex flex-wrap items-center gap-3 ${showHero ? "justify-center lg:justify-start" : "justify-center"}`} style={{ ["--delay" as string]: "240ms" }}>
-              <Link href={FIND_PATH} data-testid="cta-find" className="btn btn-primary">
-                Find a clinic near you
-              </Link>
-              <Link href="/findings" data-testid="cta-findings" className="btn btn-secondary">
-                Read the findings
-              </Link>
-            </p>
-            {/* Quiet, and on the first screen at every width: the emergency number and what this site is not. */}
-            <p className={`landing-rise mt-6 flex flex-wrap items-center gap-x-2 text-meta text-muted ${showHero ? "justify-center lg:justify-start" : "justify-center"}`}
-               data-testid="not-advice" style={{ ["--delay" as string]: "360ms" }}>
-              <span className="font-semibold text-ink">Emergency? <a href="tel:995" className="inline-flex min-h-11 items-center">Call 995</a>.</span>
-              <span>{NOTICE_995_LINE}</span>
-            </p>
-          </div>
-          {showHero ? (
-            <div className="landing-rise rounded-xl border border-line bg-surface p-4 sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
-              <p className="text-small font-semibold text-ink">Average bed wait at the full emergency departments, month by month</p>
-              <HeroLine points={heroLine} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
-              <p className="mt-1 flex justify-between text-meta text-muted" data-testid="hero-range">
-                <span>{heroLine.find((p) => p.value != null)?.label}</span>
-                <span className="font-semibold text-ink">{newestName}: {newest?.wait?.toFixed(1)} hours</span>
-              </p>
-              <p className="mt-2 text-meta text-muted" data-testid="hero-source">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
-            </div>
-          ) : null}
+      {/* The deep-purple hero (.hero-glow, app/globals.css): full window width, a royal-blue glow behind the claim, fading into the
+          page colour below the last line of text. Centred, with the monthly picture under the buttons: its own layout, not the
+          author's portfolio (text left, card right). */}
+      <section aria-labelledby="landing-title" data-testid="landing-hero"
+               className="hero-glow on-hero relative isolate -mt-3 pb-16 pt-12 sm:-mt-4 sm:pb-24 sm:pt-16">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight">
+            Emergency waits and clinic access for Singapore&apos;s seniors.
+          </h1>
+          <p className="landing-rise mt-4 text-body text-on-hero-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows about bed waits and clinic access.</p>
+          <p className="landing-rise mt-8 flex flex-wrap items-center justify-center gap-3" style={{ ["--delay" as string]: "240ms" }}>
+            <Link href={FIND_PATH} data-testid="cta-find" className="btn btn-primary">
+              Find a clinic near you
+            </Link>
+            <Link href="/findings" data-testid="cta-findings" className="btn btn-secondary">
+              Read the findings
+            </Link>
+          </p>
+          {/* Quiet, and on the first screen at every width: the emergency number and what this site is not. */}
+          <p className="landing-rise mt-6 flex flex-wrap items-center justify-center gap-x-2 text-meta text-on-hero-muted"
+             data-testid="not-advice" style={{ ["--delay" as string]: "360ms" }}>
+            <span className="font-semibold text-on-hero">Emergency? <a href="tel:995" className="inline-flex min-h-11 items-center">Call 995</a>.</span>
+            <span>{NOTICE_995_LINE}</span>
+          </p>
         </div>
-        {showHero ? <p aria-hidden="true" className="hero-cue mt-8 text-center text-muted">↓</p> : null}
+        {showHero ? (
+          <div className="landing-rise mx-auto mt-12 max-w-3xl rounded-xl border border-line bg-surface p-4 sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
+            <p className="text-small font-semibold text-ink">Average bed wait at the full emergency departments, month by month</p>
+            <HeroLine points={heroLine} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
+            <p className="mt-1 flex justify-between text-meta text-muted" data-testid="hero-range">
+              <span>{heroLine.find((p) => p.value != null)?.label}</span>
+              <span className="font-semibold text-ink">{newestName}: {newest?.wait?.toFixed(1)} hours</span>
+            </p>
+            <p className="mt-2 text-meta text-muted" data-testid="hero-source">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
+          </div>
+        ) : null}
       </section>
 
       {showHero && newest ? (
@@ -145,7 +145,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
                 ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />, unit: "", label: `change in bed wait, against ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
             ].map((t) => (
               <p key={t.id} data-testid="landing-stat" className="rounded-xl border border-line bg-surface p-4 text-center">
-                <span className="block text-kpi font-semibold tracking-tight text-ink">{t.figure}{t.unit ? <span className="ml-1 text-small font-normal text-muted">{t.unit}</span> : null}</span>
+                <span className="block text-kpi font-semibold tracking-tight text-primary-text">{t.figure}{t.unit ? <span className="ml-1 text-small font-normal text-muted">{t.unit}</span> : null}</span>
                 <span className="mt-1 block text-small text-muted">{t.label}</span>
               </p>
             ))}

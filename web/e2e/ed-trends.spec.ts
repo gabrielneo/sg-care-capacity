@@ -67,7 +67,7 @@ test.describe("ED Trends: difference-first charts", () => {
     const middle = [Number(await classes.nth(3).getAttribute("data-min")), Number(await classes.nth(3).getAttribute("data-max"))];
     expect(middle[0]! + middle[1]!).toBeCloseTo(0, 10);                                         // the middle class straddles 0
     const zero = page.locator('[data-testid=heat-cell][data-value="0.00"]').first();
-    await expect(zero).toHaveAttribute("data-color", "#EFEAE1");                                 // 0 is the neutral colour
+    await expect(zero).toHaveAttribute("data-color", "#F1EFF6");                                 // 0 is the neutral colour (div-4)
     await expect(page.locator("[data-testid=heat-cell][data-annotated]")).toHaveCount(1);
     await expect(page.getByTestId("chart-frame").filter({ hasText: "Bed wait by day of the week" }).getByTestId("chart-callout"))
       .toContainText("Mondays: 25% above average");

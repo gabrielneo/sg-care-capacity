@@ -55,7 +55,7 @@ export function EdFilterForm({ hospitals, selected, from, to }: { hospitals: Hos
           <span className="block font-semibold">To</span>
           <input type="date" name="to" defaultValue={to} className="mt-1 min-h-11 rounded-md border border-control px-2" />
         </label>
-        <button type="submit" className="min-h-11 rounded-md bg-accent px-4 text-small font-semibold text-surface">Show</button>
+        <button type="submit" className="min-h-11 rounded-md bg-primary px-4 text-small font-semibold text-on-primary">Show</button>
         <Link href="/ed-trends" className="flex min-h-11 min-w-11 items-center justify-center text-small">Reset</Link>
         <p className="w-full text-meta text-muted"><Glossed text="Up to 2 years at a time. Default: the 90 days up to the latest day MOH has published." /></p>
       </div>

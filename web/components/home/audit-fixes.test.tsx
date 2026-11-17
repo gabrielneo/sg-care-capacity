@@ -34,7 +34,7 @@ describe("FreshnessBadge looks different from a status badge (audit L5)", () => 
   it("never uses a status colour, and each level has its own symbol", () => {
     for (const style of Object.values(LEVEL_STYLE)) expect(style).not.toMatch(/status-|danger/);
     expect(new Set(Object.values(LEVEL_SYMBOL)).size).toBe(4);
-    for (const symbol of Object.values(LEVEL_SYMBOL)) expect(["▲▲", "▲", "●", "▼"]).not.toContain(symbol);
+    for (const symbol of Object.values(LEVEL_SYMBOL)) expect(["▲▲", "▲", "▬", "▼"]).not.toContain(symbol);
   });
 
   it("is square-cornered, where the status badge is a pill", () => {

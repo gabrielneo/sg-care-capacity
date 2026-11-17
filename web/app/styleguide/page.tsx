@@ -26,7 +26,7 @@ const GROUPS: [string, (k: string) => boolean][] = [
   ["Lines", (k) => /^(line|control)$/.test(k)],
   ["Text", (k) => /^(ink|muted|tertiary)$/.test(k)],
   ["Interface accent (ink blue: links, selection, focus only)", (k) => /^accent/.test(k)],
-  ["Status (longer waits: orange and brown; shorter: violet)", (k) => /^(status|danger)/.test(k)],
+  ["Status (longer waits: amber and crimson; shorter: teal; never a brand colour)", (k) => /^(status|danger)/.test(k)],
   ["Data scales (the same in both themes)", (k) => /^(map|div|on-data)/.test(k)],
 ];
 const LEVEL_ORDER: Level[] = ["much_higher", "higher", "usual", "lower", "unknown"];
@@ -84,7 +84,7 @@ function Specimen({ theme, chart }: { theme: (typeof THEMES)[number]; chart: Awa
       <div>
         <h4 className="mb-2 text-small font-semibold text-muted">Buttons and controls</h4>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className="inline-flex min-h-11 items-center rounded-md bg-accent px-4 text-small font-semibold text-page hover:bg-accent-strong">Primary action</button>
+          <button type="button" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-small font-semibold text-on-primary hover:bg-primary-strong">Primary action</button>
           <button type="button" className="inline-flex min-h-11 items-center rounded-md border border-control bg-surface px-4 text-small font-semibold text-ink hover:border-accent">Secondary</button>
           <button type="button" aria-pressed="true" className="inline-flex min-h-11 items-center rounded-md border border-accent bg-accent-soft px-4 text-small font-semibold text-accent">Selected</button>
           <a href="#main" className="inline-flex min-h-11 min-w-11 items-center justify-center text-small">A link</a>
@@ -113,7 +113,7 @@ function Specimen({ theme, chart }: { theme: (typeof THEMES)[number]; chart: Awa
       </div>
 
       <div>
-        <h4 className="mb-2 text-small font-semibold text-muted">Weekday heatmap ramp: violet = shorter than the hospital&apos;s own average, orange = longer</h4>
+        <h4 className="mb-2 text-small font-semibold text-muted">Weekday heatmap ramp: teal = shorter than the hospital&apos;s own average, amber = longer</h4>
         <div className="flex max-w-md overflow-hidden rounded-sm border border-control" data-testid="ramp-diverging">
           {divergingScale.map((c) => <span key={c} className="h-8 flex-1" style={{ background: c }} />)}
         </div>

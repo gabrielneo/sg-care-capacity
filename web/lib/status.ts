@@ -40,7 +40,7 @@ export interface LevelInfo {
 export const LEVELS: Record<Level, LevelInfo> = {
   much_higher: { label: "Much higher than usual", icon: "▲▲", tone: "much", sentence: "Bed waits were much longer than usual in the latest complete week." },
   higher: { label: "Higher than usual", icon: "▲", tone: "higher", sentence: "Bed waits were longer than usual in the latest complete week." },
-  usual: { label: "About usual", icon: "●", tone: "usual", sentence: "Bed waits were about usual in the latest complete week." },
+  usual: { label: "About usual", icon: "▬", tone: "usual", sentence: "Bed waits were about usual in the latest complete week." },
   lower: { label: "Lower than usual", icon: "▼", tone: "lower", sentence: "Bed waits were shorter than usual in the latest complete week." },
   unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual." },
 };

@@ -55,7 +55,8 @@ export interface AnnotatedChartProps {
 }
 
 export const LEGEND_ABOVE = 3;
-const SERIES_COLOURS = [colors.accent, colors["map-4"], colors["map-5"], colors["status-higher"], colors.muted];
+// Royal blue for the main series, then the compare-mode categories (never a status colour or the map ramp).
+const SERIES_COLOURS = [colors["data-mark"], colors["cat-2"], colors["cat-3"], colors["cat-4"], colors.muted];
 const colourAt = (i: number): string => SERIES_COLOURS[i % SERIES_COLOURS.length] ?? colors.ink;
 const X0 = 6;            // plot area, % of width
 const X1 = 94;
@@ -216,7 +217,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
               return (
                 <g key={i} data-testid="chart-bar" data-highlight={hot ? "" : undefined}>
                   <rect x={pct(x(i) - band * 0.34)} width={pct(band * 0.68)} y={top} height={Math.max(Math.abs(y(v) - zero), 1)}
-                        rx="2" fill={hot ? colors.accent : colors.line} />
+                        rx="2" fill={hot ? colors["data-mark"] : colors.line} />
                   <text x={pct(x(i))} y={v >= 0 ? top - 4 : top + Math.abs(y(v) - zero) + 12} fontSize="13" textAnchor="middle"
                         fill={hot ? colors.ink : colors.muted} fontWeight={hot ? 600 : 400} className="tabular-nums" {...HALO}>
                     {format(v)}
@@ -236,7 +237,7 @@ function Plot({ id, kind, categories, series, highlight, callout, reference, tre
                 {s.values.map((v, i) =>
                   v == null ? null : (
                     <circle key={`p${i}`} cx={pct(x(i))} cy={y(v)} r={marked.includes(i) && si === 0 ? 5 : 3}
-                            fill={marked.includes(i) && si === 0 ? colors.accent : colourAt(si)}
+                            fill={marked.includes(i) && si === 0 ? colors["data-mark"] : colourAt(si)}
                             data-highlight={marked.includes(i) && si === 0 ? "" : undefined} />
                   ),
                 )}

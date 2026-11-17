@@ -70,7 +70,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
           <input id="near" type="text" value={text} onChange={(e) => setDraft(e.target.value)} onFocus={ensurePlaces}
                  placeholder="e.g. 460123 or Bedok" autoComplete="postal-code" enterKeyHint="search" maxLength={60}
                  className="min-h-12 w-full min-w-0 rounded-lg border border-control bg-surface px-3 text-body text-ink placeholder:text-muted" />
-          <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-accent px-6 text-body font-semibold text-surface hover:bg-accent-strong">
+          <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-primary px-6 text-body font-semibold text-on-primary hover:bg-primary-strong">
             Find clinics
           </button>
         </div>

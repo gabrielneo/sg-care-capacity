@@ -21,7 +21,7 @@ export function WeekPattern({ profiles, hospitals, finding, meta, from, to }: {
         <WeekdayHeatmap profiles={profiles} hospitals={shown} mode="usual" finding={finding} />
       </ChartFrame>
       <Prose size="small" tone="muted" className="mt-3">
-        Each day&apos;s bed wait over the {formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}, compared with that hospital&apos;s own average. Orange is longer, purple is shorter.
+        Each day&apos;s bed wait over the {formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}, compared with that hospital&apos;s own average. Amber is longer, teal is shorter.
       </Prose>
     </section>
   );

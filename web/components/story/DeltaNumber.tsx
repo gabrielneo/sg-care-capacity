@@ -17,7 +17,7 @@ export type PillLevel = "much_higher" | "higher" | "usual" | "lower";
 const PILL: Record<PillLevel, { cls: string; mark: string }> = {
   much_higher: { cls: "text-status-much bg-status-much-soft", mark: "▲▲" },
   higher: { cls: "text-status-higher bg-status-higher-soft", mark: "▲" },
-  usual: { cls: "text-ink bg-status-usual-soft", mark: "≈" },
+  usual: { cls: "text-status-usual bg-status-usual-soft", mark: "▬" },
   lower: { cls: "text-status-lower bg-status-lower-soft", mark: "▼" },
 };
 
@@ -36,7 +36,7 @@ export interface DeltaNumberProps {
   direction: Direction;
   /** One line (value, arrow and word), for chart rows. */
   compact?: boolean;
-  /** Compact only: the word as a small pill in its level's colour and mark ("≈" for about usual), so it reads at a glance. */
+  /** Compact only: the word as a small pill in its level's colour and mark ("▬", a flat bar, for about usual; "–" stays the sign for missing), so it reads at a glance. */
   pill?: PillLevel | null;
 }
 

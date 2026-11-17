@@ -20,9 +20,13 @@ describe("calm colour", () => {
     expect(css).not.toMatch(/linear-gradient\([^)]*var\(--pop\)/);
   });
 
-  it("the only radial gradients are the hero's two glows", () => {
-    expect(css.match(/radial-gradient\(/g)).toHaveLength(2);
-    expect(css.slice(css.indexOf(".hero-glow::before"), css.indexOf(".hero-glow::after") + 400)).toMatch(/radial-gradient/);
+  it("the hero is the one gradient: deep purple fading into the page, and one royal-blue glow (no rainbow, no glow violet)", () => {
+    expect(css.match(/radial-gradient\(/g)).toHaveLength(1);
+    expect(css.match(/(?<!repeating-)linear-gradient\(/g)).toHaveLength(1);   // the no-data hatch (repeating) is a pattern, not a gradient
+    const hero = css.slice(css.indexOf(".hero-glow::before {"), css.lastIndexOf(".hero-glow::after {") + 300);
+    expect(hero).toMatch(/linear-gradient\(to bottom in oklch, var\(--hero-bg\)[^;]*var\(--bg-page\) 100%\)/);
+    expect(hero).toMatch(/radial-gradient\([^;]*var\(--royal-600\)/);
+    expect(css).not.toMatch(/var\(--glow-violet\)/);
   });
 
   it("the landing page and its hero line use the accent and ink, never the coral or sun", () => {
@@ -33,7 +37,7 @@ describe("calm colour", () => {
   });
 
   it("buttons share one style: a solid primary and an outlined secondary", () => {
-    expect(css).toMatch(/\.btn-primary \{ background: var\(--accent\);/);
+    expect(css).toMatch(/\.btn-primary \{ background: var\(--primary\); color: var\(--on-primary\);/);
     expect(css).toMatch(/\.btn-secondary \{ background: var\(--bg-surface\); border-color: var\(--border-control\);/);
   });
 });

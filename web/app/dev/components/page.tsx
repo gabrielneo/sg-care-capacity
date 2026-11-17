@@ -164,7 +164,7 @@ export default function ComponentsPage() {
       <Section title="DeltaNumber">
         <p className="mb-3 text-small text-muted">
           Value, unit, comparison, and the change as an arrow and a word. Colour comes from the insight&apos;s direction, never
-          from the arrow: the same ▲ is brick red for a longer wait and violet for more clinics. Neutral findings have no colour.
+          from the arrow: the same ▲ is crimson for a longer wait and teal for more clinics. Neutral findings have no colour.
         </p>
         <div className="card-grid sm:grid-cols-2 lg:grid-cols-4">
           {storySample.map((i) => (
@@ -205,7 +205,7 @@ export default function ComponentsPage() {
       </Section>
 
       <Section title="Palette">
-        <p className="mb-3 text-small text-muted">One accent. Status colours only appear with a text label. Map: Viridis, light = low.</p>
+        <p className="mb-3 text-small text-muted">One accent. Status colours only appear with a text label. Map: one lavender-to-deep-royal ramp, light = more clinics.</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(colors)
             .filter(([k]) => !k.startsWith("map"))

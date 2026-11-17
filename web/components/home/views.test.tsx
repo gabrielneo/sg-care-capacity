@@ -99,7 +99,7 @@ describe("StatusCard densities", () => {
     const badge = screen.getAllByTestId("status-badge").map((b) => [b.textContent, /text-(status-much|status-higher|status-usual|status-lower)/.exec(b.className)?.[1],
       /bg-(status-\w+)-soft/.exec(b.className)?.[1]]);
     expect(badge).toEqual([["▲▲Much higher than usual", "status-much", "status-much"], ["▲Higher than usual", "status-higher", "status-higher"],
-      ["●About usual", "status-usual", "status-usual"], ["▼Lower than usual", "status-lower", "status-lower"], ["●About usual", "status-usual", "status-usual"]]);
+      ["▬About usual", "status-usual", "status-usual"], ["▼Lower than usual", "status-lower", "status-lower"], ["▬About usual", "status-usual", "status-usual"]]);
   });
 
   it("full: only a hospital above usual has a status-coloured left edge", () => {
@@ -154,8 +154,8 @@ describe("StatusCard densities", () => {
     const shown = screen.getAllByTestId("status-card").map((c) =>
       [within(c).getByTestId("status-badge").textContent, within(c).getByTestId("status-delta").textContent]);
     expect(shown).toEqual([
-      ["●About usual", "▲ 15%+15% vs usual"], ["▲Higher than usual", "▲ 30%+30% vs usual"],
-      ["●About usual", "▼ 15%−15% vs usual"], ["●About usual", "0%0% vs usual"]]);
+      ["▬About usual", "▲ 15%+15% vs usual"], ["▲Higher than usual", "▲ 30%+30% vs usual"],
+      ["▬About usual", "▼ 15%−15% vs usual"], ["▬About usual", "0%0% vs usual"]]);
   });
 });
 

@@ -16,7 +16,7 @@ const MARK = "①";
 
 /**
  * Each hospital's weekday pattern. "vs usual": % above or below its own average, on a diverging,
- * colour-blind-safe scale symmetric about 0 (purple below, near-white at 0, orange above). Raw:
+ * colour-blind-safe scale symmetric about 0 (teal below, near-white at 0, amber above). Raw:
  * hours, darker = longer. A real table, so screen readers get rows and columns; every cell shows
  * its number, so colour never carries the meaning alone.
  */
@@ -145,7 +145,7 @@ export function WeekdayHeatmap({ profiles, hospitals, mode, finding }: {
       <p className="mt-2 text-meta text-muted">
         {mode === "raw"
           ? "Darker means a longer wait. Hours, average of each day's median for that weekday."
-          : "Each weekday against the hospital's own average: violet is shorter, orange is longer. The middle class is about average."}
+          : "Each weekday against the hospital's own average: teal is shorter, amber is longer. The middle class is about average."}
       </p>
       {missing.length ? (
         <p className="mt-1 text-meta text-muted"><Glossed text={`Not shown, with fewer than 4 complete weeks in the window: ${missing.map((h) => h.hospital_code).join(", ")}.`} /></p>

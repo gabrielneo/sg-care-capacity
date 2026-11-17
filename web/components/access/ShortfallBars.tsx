@@ -22,7 +22,7 @@ export function ShortfallBars({ bars, meta, top }: { bars: ShortfallBar[]; meta:
               data-top={b.name === top ? "" : undefined}>
             <span className={`truncate ${b.name === top ? "font-semibold text-ink" : "text-ink"}`} title={b.name}>{b.name}</span>
             <span className="h-3 rounded-sm bg-page" aria-hidden="true">
-              <span className={`block h-3 rounded-sm ${b.name === top ? "bg-accent" : "bg-muted/50"}`}
+              <span className={`block h-3 rounded-sm ${b.name === top ? "bg-data-mark" : "bg-muted/50"}`}
                     style={{ width: `${Math.max(2, (100 * b.shortfall) / max)}%` }} />
             </span>
             <span className="tabular-nums text-muted">about {Math.round(b.shortfall)}</span>

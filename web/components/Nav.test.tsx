@@ -15,13 +15,13 @@ describe("Nav", () => {
     expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
   });
 
-  it("marks the current page for assistive tech, with accent text and an underline (no filled pill)", () => {
+  it("marks the current page for assistive tech, with royal-blue text and an underline (no filled pill)", () => {
     pathname.value = "/access-map";
     render(<Nav />);
     const explore = screen.getByRole("link", { name: "Explore" });
     expect(explore).toHaveAttribute("aria-current", "page");   // a page under Explore
-    expect(explore.className).toContain("border-accent");
-    expect(explore.className).toContain("text-accent");
+    expect(explore.className).toContain("border-primary");
+    expect(explore.className).toContain("text-primary-text");
     expect(explore.className).not.toContain("bg-");
     expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
   });

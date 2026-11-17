@@ -105,14 +105,14 @@ export default function CareMapLeaflet({ hospitals, polyclinics, gps, here, focu
       <Fit hospitals={hospitals} here={here} focus={focus} />
       {polyclinics.map((p) => (
         <CircleMarker key={p.name} center={[p.latitude, p.longitude]} radius={5}
-                      pathOptions={{ color: colors.surface, weight: 1.5, fillColor: colors.accent, fillOpacity: 1 }}
+                      pathOptions={{ color: colors.surface, weight: 1.5, fillColor: colors["data-mark"], fillOpacity: 1 }}
                       eventHandlers={{ add: (e) => decorative(e.target as L.CircleMarker) }}>
           <Tooltip>{p.name}</Tooltip>
         </CircleMarker>
       ))}
       {gps.map((g) => (
         <CircleMarker key={`${g.name}|${g.latitude}`} center={[g.latitude, g.longitude]} radius={4}
-                      pathOptions={{ color: colors.accent, weight: 2, fillColor: colors.surface, fillOpacity: 1 }}
+                      pathOptions={{ color: colors["data-mark"], weight: 2, fillColor: colors.surface, fillOpacity: 1 }}
                       eventHandlers={{ add: (e) => decorative(e.target as L.CircleMarker) }}>
           <Tooltip>{g.name}</Tooltip>
         </CircleMarker>

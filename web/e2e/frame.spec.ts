@@ -19,7 +19,7 @@ test.describe("header", () => {
     // The hairline is inside the height.
     expect(box.height).toBe(wide(page) ? 64 : 56);
     const css = await header.evaluate((el) => { const s = getComputedStyle(el); return { bg: s.backgroundColor, border: s.borderBottomWidth }; });
-    expect(css).toEqual({ bg: "rgb(247, 251, 250)", border: "1px" });
+    expect(css).toEqual({ bg: "rgb(250, 249, 255)", border: "1px" });
     await expect(page.getByTestId("wordmark")).toContainText("Care-pacity");
     expect(await page.getByTestId("wordmark").locator(".font-serif").evaluate((el) => getComputedStyle(el).fontSize)).toBe("18px");
   });
@@ -192,7 +192,7 @@ test.describe("view switch", () => {
     const box = (await page.getByTestId("view-radios").boundingBox())!;
     expect(box.height).toBeCloseTo(36, 0);
     const selected = page.getByTestId("view-radios").locator("label", { has: page.getByRole("radio", { name: "Public", exact: true }) });
-    expect(await selected.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(214, 240, 242)");   // accent-soft
+    expect(await selected.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(237, 233, 254)");   // accent-soft
     await expect(selected).toContainText("✓");                          // and a tick: not colour alone
   });
 });
@@ -241,7 +241,7 @@ test.describe("footer", () => {
   test("three columns with at most six links each, on the band colour, credits on one line", async ({ page }) => {
     await page.goto("/findings");
     const footer = page.getByTestId("site-footer");
-    expect(await footer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(227, 244, 241)");
+    expect(await footer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(241, 238, 252)");
     const columns = footer.getByTestId("footer-column");
     await expect(columns).toHaveCount(3);
     await expect(columns.locator("[data-footer-title]")).toHaveText(["Data and privacy", "About this project", "Help"]);

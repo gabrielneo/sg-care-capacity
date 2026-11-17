@@ -43,7 +43,7 @@ export function CareMap(props: CareMapProps) {
             Hospital: {LEVELS[l].label.toLowerCase()}
           </li>
         ))}
-        <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-accent" />Polyclinic</li>
+        <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-data-mark" />Polyclinic</li>
         {props.gps.length ? (
           <li className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full border-2 border-accent bg-surface" /><Glossed text="Nearest GP clinics" plain /></li>
         ) : null}

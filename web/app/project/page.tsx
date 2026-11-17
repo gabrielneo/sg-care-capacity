@@ -60,7 +60,7 @@ export default async function ProjectPage() {
         <p className="mt-4 flex flex-wrap gap-3">
           {cv ? (
             <a href={cv.href} target="_blank" rel="noopener noreferrer"
-               className="inline-flex min-h-11 items-center rounded-md bg-accent px-4 text-small font-semibold text-surface no-underline hover:bg-accent-strong">
+               className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-small font-semibold text-on-primary no-underline hover:bg-primary-strong">
               Read my CV<span className="sr-only"> (opens in a new tab)</span>
             </a>
           ) : null}

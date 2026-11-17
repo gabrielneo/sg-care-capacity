@@ -3,7 +3,7 @@
 import type { Layout } from "@/lib/careMapState";
 
 const BUTTON = "min-h-11 rounded-full border px-4 text-small font-semibold";
-const ON = "border-accent bg-accent text-surface";
+const ON = "border-primary bg-primary text-on-primary";
 const OFF = "border-control bg-surface text-ink hover:border-accent";
 
 /**

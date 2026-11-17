@@ -13,8 +13,8 @@ import { hours, signed } from "./format";
 import { USUAL_WEEKS } from "@/lib/windows";
 import { HospitalName } from "@/components/HospitalName";
 
-/** The dot's colour by badge level (static class names, so Tailwind sees them). */
-const DOT: Record<Level, string> = { much_higher: "bg-status-much", higher: "bg-status-higher", usual: "bg-status-usual", lower: "bg-status-lower", unknown: "bg-accent" };
+/** The latest week's dot is royal blue at every level (the brand's key data mark); the level is in the pill beside it, in words. */
+const DOT: Record<Level, string> = { much_higher: "bg-data-mark", higher: "bg-data-mark", usual: "bg-data-mark", lower: "bg-data-mark", unknown: "bg-data-mark" };
 const WORD: Record<Level, string> = { much_higher: "much higher than usual", higher: "higher than usual", usual: "about usual", lower: "lower than usual", unknown: "no comparison" };
 
 /**
@@ -65,7 +65,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
         <span className="dumbbell-track relative block h-8 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:col-start-2 lg:row-start-1" aria-hidden="true"
               style={{ ["--delay" as string]: `${index * 90}ms` }}>
           {gridlines}
-          <span className="dumbbell-bar absolute top-1/2 h-0.5 -translate-y-1/2 bg-muted"
+          <span className="dumbbell-bar absolute top-1/2 h-0.5 -translate-y-1/2 bg-control"
                 style={{ left: `${Math.min(a, b)}%`, width: `${Math.abs(b - a)}%`, transformOrigin: b >= a ? "left center" : "right center" }} />
           {mode === "raw" ? (
             <span className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-muted bg-surface"
@@ -121,12 +121,12 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
   const key = mode === "raw" ? (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-muted" data-testid="dumbbell-legend">
       <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full border-2 border-muted bg-surface" />Usual level</li>
-      <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full bg-muted" />Latest complete week</li>
+      <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full bg-data-mark" />Latest complete week</li>
     </ul>
   ) : (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-meta text-muted" data-testid="dumbbell-legend">
       <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-px bg-ink" />Usual level (0%)</li>
-      <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full bg-muted" />Latest complete week</li>
+      <li className="flex items-center gap-2"><span aria-hidden="true" className="h-3 w-3 rounded-full bg-data-mark" />Latest complete week</li>
     </ul>
   );
 
