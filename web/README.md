@@ -1,6 +1,6 @@
 # sg-care-capacity web
 
-The website for *Right-siting care in a super-aged Singapore*. It's built with Next.js (App
+The website for *Care-pacity* (emergency waits and clinic access in a super-aged Singapore). It's built with Next.js (App
 Router), TypeScript in strict mode and Tailwind.
 
 The site reads only from the [API](../api/README.md), and only on the server. The browser never

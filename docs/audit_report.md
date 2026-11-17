@@ -1,4 +1,4 @@
-# Data accuracy audit: Right-siting care in a super-aged Singapore
+# Data accuracy audit: Care-pacity
 
 **Date:** 2026-11-08
 **Auditor note:** independent; implementation not read. Every figure below was recomputed with the auditor's own Python (stdlib, duckdb, pandas, pyarrow, openpyxl) from the raw files and staging tables. No pipeline, API or web source code, SQL, tests or other project docs were opened. The only project doc read was `docs/data_dictionary.md`. The case study was read through the website.

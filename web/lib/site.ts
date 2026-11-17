@@ -3,9 +3,9 @@
  * from here; a test fails on the name typed anywhere else (lib/site.test.ts).
  */
 export const SITE = {
-  name: "Right-siting care",
+  name: "Care-pacity",
   tagline: "in a super-aged Singapore",
 } as const;
 
-/** "Right-siting care in a super-aged Singapore": the full title. */
-export const SITE_TITLE = `${SITE.name} ${SITE.tagline}`;
+/** "Care-pacity: emergency waits and clinic access in a super-aged Singapore": the full title (renamed 17 Nov 2026). */
+export const SITE_TITLE = `${SITE.name}: emergency waits and clinic access ${SITE.tagline}`;

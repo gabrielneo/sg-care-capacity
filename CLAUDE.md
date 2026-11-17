@@ -2,7 +2,7 @@
 
 ## Project
 
-**Right-siting care in a super-aged Singapore** is a healthcare analytics portfolio project. It tracks:
+**Care-pacity** (emergency waits and clinic access in a super-aged Singapore; repo `sg-care-capacity`) is a healthcare analytics portfolio project about right-siting care. It tracks:
 
 - **ED bed waits and attendances**: MOH published statistics.
 - **Clinic access for residents aged 65+**: CHAS and CDMP clinic locations against SingStat resident population by planning area.

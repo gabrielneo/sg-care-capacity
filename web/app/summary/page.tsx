@@ -56,7 +56,7 @@ export default async function SummaryPage() {
       </p>
       <h1 className="mt-1 font-semibold tracking-tight text-ink text-h1">{SITE_TITLE}</h1>
       <p className="mt-1 text-muted">
-        {SITE.name} means <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
+        {SITE.name} looks at <Glossed text="right-siting" />: <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
     </header>
   );

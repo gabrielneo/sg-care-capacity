@@ -6,8 +6,9 @@ import { describe, expect, it } from "vitest";
 import { SITE, SITE_TITLE } from "./site";
 
 describe("one site name (audit G3)", () => {
-  it("is \"Right-siting care\", with the tagline \"in a super-aged Singapore\"", () => {
-    expect(SITE_TITLE).toBe("Right-siting care in a super-aged Singapore");
+  it("is \"Care-pacity\", with the tagline \"in a super-aged Singapore\"", () => {
+    expect(SITE.name).toBe("Care-pacity");
+    expect(SITE_TITLE).toBe("Care-pacity: emergency waits and clinic access in a super-aged Singapore");
   });
 
   it("is never typed outside lib/site.ts", () => {

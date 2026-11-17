@@ -22,8 +22,8 @@ from .snapshot import load_snapshot
 
 LOG = logging.getLogger(__name__)
 
-DESCRIPTION = """Read-only access to one published, verified snapshot of the *Right-siting care in a
-super-aged Singapore* data: MOH emergency department bed waits and attendances, CHAS/CDMP clinic
+DESCRIPTION = """Read-only access to one published, verified snapshot of the *Care-pacity* data
+(emergency waits and clinic access in a super-aged Singapore): MOH emergency department bed waits and attendances, CHAS/CDMP clinic
 access for residents aged 65+ by planning area, and NUHS ED wait estimates.
 
 Every response is `{data, meta}`. `meta.as_of` says when the figures were current; `meta.sources`,

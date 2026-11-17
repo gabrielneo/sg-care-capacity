@@ -3401,7 +3401,7 @@
     }
   },
   "info": {
-    "description": "Read-only access to one published, verified snapshot of the *Right-siting care in a\nsuper-aged Singapore* data: MOH emergency department bed waits and attendances, CHAS/CDMP clinic\naccess for residents aged 65+ by planning area, and NUHS ED wait estimates.\n\nEvery response is `{data, meta}`. `meta.as_of` says when the figures were current; `meta.sources`,\n`meta.caveats` and `meta.dq_warnings` must be shown with them. Definitions:\n`docs/data_dictionary.md`.",
+    "description": "Read-only access to one published, verified snapshot of the *Care-pacity* data\n(emergency waits and clinic access in a super-aged Singapore): MOH emergency department bed waits and attendances, CHAS/CDMP clinic\naccess for residents aged 65+ by planning area, and NUHS ED wait estimates.\n\nEvery response is `{data, meta}`. `meta.as_of` says when the figures were current; `meta.sources`,\n`meta.caveats` and `meta.dq_warnings` must be shown with them. Definitions:\n`docs/data_dictionary.md`.",
     "title": "sg-care-capacity API",
     "version": "0.1.0"
   },

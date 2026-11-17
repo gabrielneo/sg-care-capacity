@@ -1,4 +1,4 @@
-# Case study: right-siting care in a super-aged Singapore
+# Case study: Care-pacity, right-siting care in a super-aged Singapore
 
 Everything here follows from the published data, official sources and the project's docs.
 Assumptions are labelled as such; no quotes, interview findings or outcomes are invented. Figures

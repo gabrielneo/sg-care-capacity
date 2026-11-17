@@ -34,7 +34,7 @@ test.describe("Findings: one band per finding", () => {
     // The big number is Finding 1's, once: the old hero callout is gone.
     await expect(page.getByTestId("hero-number")).toHaveCount(0);
     await expect(page.getByTestId("countup")).toHaveCount(0);
-    expect(await plain(page.getByTestId("site-purpose"))).toBe("Right-siting care means treating people in the most suitable place, "
+    expect(await plain(page.getByTestId("site-purpose"))).toBe("Care-pacity looks at right-siting: treating people in the most suitable place, "
       + "such as a general practitioner (GP) clinic rather than a hospital, when it is safe to do so. "
       + "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.");
   });

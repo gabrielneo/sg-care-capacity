@@ -1,4 +1,4 @@
-# Right-siting care in a super-aged Singapore
+# Care-pacity: emergency waits and clinic access in a super-aged Singapore
 
 **Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
 the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from

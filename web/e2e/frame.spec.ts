@@ -20,7 +20,7 @@ test.describe("header", () => {
     expect(box.height).toBe(wide(page) ? 64 : 56);
     const css = await header.evaluate((el) => { const s = getComputedStyle(el); return { bg: s.backgroundColor, border: s.borderBottomWidth }; });
     expect(css).toEqual({ bg: "rgb(247, 251, 250)", border: "1px" });
-    await expect(page.getByTestId("wordmark")).toContainText("Right-siting care");
+    await expect(page.getByTestId("wordmark")).toContainText("Care-pacity");
     expect(await page.getByTestId("wordmark").locator(".font-serif").evaluate((el) => getComputedStyle(el).fontSize)).toBe("18px");
   });
 

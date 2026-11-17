@@ -69,7 +69,7 @@ export function Hero({ insight, meta, count }: { insight: StoryInsight; meta: Me
         on emergency department bed waits and clinic access for seniors, each published only after a fixed statistical check.
       </p>
       <p className="mt-3 max-w-prose text-small text-muted" data-testid="site-purpose">
-        <strong className="font-semibold text-ink">{SITE.name}</strong> means{" "}
+        <strong className="font-semibold text-ink">{SITE.name}</strong> looks at <Glossed text="right-siting" />:{" "}
         <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-small text-muted">

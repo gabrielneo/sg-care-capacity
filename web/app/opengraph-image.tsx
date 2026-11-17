@@ -21,7 +21,7 @@ export default function OpengraphImage() {
                     padding: "72px 80px", backgroundColor: colors.page, color: colors.ink, fontFamily: "sans-serif",
                     // The site's hero light: one soft glow behind the claim, fading to the page colour well before the edges.
                     backgroundImage: `radial-gradient(ellipse 720px 300px at 42% 46%, ${colors["accent-soft"]}, ${colors.page} 85%)` }}>
-        <div style={{ display: "flex", fontSize: 30, color: colors.accent, fontWeight: 600 }}>A data analytics project by Gabriel Neo</div>
+        <div style={{ display: "flex", fontSize: 30, color: colors.accent, fontWeight: 600 }}>{`${SITE.name} · a data analytics project by Gabriel Neo`}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ display: "flex", fontSize: 64, fontWeight: 600, lineHeight: 1.12, maxWidth: 1000 }}>
             Where do Singapore&apos;s hospital waits run longest, and where are clinics for seniors scarce?
