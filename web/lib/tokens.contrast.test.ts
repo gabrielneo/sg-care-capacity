@@ -54,6 +54,25 @@ describe.each(THEMES)("%s theme", (_name, c) => {
   });
 });
 
+describe.each(THEMES)("brand roles, %s theme (17 Nov 2026 rebrand)", (_name, c) => {
+  it.each(BACKGROUNDS)("heading and active-nav text on %s >= 4.5", (bg) => {
+    expect(contrast(c.heading!, c[bg]!)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c["primary-text"]!, c[bg]!)).toBeGreaterThanOrEqual(4.5);
+  });
+  it("button label on the primary fill and its hover >= 4.5", () => {
+    expect(contrast(c["on-primary"]!, c.primary!)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c["on-primary"]!, c["primary-hover"]!)).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each(BACKGROUNDS)("key data marks (royal blue) are a 3:1 graphic on %s", (bg) => {
+    expect(contrast(c["data-mark"]!, c[bg]!)).toBeGreaterThanOrEqual(3);
+  });
+  it("the hero's text >= 4.5 on deep purple, its buttons >= 3", () => {
+    expect(contrast(c["on-hero"]!, c["hero-bg"]!)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c["on-hero-muted"]!, c["hero-bg"]!)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c.primary!, c["hero-bg"]!)).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("data cells carry their own label colour, in both themes", () => {
   const dark = ["div-1", "div-2", "div-7", "map-4", "map-5"] as const;
   const light = ["div-3", "div-4", "div-5", "div-6", "map-1", "map-2", "map-3"] as const;

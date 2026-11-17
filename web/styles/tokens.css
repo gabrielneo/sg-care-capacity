@@ -66,150 +66,269 @@
 
 
 /*
- * Design tokens: "Fresh teal" (16 Nov 2026; before that "Paper & Ink", docs/design/redesign_brief.md). The ONE place colours are
- * written as hex (besides lib/palette.ts, which a test keeps identical to this file).
+ * Design tokens: "Purple, electric violet and royal blue" (17 Nov 2026; before that "Fresh teal", and "Paper & Ink" before
+ * that: docs/design/redesign_brief.md). The ONE place colours are written as hex (besides lib/palette.ts, which a test keeps
+ * identical to this file). Values were checked before use: text 4.5:1 and graphics 3:1 on every surface in both themes
+ * (lib/tokens.contrast.test.ts), colour-blind separation (lib/chartColors.test.ts).
  *
- * Rules:
- *  - Orange/brown family = longer bed waits, violet family = shorter, everywhere.
- *  - Teal (--accent) is interface only (links, selection, focus, buttons), never data meaning. Coral (--pop) and sun (--sun) are
- *    decoration and large figures only: never body text, never a status.
- *  - Light is a bright, cool white; dark is a deep ink-navy with the same accents lifted. Both follow the OS setting only (there is no
- *    switch). Any element can carry data-theme: /styleguide shows both themes side by side that way.
- *    The dark block appears twice because CSS cannot share one block between a media query and a selector;
- *    web/lib/tokens.test.ts checks the two copies are identical.
+ * Roles: royal blue = primary action and key data marks; electric violet = accent (links, focus, small highlights); deep purple =
+ * the hero surface and, in light, headings. A component uses at most two of the three. Status never uses a brand hue.
+ * Light and dark follow the OS setting only (there is no switch). Any element can carry data-theme: /styleguide shows both
+ * themes side by side that way. The dark block appears twice because CSS cannot share one block between a media query and a
+ * selector; lib/palette.test.ts checks the two copies are identical.
  */
 :root,
 [data-theme="light"] {
   color-scheme: light;
 
-  --bg-page: #F7FBFA;
-  --bg-band: #E3F4F1;
+  /* Surfaces, borders and text (neutrals tinted slightly violet). */
+  --bg-page: #FAF9FF;
+  --bg-band: #F1EEFC;
   --bg-surface: #FFFFFF;
-  --bg-sunken: #EEF6F5;
-  --border-subtle: #CFE3E0;
-  --border-control: #5E8280;
-  --text-primary: #0F2B33;
-  --text-secondary: #37535B;
-  --text-tertiary: #4A666E;
-  --accent: #07707C;
-  --accent-hover: #054F59;
-  --accent-soft: #D6F0F2;
-  --pop: #E8512B;
-  --pop-soft: #FFE6DD;
-  --sun: #FFB703;
-  --status-much: #A8322A;
-  --status-much-fill: #F7E1DC;
-  --status-higher: #8F5A12;
-  --status-higher-fill: #F5E7CF;
-  --status-usual: #4F5563;
-  --status-usual-fill: #ECE7DE;
-  --status-lower: #5B4A8B;
-  --status-lower-fill: #E7E2F2;
-  --danger-notice: #A8322A;
-  --danger-notice-fill: #F9E6E2;
-
-  /* Data palettes: the same in both themes (each cell carries its own label colour, below). */
-  --map-1: #FDE725; --map-2: #5EC962; --map-3: #21918C; --map-4: #3B528B; --map-5: #440154;
-  --map-none: #E2E8F0;
-  --div-1: #4B3A7A; --div-2: #6E5CA3; --div-3: #C9C0E3; --div-4: #EFEAE1;
-  --div-5: #F2D3A8; --div-6: #E0A35A; --div-7: #A85A14;
+  --bg-sunken: #F4F2FD;
+  --border-subtle: #E4E0F5;
+  --border-control: #77719B;
+  --text-primary: #16122E;
+  --text-secondary: #5A5675;
+  --text-tertiary: #635F80;
+  --text-heading: #5B21B6;
+  /* Electric violet: accent (links, hover, focus ring, eyebrow labels). On dark, the violet-300 tint. */
+  --accent: #7C3AED;
+  --accent-hover: #6D28D9;
+  --accent-soft: #EDE9FE;
+  /* Royal blue: primary action (main buttons, active nav) and key data marks. On dark, text and marks use royal-400. */
+  --primary: #3F5FE0;
+  --primary-hover: #2F4CC4;
+  --on-primary: #FFFFFF;
+  --primary-text: #3F5FE0;
+  --data-mark: #3F5FE0;
+  /* Deep purple: the landing hero's surface (both themes), with its own text colours. */
+  --hero-bg: #1E1250;
+  --on-hero: #FFFFFF;
+  --on-hero-muted: #C4B5FD;
+  /* Status: never a brand hue. Teal = lower, neutral = about usual, amber = higher, crimson = much higher; always with a mark and words. */
+  --status-much: #BE123C;
+  --status-much-fill: #FFE4E8;
+  --status-higher: #A35207;
+  --status-higher-fill: #FEF1DC;
+  --status-usual: #5A5675;
+  --status-usual-fill: #EEECF5;
+  --status-lower: #0B7A6E;
+  --status-lower-fill: #DDF4F0;
+  --danger-notice: #B42318;
+  --danger-notice-fill: #FDECEA;
+  /* Decoration only (never text, never a status): the violet glow and its tints. */
+  --pop: #8F00FF;
+  --pop-soft: #F3E8FF;
+  --sun: #7C93F5;
   /* Compare mode's categories (max 4); never status colours. lib/chartColors.test.ts checks colour-blind distinguishability. */
-  --cat-1: #07707C; --cat-2: #9C4F3D; --cat-3: #7B4CA6; --cat-4: #8A6A12;
-  --on-data-dark: #12141B;   /* label on a light data cell */
-  --on-data-light: #FFFFFF;  /* label on a dark data cell */
+  --cat-1: #7C3AED;
+  --cat-2: #DB2777;
+  --cat-3: #18181B;
+  --cat-4: #0369A1;
+
+  /* Data palettes: the same in both themes. Map: one lavender-to-deep-royal ramp, even L* steps of 17. Heatmap: teal (shorter) to amber (longer). */
+  --map-1: #F0E8FD;
+  --map-2: #C5B2F2;
+  --map-3: #9380E1;
+  --map-4: #6051C8;
+  --map-5: #392793;
+  --map-none: #E8E6EF;
+  --div-1: #0B5E57;
+  --div-2: #1F7A71;
+  --div-3: #A8DDD5;
+  --div-4: #F1EFF6;
+  --div-5: #F6D9A8;
+  --div-6: #E3A24B;
+  --div-7: #94480B;
+  /* Label colours on data cells. */
+  --on-data-dark: #16122E;
+  --on-data-light: #FFFFFF;
+  /* Brand: the six named colours and the one decorative glow. Components use the role tokens above; these are for gradients and the share image. */
+  --purple-950: #1E1250;
+  --purple-700: #5B21B6;
+  --violet-500: #7C3AED;
+  --violet-300: #C4B5FD;
+  --royal-600: #3F5FE0;
+  --royal-400: #7C93F5;
+  --glow-violet: #8F00FF;
 
   /* Radii (6 / 10 / 14px) are defined once, in app/globals.css (@theme static). */
-  --shadow-float: 0 8px 24px rgba(31, 35, 48, 0.10);
-  --scrim: rgba(31, 35, 48, 0.45);
+  --shadow-float: 0 8px 24px rgba(22, 18, 46, 0.12);
+  --scrim: rgba(22, 18, 46, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg-page: #08141C; --bg-band: #0D1F2B; --bg-surface: #122A38; --bg-sunken: #0B1923;
-    --border-subtle: #23455A; --border-control: #6E93A3;
-    --text-primary: #EAF7F6; --text-secondary: #B2CCD0; --text-tertiary: #8FB0B6;
-    --accent: #2DD4BF; --accent-hover: #5EEAD4; --accent-soft: #0F3C45;
-  --pop: #FF7A59;
-  --pop-soft: #3A2320;
-  --sun: #FFC83D;
-    --status-much: #F08A7E; --status-much-fill: #413337;
-    --status-higher: #E0A955; --status-higher-fill: #3F3831;
-    --status-usual: #B8B2A7; --status-usual-fill: #383A3E;
-    --status-lower: #B3A3E6; --status-lower-fill: #383748;
-    --danger-notice: #F08A7E; --danger-notice-fill: #413337;
-    --cat-1: #2DD4BF; --cat-2: #E58E7A; --cat-3: #C3A6F5; --cat-4: #C9A53A;
-    --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
-    --scrim: rgba(0, 0, 0, 0.6);
+    /* Surfaces, borders and text (neutrals tinted slightly violet). */
+    --bg-page: #0D0A22;
+    --bg-band: #120E2C;
+    --bg-surface: #171335;
+    --bg-sunken: #100C27;
+    --border-subtle: #2C2755;
+    --border-control: #7F79B0;
+    --text-primary: #F1EFFF;
+    --text-secondary: #A9A3CF;
+    --text-tertiary: #9C96C4;
+    --text-heading: #F1EFFF;
+    /* Electric violet: accent (links, hover, focus ring, eyebrow labels). On dark, the violet-300 tint. */
+    --accent: #C4B5FD;
+    --accent-hover: #DDD6FE;
+    --accent-soft: #2A2160;
+    /* Royal blue: primary action (main buttons, active nav) and key data marks. On dark, text and marks use royal-400. */
+    --primary-hover: #3352D0;
+    --primary-text: #7C93F5;
+    --data-mark: #7C93F5;
+    /* Status: never a brand hue. Teal = lower, neutral = about usual, amber = higher, crimson = much higher; always with a mark and words. */
+    --status-much: #FB7185;
+    --status-much-fill: #3A1520;
+    --status-higher: #F59E0B;
+    --status-higher-fill: #33250D;
+    --status-usual: #A9A3CF;
+    --status-usual-fill: #24203F;
+    --status-lower: #2DD4BF;
+    --status-lower-fill: #0F2E31;
+    --danger-notice: #F97066;
+    --danger-notice-fill: #3A1620;
+    /* Decoration only (never text, never a status): the violet glow and its tints. */
+    --pop-soft: #2A1450;
+    /* Compare mode's categories (max 4); never status colours. lib/chartColors.test.ts checks colour-blind distinguishability. */
+    --cat-1: #C4B5FD;
+    --cat-2: #F472B6;
+    --cat-3: #FFFFFF;
+    --cat-4: #71717A;
+    --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --scrim: rgba(5, 3, 18, 0.65);
   }
 }
 
 :root[data-theme="dark"],
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg-page: #08141C; --bg-band: #0D1F2B; --bg-surface: #122A38; --bg-sunken: #0B1923;
-  --border-subtle: #23455A; --border-control: #6E93A3;
-  --text-primary: #EAF7F6; --text-secondary: #B2CCD0; --text-tertiary: #8FB0B6;
-  --accent: #2DD4BF; --accent-hover: #5EEAD4; --accent-soft: #0F3C45;
-  --pop: #FF7A59;
-  --pop-soft: #3A2320;
-  --sun: #FFC83D;
-  --status-much: #F08A7E; --status-much-fill: #413337;
-  --status-higher: #E0A955; --status-higher-fill: #3F3831;
-  --status-usual: #B8B2A7; --status-usual-fill: #383A3E;
-  --status-lower: #B3A3E6; --status-lower-fill: #383748;
-  --danger-notice: #F08A7E; --danger-notice-fill: #413337;
-  --cat-1: #2DD4BF; --cat-2: #E58E7A; --cat-3: #C3A6F5; --cat-4: #C9A53A;
-  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --scrim: rgba(0, 0, 0, 0.6);
+  /* Surfaces, borders and text (neutrals tinted slightly violet). */
+  --bg-page: #0D0A22;
+  --bg-band: #120E2C;
+  --bg-surface: #171335;
+  --bg-sunken: #100C27;
+  --border-subtle: #2C2755;
+  --border-control: #7F79B0;
+  --text-primary: #F1EFFF;
+  --text-secondary: #A9A3CF;
+  --text-tertiary: #9C96C4;
+  --text-heading: #F1EFFF;
+  /* Electric violet: accent (links, hover, focus ring, eyebrow labels). On dark, the violet-300 tint. */
+  --accent: #C4B5FD;
+  --accent-hover: #DDD6FE;
+  --accent-soft: #2A2160;
+  /* Royal blue: primary action (main buttons, active nav) and key data marks. On dark, text and marks use royal-400. */
+  --primary-hover: #3352D0;
+  --primary-text: #7C93F5;
+  --data-mark: #7C93F5;
+  /* Status: never a brand hue. Teal = lower, neutral = about usual, amber = higher, crimson = much higher; always with a mark and words. */
+  --status-much: #FB7185;
+  --status-much-fill: #3A1520;
+  --status-higher: #F59E0B;
+  --status-higher-fill: #33250D;
+  --status-usual: #A9A3CF;
+  --status-usual-fill: #24203F;
+  --status-lower: #2DD4BF;
+  --status-lower-fill: #0F2E31;
+  --danger-notice: #F97066;
+  --danger-notice-fill: #3A1620;
+  /* Decoration only (never text, never a status): the violet glow and its tints. */
+  --pop-soft: #2A1450;
+  /* Compare mode's categories (max 4); never status colours. lib/chartColors.test.ts checks colour-blind distinguishability. */
+  --cat-1: #C4B5FD;
+  --cat-2: #F472B6;
+  --cat-3: #FFFFFF;
+  --cat-4: #71717A;
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --scrim: rgba(5, 3, 18, 0.65);
 }
 
 /* Print is always the light theme (audit D9): the same values as the light block above, whatever the OS or the footer toggle says.
-   test/tokens-print.test.ts checks the two copies are identical. */
+   test/motion.test.ts checks the two copies are identical. */
 @media print {
   :root,
   :root[data-theme="dark"],
   [data-theme="dark"] {
   color-scheme: light;
 
-  --bg-page: #F7FBFA;
-  --bg-band: #E3F4F1;
+  /* Surfaces, borders and text (neutrals tinted slightly violet). */
+  --bg-page: #FAF9FF;
+  --bg-band: #F1EEFC;
   --bg-surface: #FFFFFF;
-  --bg-sunken: #EEF6F5;
-  --border-subtle: #CFE3E0;
-  --border-control: #5E8280;
-  --text-primary: #0F2B33;
-  --text-secondary: #37535B;
-  --text-tertiary: #4A666E;
-  --accent: #07707C;
-  --accent-hover: #054F59;
-  --accent-soft: #D6F0F2;
-  --pop: #E8512B;
-  --pop-soft: #FFE6DD;
-  --sun: #FFB703;
-  --status-much: #A8322A;
-  --status-much-fill: #F7E1DC;
-  --status-higher: #8F5A12;
-  --status-higher-fill: #F5E7CF;
-  --status-usual: #4F5563;
-  --status-usual-fill: #ECE7DE;
-  --status-lower: #5B4A8B;
-  --status-lower-fill: #E7E2F2;
-  --danger-notice: #A8322A;
-  --danger-notice-fill: #F9E6E2;
-
-  /* Data palettes: the same in both themes (each cell carries its own label colour, below). */
-  --map-1: #FDE725; --map-2: #5EC962; --map-3: #21918C; --map-4: #3B528B; --map-5: #440154;
-  --map-none: #E2E8F0;
-  --div-1: #4B3A7A; --div-2: #6E5CA3; --div-3: #C9C0E3; --div-4: #EFEAE1;
-  --div-5: #F2D3A8; --div-6: #E0A35A; --div-7: #A85A14;
+  --bg-sunken: #F4F2FD;
+  --border-subtle: #E4E0F5;
+  --border-control: #77719B;
+  --text-primary: #16122E;
+  --text-secondary: #5A5675;
+  --text-tertiary: #635F80;
+  --text-heading: #5B21B6;
+  /* Electric violet: accent (links, hover, focus ring, eyebrow labels). On dark, the violet-300 tint. */
+  --accent: #7C3AED;
+  --accent-hover: #6D28D9;
+  --accent-soft: #EDE9FE;
+  /* Royal blue: primary action (main buttons, active nav) and key data marks. On dark, text and marks use royal-400. */
+  --primary: #3F5FE0;
+  --primary-hover: #2F4CC4;
+  --on-primary: #FFFFFF;
+  --primary-text: #3F5FE0;
+  --data-mark: #3F5FE0;
+  /* Deep purple: the landing hero's surface (both themes), with its own text colours. */
+  --hero-bg: #1E1250;
+  --on-hero: #FFFFFF;
+  --on-hero-muted: #C4B5FD;
+  /* Status: never a brand hue. Teal = lower, neutral = about usual, amber = higher, crimson = much higher; always with a mark and words. */
+  --status-much: #BE123C;
+  --status-much-fill: #FFE4E8;
+  --status-higher: #A35207;
+  --status-higher-fill: #FEF1DC;
+  --status-usual: #5A5675;
+  --status-usual-fill: #EEECF5;
+  --status-lower: #0B7A6E;
+  --status-lower-fill: #DDF4F0;
+  --danger-notice: #B42318;
+  --danger-notice-fill: #FDECEA;
+  /* Decoration only (never text, never a status): the violet glow and its tints. */
+  --pop: #8F00FF;
+  --pop-soft: #F3E8FF;
+  --sun: #7C93F5;
   /* Compare mode's categories (max 4); never status colours. lib/chartColors.test.ts checks colour-blind distinguishability. */
-  --cat-1: #07707C; --cat-2: #9C4F3D; --cat-3: #7B4CA6; --cat-4: #8A6A12;
-  --on-data-dark: #12141B;   /* label on a light data cell */
-  --on-data-light: #FFFFFF;  /* label on a dark data cell */
+  --cat-1: #7C3AED;
+  --cat-2: #DB2777;
+  --cat-3: #18181B;
+  --cat-4: #0369A1;
+
+  /* Data palettes: the same in both themes. Map: one lavender-to-deep-royal ramp, even L* steps of 17. Heatmap: teal (shorter) to amber (longer). */
+  --map-1: #F0E8FD;
+  --map-2: #C5B2F2;
+  --map-3: #9380E1;
+  --map-4: #6051C8;
+  --map-5: #392793;
+  --map-none: #E8E6EF;
+  --div-1: #0B5E57;
+  --div-2: #1F7A71;
+  --div-3: #A8DDD5;
+  --div-4: #F1EFF6;
+  --div-5: #F6D9A8;
+  --div-6: #E3A24B;
+  --div-7: #94480B;
+  /* Label colours on data cells. */
+  --on-data-dark: #16122E;
+  --on-data-light: #FFFFFF;
+  /* Brand: the six named colours and the one decorative glow. Components use the role tokens above; these are for gradients and the share image. */
+  --purple-950: #1E1250;
+  --purple-700: #5B21B6;
+  --violet-500: #7C3AED;
+  --violet-300: #C4B5FD;
+  --royal-600: #3F5FE0;
+  --royal-400: #7C93F5;
+  --glow-violet: #8F00FF;
 
   /* Radii (6 / 10 / 14px) are defined once, in app/globals.css (@theme static). */
-  --shadow-float: 0 8px 24px rgba(31, 35, 48, 0.10);
-  --scrim: rgba(31, 35, 48, 0.45);
+  --shadow-float: 0 8px 24px rgba(22, 18, 46, 0.12);
+  --scrim: rgba(22, 18, 46, 0.5);
   }
 }

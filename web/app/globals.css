@@ -20,6 +20,15 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
+  --color-heading: var(--text-heading);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-text: var(--primary-text);
+  --color-data-mark: var(--data-mark);
+  --color-hero: var(--hero-bg);
+  --color-on-hero: var(--on-hero);
+  --color-on-hero-muted: var(--on-hero-muted);
   --color-status-much: var(--status-much);
   --color-status-much-soft: var(--status-much-fill);
   --color-status-higher: var(--status-higher);
@@ -79,8 +88,11 @@
   --tracking-tight: -0.01em;
 
   --container-prose: 68ch;   /* prose is never wider than 68 characters */
-  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  /* Body: the reader's own system UI face (SF Pro, Segoe UI, Roboto). Headings: a transitional serif (Charter on Apple devices,
+     Cambria on Windows). The author's portfolio is Inter throughout, so this site reads as its own product. No web font is
+     downloaded (LCP budget, docs/design/redesign_brief.md "Fonts"). */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, "Iowan Old Style", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -115,6 +127,7 @@
      took the Overview's LCP to 2.6-2.8 s against its 2.5 s budget (docs/design/redesign_brief.md, "Fonts"). A reader who has
      them installed sees them; everyone else gets the system fonts. */
   h1, h2 { font-family: var(--font-serif); }
+  h1, h2 { color: var(--text-heading); }
   /* Figures line up in columns: tabular numerals everywhere. */
   body { font-feature-settings: "tnum"; }
   /* Links are underlined unless a component opts out (nav, tabs, cards): colour alone must not
@@ -186,33 +199,46 @@
     .scroll-progress { animation: landing-progress linear both; animation-timeline: scroll(root block); }
   }
 }
-/* The landing hero's light (Task 1, 17 Nov 2026): one soft glow centred behind the claim and one fainter one up to its right. Each
-   is a border image with a 100vmax side outset, so it spans the whole window while the hero stays in the page column; a border
-   image is ink overflow, never scrollable overflow, so the page cannot scroll sideways. Both fade to nothing well inside the hero's
-   top and bottom edges, and the section below is on the same page colour: there is no edge or seam at any width. */
+/* The landing hero (17 Nov 2026 rebrand): deep purple, full window width, with one soft royal-blue glow behind the claim. Both are
+   border images with a 100vmax side outset, so they span the window while the hero stays in the page column; a border image is
+   ink overflow, never scrollable overflow, so the page cannot scroll sideways. The purple is solid behind all the text and fades
+   fully into the page colour over the hero's bottom padding, so the section below starts on the same colour: no edge or seam at
+   any width. Its text uses the hero's own tokens (.on-hero). */
+/* The fade is exactly the hero's bottom padding (pb-16, sm:pb-24 in app/page.tsx), so no text ever sits on it. */
+/* The section also carries the purple as its own background colour: never seen (the opaque gradient above covers it), but it is
+   what contrast checkers such as axe read, since they cannot see a pseudo-element's border image. */
+.hero-glow { --hero-fade: var(--space-8); background-color: var(--hero-bg); }
+@media (min-width: 40rem) { .hero-glow { --hero-fade: var(--space-9); } }
 .hero-glow::before, .hero-glow::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .hero-glow::before {
-  border-image: radial-gradient(ellipse min(40rem, 85vw) 46% at 50% 42%,
-    var(--accent-soft), transparent 85%) fill 0 / 0 / 0 100vmax;
+  border-image: linear-gradient(to bottom in oklch, var(--hero-bg) 0, var(--hero-bg) calc(100% - var(--hero-fade)), var(--bg-page) 100%)
+    fill 0 / 0 / 0 100vmax;
 }
 .hero-glow::after {
-  border-image: radial-gradient(ellipse min(26rem, 60vw) 40% at calc(50% + min(24rem, 30vw)) 38%,
-    color-mix(in srgb, var(--accent-soft) 70%, transparent), transparent 85%) fill 0 / 0 / 0 100vmax;
+  border-image: radial-gradient(ellipse min(38rem, 85vw) 38% at 50% 34%,
+    color-mix(in srgb, var(--royal-600) 55%, transparent), transparent 80%) fill 0 / 0 / 0 100vmax;
 }
 .scroll-progress { position: fixed; inset: 0 0 auto 0; z-index: 60; height: var(--bar-status); transform: scaleX(0); transform-origin: left;
-  background: var(--accent); }
+  background: var(--primary); }
 /* Print and reduced motion: everything is shown, nothing moves. */
-@media print { [data-reveal] { opacity: 1 !important; transform: none !important; } .scroll-progress, .hero-glow::before, .hero-glow::after { display: none; } }
+@media print { [data-reveal] { opacity: 1 !important; transform: none !important; } .scroll-progress, .hero-glow::before, .hero-glow::after { display: none; }
+  /* Paper has no purple hero: its text prints in ink. */
+  .hero-glow { background: none !important; }
+  .on-hero, .on-hero h1, .on-hero h2, .on-hero p, .on-hero span, .on-hero a:not(.btn) { color: var(--text-primary) !important; } }
 
 /* Buttons (17 Nov 2026): one solid accent primary and one outlined secondary, the same height, radius and type everywhere. No
    gradient, no lift: colour changes on hover (the base rule's 120 ms), the accent ring on keyboard focus. */
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding-inline: var(--space-5);
   border: 1px solid transparent; border-radius: var(--radius-md); font-size: var(--fs-body); line-height: var(--lh-small);
   font-weight: 600; text-decoration-line: none; }
-.btn-primary { background: var(--accent); color: var(--bg-surface); }
-.btn-primary:hover { background: var(--accent-hover); color: var(--bg-surface); }
+.btn-primary { background: var(--primary); color: var(--on-primary); }
+.btn-primary:hover { background: var(--primary-hover); color: var(--on-primary); }
 .btn-secondary { background: var(--bg-surface); border-color: var(--border-control); color: var(--accent); }
 .btn-secondary:hover { background: var(--accent-soft); color: var(--accent-hover); }
+/* On the deep-purple hero: the outlined button is transparent with the violet tint for its border and label. */
+.on-hero .btn-secondary { background: transparent; border-color: var(--on-hero-muted); color: var(--on-hero); }
+.on-hero .btn-secondary:hover { background: color-mix(in srgb, var(--on-hero) 12%, transparent); color: var(--on-hero); }
+.on-hero a:not(.btn) { color: var(--on-hero-muted); }
 /* A quiet 1px rule between page sections, where spacing alone is not enough (the landing page has no colour bands). */
 .section-rule { border-top: 1px solid var(--border-subtle); }
 
@@ -517,3 +543,8 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 }
 .section-head > .section-actions { margin-top: var(--space-3); }
 @media (min-width: 48rem) { .section-head > .section-actions { margin-top: 0; } }
+
+/* Headings take the heading colour (deep purple in light, near-white in dark) even where a component gives them text-ink.
+   Unlayered, so it wins over the utility; a heading that sits on the hero sets .on-hero instead (below). */
+h1.text-ink, h2.text-ink { color: var(--text-heading); }
+.on-hero h1, .on-hero h2, h1.on-hero, h2.on-hero { color: var(--on-hero); }

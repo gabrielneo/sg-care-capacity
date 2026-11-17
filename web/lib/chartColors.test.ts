@@ -51,13 +51,38 @@ describe.each([["light", colors], ["dark", darkColors]] as const)("categorical p
   });
 });
 
+describe.each([["light", colors], ["dark", darkColors]] as const)("status never looks like the brand, %s theme", (_n, c) => {
+  const brand = [c.accent, c.primary, c["data-mark"], c["brand-purple-700"]];
+  it.each(VISIONS)("teal, amber and crimson stay apart from violet and royal blue for %s vision (ΔE >= 12)", (v) => {
+    for (const s of [c["status-lower"], c["status-higher"], c["status-much"]]) for (const b of brand) {
+      expect(deltaE(s, b, v), `${s} vs ${b}`).toBeGreaterThanOrEqual(12);
+    }
+  });
+  it.each(VISIONS)("lower and higher, and higher and much higher, stay apart for %s vision", (v) => {
+    expect(deltaE(c["status-lower"], c["status-higher"], v)).toBeGreaterThanOrEqual(MIN_DELTA_E);
+    expect(deltaE(c["status-higher"], c["status-much"], v)).toBeGreaterThanOrEqual(MIN_DELTA_E);
+  });
+});
+
+describe("the map ramp", () => {
+  const L = mapScale.map((h) => lab(h, "normal")[0]!);
+  it("runs light to dark in even steps of L* (one hue family, no cycling)", () => {
+    const steps = L.slice(1).map((l, i) => L[i]! - l);
+    for (const s of steps) expect(s).toBeGreaterThan(12);
+    expect(Math.max(...steps) - Math.min(...steps)).toBeLessThanOrEqual(2);
+  });
+  it.each(VISIONS)("neighbouring classes stay apart for %s vision", (v) => {
+    for (let i = 1; i < mapScale.length; i++) expect(deltaE(mapScale[i - 1]!, mapScale[i]!, v)).toBeGreaterThanOrEqual(10);
+  });
+});
+
 describe("cell labels", () => {
   const bins = [...divergingScale, ...mapScale];
   it.each(bins.map((b) => [b]))("%s: the chosen label colour reaches 4.5:1", (bin) => {
     const label = textOn(bin) === "light" ? colors["on-data-light"] : colors["on-data-dark"];
     expect(contrast(label, bin)).toBeGreaterThanOrEqual(4.5);
   });
-  it("the diverging ramp runs shorter to longer: violet, a neutral middle, orange", () => {
+  it("the diverging ramp runs shorter to longer: teal, a neutral middle, amber", () => {
     expect(divergingScale).toHaveLength(7);
     const lum = divergingScale.map((h) => rgb(h).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i]!, 0));
     expect(lum[3]).toBeGreaterThan(lum[0]!);
