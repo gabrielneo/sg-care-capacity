@@ -104,7 +104,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
             <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight text-ink">
               Emergency waits and clinic access for Singapore&apos;s seniors.
             </h1>
-            <p className="landing-rise mt-4 text-body text-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows, in two pictures.</p>
+            <p className="landing-rise mt-4 text-body text-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows about bed waits and clinic access.</p>
             <p className={`landing-rise mt-8 flex flex-wrap items-center gap-3 ${showHero ? "justify-center lg:justify-start" : "justify-center"}`} style={{ ["--delay" as string]: "240ms" }}>
               <Link href={FIND_PATH} data-testid="cta-find" className="btn btn-primary">
                 Find a clinic near you
