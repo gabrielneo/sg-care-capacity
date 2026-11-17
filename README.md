@@ -2,29 +2,32 @@
 
 **Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
 the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from
-public MOH, data.gov.sg and SingStat data. The site opens on two pictures, each with a one-line note:
-each hospital's latest bed wait against its own usual level, and clinics per senior by planning area.
-A separate page finds the nearest polyclinics and GP clinics for any postcode.**
+public MOH, data.gov.sg and SingStat data. The site opens on the average bed wait month by month, then
+two pictures, each with a one-line note: each hospital's latest bed wait against its own usual level,
+and clinics per senior by planning area. A separate page finds the nearest polyclinics and GP clinics
+for any postcode.**
 
 **Live site: [sg-care-capacity-web.vercel.app](https://sg-care-capacity-web.vercel.app/)** ·
 [Case study](https://sg-care-capacity-web.vercel.app/case-study) ·
 [One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
 [Independent audit](docs/audit_report.md)
 
-[![The landing page: a short claim and two buttons, then a chart of each hospital's latest bed wait against its usual level, with the date and source under it](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+[![The landing page: the claim, a "Find a clinic near you" button and a "Read the findings" button on a soft teal glow, the 995 line, then each hospital's latest bed wait against its usual level on a common hour scale](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
 
 ## The site
 
 | Page | What it is for |
 |---|---|
-| **Home** `/` | The claim, then two pictures with a short note each: bed waits against each hospital's usual, and clinics per 1,000 residents aged 65+ by planning area (plain SVG, no map script). Each has its date and source, a table and CSV/Excel downloads |
+| **Home** `/` | The claim and two buttons; the average bed wait month by month with three headline figures (when the data release has monthly figures); then two pictures with a short note each: bed waits against each hospital's usual, on one hour scale with status pills, and clinics per 1,000 residents aged 65+ by planning area (plain SVG, no map script). Each has its date and source, a table and CSV/Excel downloads. A "Data and privacy" panel repeats the footer's promise and links to the methods and data quality |
 | **Find a clinic** `/find` | A postcode search for the nearest polyclinics, CHAS GP clinics and emergency departments. The search runs in the browser and is never sent to a server. `?view=planner` and `?view=analyst` show the same figures for a planner and an analyst |
 | **Findings** | What the latest data release shows, each finding computed by code and shown with how sure it is |
 | **Explore** | ED trends, the Access Map (3D, 2D and table) and the NUHS live estimates |
 | **Methods, About** | Where each number comes from and what it can't tell you; the case study and the decisions behind the build |
 
-It follows the device's light or dark setting, has no theme switch, and has no red banner: the 995
-emergency number is in the footer of every page. Links underline only their own words.
+It follows the device's light or dark setting and has no theme switch. There is no red banner: the 995
+emergency number and "not medical advice" share one small line on the home page's first screen, and
+the 995 number is in the footer of every page. One accent colour, no gradient text; a status is always
+an arrow and a word as well as a colour. Links underline only their own words.
 
 ## What the data shows
 
@@ -84,10 +87,11 @@ number with its "Data as of" date and source.
   to the exact raw cells: 19 matched; the 20th is an external citation. It rebuilt two tables from
   scratch, which matched. It found 1 critical, 1 high and 5 medium issues. All are fixed, each with
   a test ([audit report](docs/audit_report.md)).
-- **Tests on every push.** Over 2,000 automated tests run in CI: about 1,100 website unit tests, about
-  780 browser checks, and the pipeline, API and real-data suites. The browser checks cover every page at
-  1280 and 375 px wide (with overflow checks at 768 and 1440 px), WCAG 2.2 AA accessibility with axe, and
-  Lighthouse budgets for loading time and layout shift.
+- **Tests on every push.** Over 2,000 automated tests run in CI: about 1,150 website unit tests, about
+  850 browser checks, and the pipeline, API and real-data suites. The browser checks cover every page at
+  1280 and 375 px wide (with overflow checks at 768 and 1440 px), WCAG 2.1 AA accessibility with axe on
+  every page (2.2 AA as well on the home page and the newer pages), and Lighthouse budgets for loading
+  time and layout shift.
 
 ## Tech stack
 
