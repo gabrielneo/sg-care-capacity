@@ -121,7 +121,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
             </p>
           </div>
           {showHero ? (
-            <div className="landing-rise rounded-xl border border-line bg-surface p-4 shadow-popover sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
+            <div className="landing-rise rounded-xl border border-line bg-surface p-4 sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
               <p className="text-small font-semibold text-ink">Average bed wait at the full emergency departments, month by month</p>
               <HeroLine points={heroLine} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
               <p className="mt-1 flex justify-between text-meta text-muted" data-testid="hero-range">
@@ -145,7 +145,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
                 ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />, unit: "", label: `change in bed wait, against ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
             ].map((t) => (
               <p key={t.id} data-testid="landing-stat" className="rounded-xl border border-line bg-surface p-4 text-center">
-                <span className="block text-kpi font-semibold tracking-tight text-accent">{t.figure}{t.unit ? <span className="ml-1 text-small font-normal text-muted">{t.unit}</span> : null}</span>
+                <span className="block text-kpi font-semibold tracking-tight text-ink">{t.figure}{t.unit ? <span className="ml-1 text-small font-normal text-muted">{t.unit}</span> : null}</span>
                 <span className="mt-1 block text-small text-muted">{t.label}</span>
               </p>
             ))}
