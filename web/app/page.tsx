@@ -13,6 +13,7 @@ import { ScrollProgress } from "@/components/motion/ScrollProgress";
 import { NOTICE_995_LINE } from "@/components/Notice995";
 import { provenanceText } from "@/components/Provenance";
 import { ErrorState } from "@/components/States";
+import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
 import { CAVEAT, plainError } from "@/lib/copy";
 import { latestCompleteWeek, profileWindow, usualLevels } from "@/lib/edCompare";
@@ -101,19 +102,23 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
         <div className={`mx-auto grid items-center gap-x-12 gap-y-8 ${showHero ? "max-w-6xl lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]" : "max-w-3xl"}`}>
           <div className={showHero ? "text-center lg:text-left" : "text-center"}>
             <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight text-ink">
-              Emergency waits and clinic access for <span className="text-gradient">Singapore&apos;s seniors.</span>
+              Emergency waits and clinic access for Singapore&apos;s seniors.
             </h1>
             <p className="landing-rise mt-4 text-body text-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows, in two pictures.</p>
             <p className={`landing-rise mt-8 flex flex-wrap items-center gap-3 ${showHero ? "justify-center lg:justify-start" : "justify-center"}`} style={{ ["--delay" as string]: "240ms" }}>
-              <Link href={FIND_PATH} data-testid="cta-find"
-                    className="cta-primary inline-flex min-h-12 items-center rounded-lg px-6 text-body font-semibold text-surface no-underline">
+              <Link href={FIND_PATH} data-testid="cta-find" className="btn btn-primary">
                 Find a clinic near you
               </Link>
-              <Link href="/findings" data-testid="cta-findings" className="inline-flex min-h-12 items-center px-4 text-body font-semibold">
+              <Link href="/findings" data-testid="cta-findings" className="btn btn-secondary">
                 Read the findings
               </Link>
             </p>
-            <p className="landing-rise mt-6 text-meta text-muted" data-testid="not-advice" style={{ ["--delay" as string]: "360ms" }}>{NOTICE_995_LINE}</p>
+            {/* Quiet, and on the first screen at every width: the emergency number and what this site is not. */}
+            <p className={`landing-rise mt-6 flex flex-wrap items-center gap-x-2 text-meta text-muted ${showHero ? "justify-center lg:justify-start" : "justify-center"}`}
+               data-testid="not-advice" style={{ ["--delay" as string]: "360ms" }}>
+              <span className="font-semibold text-ink">Emergency? <a href="tel:995" className="inline-flex min-h-11 items-center">Call 995</a>.</span>
+              <span>{NOTICE_995_LINE}</span>
+            </p>
           </div>
           {showHero ? (
             <div className="landing-rise rounded-xl border border-line bg-surface p-4 shadow-popover sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
@@ -204,6 +209,27 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           <div className="mt-6"><ErrorState title="The clinic map can't be shown right now" error={plainError(areasRes.error)} /></div>
         </section>
       ) : null}
+
+      {/* The site's data-and-privacy promise, in the footer's own words and links, given a place on the front page. */}
+      <section aria-labelledby="landing-trust" className="section section-rule" data-testid="landing-trust">
+        <div className="grid gap-x-8 gap-y-4 rounded-xl border border-line bg-sunken card md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="hidden h-8 w-8 text-accent md:block" fill="none" stroke="currentColor" strokeWidth="1.75"
+               strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" /><path d="M9 12l2 2 4-4" />
+          </svg>
+          <div>
+            <h2 id="landing-trust" className="text-h3 font-semibold text-ink">Data and privacy</h2>
+            <p className="mt-1 max-w-prose text-small text-muted">
+              <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." />{" "}
+              Page views are counted without cookies, and searches aren&apos;t recorded.
+            </p>
+          </div>
+          <ul className="flex flex-wrap gap-x-6 md:block">
+            <li><Link href="/methodology" className="inline-flex min-h-11 items-center text-small font-semibold">How the figures are made</Link></li>
+            <li><Link href="/data-quality" className="inline-flex min-h-11 items-center text-small font-semibold">Data quality</Link></li>
+          </ul>
+        </div>
+      </section>
 
       <section aria-labelledby="landing-more" className="section" data-testid="landing-more">
         <h2 id="landing-more" className="sr-only">Where to go next</h2>

@@ -25,7 +25,8 @@ const TARGET = "inline-flex min-h-11 min-w-11 items-center sm:min-h-0 sm:min-w-0
 const item = (href: string, label: string) => <li key={href}><Link href={href} className={TARGET}>{label}</Link></li>;
 
 /**
- * The footer, on every page: the page's last band. Three columns: data and privacy, about this project, and help (995 and the glossary).
+ * The footer, on every page: the page's last band. Three columns: data and privacy, about this project, and help (995 and the glossary); the style guide and decision
+ * records sit in a smaller, muted developer line beside the credits.
  * The 60-second overview, case study, GitHub and CV live here, not in the product's pages. Credits are one line.
  */
 export function SiteFooter() {
@@ -43,7 +44,7 @@ export function SiteFooter() {
   return (
     <footer className="bg-band text-small text-muted" data-testid="site-footer">
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] sm:gap-8">
           <Column id="footer-data" title="Data and privacy">
             <p className="mt-2 max-w-prose">
               {/* Standalone: the footer is site chrome, so it doesn't use up the page's first use of a term. */}
@@ -53,7 +54,6 @@ export function SiteFooter() {
             <Links>
               {item("/methodology", "How the figures are made")}
               {item("/data-quality", "Data quality")}
-              {item("/decisions", "Decision records")}
             </Links>
             {/* Loaded in the browser (/status.json): building a page never waits on the API. */}
             <div className="mt-3"><DataStatus /></div>
@@ -70,13 +70,20 @@ export function SiteFooter() {
             <Notice995 variant="footer" className="mt-2" />
             <Links>
               {item("/glossary", "Glossary")}
-              {item("/styleguide", "Style guide")}
             </Links>
           </Column>
         </div>
-        <p className="mt-8 border-t border-line pt-4" data-testid="footer-credits">
-          <span>Built by <strong className="font-semibold text-ink">{AUTHOR.name}</strong>, {AUTHOR.role}.</span>
-        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line pt-4">
+          <p data-testid="footer-credits">
+            <span>Built by <strong className="font-semibold text-ink">{AUTHOR.name}</strong>, {AUTHOR.role}.</span>
+          </p>
+          {/* For people reviewing the build, not for readers of the figures: kept, but muted next to the columns. */}
+          <p className="flex flex-wrap items-center gap-x-4 text-meta text-tertiary" data-testid="footer-dev">
+            <span>For developers:</span>
+            <Link href="/styleguide" className={`${TARGET} text-tertiary`}>Style guide</Link>
+            <Link href="/decisions" className={`${TARGET} text-tertiary`}>Decision records</Link>
+          </p>
+        </div>
       </div>
     </footer>
   );

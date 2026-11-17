@@ -200,14 +200,21 @@
     color-mix(in srgb, var(--accent-soft) 70%, transparent), transparent 85%) fill 0 / 0 / 0 100vmax;
 }
 .scroll-progress { position: fixed; inset: 0 0 auto 0; z-index: 60; height: var(--bar-status); transform: scaleX(0); transform-origin: left;
-  background: linear-gradient(90deg, var(--accent), var(--pop), var(--sun)); }
+  background: var(--accent); }
 /* Print and reduced motion: everything is shown, nothing moves. */
 @media print { [data-reveal] { opacity: 1 !important; transform: none !important; } .scroll-progress, .hero-glow::before, .hero-glow::after { display: none; } }
 
-.cta-primary { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); box-shadow: var(--shadow-float);
-  transition: transform var(--dur-hover) var(--ease-out), box-shadow var(--dur-hover) var(--ease-out); }
-.cta-primary:hover { transform: translateY(-0.125rem); }
-.text-gradient { background: linear-gradient(100deg, var(--accent), var(--pop)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* Buttons (17 Nov 2026): one solid accent primary and one outlined secondary, the same height, radius and type everywhere. No
+   gradient, no lift: colour changes on hover (the base rule's 120 ms), the accent ring on keyboard focus. */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding-inline: var(--space-5);
+  border: 1px solid transparent; border-radius: var(--radius-md); font-size: var(--fs-body); line-height: var(--lh-small);
+  font-weight: 600; text-decoration-line: none; }
+.btn-primary { background: var(--accent); color: var(--bg-surface); }
+.btn-primary:hover { background: var(--accent-hover); color: var(--bg-surface); }
+.btn-secondary { background: var(--bg-surface); border-color: var(--border-control); color: var(--accent); }
+.btn-secondary:hover { background: var(--accent-soft); color: var(--accent-hover); }
+/* A quiet 1px rule between page sections, where spacing alone is not enough (the landing page has no colour bands). */
+.section-rule { border-top: 1px solid var(--border-subtle); }
 
 /* Links in navigation, tabs and cards: no underline until hover or keyboard focus. Links in running text keep the base rule (always underlined). */
 @utility link-quiet {
