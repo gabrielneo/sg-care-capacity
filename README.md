@@ -106,7 +106,7 @@ number with its "Data as of" date and source.
   to the exact raw cells: 19 matched; the 20th is an external citation. It rebuilt two tables from
   scratch, which matched. It found 1 critical, 1 high and 5 medium issues. All are fixed, each with
   a test ([audit report](docs/audit_report.md)).
-- **Tests on every push.** About 2,600 automated tests run in CI: about 1,200 website unit tests, about
+- **Tests on every push.** Over 2,500 automated tests run in CI: about 1,200 website unit tests, about
   850 browser checks, about 380 pipeline tests and about 140 API tests. Another 100 acceptance checks run
   on the real built data (`make test`). The browser checks cover every page at 1280 and 375 px wide (with
   overflow checks at 768 and 1440 px), WCAG 2.1 AA accessibility with axe on every page (2.2 AA as well on
