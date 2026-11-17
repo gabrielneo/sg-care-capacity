@@ -16,7 +16,7 @@ describe("MapLegend", () => {
     expect(legend).toHaveTextContent("Darker means fewer clinics per senior: worse access.");
     expect(legend).toHaveTextContent("The map is shaded in five groups with equal numbers of areas");
     expect(legend).not.toHaveTextContent(/quantile/i);
-    expect(legend).toHaveTextContent("0.50 – 1.10 per 1,000 aged 65+ (2 areas)");
+    expect(legend).toHaveTextContent("0.50 to 1.10 per 1,000 aged 65+ (2 areas)");
     expect(legend).toHaveTextContent("No data (2 areas");
     expect(legend).toHaveTextContent("1 of the areas shown have fewer than 1,000 residents aged 65+");
   });

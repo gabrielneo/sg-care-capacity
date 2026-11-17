@@ -1,5 +1,6 @@
 import { formatValue, metricByKey } from "@/lib/areaMetrics";
 import type { AreaStyle, Svy21Feature } from "@/lib/map3d";
+import { classRanges } from "@/lib/legendRanges";
 import type { LegendClass } from "@/lib/quantiles";
 import { staticMap } from "@/lib/staticMap";
 
@@ -14,8 +15,11 @@ export function LandingMap({ features, areas, classes, excluded }: {
   features: readonly Svy21Feature[]; areas: readonly AreaStyle[]; classes: readonly LegendClass[]; excluded: number }) {
   const map = staticMap(features, areas);
   if (!map) return null;
-  const range = (c: LegendClass) =>
-    c.min === c.max ? formatValue(c.min, METRIC.decimals) : `${formatValue(c.min, METRIC.decimals)} to ${formatValue(c.max, METRIC.decimals)}`;
+  // Each class in the words of the rule that fills it, so the ranges meet with no gap and no figure is in two (lib/legendRanges.ts).
+  const ranges = classRanges(classes, METRIC.decimals, formatValue);
+  // Why areas are not ranked, in the API's own words, with how many areas each reason covers.
+  const reasons = [...areas.filter((a) => a.excluded && a.props.excluded_reason)
+    .reduce((m, a) => m.set(a.props.excluded_reason!, (m.get(a.props.excluded_reason!) ?? 0) + 1), new Map<string, number>())];
   return (
     <div data-testid="landing-map" className="grid items-center gap-x-8 gap-y-6 md:grid-cols-[minmax(0,1fr)_15rem]">
       <svg viewBox={`0 0 ${map.width} ${map.height}`} role="img" className="landing-map mx-auto h-auto w-full max-w-xl"
@@ -41,11 +45,11 @@ export function LandingMap({ features, areas, classes, excluded }: {
         <p className="mt-1 text-muted"><span aria-hidden="true">▼ </span>Darker means fewer.</p>
         {/* The classes as one stepped bar, lightest (most) at the top, each step with its range. */}
         <ul className="mt-3">
-          {[...classes].reverse().map((c, i, all) => (
+          {classes.map((c, i) => ({ c, label: ranges[i]! })).reverse().map(({ c, label }, i, all) => (
             <li key={c.index} className="flex items-center gap-3">
               <span aria-hidden="true" className={`h-6 w-6 shrink-0 ${i === 0 ? "rounded-t-sm" : ""} ${i === all.length - 1 ? "rounded-b-sm" : ""}`}
                     style={{ background: c.color }} />
-              <span className="tabular-nums">{range(c)}</span>
+              <span className="tabular-nums">{label}</span>
             </li>
           ))}
         </ul>
@@ -56,6 +60,11 @@ export function LandingMap({ features, areas, classes, excluded }: {
             </svg>
             <span>Not ranked ({excluded})</span>
           </p>
+        ) : null}
+        {excluded > 0 && reasons.length ? (
+          <ul className="mt-1 pl-8 text-muted" data-testid="landing-not-ranked-reasons">
+            {reasons.map(([reason, n]) => <li key={reason}>{reason} ({n})</li>)}
+          </ul>
         ) : null}
       </div>
     </div>

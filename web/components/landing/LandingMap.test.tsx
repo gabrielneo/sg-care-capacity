@@ -29,6 +29,16 @@ describe("LandingMap", () => {
     expect(getByTestId("landing-legend")).toHaveTextContent("Not ranked (3)");
   });
 
+  it("ranks meet with no gap, and the not-ranked areas are counted by the API's own reason", () => {
+    const withReason = (code: string, reason: string) => ({ ...a(code, code, true), props: { excluded_reason: reason } as AreaStyle["props"] });
+    const { getByTestId } = render(<LandingMap features={[f("BD", 0)]}
+      areas={[a("BD", "Bedok"), withReason("TS", "no residents aged 65+"), withReason("WI", "no residents aged 65+"), withReason("DT", "fewer than 1,000 residents aged 65+")]}
+      classes={[{ index: 0, min: 0, max: 0.8912, count: 1, color: "#440154" }, { index: 1, min: 0.9001, max: 1.3, count: 1, color: "#21918C" }]} excluded={3} />);
+    expect(getByTestId("landing-legend")).toHaveTextContent("over 0.89 to 1.30");
+    expect(getByTestId("landing-legend")).toHaveTextContent("0.00 to 0.89");
+    expect(getByTestId("landing-not-ranked-reasons")).toHaveTextContent("no residents aged 65+ (2)fewer than 1,000 residents aged 65+ (1)");
+  });
+
   it("draws nothing when there is no geometry", () => {
     const { container } = render(<LandingMap features={[]} areas={[]} classes={[]} excluded={0} />);
     expect(container).toBeEmptyDOMElement();

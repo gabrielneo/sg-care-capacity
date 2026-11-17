@@ -1,5 +1,6 @@
 import type { AreaMetric } from "@/lib/areaMetrics";
 import { formatValue } from "@/lib/areaMetrics";
+import { classRanges } from "@/lib/legendRanges";
 import type { LegendClass } from "@/lib/quantiles";
 
 import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
@@ -10,6 +11,7 @@ import { ClientGlossed as Glossed } from "../terms/ClientGlossed";
  */
 export function MapLegend({ metric, classes, noData, noResidents = 0, smallAreas = 0 }: {
   metric: AreaMetric; classes: LegendClass[]; noData: number; noResidents?: number; smallAreas?: number }) {
+  const ranges = classRanges(classes, metric.decimals, formatValue);   // ranges that meet, with no figure in two (lib/legendRanges.ts)
   return (
     <div className="text-meta text-ink" data-testid="map-legend">
       <p className="font-semibold"><Glossed text={metric.label} /></p>
@@ -19,11 +21,11 @@ export function MapLegend({ metric, classes, noData, noResidents = 0, smallAreas
         {classes.length < 5 ? " (fewer when areas share a value)" : ""}. Areas with no value are left out of the groups.
       </p>
       <ul className="mt-2 space-y-1">
-        {classes.map((c) => (
+        {classes.map((c, i) => (
           <li key={c.index} className="flex items-center gap-2">
             <span aria-hidden="true" className="h-4 w-6 rounded-sm border border-line" style={{ background: c.color }} />
             <span className="tabular-nums">
-              {c.min === c.max ? formatValue(c.min, metric.decimals) : `${formatValue(c.min, metric.decimals)} – ${formatValue(c.max, metric.decimals)}`}{" "}
+              {ranges[i]}{" "}
               {metric.unit}
             </span>{" "}
             <span className="text-muted">({c.count} {c.count === 1 ? "area" : "areas"})</span>
