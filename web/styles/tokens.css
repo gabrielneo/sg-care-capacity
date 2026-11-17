@@ -21,7 +21,6 @@
      never to hide data: see test/motion.test.ts for the rules. */
   --dur-reveal: 700ms;     /* a block rising into place, a dot sliding to its value */
   --dur-draw: 1600ms;      /* the hero line drawing itself */
-  --dur-drift: 18s;        /* the hero's slow background drift */
 
   --space-1: 0.25rem;  --space-2: 0.5rem;  --space-3: 0.75rem; --space-4: 1rem;  --space-5: 1.5rem;
   --space-6: 2rem;     --space-7: 3rem;    --space-8: 4rem;    --space-9: 6rem;

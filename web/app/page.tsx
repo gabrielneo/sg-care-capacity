@@ -94,15 +94,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
   const drawAccess = accessMeta != null && styled.classes.length > 0;
 
   return (
-    <div data-testid="landing" className="overflow-x-clip">
+    <div data-testid="landing">
       <ScrollProgress />
-      <section aria-labelledby="landing-title" data-testid="landing-hero" className="relative isolate py-8 sm:py-16">
-        {/* A slow drift of colour behind the claim: decorative, and still when motion is reduced. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2">
-          <div className="hero-blob" style={{ top: "-30%", left: "-10%", width: "42rem", height: "42rem", background: "radial-gradient(closest-side, color-mix(in srgb, var(--accent) 32%, transparent), transparent)" }} />
-          <div className="hero-blob" style={{ top: "-10%", right: "-12%", width: "36rem", height: "36rem", background: "radial-gradient(closest-side, color-mix(in srgb, var(--pop) 26%, transparent), transparent)", animationDirection: "alternate-reverse" }} />
-          <div className="hero-blob" style={{ bottom: "-40%", left: "30%", width: "34rem", height: "34rem", background: "radial-gradient(closest-side, color-mix(in srgb, var(--sun) 24%, transparent), transparent)" }} />
-        </div>
+      {/* The soft light behind the claim is .hero-glow (app/globals.css): full window width, faded out before the hero's edges. */}
+      <section aria-labelledby="landing-title" data-testid="landing-hero" className="hero-glow relative isolate pb-8 pt-8 sm:pb-12 sm:pt-12">
         <div className={`mx-auto grid items-center gap-x-12 gap-y-8 ${showHero ? "max-w-6xl lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]" : "max-w-3xl"}`}>
           <div className={showHero ? "text-center lg:text-left" : "text-center"}>
             <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight text-ink">
@@ -155,7 +150,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
       ) : null}
 
       {waitsMeta && drawBedWaits ? (
-        <section aria-labelledby="landing-waits" data-testid="landing-waits" className="section section-band">
+        <section aria-labelledby="landing-waits" data-testid="landing-waits" className="section">
           <Reveal className="mx-auto max-w-3xl text-center">
             <h2 id="landing-waits" className="text-h2 font-semibold text-ink">Bed waits, against each hospital&apos;s usual.</h2>
             {count ? <p className="mt-3 text-body font-semibold text-ink" data-testid="landing-count">{count.figure}.</p> : null}
@@ -173,7 +168,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
       ) : null}
 
       {!drawBedWaits && !(hospitalsRes.ok && weeklyRes.ok) ? (
-        <section aria-labelledby="landing-waits" data-testid="landing-waits-error" className="section section-band">
+        <section aria-labelledby="landing-waits" data-testid="landing-waits-error" className="section">
           <h2 id="landing-waits" className="text-h2 font-semibold text-ink">Bed waits, against each hospital&apos;s usual.</h2>
           <div className="mt-6">
             <ErrorState title="The bed-wait figures can't be shown right now"
@@ -210,7 +205,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
         </section>
       ) : null}
 
-      <section aria-labelledby="landing-more" className="section section-band" data-testid="landing-more">
+      <section aria-labelledby="landing-more" className="section" data-testid="landing-more">
         <h2 id="landing-more" className="sr-only">Where to go next</h2>
         <Reveal as="ul" className="card-grid md:grid-cols-3">
           {[

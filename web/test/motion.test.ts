@@ -27,7 +27,7 @@ function tsx(dir: string): string[] {
 describe("motion", () => {
   it("the keyframes are the drawer, the sheet, the loading placeholder and the landing page's own", () => {
     expect([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]).sort()).toEqual([
-      "care-drawer-in", "care-sheet-in", "landing-cue", "landing-draw", "landing-drift", "landing-fade", "landing-grow",
+      "care-drawer-in", "care-sheet-in", "landing-cue", "landing-draw", "landing-fade", "landing-grow",
       "landing-progress", "landing-pulse", "landing-rise", "landing-slide", "show-after-delay"]);
   });
 
@@ -35,7 +35,7 @@ describe("motion", () => {
     const start = css.indexOf("@media (prefers-reduced-motion: no-preference) {\n  @keyframes landing-rise");
     expect(start).toBeGreaterThan(-1);
     const block = css.slice(start, css.indexOf("\n}\n", start));
-    for (const k of ["landing-rise", "landing-draw", "landing-fade", "landing-drift", "landing-pulse", "landing-slide", "landing-grow", "landing-cue", "landing-progress"]) {
+    for (const k of ["landing-rise", "landing-draw", "landing-fade", "landing-pulse", "landing-slide", "landing-grow", "landing-cue", "landing-progress"]) {
       expect(block).toContain(`@keyframes ${k}`);
     }
     expect(css.slice(0, start)).not.toMatch(/animation:\s*landing-/);          // nothing outside it starts a landing animation
@@ -44,17 +44,17 @@ describe("motion", () => {
   it("every transition and animation duration is a motion token", () => {
     const bad = [...css.matchAll(/(?<![-\w])(?:transition|animation)(?:-duration)?\s*:\s*([^;}]+)/g)]
       .map((m) => m[1]!.trim())
-      .filter((v) => v !== "none" && !/var\(--dur-(hover|accordion|drawer|reveal|draw|drift)\)/.test(v) && v !== "landing-progress linear both" && !/^show-after-delay 0s linear 1s forwards$/.test(v) && !/^none !important$/.test(v));
+      .filter((v) => v !== "none" && !/var\(--dur-(hover|accordion|drawer|reveal|draw)\)/.test(v) && v !== "landing-progress linear both" && !/^show-after-delay 0s linear 1s forwards$/.test(v) && !/^none !important$/.test(v));
     expect(bad).toEqual([]);
   });
 
-  it("the interface durations are 120, 180 and 200 ms, and the landing page's are 700 ms, 1.6 s and 18 s", () => {
+  it("the interface durations are 120, 180 and 200 ms, and the landing page's are 700 ms and 1.6 s (the hero's background is still since 17 Nov 2026)", () => {
     expect(tokens).toMatch(/--dur-hover:\s*120ms/);
     expect(tokens).toMatch(/--dur-accordion:\s*180ms/);
     expect(tokens).toMatch(/--dur-drawer:\s*200ms/);
     expect(tokens).toMatch(/--dur-reveal:\s*700ms/);
     expect(tokens).toMatch(/--dur-draw:\s*1600ms/);
-    expect(tokens).toMatch(/--dur-drift:\s*18s/);
+    expect(tokens).not.toMatch(/--dur-drift/);
   });
 
   it("only transform, opacity and the hero stroke are animated, so nothing shifts the layout", () => {
