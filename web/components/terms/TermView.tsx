@@ -11,6 +11,8 @@ export interface TermViewProps {
   children?: ReactNode;
   plural?: boolean;
   plain?: boolean;
+  /** The text already reads "Full name (ABBR)" (lib/glossary.ts, segmentText): show it as written, never spelled out again. */
+  spelled?: boolean;
 }
 
 /**
@@ -21,13 +23,14 @@ export interface TermViewProps {
  * - Rule 2 (explained word): the first use is underlined with its explanation; later uses are plain.
  * It never decides first use itself, so it renders the same on the server and in the browser.
  */
-export function TermView({ id, first, children, plural = false, plain = false }: TermViewProps) {
+export function TermView({ id, first, children, plural = false, plain = false, spelled = false }: TermViewProps) {
   const t = term(id);
   const abbr = t.abbreviation ? `${t.abbreviation}${plural ? "s" : ""}` : null;
   const kind = t.category === "keep_abbreviation" && !selfNamed(t) ? "abbr" : "explain";
   const data = { "data-term": id, "data-kind": kind, "data-first": first ? "" : undefined };
 
   if (kind === "abbr") {
+    if (spelled) return first || plain ? <span {...data}>{children}</span> : <TermTip entry={t} label={children} data={data} />;
     if (first) return <span {...data}>{firstUseText(t, plural)}</span>;
     if (plain) return <span {...data}>{abbr}</span>;
     return <TermTip entry={t} label={abbr} data={data} />;

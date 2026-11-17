@@ -12,7 +12,7 @@ export function Glossed({ text, plain = false, standalone = false }: { text: str
         typeof s === "string" ? (
           <Fragment key={i}>{s}</Fragment>
         ) : (
-          <Term key={i} id={s.id} plural={s.plural} plain={plain} standalone={standalone}>{s.text}</Term>
+          <Term key={i} id={s.id} plural={s.plural} plain={plain} standalone={standalone} spelled={s.spelled}>{s.text}</Term>
         ),
       )}
     </>

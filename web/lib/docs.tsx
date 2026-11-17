@@ -47,7 +47,7 @@ function components(fromFile: string) {
     span: ({ children, ...rest }: ComponentProps<"span"> & Record<string, unknown>) => {
       const id = rest["data-glossary"];
       if (typeof id === "string") {
-        return <Term id={id} plural={rest["data-plural"] === "true"} plain={rest["data-plain"] === "true"}>{children}</Term>;
+        return <Term id={id} plural={rest["data-plural"] === "true"} plain={rest["data-plain"] === "true"} spelled={rest["data-spelled"] === "true"}>{children}</Term>;
       }
       return <span {...rest}>{children}</span>;
     },

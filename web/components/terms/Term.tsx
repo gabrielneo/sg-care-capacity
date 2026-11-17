@@ -14,6 +14,8 @@ export interface TermProps {
   plain?: boolean;
   /** Outside the page's text (the site footer): always spelled out, and doesn't use up the page's first use. */
   standalone?: boolean;
+  /** The text around it already spells the term out: shown as written (TermView). */
+  spelled?: boolean;
 }
 
 /**
@@ -21,7 +23,7 @@ export interface TermProps {
  * page order (lib/termScope.ts), and hands the answer to TermView. Client components use
  * ClientTerm instead.
  */
-export function Term({ id, children, plural = false, plain = false, standalone = false }: TermProps) {
+export function Term({ id, children, plural = false, plain = false, standalone = false, spelled = false }: TermProps) {
   const first = standalone || pageScope().claim(id, {});
-  return <TermView id={id} first={first} plural={plural} plain={plain}>{children}</TermView>;
+  return <TermView id={id} first={first} plural={plural} plain={plain} spelled={spelled}>{children}</TermView>;
 }

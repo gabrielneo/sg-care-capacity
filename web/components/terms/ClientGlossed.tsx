@@ -14,7 +14,7 @@ export function ClientGlossed({ text, plain = false }: { text: string; plain?: b
         typeof s === "string" ? (
           <Fragment key={i}>{s}</Fragment>
         ) : (
-          <ClientTerm key={i} id={s.id} plural={s.plural} plain={plain}>{s.text}</ClientTerm>
+          <ClientTerm key={i} id={s.id} plural={s.plural} plain={plain} spelled={s.spelled}>{s.text}</ClientTerm>
         ),
       )}
     </>

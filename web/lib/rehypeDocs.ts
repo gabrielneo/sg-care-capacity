@@ -45,7 +45,7 @@ export function rehypeHeadings(stats: DocStats) {
  * Wrap glossary terms in doc text as <span data-glossary>, which the renderer turns into <Term>.
  * Never inside code; inside a link the term is text-only (no button inside a link).
  */
-export function rehypeGlossary(split: (text: string) => (string | { id: string; text: string; plural: boolean })[]) {
+export function rehypeGlossary(split: (text: string) => (string | { id: string; text: string; plural: boolean; spelled?: boolean })[]) {
   return () => (tree: Root) => {
     const walk = (node: Root | Element, inLink: boolean) => {
       if (node.type === "element" && (node.tagName === "code" || node.tagName === "pre")) return;
@@ -56,7 +56,7 @@ export function rehypeGlossary(split: (text: string) => (string | { id: string; 
           for (const seg of split(child.value)) {
             if (typeof seg === "string") next.push({ type: "text", value: seg });
             else next.push({ type: "element", tagName: "span",
-                             properties: { "data-glossary": seg.id, "data-plural": seg.plural ? "true" : undefined,
+                             properties: { "data-glossary": seg.id, "data-plural": seg.plural ? "true" : undefined, "data-spelled": seg.spelled ? "true" : undefined,
                                            "data-plain": link ? "true" : undefined },
                              children: [{ type: "text", value: seg.text }] });
           }

@@ -18,6 +18,13 @@ describe("glossary helpers", () => {
       "[MOH] counts [ED] visits at [EDs]; CHASE and BED are not terms. [NHG Health] runs [TTSH].");
   });
 
+  it("keeps 'Full name (ABBR)' as one term that is already spelled out", () => {
+    expect(segmentText("Urgent Care Centre (UCC): not a full ED")).toEqual([
+      { id: "ucc", text: "Urgent Care Centre (UCC)", plural: false, spelled: true }, ": not a full ", { id: "ed", text: "ED", plural: false }]);
+    expect(segmentText("an urgent care centre (UCC) here")[1]).toMatchObject({ text: "urgent care centre (UCC)", spelled: true });
+    expect(segmentText("the centre (UCC)")).toEqual(["the centre (", { id: "ucc", text: "UCC", plural: false }, ")"]);   // not the full name: unchanged
+  });
+
   it("matches explained words and aliases, never technical terms", () => {
     const ids = segmentText("the daily median, two medians, bed waits, right-siting, attendances, choropleth")
       .flatMap((s) => (typeof s === "string" ? [] : [s.id]));

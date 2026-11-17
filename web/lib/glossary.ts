@@ -37,18 +37,39 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export const TERM_PATTERN = new RegExp(`(?<![\\w-])(${FORMS.map((f) => escape(f.form)).join("|")})(?![\\w-])`, "g");
 const BY_FORM = new Map(FORMS.map((f) => [f.form, f]));
 
-export type Segment = string | { id: string; text: string; plural: boolean };
+export type Segment = string | { id: string; text: string; plural: boolean; spelled?: boolean };
 
-/** Split text into plain strings and glossary terms (whole words only). */
+/** "Urgent Care Centre (" right before an abbreviation: the text already spells it out. */
+function spelledBefore(before: string, id: string, plural: boolean): number {
+  const t = GLOSSARY_BY_ID[id];
+  if (!t || t.category !== "keep_abbreviation" || selfNamed(t)) return -1;
+  const m = before.match(new RegExp(`(?<![\\w-])${escape(t.full_name)}${plural ? "s?" : ""}\\s*\\($`, "i"));
+  return m ? m.index! : -1;
+}
+
+/**
+ * Split text into plain strings and glossary terms (whole words only). Where the text already reads "Full name (ABBR)", the whole
+ * phrase is one term marked `spelled`, so it is never spelled out a second time ("Urgent Care Centre (Urgent Care Centre (UCC))").
+ */
 export function segmentText(text: string): Segment[] {
   const out: Segment[] = [];
   let last = 0;
   for (const m of text.matchAll(TERM_PATTERN)) {
+    if (m.index < last) continue;
     const f = BY_FORM.get(m[1]!);
     if (!f) continue;
-    if (m.index > last) out.push(text.slice(last, m.index));
+    const before = text.slice(last, m.index);
+    const end = m.index + m[1]!.length;
+    const from = text[end] === ")" ? spelledBefore(before, f.id, f.plural) : -1;
+    if (from >= 0) {
+      if (from > 0) out.push(before.slice(0, from));
+      out.push({ id: f.id, text: text.slice(last + from, end + 1), plural: f.plural, spelled: true });
+      last = end + 1;
+      continue;
+    }
+    if (m.index > last) out.push(before);
     out.push({ id: f.id, text: m[1]!, plural: f.plural });
-    last = m.index + m[1]!.length;
+    last = end;
   }
   if (last < text.length) out.push(text.slice(last));
   return out;

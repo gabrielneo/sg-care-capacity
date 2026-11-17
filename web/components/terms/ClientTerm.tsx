@@ -10,6 +10,7 @@ import { TermView } from "./TermView";
  * They only appear on pages whose text has already spelled the term out (checked on the
  * rendered pages by e2e/terms.spec.ts).
  */
-export function ClientTerm({ id, children, plural = false, plain = false }: { id: string; children?: ReactNode; plural?: boolean; plain?: boolean }) {
-  return <TermView id={id} first={false} plural={plural} plain={plain}>{children}</TermView>;
+export function ClientTerm({ id, children, plural = false, plain = false, spelled = false }:
+  { id: string; children?: ReactNode; plural?: boolean; plain?: boolean; spelled?: boolean }) {
+  return <TermView id={id} first={false} plural={plural} plain={plain} spelled={spelled}>{children}</TermView>;
 }

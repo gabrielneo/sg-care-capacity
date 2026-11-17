@@ -60,6 +60,29 @@ describe("Term", () => {
   });
 });
 
+describe("a term the text already spells out", () => {
+  it("is shown as written, never spelled out a second time, and still uses up the first use", () => {
+    inScope(<p><Glossed text="Urgent Care Centre (UCC): not a full ED. A UCC is smaller." /></p>);
+    const p = screen.getByText(/not a full/).closest("p")!;
+    expect(p.textContent).toMatch(/^Urgent Care Centre \(UCC\): not a full Emergency Department \(ED\)\. A UCC/);   // (then the later use's hidden tooltip)
+    expect(p.textContent).not.toMatch(/Urgent Care Centre \(Urgent Care Centre/);
+    expect(screen.getByText("Urgent Care Centre (UCC)")).toHaveAttribute("data-first");
+    expect(screen.getByRole("button", { name: "UCC" })).toBeInTheDocument();       // the later use is the short form
+  });
+
+  it("on a later use it keeps the author's wording, with the definition", () => {
+    inScope(<p><Term id="ucc" /> then <Glossed text="an Urgent Care Centre (UCC)" /></p>);
+    expect(screen.getByRole("button", { name: "Urgent Care Centre (UCC)" })).toBeInTheDocument();
+  });
+
+  it("client components show it as written too", () => {
+    render(<p><ClientGlossed text="Urgent Care Centre (UCC) only" /></p>);
+    const p = screen.getByRole("button", { name: "Urgent Care Centre (UCC)" }).closest("p")!;
+    expect(p.textContent).toMatch(/^Urgent Care Centre \(UCC\)/);
+    expect(p.textContent).not.toMatch(/Urgent Care Centre \(Urgent Care Centre/);
+  });
+});
+
 describe("TermView: the server's decision is the only one (no hydration mismatch, React #418)", () => {
   it("renders exactly what it is told, whatever else is on the page", () => {
     render(<p><TermView id="cgh" first={false} /> and <TermView id="cgh" first /></p>);
