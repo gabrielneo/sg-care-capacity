@@ -9,6 +9,8 @@ export type Direction = "better" | "worse" | "neutral";
 /** Colour comes from direction only (more clinics is better, a longer wait is worse); neutral has none. */
 const TONE: Record<Direction, string> = { better: "text-status-lower", worse: "text-status-much", neutral: "text-ink" };
 const ARROW = { up: "▲", down: "▼" } as const;
+/** The pill's fill, by the same direction: the status colours' own soft fills (AA for their text, lib/tokens.contrast.test.ts). */
+const PILL: Record<Direction, string> = { better: "bg-status-lower-soft", worse: "bg-status-much-soft", neutral: "bg-status-usual-soft" };
 
 export interface DeltaNumberProps {
   value: string;
@@ -25,21 +27,24 @@ export interface DeltaNumberProps {
   direction: Direction;
   /** One line (value, arrow and word), for chart rows. */
   compact?: boolean;
+  /** Compact only: the word as a small pill on its status fill, with "≈" for about usual, so it reads at a glance. */
+  pill?: boolean;
 }
 
 /**
  * A key number with its comparison. The change is shown as an arrow AND a word, and coloured by
  * direction, so colour never carries the meaning alone (docs/language_rules.md, Rule 5).
  */
-export function DeltaNumber({ value, unit, label, comparison, change, word, direction, compact = false }: DeltaNumberProps) {
+export function DeltaNumber({ value, unit, label, comparison, change, word, direction, compact = false, pill = false }: DeltaNumberProps) {
   if (compact) {
     return (
       <span data-testid="delta-number" data-direction={direction} className="inline-flex flex-wrap items-baseline gap-x-2 text-small">
         <span className="font-semibold tabular-nums text-ink">{value}</span>
         {unit ? <span className="text-muted">{unit}</span> : null}
         {word ? (
-          <span className={`font-semibold ${TONE[direction]}`} data-testid="delta-change">
-            {change ? <span aria-hidden="true">{ARROW[change]} </span> : null}
+          <span className={`font-semibold ${TONE[direction]}${pill ? ` inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 ${PILL[direction]}` : ""}`}
+                data-testid="delta-change">
+            {change ? <span aria-hidden="true">{ARROW[change]} </span> : pill ? <span aria-hidden="true">≈ </span> : null}
             {word}
             {direction !== "neutral" ? <span className="sr-only"> ({direction === "worse" ? "worse" : "better"})</span> : null}
           </span>

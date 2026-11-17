@@ -393,6 +393,11 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
  * that holds only its summary) is opened; from 768px the toggle is gone and everything shows. CSS only, so nothing shifts after
  * load (an accordion that closes on hydration would move the page); a browser without :has() shows everything; print shows all.
  */
+/* A chart's "Show as table" toggle (components/ChartFrame.tsx): an outlined button with no disclosure triangle, whose label says what
+   pressing it will do. */
+.table-toggle > summary { list-style: none; }
+.table-toggle > summary::-webkit-details-marker { display: none; }
+.table-toggle[open] > summary .when-closed, .table-toggle:not([open]) > summary .when-open { display: none; }
 .phone-fold-toggle { display: none; }
 .phone-fold-toggle[open] .when-closed, .phone-fold-toggle:not([open]) .when-open { display: none; }
 @media screen and (max-width: 47.99rem) {

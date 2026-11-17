@@ -100,8 +100,13 @@ export function ChartFrame({ title, slug, meta, children, summary, csv, table, d
               : children}
           </div>
           {state === "ready" && hasTable ? (
-            <details className="mt-3 border-t border-line" data-testid="chart-table">
-              <summary className="min-h-11 cursor-pointer select-none py-3 text-small font-semibold text-accent">Show as table</summary>
+            <details className="table-toggle mt-3 border-t border-line pt-3" data-testid="chart-table">
+              <summary className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2 rounded-md border border-control bg-surface px-3 text-small font-semibold text-accent hover:bg-accent-soft">
+                <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5" /><path d="M1.75 6.25h12.5M1.75 9.75h12.5M6 6.25v7" />
+                </svg>
+                <span className="when-closed">Show as table</span><span className="when-open">Hide table</span>
+              </summary>
               <div className="mt-3 overflow-x-auto" tabIndex={0} role="region" aria-label="The figures behind the chart, as a table">{table as ReactNode}</div>
             </details>
           ) : null}
