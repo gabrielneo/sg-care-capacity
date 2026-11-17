@@ -2,7 +2,7 @@ import type { Hospital, Insight } from "@/lib/api/types";
 import type { Mode, Usual } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
 import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
-import { type Level, levelFor } from "@/lib/status";
+import { HIGHER_PCT, type Level, levelFor } from "@/lib/status";
 
 import { CaveatChip } from "../CaveatChip";
 import { DeltaNumber } from "../story/DeltaNumber";
@@ -75,10 +75,14 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
                 style={{ left: `${b}%`, ["--dx" as string]: a - b }} data-testid="dumbbell-latest" data-level={level} />
         </span>
         <span className="sm:col-start-2 sm:row-start-1 sm:text-right lg:col-start-3 lg:text-left">
-          <DeltaNumber compact pill direction={direction} change={sign > 0 ? "up" : sign < 0 ? "down" : null}
+          <DeltaNumber compact pill={level === "unknown" ? null : level} direction={direction} change={sign > 0 ? "up" : sign < 0 ? "down" : null}
                        value={mode === "raw" ? `${hours(u.latest)} hours` : `${signed(u.pct, 0)}%`}
                        unit={mode === "raw" ? `vs ${hours(u.usual)} usual` : null}
                        word={WORD[level]} />
+          {/* Why a big move still reads "about usual": the week sits inside the range of the weeks before (lib/status.ts). */}
+          {level === "usual" && Math.abs(u.pct) >= HIGHER_PCT && u.position === 0 ? (
+            <span className="block text-meta text-muted" data-testid="within-range">within the range of its {USUAL_WEEKS} weeks before</span>
+          ) : null}
         </span>
         {annotated && finding?.chart ? (
           <p className="text-meta font-semibold text-ink sm:col-span-2 lg:col-span-1 lg:col-start-2" data-testid="chart-callout">
@@ -156,7 +160,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
         {mode === "raw"
           ? "Hollow dot: usual level. Filled dot: the latest complete week. Hours, average of each day's median."
           : "Dot: the latest complete week, as a % above (right) or below (left) the hospital's own usual level (the line)."}
-        {" "}{`A hospital counts as higher or lower than usual only when the move is at least 15% and takes it beyond every one of the ${USUAL_WEEKS} weeks before; otherwise it reads "about usual".`}
+        {" "}{`A hospital counts as higher or lower than usual only when the move is at least ${HIGHER_PCT}% and takes it beyond every one of the ${USUAL_WEEKS} weeks before; otherwise it reads "about usual".`}
       </p>
       {missing.length ? (
         <p className="mt-1 text-meta text-muted" data-testid="dumbbell-missing">

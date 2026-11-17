@@ -31,7 +31,7 @@ describe("Dumbbell", () => {
     expect(rows.map((r) => r.getAttribute("data-hospital"))).toEqual(["NUH", "SGH", "AH"]);
     expect(within(screen.getByTestId("dumbbell-ucc")).getByTestId("dumbbell-row")).toHaveAttribute("data-hospital", "AH");
     expect(screen.getByTestId("dumbbell-ucc")).toHaveTextContent("Urgent care centre · Not compared with full emergency departments");
-    expect(within(rows[2]!).getByTestId("delta-number")).toHaveTextContent("+56%▲ much higher than usual (worse)");
+    expect(within(rows[2]!).getByTestId("delta-number")).toHaveTextContent("+56%▲▲ much higher than usual (worse)");   // the badge's two arrows
     expect(within(rows[0]!).getByTestId("delta-change")).toHaveTextContent("about usual");            // −10%: under the badge's 15% line
     expect(screen.getByTestId("dumbbell-missing")).toHaveTextContent("Sengkang General Hospital (SKH) (7 of 8)");
   });
@@ -82,6 +82,23 @@ describe("Dumbbell: the same words as the badge", () => {
     expect(screen.getByTestId("dumbbell-tally")).toHaveTextContent("Of 1 emergency department with a comparison");
     expect(screen.getByTestId("dumbbell-tally")).toHaveTextContent("The urgent care centre is not counted.");
     expect(within(screen.getByTestId("dumbbell-ucc")).getByTestId("delta-number")).toHaveTextContent("about usual");
+  });
+
+  it("the word is a pill in the badge's own colour per level, so 'higher' and 'much higher' differ in colour and mark", () => {
+    render8({ SKH: { ...usual("SKH", 5, 6.2), position: 1 }, NUH: { ...usual("NUH", 5, 8), position: 1 }, SGH: { ...usual("SGH", 8, 4), position: -1 } });
+    const pill = (code: string) => within(word(code)).getByTestId("delta-change");
+    expect(pill("SKH")).toHaveClass("text-status-higher", "bg-status-higher-soft");
+    expect(pill("SKH")).toHaveTextContent(/^▲ higher than usual/);
+    expect(pill("NUH")).toHaveClass("text-status-much", "bg-status-much-soft");
+    expect(pill("NUH")).toHaveTextContent(/^▲▲ much higher than usual/);
+    expect(pill("SGH")).toHaveClass("text-status-lower", "bg-status-lower-soft");
+  });
+
+  it("a big move inside the range of the weeks before says so under 'about usual'; a small one does not", () => {
+    render8({ SKH: { ...usual("SKH", 5.6, 3.4), position: 0 }, NUH: { ...usual("NUH", 5.7, 5.6), position: 0 } });
+    const row = (code: string) => screen.getAllByTestId("dumbbell-row").find((r) => r.getAttribute("data-hospital") === code)!;
+    expect(within(row("SKH")).getByTestId("within-range")).toHaveTextContent("within the range of its 8 weeks before");
+    expect(within(row("NUH")).queryByTestId("within-range")).toBeNull();
   });
 
   it("the dot carries the badge's level, so colour matches the word", () => {
