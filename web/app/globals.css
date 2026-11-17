@@ -309,6 +309,9 @@
   vertical-align: middle;
 }
 
+/* The landing map: the area under the pointer is outlined in ink (its name is in the tooltip). */
+.landing-map path:hover { stroke: var(--text-primary); stroke-width: 2; }
+
 /* "No data" on the map: hatched, so it can never be read as the lowest class. */
 .bg-nodata {
   background-image: repeating-linear-gradient(
