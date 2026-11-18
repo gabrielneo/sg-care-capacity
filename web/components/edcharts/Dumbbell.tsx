@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { Hospital, Insight } from "@/lib/api/types";
 import type { Mode, Usual } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
@@ -61,7 +63,13 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
     return (
       <li key={code} data-testid="dumbbell-row" data-hospital={code} data-annotated={annotated ? "" : undefined}
           className={`${GRID} gap-y-1 rounded-md px-2 py-2 hover:bg-sunken focus-within:bg-sunken lg:items-center ${annotated ? "bg-accent-soft hover:bg-accent-soft" : ""}`}>
-        <span className="min-w-0 text-small font-semibold text-ink sm:col-start-1 sm:row-start-1 lg:whitespace-nowrap"><HospitalName hospital={h} /></span>
+        {/* The name opens the hospital's own page: month by month and year on year (app/hospital/[code]). */}
+        <span className="min-w-0 text-small font-semibold sm:col-start-1 sm:row-start-1 lg:whitespace-nowrap">
+          <Link href={`/hospital/${code}`} className="inline-flex min-h-11 items-center" data-testid="dumbbell-hospital-link">
+            <HospitalName hospital={h} inControl />
+            <span className="sr-only">, month by month and year on year</span>
+          </Link>
+        </span>
         <span className="dumbbell-track relative block h-8 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:col-start-2 lg:row-start-1" aria-hidden="true"
               style={{ ["--delay" as string]: `${index * 90}ms` }}>
           {gridlines}

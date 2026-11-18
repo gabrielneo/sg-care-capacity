@@ -36,6 +36,15 @@ describe("Dumbbell", () => {
     expect(screen.getByTestId("dumbbell-missing")).toHaveTextContent("Sengkang General Hospital (SKH) (7 of 8)");
   });
 
+  it("each hospital's name opens its own page, month by month and year on year", () => {
+    render(<Dumbbell usuals={usuals} hospitals={HOSPITALS} mode="raw" finding={null} />);
+    for (const row of screen.getAllByTestId("dumbbell-row")) {
+      const link = within(row).getByTestId("dumbbell-hospital-link");
+      expect(link).toHaveAttribute("href", `/hospital/${row.getAttribute("data-hospital")}`);
+      expect(link).toHaveAccessibleName(/month by month and year on year/);
+    }
+  });
+
   it("annotates the unusual-week finding's hospital, and pins the caveats in raw mode", () => {
     render(<Dumbbell usuals={usuals} hospitals={HOSPITALS} mode="raw" finding={finding("anomaly", "AH", "19–25 Oct 2026: 2.1 hours")} />);
     const ah = screen.getAllByTestId("dumbbell-row").find((r) => r.getAttribute("data-hospital") === "AH")!;

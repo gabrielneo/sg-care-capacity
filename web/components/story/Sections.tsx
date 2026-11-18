@@ -68,7 +68,17 @@ export function Hero({ insight, meta, count }: { insight: StoryInsight; meta: Me
         {count === 1 ? "One finding" : `${NUMBER_WORDS[count] ? NUMBER_WORDS[count]!.charAt(0).toUpperCase() + NUMBER_WORDS[count]!.slice(1) : count} findings`}{" "}
         on emergency department bed waits and clinic access for seniors, each published only after a fixed statistical check.
       </p>
-      <p className="mt-3 max-w-prose text-small text-muted" data-testid="site-purpose">
+      {/* The page's one action, where a planner looks first: the same findings on one printable page. */}
+      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="summary-cta">
+        <Link href="/summary" className="btn btn-primary gap-2" data-testid="summary-link">
+          <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+            <path d="M4 1.75h5.5L12.25 4.5v9.75H4z" /><path d="M9.5 1.75V4.5h2.75M6 8h4.25M6 10.75h4.25" />
+          </svg>
+          Get the one-page summary
+        </Link>
+        <span className="text-small text-muted">This week&apos;s findings on one A4 page, ready to print or save as PDF.</span>
+      </div>
+      <p className="mt-4 max-w-prose text-small text-muted" data-testid="site-purpose">
         <strong className="font-semibold text-ink">{SITE.name}</strong> looks at <Glossed text="right-siting" />:{" "}
         <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
@@ -124,7 +134,6 @@ export function Findings({ insights, meta }: { insights: StoryInsight[]; meta: M
         The {NUMBER_WORDS[n] ?? n} strongest {n === 1 ? "finding" : "findings"} in this week&apos;s data release.{" "}
         <Link href="/docs/insights-method">How findings are tested</Link>
         {" · "}<a href="/export/findings.csv" download data-testid="csv-download">Download every finding (CSV)</a>
-        {" · "}<Link href="/summary" data-testid="summary-link">One-page summary to print</Link>
       </p>
       <p className={`${shared ? "" : "mb-6 "}mt-2 max-w-prose text-small text-muted`} data-testid="bed-wait-explainer">
         <Glossed text={BED_WAIT_EXPLAINER} /> <span data-testid="average-vs-typical">{AVERAGE_VS_TYPICAL}</span>
