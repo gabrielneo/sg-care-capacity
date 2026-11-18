@@ -20,7 +20,8 @@ export const metadata: Metadata = { title: "One-page summary" };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
 const LIMITS_MARKER = "**What the data can't show**";
-const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+/** Lower-case the first letter to run on from a colon, but never an abbreviation's ("CDMP GP clinics" stays, not "cDMP"). */
+const lowerFirst = (t: string) => (/^[A-Z][A-Z]/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1));
 const MISSING = <span className="text-muted">No figure</span>;
 
 /**
@@ -50,12 +51,12 @@ export default async function SummaryPage() {
   const release = insights.ok ? insights.value.meta.snapshot_id : areas.ok ? areas.value.meta.snapshot_id : null;
 
   const header = (
-    <header className="border-b border-line pb-3">
-      <p className="text-meta font-semibold text-accent" data-testid="summary-release">
+    <header className="border-b border-line pb-6">
+      <p className="text-small font-semibold text-accent" data-testid="summary-release">
         One-page summary{release ? ` · weekly data release ${release}` : null}
       </p>
       <h1 className="mt-1 font-semibold tracking-tight text-ink text-h1">{SITE_TITLE}</h1>
-      <p className="mt-1 text-muted">
+      <p className="mt-3 max-w-prose text-body text-muted">
         {SITE.name} looks at <Glossed text="right-siting" />: <Glossed text={lowerFirst(term("right_siting").plain_definition)} /> <Glossed text={SITE_SCOPE} />
       </p>
     </header>
@@ -64,7 +65,7 @@ export default async function SummaryPage() {
   // Nothing came back: one message, as on the Overview, not one per block.
   if (!insights.ok && !areas.ok && !population.ok) {
     return (
-      <article className="summary mx-auto max-w-3xl text-small" data-testid="summary">
+      <article className="summary mx-auto max-w-3xl text-body" data-testid="summary">
         {header}
         <div className="mt-4"><ErrorState error={plainError(insights.error)} /></div>
       </article>
@@ -72,7 +73,7 @@ export default async function SummaryPage() {
   }
 
   return (
-    <article className="summary mx-auto max-w-3xl text-small" data-testid="summary">
+    <article className="summary mx-auto max-w-3xl text-body" data-testid="summary">
       <div className="print-hide mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link href="/findings">Back to the findings</Link>
         <PrintButton />
@@ -80,7 +81,7 @@ export default async function SummaryPage() {
 
       {header}
 
-      <section aria-labelledby="s-why" className="summary-block mt-3">
+      <section aria-labelledby="s-why" className="summary-block summary-gap">
         <h2 id="s-why" className="font-semibold text-ink text-h2">Why now</h2>
         {share && population.ok ? (
           <>
@@ -88,7 +89,7 @@ export default async function SummaryPage() {
               <strong>{percentText(share.latest.share_65plus)}</strong> of Singapore residents were aged 65 or over in{" "}
               {monthYear(share.latest.reference_date)}. A <Glossed text="super-aged society" plain /> has 21% or more.
             </p>
-            <div className="text-meta text-muted"><AsOfLine asOf={population.value.meta.as_of} meta={population.value.meta} /></div>
+            <div className="mt-2 text-small text-muted"><AsOfLine asOf={population.value.meta.as_of} meta={population.value.meta} /></div>
           </>
         ) : population.ok ? (
           <p className="text-muted">This data release has no population figures.</p>
@@ -97,7 +98,7 @@ export default async function SummaryPage() {
         )}
       </section>
 
-      <section aria-labelledby="s-findings" className="summary-block mt-3">
+      <section aria-labelledby="s-findings" className="summary-block summary-gap">
         <h2 id="s-findings" className="font-semibold text-ink text-h2">The strongest findings this week</h2>
         {!insights.ok ? (
           <ErrorState title="The findings can't be shown" error={plainError(insights.error)} />
@@ -105,15 +106,17 @@ export default async function SummaryPage() {
           <p className="text-muted">No finding passed its statistical check in this data release.</p>
         ) : (
           <>
-            <ol className="mt-1 space-y-2" data-testid="summary-findings">
+            <ol className="mt-4 grid gap-3" data-testid="summary-findings">
               {findings.map((f) => (
-                <li key={f.insight_id} className="grid grid-cols-[6.5rem_1fr] gap-3" data-testid="summary-finding">
-                  <span className="font-semibold tabular-nums text-ink">
-                    {f.display.value_text}{f.display.unit_text ? ` ${f.display.unit_text}` : ""}
+                <li key={f.insight_id} className="summary-card grid gap-x-6 gap-y-2 rounded-lg border border-line bg-surface p-4 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)]"
+                    data-testid="summary-finding">
+                  <span className="text-ink">
+                    <span className="block text-h2 font-semibold tabular-nums text-primary-text">{f.display.value_text}</span>
+                    {f.display.unit_text ? <span className="block text-small text-muted">{f.display.unit_text}</span> : null}
                   </span>
                   <span className="text-ink">
                     <Glossed text={f.headline} />
-                    <span className="block text-meta text-muted">
+                    <span className="mt-1 block text-small text-muted">
                       <span data-testid="summary-metric">The number: <Glossed text={lowerFirst(f.display.metric_label)} plain /></span>.{" "}
                       Uses data to <time dateTime={f.as_of}>{formatAsOf(f.as_of)}</time>.
                     </span>
@@ -121,13 +124,13 @@ export default async function SummaryPage() {
                 </li>
               ))}
             </ol>
-            <p className="mt-1 text-meta text-muted"><Glossed text={BED_WAIT_SHORT} /></p>
-            <div className="text-meta text-muted"><AsOfLine asOf={findingsMeta!.as_of} meta={findingsMeta!} bySource /></div>
+            <p className="mt-3 text-small text-muted"><Glossed text={BED_WAIT_SHORT} /></p>
+            <div className="mt-2 text-small text-muted"><AsOfLine asOf={findingsMeta!.as_of} meta={findingsMeta!} bySource /></div>
           </>
         )}
       </section>
 
-      <section aria-labelledby="s-areas" className="summary-block mt-3">
+      <section aria-labelledby="s-areas" className="summary-block summary-gap">
         <h2 id="s-areas" className="font-semibold text-ink text-h2">Areas with the least clinic access for seniors</h2>
         {areaError || !areas.ok ? (
           <ErrorState title="The areas can't be shown" error={plainError(areaError ?? { message: "" })} />
@@ -135,42 +138,46 @@ export default async function SummaryPage() {
           <p className="text-muted">No area passed the access check in this data release.</p>
         ) : (
           <>
-            <p className="text-muted">
+            <p className="mt-2 max-w-prose text-muted">
               <Glossed text="The priority areas from this week's findings: many residents aged 65+, few CDMP GP clinics per senior." />
             </p>
-            <table className="mt-1 w-full text-left tabular-nums" data-testid="summary-areas">
-              <thead className="text-meta text-muted">
+            {/* On a phone the five columns may be wider than the screen: the table scrolls inside its own labelled region. */}
+            <div className="mt-3 overflow-x-auto" role="region" aria-labelledby="s-areas" tabIndex={0}>
+            <table className="summary-table w-full text-left text-small tabular-nums" data-testid="summary-areas">
+              <caption className="sr-only">Priority areas, ranked: residents aged 65+, clinics per 1,000 of them, and clinics short of the benchmark rate</caption>
+              <thead className="text-muted">
                 <tr>
-                  <th scope="col" className="py-1 pr-2 font-semibold">Rank</th>
-                  <th scope="col" className="py-1 pr-2 font-semibold">Area</th>
-                  <th scope="col" className="py-1 pr-2 text-right font-semibold">Residents aged 65+</th>
-                  <th scope="col" className="py-1 pr-2 text-right font-semibold"><Glossed text="CDMP clinics per 1,000 aged 65+" plain /></th>
-                  <th scope="col" className="py-1 text-right font-semibold">Clinics short of the benchmark rate</th>
+                  <th scope="col" className="py-2 pr-2 font-semibold">Rank</th>
+                  <th scope="col" className="py-2 pr-2 font-semibold">Area</th>
+                  <th scope="col" className="py-2 pr-2 text-right font-semibold">Residents aged 65+</th>
+                  <th scope="col" className="py-2 pr-2 text-right font-semibold"><Glossed text="CDMP clinics per 1,000 aged 65+" plain /></th>
+                  <th scope="col" className="py-2 text-right font-semibold">Clinics short of the benchmark rate</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.name} className="border-t border-line" data-testid="summary-area">
-                    <td className="py-1 pr-2">{r.rank}</td>
-                    <th scope="row" className="py-1 pr-2 font-semibold text-ink">{r.name}</th>
-                    <td className="py-1 pr-2 text-right">{r.seniors == null ? MISSING : r.seniors.toLocaleString("en-SG")}</td>
-                    <td className="py-1 pr-2 text-right">{r.rate == null ? MISSING : r.rate.toLocaleString("en-SG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="py-1 text-right">{r.shortfall == null ? MISSING : `about ${Math.round(r.shortfall)}`}</td>
+                    <td className="py-2 pr-2">{r.rank}</td>
+                    <th scope="row" className="py-2 pr-2 font-semibold text-ink">{r.name}</th>
+                    <td className="py-2 pr-2 text-right">{r.seniors == null ? MISSING : r.seniors.toLocaleString("en-SG")}</td>
+                    <td className="py-2 pr-2 text-right">{r.rate == null ? MISSING : r.rate.toLocaleString("en-SG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="py-2 text-right">{r.shortfall == null ? MISSING : `about ${Math.round(r.shortfall)}`}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="text-meta text-muted"><AsOfLine asOf={areas.value.meta.as_of} meta={areas.value.meta} /></div>
+            </div>
+            <div className="mt-2 text-small text-muted"><AsOfLine asOf={areas.value.meta.as_of} meta={areas.value.meta} /></div>
           </>
         )}
       </section>
 
-      <section aria-labelledby="s-limits" className="summary-block mt-3" data-testid="summary-limits">
+      <section aria-labelledby="s-limits" className="summary-block summary-gap" data-testid="summary-limits">
         <h2 id="s-limits" className="font-semibold text-ink text-h2">What this data can&apos;t show</h2>
-        <div className="doc doc-tight">{limits.content}</div>
+        <div className="doc doc-tight summary-limits mt-2">{limits.content}</div>
       </section>
 
-      <footer className="mt-3 border-t border-line pt-2 text-meta text-muted">
+      <footer className="summary-gap border-t border-line pt-4 text-small text-muted">
         <Glossed text="Aggregate public data only. No personal or patient-level data. Findings describe patterns, not their causes." />{" "}
         Methods and every limit: <Link href="/methodology">the methodology</Link>.
       </footer>

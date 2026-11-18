@@ -410,8 +410,12 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   box-shadow: var(--shadow-float);
 }
 
-/* The one-page summary (/summary, requirement S4). */
+/* The one-page summary (/summary, requirement S4). On screen: body-size text, room between sections, the findings as cards,
+   the table in its own scroll region on a phone. In print (below): compact, so it stays on one A4 page. */
 .doc-tight p, .doc-tight ul { margin: 0; }
+.summary-gap { margin-top: var(--space-7); }
+.summary-table { min-width: 34rem; }
+.summary-limits li { margin-block: var(--space-2); }
 
 /* Printing: the content only, on A4, in the light theme (audit D9). The site's header, nav, footer, status strip, rail, jump
    menu, view and theme toggles, and anything marked .print-hide are dropped; every section's meta line (window, source, as-of)
@@ -446,6 +450,20 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   h1, h2, h3 { break-after: avoid; }
   .accordion::details-content { block-size: auto !important; content-visibility: visible !important; }
   .summary { max-width: none; font-size: 10pt; }
+  .summary .summary-gap { margin-top: 0.6rem; }
+  .summary .summary-card { padding: 0.15rem 0; border: 0; border-radius: 0; background: none; }
+  .summary .summary-card .text-h2 { font-size: 11pt; }
+  .summary .text-body, .summary .text-small { font-size: inherit; }
+  .summary .summary-table { min-width: 0; }
+  .summary .summary-limits li { margin-block: 0; }
+  .summary header { padding-bottom: 0.4rem; }
+  /* The screen's breathing room, taken back out so it all fits on one A4 page. */
+  .summary [class*="mt-"] { margin-top: 0.15rem; }
+  .summary ol { gap: 0.1rem; }
+  .summary .summary-card { grid-template-columns: 7rem minmax(0, 1fr); column-gap: 0.6rem; row-gap: 0; }
+  .summary td, .summary th { padding-block: 0.05rem; }
+  .summary h1 { font-size: 16pt; }
+  .summary h2 { font-size: 12pt; }
 }
 
 /* Hospital markers on the map are keyboard buttons (components/home/CareMapLeaflet.tsx): a ring that shows on a map. */

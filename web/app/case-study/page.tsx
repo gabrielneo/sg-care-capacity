@@ -6,6 +6,7 @@ import { FigureCadenceNote } from "@/components/FigureCadenceNote";
 import { DocPage } from "@/components/docs/DocPage";
 import { docWords, renderDoc } from "@/lib/docs";
 import { readingMinutes } from "@/lib/story";
+import { SectionCrumb } from "@/components/SectionCrumb";
 
 export const metadata: Metadata = { title: "Case Study" };
 export const dynamic = "force-static";
@@ -13,6 +14,8 @@ export const dynamic = "force-static";
 export default async function CaseStudyPage() {
   const [doc, words] = await Promise.all([renderDoc("case_study.md"), docWords("case_study.md")]);
   return (
+    <>
+    <SectionCrumb section="About" href="/about" page="Case study" />
     <DocPage toc={doc.headings} todos={doc.todos}
              aside={
                <ul className="space-y-1 border-t border-line pt-3">
@@ -32,5 +35,6 @@ export default async function CaseStudyPage() {
       <FigureCadenceNote kind="case-study" />
       {doc.content}
     </DocPage>
+    </>
   );
 }

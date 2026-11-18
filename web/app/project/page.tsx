@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionCrumb } from "@/components/SectionCrumb";
 import type { ReactNode } from "react";
 
 import { Missing } from "@/components/Missing";
@@ -51,7 +52,8 @@ export default async function ProjectPage() {
 
   return (
     <div data-testid="project">
-      <header className="max-w-3xl pb-6 pt-2 sm:pt-6">
+      <SectionCrumb section="About" href="/about" page="The project in 60 seconds" />
+      <header className="max-w-3xl pb-6 pt-2 sm:pt-4">
         <Eyebrow>A public-data analytics project by {AUTHOR.name}</Eyebrow>
         <h1 className="mt-2 font-semibold tracking-tight text-ink text-h1">
           Singapore is ageing fast. Where do hospital waits run longest, and where are clinics for seniors scarce?

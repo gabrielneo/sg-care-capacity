@@ -11,8 +11,10 @@ export const contentType = "image/png";
 
 export default function OpengraphImage() {
   const badge = (label: string, fg: string, bg: string) => (
-    <div style={{ display: "flex", padding: "10px 22px", borderRadius: 999, background: bg, color: fg, fontSize: 28, fontWeight: 600 }}>
-      {label}
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", borderRadius: 999, background: bg, color: fg, fontSize: 28, fontWeight: 600 }}>
+      {/* The flat bar (about usual) is drawn: the image's font has no "▬" glyph. */}
+      {label.startsWith("▬ ") ? <div style={{ display: "flex", width: 22, height: 7, borderRadius: 2, background: fg }} /> : null}
+      {label.startsWith("▬ ") ? label.slice(2) : label}
     </div>
   );
   return new ImageResponse(
