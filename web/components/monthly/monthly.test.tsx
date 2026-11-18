@@ -59,3 +59,23 @@ describe("ChangeBars", () => {
     expect(screen.getByTestId("change-bars-empty")).toBeInTheDocument();
   });
 });
+
+describe("exact values on hover", () => {
+  it("a line chart has one column per month, each with the month in full and every series' value (or a gap said in words)", () => {
+    render(<LineChart labels={["Jan", "Feb", "Mar"]} titles={["January", "February", "March"]} unit="h" summary="s" format={(v) => `${v.toFixed(1)} hours`}
+                      series={[{ key: "2025", label: "2025", color: "cat-2", values: [2.5, null, 3] },
+                               { key: "2026", label: "2026", color: "cat-1", values: [2.94, 2.1, 2.2], strong: true }]} />);
+    const bands = screen.getAllByTestId("hover-band");
+    expect(bands).toHaveLength(3);
+    expect(bands[0]).toHaveTextContent("January20252.5 hours20262.9 hours");
+    expect(bands[1]).toHaveTextContent("February2025no complete month20262.1 hours");
+    expect(screen.getByTestId("line-chart-hover")).toHaveAttribute("aria-hidden", "true");   // the table is the accessible route
+  });
+
+  it("a bar chart says each month's change, signed, and a missing month in words", () => {
+    render(<ChangeBars labels={["Jan 26", "Feb 26"]} titles={["Jan 2026", "Feb 2026"]} values={[33.6, null]} tone="wait" unit="%" summary="s" />);
+    const tips = screen.getAllByTestId("hover-tip");
+    expect(tips[0]).toHaveTextContent("Jan 2026+33.6% on a year before");
+    expect(tips[1]).toHaveTextContent("Feb 2026no figure: not complete in both years");
+  });
+});

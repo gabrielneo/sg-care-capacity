@@ -5,7 +5,7 @@ import { Chapters } from "@/components/Section";
 import { Glossed } from "@/components/terms/Glossed";
 import type { Meta } from "@/lib/api/types";
 import { CAVEAT } from "@/lib/copy";
-import { MONTHS, monthsText, type Point, timeSeries, yearLines, yearsSoFar } from "@/lib/monthly";
+import { MONTHS, MONTHS_LONG, monthsText, type Point, timeSeries, yearLines, yearsSoFar } from "@/lib/monthly";
 
 import { ChangeBars } from "./ChangeBars";
 import { LineChart, type LineSeries } from "./LineChart";
@@ -32,13 +32,16 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                                   values: l.values, strong: i === lines.length - 1 }));
   };
   const years = yearLines(points, "wait").map((l) => l.year);
+  // What the hover tooltips say: the month in full, and each value with its unit.
+  const hoursText = (v: number) => `${v.toLocaleString("en-SG", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} hours`;
+  const visitsText = (v: number) => `${Math.round(v).toLocaleString("en-SG")} visits`;
   return (
     <Chapters first="band">
       <ChartFrame title={`${subject}: average bed wait, month by month`} slug="monthly-wait" meta={meta} caveat={caveat} csv={csv}
                   summary={`A line of ${subject}'s average bed wait for each complete month, in hours. A gap is a month that is partial or has no figure.`}
                   table={<MonthlyTable points={points} caption={`${subject}: bed wait and ED visits by month, with change against a year before and the month before`} />}
                   description={<Glossed text="Each point is a month's average of its daily medians, in hours. A break in the line is a month that is not complete: it is left out, never filled in." />}>
-        <LineChart labels={labels} every={6} unit="Hours, average of each day's median"
+        <LineChart labels={labels} every={6} unit="Hours, average of each day's median" titles={wait.map((p) => p.label)} format={hoursText}
                    series={[{ key: "wait", label: "Wait", color: "cat-1", values: wait.map((p) => p.value), strong: true }]}
                    summary={`${subject}'s average bed wait by month, in hours, from ${labels[0] ?? "the first month"} to ${labels.at(-1) ?? "the latest"}.`} />
       </ChartFrame>
@@ -47,10 +50,10 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                   summary={`Lines for ${years.join(", ")} on one January to December axis, so each month can be read against the same month in other years.`}
                   table={<YearSoFarTable rows={sofar} />}
                   description={<Glossed text={`Each year is one line, January to December. Months differ through the year, so this compares each month with the same month in other years.${span ? ` The table counts only ${span}, the months complete in every year shown.` : ""}`} />}>
-        <LineChart labels={[...MONTHS]} unit="Hours, average of each day's median" series={yearSeries("wait")} testId="year-lines-wait"
+        <LineChart labels={[...MONTHS]} titles={[...MONTHS_LONG]} format={hoursText} unit="Hours, average of each day's median" series={yearSeries("wait")} testId="year-lines-wait"
                    summary={`Average bed wait by month for ${years.join(", ")}, in hours.`} />
         <div className="mt-6">
-          <LineChart labels={[...MONTHS]} unit="ED visits in the month" series={yearSeries("visits")} testId="year-lines-visits"
+          <LineChart labels={[...MONTHS]} titles={[...MONTHS_LONG]} format={visitsText} unit="ED visits in the month" series={yearSeries("visits")} testId="year-lines-visits"
                      summary={`Emergency department visits by month for ${years.join(", ")}.`} />
         </div>
       </ChartFrame>
@@ -60,10 +63,10 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                   table="self"
                   description={<Glossed text="Bars above 0 mean a longer wait (or more visits) than a year before. Only months complete in both years are drawn. This describes change; it does not show why." />}>
         {findings}
-        <ChangeBars labels={labels} every={6} values={waitYoy.map((p) => p.value)} tone="wait" unit="Bed wait, % change on the same month a year before"
+        <ChangeBars labels={labels} titles={waitYoy.map((p) => p.label)} every={6} values={waitYoy.map((p) => p.value)} tone="wait" unit="Bed wait, % change on the same month a year before"
                     summary="Percentage change in the average bed wait against the same month a year before." testId="change-bars-wait" />
         <div className="mt-6">
-          <ChangeBars labels={labels} every={6} values={visitsYoy.map((p) => p.value)} tone="visits" unit="ED visits, % change on the same month a year before"
+          <ChangeBars labels={labels} titles={visitsYoy.map((p) => p.label)} every={6} values={visitsYoy.map((p) => p.value)} tone="visits" unit="ED visits, % change on the same month a year before"
                       summary="Percentage change in emergency department visits against the same month a year before." testId="change-bars-visits" />
         </div>
       </ChartFrame>

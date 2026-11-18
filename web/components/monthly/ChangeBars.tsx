@@ -1,5 +1,6 @@
 import { cssColors as colors } from "@/lib/palette";
 
+import { type HoverBand, HoverBands } from "./HoverBands";
 import { niceScale } from "./LineChart";
 
 const H = 200;
@@ -13,8 +14,10 @@ const XR = 98;
  * year before) is no bar. `tone` "wait": above 0 is a longer wait, in the status colours (amber up, teal down); "visits": one
  * neutral colour, since more visits is not better or worse by itself. A value is never drawn as 0 when it is missing.
  */
-export function ChangeBars({ labels, values, unit, summary, tone, every = 1, testId = "change-bars" }: {
+export function ChangeBars({ labels, values, unit, summary, tone, every = 1, testId = "change-bars", titles }: {
   labels: string[]; values: (number | null)[]; unit: string; summary: string; tone: "wait" | "visits"; every?: number; testId?: string;
+  /** Each x label in full, for the hover tooltip ("October 2026"); defaults to the labels. */
+  titles?: string[];
 }) {
   const known = values.filter((v): v is number => v != null);
   if (!known.length) return <p className="text-small text-muted" data-testid={`${testId}-empty`}>No month has a complete month a year before it to compare with.</p>;
@@ -31,9 +34,17 @@ export function ChangeBars({ labels, values, unit, summary, tone, every = 1, tes
   const ticks: number[] = [];
   for (let t = -downTop; t <= upTop + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100);
   const fill = (v: number) => (tone === "visits" ? colors["data-mark"] : v > 0 ? colors["status-higher"] : colors["status-lower"]);
+  const pct = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toLocaleString("en-SG", { maximumFractionDigits: 1 })}%`;
+  const bands: HoverBand[] = labels.map((l, i) => {
+    const v = values[i];
+    return { left: x(i), width: slot, title: titles?.[i] ?? l,
+             rows: [{ value: v == null ? "no figure: not complete in both years" : `${pct(v)} on a year before`, color: v == null ? undefined : fill(v) }] };
+  });
   return (
     <div>
       <p className="text-meta text-muted">{unit}</p>
+      <div className="relative">
+      <HoverBands bands={bands} plotTop={TOP} plotBottom={H - BOTTOM} testId={`${testId}-hover`} />
       <svg width="100%" height={H} role="img" aria-label={summary} data-testid={testId}>
         {ticks.map((t) => (
           <g key={t}>
@@ -49,6 +60,7 @@ export function ChangeBars({ labels, values, unit, summary, tone, every = 1, tes
           <text key={l + i} x={`${x(i) + slot / 2}%`} y={H - 8} textAnchor="middle" fontSize="13" fill={colors.muted}>{l}</text>
         ) : null))}
       </svg>
+      </div>
     </div>
   );
 }

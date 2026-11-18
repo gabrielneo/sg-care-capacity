@@ -1,6 +1,7 @@
 import { cssColors as colors } from "@/lib/palette";
 
 import { spread } from "../edcharts/SlopeChart";
+import { type HoverBand, HoverBands } from "./HoverBands";
 
 const H = 260;
 const TOP = 12;
@@ -34,8 +35,12 @@ const compact = (v: number) => (Math.abs(v) >= 10_000 ? `${Math.round(v / 1000)}
  * Lines on one axis, drawn on the server. The y axis starts at 0, so a line's height is its value and a fall is not exaggerated.
  * A null value breaks the line; a lone point is a dot. x labels are given in full and thinned to `every`.
  */
-export function LineChart({ labels, series, unit, summary, every = 1, testId = "line-chart" }: {
+export function LineChart({ labels, series, unit, summary, every = 1, testId = "line-chart", titles, format = compact }: {
   labels: string[]; series: LineSeries[]; unit: string; summary: string; every?: number; testId?: string;
+  /** Each x label in full, for the hover tooltip ("October 2026"); defaults to the labels. */
+  titles?: string[];
+  /** A value as the tooltip says it ("2.9 hours"). */
+  format?: (v: number) => string;
 }) {
   const known = series.flatMap((s) => s.values).filter((v): v is number => v != null);
   if (!known.length) return <p className="text-small text-muted" data-testid={`${testId}-empty`}>No complete months to draw.</p>;
@@ -49,9 +54,22 @@ export function LineChart({ labels, series, unit, summary, every = 1, testId = "
     return i < 0 ? null : { i, v: s.values[i] as number };
   });
   const labelY = spread(ends.map((e) => (e ? y(e.v) : 0)), 15);
+  // One hover column per x label, centred on its point; the first and last stop at the plot's edges.
+  const w = n <= 1 ? XR - XL : (XR - XL) / (n - 1);
+  const bands: HoverBand[] = labels.map((l, i) => {
+    const left = Math.max(XL - w / 2, xPct(i) - w / 2);
+    return {
+      left, width: Math.min(xPct(i) + w / 2, XR + w / 2) - left, title: titles?.[i] ?? l,
+      rows: series.map((s) => ({ label: series.length > 1 ? s.label : undefined, color: colors[s.color],
+                                 value: s.values[i] == null ? "no complete month" : format(s.values[i] as number) })),
+      marks: series.flatMap((s) => (s.values[i] == null ? [] : [{ y: y(s.values[i] as number), color: colors[s.color] }])),
+    };
+  });
   return (
     <div>
       <p className="text-meta text-muted">{unit}</p>
+      <div className="relative">
+      <HoverBands bands={bands} plotTop={TOP} plotBottom={H - BOTTOM} testId={`${testId}-hover`} />
       <svg width="100%" height={H} role="img" aria-label={summary} data-testid={testId}>
         {ticks.map((t) => (
           <g key={t}>
@@ -86,6 +104,7 @@ export function LineChart({ labels, series, unit, summary, every = 1, testId = "
           </g>
         ))}
       </svg>
+      </div>
     </div>
   );
 }

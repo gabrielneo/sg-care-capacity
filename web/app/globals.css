@@ -375,6 +375,27 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 .term-tip[data-open="true"] { display: block; }
 .term-tip strong { font-weight: 600; }
 
+/* Exact values on hover over the monthly charts (components/monthly/HoverBands.tsx): one invisible column per month; pointing at
+   it shows a guide line, a dot on each line, and the values in a tooltip above the plot. CSS only, no motion; hidden in print. */
+.hover-bands { position: absolute; left: 0; right: 0; z-index: 1; }
+.hover-band { position: absolute; top: 0; bottom: 0; cursor: crosshair; }
+.hover-band:hover { z-index: 2; }
+.hover-guide { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--border-control); opacity: 0; }
+.hover-mark { position: absolute; left: 50%; width: 0.625rem; height: 0.625rem; margin: -0.3125rem 0 0 -0.3125rem; border-radius: 9999px;
+  box-shadow: 0 0 0 2px var(--bg-surface); opacity: 0; }
+.hover-band:hover .hover-guide, .hover-band:hover .hover-mark { opacity: 1; }
+.hover-tip { display: none; position: absolute; top: 0; left: 50%; transform: translate(-50%, calc(-100% - 0.5rem)); pointer-events: none;
+  background: var(--text-primary); color: var(--bg-surface); border-radius: 6px; padding: 0.4rem 0.65rem; box-shadow: var(--shadow-float);
+  font-size: var(--fs-small); line-height: var(--lh-small); white-space: nowrap; }
+.hover-tip-start { left: 0; transform: translate(0, calc(-100% - 0.5rem)); }
+.hover-tip-end { left: auto; right: 0; transform: translate(0, calc(-100% - 0.5rem)); }
+.hover-band:hover .hover-tip { display: block; }
+.hover-tip-title { display: block; font-weight: 600; }
+.hover-tip-row { display: flex; align-items: center; gap: 0.4rem; }
+.hover-swatch { width: 0.625rem; height: 0.625rem; flex: none; border-radius: 9999px; box-shadow: 0 0 0 1px var(--bg-surface); }
+.hover-tip-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+@media print { .hover-bands { display: none; } }
+
 /* HighlightPhrase: a static marker stroke under a phrase (no motion: audit D9). An inline block that
    may wrap (never nowrap: a wider font, e.g. Linux's fallback, would push it past a 375 px screen). */
 .highlight { position: relative; display: inline-block; max-width: 100%; isolation: isolate; }

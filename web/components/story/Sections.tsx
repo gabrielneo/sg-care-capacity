@@ -69,7 +69,7 @@ export function Hero({ insight, meta, count }: { insight: StoryInsight; meta: Me
         on emergency department bed waits and clinic access for seniors, each published only after a fixed statistical check.
       </p>
       {/* The page's one action, where a planner looks first: the same findings on one printable page. */}
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="summary-cta">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="summary-cta">
         <Link href="/summary" className="btn btn-primary gap-2" data-testid="summary-link">
           <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
             <path d="M4 1.75h5.5L12.25 4.5v9.75H4z" /><path d="M9.5 1.75V4.5h2.75M6 8h4.25M6 10.75h4.25" />
