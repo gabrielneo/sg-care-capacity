@@ -1,5 +1,5 @@
 /**
- * The Planner summary's own arithmetic: the order of the hospital cards, the change against usual
+ * The hospital figures' arithmetic (it began as the Planner view's, removed 18 Nov 2026): the order of the hospital cards, the change against usual
  * as text, and what the four summary tiles show (docs/data_dictionary.md, "Computed by the site").
  *
  * Everything here reads the statuses the cards are drawn from (lib/status.ts): the same latest

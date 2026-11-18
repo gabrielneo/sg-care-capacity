@@ -172,7 +172,6 @@
   @keyframes landing-pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.2); opacity: 0; } }
   @keyframes landing-slide { from { transform: translateX(calc(var(--dx, 0) * 1cqw)); } }
   @keyframes landing-grow { from { transform: scaleX(0); } }
-  @keyframes landing-cue { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(0.5rem); } }
   @keyframes landing-progress { to { transform: scaleX(1); } }
 
   /* The hero builds itself on load, one piece after another (--delay). */
@@ -180,7 +179,6 @@
   .hero-stroke { stroke-dasharray: 1; animation: landing-draw var(--dur-draw) var(--ease-out) both; animation-delay: 400ms; }
   .hero-area { animation: landing-fade var(--dur-draw) var(--ease-out) both; animation-delay: 900ms; }
   .hero-pulse { transform-box: fill-box; transform-origin: center; animation: landing-pulse var(--dur-draw) ease-out infinite; animation-delay: 1600ms; }
-  .hero-cue { animation: landing-cue var(--dur-draw) ease-in-out infinite; }
 
   /* Blocks below the fold rise in as they arrive (components/motion/Reveal.tsx arms them after load, so the server never hides anything). */
   [data-reveal] { transition: opacity var(--dur-reveal) var(--ease-out), transform var(--dur-reveal) var(--ease-out); transition-delay: var(--delay, 0ms); }
@@ -250,7 +248,6 @@
 
 /* The frame's heights (styles/tokens.css) and the map panels. */
 @utility header-h { height: var(--h-header); }
-@utility strip-h { height: var(--h-strip); }
 @utility control-h { height: var(--h-control); }
 @utility h-map { height: var(--h-map); }
 @utility h-map-tall { height: var(--h-map-tall); }
@@ -270,8 +267,6 @@
 
 /* A section's heading, its lede, then the content: 8px, then 24px. */
 .section-head { margin-bottom: var(--lede-content); }
-.section-head .lede-row { margin-top: var(--heading-lede); }
-.section-head .lede-row .lede { margin-top: 0; }
 
 /* A KPI tile that links to a hospital card: the label is the link, stretched over the tile. Glossary terms and tips inside stay clickable above it. */
 .kpi-linked:has(.kpi-link:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -281,14 +276,12 @@
 @media (min-width: 40rem) { .kpi-label { min-height: calc(2 * var(--lh-small)); } }
 .kpi-visual { height: var(--kpi-visual-row); }   /* the reserved micro-visual row: 32px */
 /* The card a tile or a link points at (its #hospital-CODE address): a solid ink-blue outline, no motion. */
-.target-card { scroll-margin-top: var(--space-9); }
-.target-card:target { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* A band runs the full width of the window while its content stays in the page container. The huge spread
    shadow paints the band colour sideways; clip-path stops it short of the window edge, so nothing scrolls. */
 .section { padding-block: calc(var(--section-gap) / 2); }   /* two page sections side by side are one section-gap apart */
 .section-first { padding-top: 0; }                                  /* the page's first section sits right under the strip */
-.section-compact { --section-gap: var(--space-4); }              /* Planner, Analyst and the public first screen: dense, so the answer stays above the fold */
+.section-compact { --section-gap: var(--space-4); }              /* The finder's first screen: dense, so the answer stays above the fold */
 .section-in-chapter + .section-in-chapter { margin-top: var(--section-gap); }   /* two sections in one chapter */
 .section-band {
   padding-block: var(--section-gap);                          /* inside a band: the full gap above and below */
@@ -308,20 +301,7 @@
 .rail-link { display: block; padding: var(--space-1) 0 var(--space-1) var(--space-3); margin-left: -1px; border-left: 3px solid transparent; text-decoration: none; }
 .rail-link:hover { color: var(--text-primary); text-decoration: underline; }
 .rail-link[data-active="true"] { border-left-color: var(--accent); }
-.back-to-top { display: flex; justify-content: flex-end; padding-top: var(--space-3); }
 .jump-menu[open] > summary { border-bottom: 1px solid var(--border-subtle); }
-.accordion > summary { list-style: none; }
-.accordion > summary::-webkit-details-marker { display: none; }
-.accordion-mark::before { content: "+"; font-size: var(--fs-h3); line-height: 1; }
-.accordion[open] > summary > .accordion-mark::before { content: "\2212"; }
-/* An accordion's height animates over 180 ms where the browser supports ::details-content; elsewhere it opens at once. */
-@media (prefers-reduced-motion: no-preference) {
-  @supports selector(::details-content) {
-    .accordion { interpolate-size: allow-keywords; }
-    .accordion::details-content { block-size: 0; overflow: clip; transition: block-size var(--dur-accordion) var(--ease-out), content-visibility var(--dur-accordion) allow-discrete; }
-    .accordion[open]::details-content { block-size: auto; }
-  }
-}
 
 /* The map's own controls follow the type scale too: Leaflet's defaults are 12px (attribution) and 22px (zoom buttons). */
 .leaflet-container { font-family: inherit; font-size: var(--fs-small); }
@@ -440,15 +420,14 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 
 @media print {
   html, body { background: white !important; color: black !important; }
-  body > header, body > footer, body > a[href="#main"], .print-hide, .site-strip, .rail, .jump-menu, .back-to-top,
-  [data-testid="site-strip"], [data-testid="view-switch"], .leaflet-control-container { display: none !important; }
+  body > header, body > footer, body > a[href="#main"], .print-hide, .rail, .jump-menu,
+  .leaflet-control-container { display: none !important; }
   main { max-width: none; padding: 0 !important; }
   a { color: inherit; text-decoration: none; }
   .section, .section-band { background: none !important; box-shadow: none !important; clip-path: none !important; }
   .rail-layout { display: block !important; }
-  .sc, .card, figure, svg, table, tr, [data-testid="chart-frame"], .summary-block { break-inside: avoid; page-break-inside: avoid; }
+  .card, figure, svg, table, tr, [data-testid="chart-frame"], .summary-block { break-inside: avoid; page-break-inside: avoid; }
   h1, h2, h3 { break-after: avoid; }
-  .accordion::details-content { block-size: auto !important; content-visibility: visible !important; }
   .summary { max-width: none; font-size: 10pt; }
   .summary .summary-gap { margin-top: 0.6rem; }
   .summary .summary-card { padding: 0.15rem 0; border: 0; border-radius: 0; background: none; }
@@ -507,60 +486,7 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
 @keyframes care-drawer-in { from { transform: translateX(2rem); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes care-sheet-in { from { transform: translateY(2rem); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/*
- * The hospital status card, full density (components/home/StatusCard.tsx). Six reserved slots, in this order:
- * name, chips, label, value, change, footer. From 768px every card spans six rows of the grid and takes them as a
- * subgrid, so each slot lines up across a row of cards (a taller footer or a wrapped chip row in one card makes the
- * row taller for all). Below 768px a card is compact: name and badge, then value and change, then one meta line.
- * Cards in a row share the grid's rows, so the row gap lives on each card's bottom margin instead.
- */
-.sc-grid { display: grid; gap: var(--card-gap); }
-.sc { display: grid; position: relative; padding: var(--space-3); row-gap: var(--space-2); column-gap: var(--space-3);
-  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name name" "value badge" "value delta" "foot foot"; }
-.sc[data-edge="true"] { border-left-width: var(--bar-status); padding-left: calc(var(--space-3) - var(--bar-status) + 1px); }
-.sc-name { grid-area: name; min-width: 0; overflow-wrap: break-word; }   /* a phone's name has the whole first line and may wrap; one line with an ellipsis from 768px */
-.sc-chips { display: contents; }
-.sc-chip { display: none; }
-.sc-badge { grid-area: badge; justify-self: end; white-space: nowrap; }
-.sc-label { display: none; }
-.sc-value { grid-area: value; align-self: center; display: flex; align-items: flex-end; gap: var(--space-3); white-space: nowrap; min-width: 0; }
-.sc-delta { grid-area: delta; text-align: right; }
-.sc-foot { grid-area: foot; }
-.sc-short { display: inline; }
-@media (max-width: 29.9375rem) { .sc-spark { display: none; } }   /* under 480px: beside the badge there is no room for it */
-@media (min-width: 48rem) {
-  .sc-grid { row-gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: calc(-1 * var(--card-gap)); }
-  .sc { grid-row: span 6; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); grid-template-areas: none;
-    row-gap: 0; margin-bottom: var(--card-gap); }
-  .sc > *, .sc-chips > * { grid-area: auto; }
-  .sc-name { overflow: hidden; overflow-wrap: normal; text-overflow: ellipsis; white-space: nowrap; }
-  /* The ellipsis cuts the name, never the code (review N10): the code is what a reader scans for. */
-  .sc-name > a, .sc-name .hn-box, .sc-name .hn-row { display: flex; min-width: 0; }
-  .sc-name .hn-row { gap: var(--space-1); }
-  .sc-name .hn-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .sc-name .hn-code { flex: none; }
-  .sc-chips { display: flex; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: var(--space-2); margin-top: var(--space-2); }
-  .sc-chip { display: inline-flex; }
-  .sc-badge { justify-self: start; }
-  .sc-label { display: block; margin-top: var(--space-2); }
-  .sc-value { justify-content: space-between; }
-  .sc-delta { text-align: left; margin-top: var(--space-2); }
-  .sc-foot { margin-top: var(--space-2); padding-top: var(--space-2); }
-  .sc-short { display: none; }
-  .sc-wide { grid-column: 1 / -1; }
-  .sc-wide .sc-value { justify-content: flex-start; gap: var(--space-5); }
-  .sc-wide .sc-spark { margin-left: 0; }
-}
-@media (min-width: 80rem) { .sc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
-/* A section header with an actions slot (the order control): below the lede on a phone, in the heading's row from 768px. */
-@media (min-width: 48rem) {
-  .section-head[data-actions="true"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-5); align-items: center; }
-  .section-head[data-actions="true"] > .section-actions { grid-column: 2; grid-row: 1; }
-  .section-head[data-actions="true"] > :not(.section-actions):not(:first-child) { grid-column: 1 / -1; }
-}
-.section-head > .section-actions { margin-top: var(--space-3); }
-@media (min-width: 48rem) { .section-head > .section-actions { margin-top: 0; } }
 
 /* Headings take the heading colour (deep purple in light, near-white in dark) even where a component gives them text-ink.
    Unlayered, so it wins over the utility; a heading that sits on the hero sets .on-hero instead (below). */

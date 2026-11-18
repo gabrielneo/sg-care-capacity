@@ -8,7 +8,7 @@
  * - layout: "map" or "list". Missing means "the default for the screen" (list on a phone, map
  *   otherwise): the CSS picks it, so nothing is guessed from the width here.
  * - hospital: a hospital code whose details are open.
- * - sort: the list's order. The same three orders as the Planner cards (lib/planner.ts).
+ * - sort: the list's order: change against usual, hours or A–Z (lib/planner.ts).
  */
 import { DEFAULT_SORT, parseSort, type Sort, sortStatuses } from "./planner";
 import type { HospitalStatus } from "./status";
@@ -82,7 +82,7 @@ export function filterByCluster<T extends { cluster: string }>(rows: readonly T[
 }
 
 /**
- * The list's rows in the chosen order (the Planner cards' own sort, so the two can't disagree): the
+ * The list's rows in the chosen order (lib/planner.ts, sortStatuses): the
  * EDs ranked, then the urgent care centre in its own group, never ranked among them (ADR 0012).
  */
 export function sortRows(rows: readonly CareRow[], sort: Sort): CareRow[] {

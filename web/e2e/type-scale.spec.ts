@@ -8,7 +8,7 @@ import { blockTiles } from "./helpers";
  * Runs at 1280 px (desktop project) and 375 px (mobile project). Measured by scripts/ui-metrics.ts, the same code
  * as `npm run ui:metrics`, so the report and the check can't disagree.
  */
-const ROUTES = ["/", "/find", "/find?view=public", "/find?view=planner", "/find?view=analyst", "/project", "/findings", "/explore", "/ed-trends",
+const ROUTES = ["/", "/find", "/project", "/findings", "/explore", "/ed-trends",
   "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/how-its-built", "/case-study", "/docs/insights-method",
   "/summary", "/about", "/styleguide"];
 

@@ -4,7 +4,6 @@
       "url": [
         "http://127.0.0.1:3320/",
         "http://127.0.0.1:3320/find",
-        "http://127.0.0.1:3320/find?view=planner",
         "http://127.0.0.1:3320/findings",
         "http://127.0.0.1:3320/ed-trends"
       ],

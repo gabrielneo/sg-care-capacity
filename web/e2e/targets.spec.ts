@@ -7,7 +7,7 @@ import { blockTiles } from "./helpers";
  * running text, glossary terms (inline buttons in a sentence), screen-reader-only elements, and a checkbox or radio
  * whose label is itself the 44px target.
  */
-const ROUTES = ["/", "/find", "/find?view=planner", "/find?view=analyst", "/ed-trends", "/live", "/access-map", "/findings", "/data-quality",
+const ROUTES = ["/", "/find", "/ed-trends", "/live", "/access-map", "/findings", "/data-quality",
   "/methodology", "/glossary", "/project", "/about", "/explore", "/styleguide"];
 
 test.use({ viewport: { width: 375, height: 812 } });

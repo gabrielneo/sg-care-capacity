@@ -15,7 +15,7 @@ const resolve = (page: Page, token: string) => page.evaluate((t) => {
 
 test("a glossary term is dotted, in the tertiary colour, never the accent", async ({ page }) => {
   await blockTiles(page);
-  await page.goto("/find?view=planner");
+  await page.goto("/find");
   const term = page.locator("button.term").first();
   await expect(term).toBeVisible();
   const style = await term.evaluate((el) => { const s = getComputedStyle(el); return { line: s.textDecorationLine, kind: s.textDecorationStyle, decoration: s.textDecorationColor, colour: s.color }; });
@@ -35,10 +35,10 @@ test("a link in running text is accent and always underlined", async ({ page }) 
   expect(style.colour).toBe(await resolve(page, "--accent"));
 });
 
-test("navigation links are underlined only on hover or focus, and the strip's plain text never is", async ({ page }) => {
+test("navigation links are underlined only on hover or focus", async ({ page }) => {
   test.skip((page.viewportSize()?.width ?? 0) < 500, "hover is a desktop measure");
   await blockTiles(page);
-  await page.goto("/find?view=planner");
+  await page.goto("/find");
   const line = (loc: ReturnType<Page["locator"]>) => loc.evaluate((el) => getComputedStyle(el).textDecorationLine);
   const nav = page.getByRole("navigation").getByRole("link", { name: "Findings" }).first();
   expect(await line(nav)).toBe("none");
@@ -48,12 +48,4 @@ test("navigation links are underlined only on hover or focus, and the strip's pl
   await nav.focus();
   expect(await line(nav)).toContain("underline");
 
-  // The strip (audit C4, E4) is plain text, not a link: no underline at rest or on hover.
-  await page.evaluate(() => window.scrollTo(0, 700));
-  const strip = page.getByTestId("strip-summary");
-  await expect(strip).toBeVisible();
-  await page.mouse.move(0, 400);
-  expect(await line(strip)).toBe("none");
-  await strip.hover();
-  expect(await line(strip)).toBe("none");
 });

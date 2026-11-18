@@ -38,5 +38,5 @@ export const BUILD_FACTS = {
 export const WHAT_I_DID = [
   "Built a weekly pipeline from MOH, data.gov.sg, SingStat and NUHS data.",
   "Wrote checks that block a bad release, and a statistical test every finding must pass.",
-  "Designed one site for three readers: the public, planners and analysts.",
+  "Designed a public clinic finder, data pages and a one-page summary, each figure shown with its date and source.",
 ] as const;

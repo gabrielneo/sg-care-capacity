@@ -11,9 +11,7 @@ export interface VisualRoute {
 
 export const ROUTES: readonly VisualRoute[] = [
   { name: "home", path: "/" },
-  { name: "home-public", path: "/find?view=public" },
-  { name: "home-planner", path: "/find?view=planner" },
-  { name: "home-analyst", path: "/find?view=analyst" },
+  { name: "home-public", path: "/find" },
   { name: "project", path: "/project" },
   { name: "findings", path: "/findings" },
   { name: "explore", path: "/explore" },

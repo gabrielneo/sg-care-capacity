@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: [{ media: "(prefers-color-scheme: light)", color: colors.page }, { media: "(prefers-color-scheme: dark)", color: darkColors.page }] };
 
-export default function RootLayout({ children, viewbar }: { children: ReactNode; viewbar: ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-SG" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-page text-ink">
@@ -36,7 +36,7 @@ export default function RootLayout({ children, viewbar }: { children: ReactNode;
         >
           Skip to content
         </a>
-        <SiteHeader viewbar={viewbar} />
+        <SiteHeader />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 pb-8 pt-3 sm:pt-4">
           {children}
         </main>

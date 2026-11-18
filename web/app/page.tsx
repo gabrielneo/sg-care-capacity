@@ -32,14 +32,14 @@ export const dynamic = "force-dynamic"; // rendered per request; API responses a
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
-/** What the home page's address carried before the landing page: the finder's own parameters. */
+/** What the home page's address carried before the landing page: the finder's own parameters (?view= is dropped at /find). */
 const FINDER_PARAMS = ["view", "sort", "cluster", "layout", "hospital"] as const;
 
 /**
  * The landing page: what the site is, in four screens. A short claim, two pictures (bed waits against each hospital's usual, and
  * clinics per senior by area), each with one short note, and the three ways on. Every figure and note is computed from the API
  * (the engine's own headlines, or a count of what is drawn); a picture that can't be drawn is left out, with no stand-in.
- * The clinic finder and the Planner and Analyst views are at /find; an old address with their parameters is sent there.
+ * The clinic finder is at /find; an old address with its parameters is sent there.
  */
 export default async function LandingPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams;

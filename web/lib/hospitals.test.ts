@@ -18,7 +18,6 @@ import { aboveUsual, acrossHospitals, largestChange, longestWait } from "./plann
 import type { HospitalStatus } from "./status";
 import { storySteps } from "./story";
 import { buildStrip } from "./strip";
-import { takeaways } from "./takeaways";
 
 const h = (hospital_code: string, facility_type: "ED" | "UCC" = "ED") => ({ hospital_code, facility_type, cluster: "X" }) as Hospital;
 const HOSPITALS = [h("SGH"), h("CGH"), h("TTSH"), h("AH", "UCC")];
@@ -89,8 +88,7 @@ describe("every aggregate across hospitals leaves the urgent care centre out", (
     expect(sortRows([row("AH", 99), row("SGH", 5), row("TTSH", 6)], "hours").map((r) => r.code)).toEqual(["TTSH", "SGH", "AH"]);
   });
 
-  it("takeaways and headline findings: never about the UCC, even when it ranks first", () => {
-    expect(takeaways(FINDINGS, HOSPITALS).map((t) => t.entity)).toEqual(["SGH", "CGH"]);
+  it("headline findings: never about the UCC, even when it ranks first", () => {
     expect(storySteps(FINDINGS, HOSPITALS).map((i) => i.entity)).toEqual(["SGH", "CGH"]);
   });
 

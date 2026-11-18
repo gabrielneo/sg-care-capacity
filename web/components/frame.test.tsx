@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { jumpTargets, parseView, SECTION_LABEL, sectionsFor, VIEWS } from "@/lib/homeViews";
+import { sectionAnchor } from "@/lib/homeViews";
 import { NOTICE_995_LINE, Notice995 } from "@/components/Notice995";
 import { SITE } from "@/lib/site";
 
@@ -13,14 +13,11 @@ import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 
 describe("Notice995", () => {
-  it("is one sentence in both short forms, and 995 is always a tel: link", () => {
-    for (const variant of ["compact", "footer"] as const) {
-      const { unmount } = render(<Notice995 variant={variant} />);
-      const note = screen.getByTestId(variant === "compact" ? "emergency-note" : "footer-notice");
-      expect(note).toHaveTextContent(`✚ Emergency? Call 995. ${NOTICE_995_LINE}`);
-      expect(within(note).getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
-      unmount();
-    }
+  it("is one sentence, and 995 is a tel: link with a 44px target", () => {
+    render(<Notice995 variant="footer" />);
+    const note = screen.getByTestId("footer-notice");
+    expect(note).toHaveTextContent(`✚ Emergency? Call 995. ${NOTICE_995_LINE}`);
+    expect(within(note).getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
     expect(NOTICE_995_LINE).toBe("This site shows public statistics, not medical advice.");
   });
 });
@@ -46,7 +43,7 @@ describe("SiteFooter", () => {
 
 describe("SiteHeader", () => {
   it("has the serif wordmark, the tagline, five sections and a Menu button", () => {
-    render(<SiteHeader viewbar={null} />);
+    render(<SiteHeader />);
     const mark = screen.getByTestId("wordmark");
     expect(mark).toHaveTextContent(`${SITE.name}${SITE.tagline}`);
     expect(mark.querySelector(".font-serif")).not.toBeNull();
@@ -57,18 +54,9 @@ describe("SiteHeader", () => {
   });
 });
 
-describe("views and jump targets", () => {
-  it("names the views Public, Planner and Analyst", () => {
-    expect(VIEWS.map((v) => v.label)).toEqual(["Public", "Planner", "Analyst"]);
-    expect(parseView("analyst")).toBe("analyst");
-  });
-
-  it("lists a view's sections in page order, without the intro, each with an anchor the page has", () => {
-    const planner = jumpTargets("planner");
-    expect(planner.map((t) => t.id)).toEqual(sectionsFor("planner").map((s) => s.id).filter((id) => id !== "notice"));
-    expect(planner.map((t) => t.label)).toEqual(planner.map((t) => SECTION_LABEL[t.id]));
-    expect(planner.every((t) => t.href === `#section-${t.id}`)).toBe(true);
-    expect(jumpTargets("analyst").map((t) => t.id)).toContain("weekdays");
-    expect(jumpTargets("planner").map((t) => t.id)).not.toContain("weekdays");
+describe("the finder's sections", () => {
+  it("each has an anchor a link can jump to (the Planner and Analyst views were removed on 18 Nov 2026)", () => {
+    expect(sectionAnchor("finder")).toBe("section-finder");
+    expect(sectionAnchor("ednear")).toBe("section-ednear");
   });
 });

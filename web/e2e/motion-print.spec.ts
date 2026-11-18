@@ -5,8 +5,7 @@ import { expectNoHorizontalScroll } from "./helpers";
 /** UX audit D9: nothing is hidden behind motion or JavaScript, and the page prints as a clean light-theme document. */
 
 const ROUTES = [
-  { path: "/find?view=planner", name: "Planner" },
-  { path: "/find?view=analyst", name: "Analyst" },
+  { path: "/", name: "Home" },
   { path: "/findings", name: "Findings" },
   { path: "/ed-trends", name: "ED trends" },
 ];
@@ -30,7 +29,7 @@ test.describe("data is on the page on first paint", () => {
   }
 
   test("nothing in a long page starts transparent, before any scrolling", async ({ page }) => {
-    await page.goto("/find?view=analyst");
+    await page.goto("/ed-trends");
     const transparent = await page.locator("main *").evaluateAll((els) =>
       els.filter((e) => {
         const cs = getComputedStyle(e);
@@ -62,37 +61,29 @@ test.describe("motion", () => {
 });
 
 test.describe("print", () => {
-  test("Analyst has a Print summary link to the one-page summary; Planner and Public do not", async ({ page }) => {
-    await page.goto("/find?view=analyst");
-    await expect(page.getByTestId("print-summary-link")).toHaveAttribute("href", "/summary");
-    await page.goto("/find?view=planner");
-    await expect(page.getByTestId("print-summary-link")).toHaveCount(0);
-  });
-
-  test("printed Analyst: light theme even if dark is chosen, no chrome, section meta lines stay, no overflow", async ({ page }) => {
+  test("printed ED trends: light theme even if dark is chosen, no chrome, the date and source lines stay, no overflow", async ({ page }) => {
     await page.addInitScript(() => { try { localStorage.setItem("theme", "dark"); } catch { /* storage blocked */ } });
     await page.emulateMedia({ colorScheme: "dark" });
-    await page.goto("/find?view=analyst");
+    await page.goto("/ed-trends");
     await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
     await page.emulateMedia({ media: "print", colorScheme: "dark" });
     const page_bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(page_bg).toBe("rgb(255, 255, 255)");
     const ink = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg-page").trim().toUpperCase());
     expect(ink).toBe("#FAF9FF");
-    for (const hidden of ["body > header", "body > footer", '[data-testid="site-strip"]', '[data-testid="view-switch"]']) {
+    for (const hidden of ["body > header", "body > footer"]) {
       await expect(page.locator(hidden).first()).toBeHidden();
     }
-    await expect(page.getByTestId("section-meta").first()).toBeVisible();
+    await expect(page.getByTestId("provenance-line").first()).toBeVisible();
     const band = await page.locator(".section-band").first().evaluate((e) => getComputedStyle(e).boxShadow);
     expect(band).toBe("none");                                                    // no full-bleed band colour on paper
-    await expect(page.getByTestId("emergency-note")).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 
-  test("a hospital card is not split across print pages", async ({ page }) => {
+  test("a chart is not split across print pages", async ({ page }) => {
     await page.emulateMedia({ media: "print" });
-    await page.goto("/find?view=analyst");
-    const breaks = await page.locator('[data-testid="status-card"]').first().evaluate((e) => getComputedStyle(e).breakInside);
+    await page.goto("/ed-trends");
+    const breaks = await page.locator('[data-testid="chart-frame"]').first().evaluate((e) => getComputedStyle(e).breakInside);
     expect(breaks).toBe("avoid");
   });
 });

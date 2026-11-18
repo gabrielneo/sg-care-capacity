@@ -94,7 +94,7 @@ test.describe("Public finder", () => {
     expect(await page.getByTestId("ed-near").innerText()).not.toMatch(/wait time/i);
     await expect(page.getByTestId("status-exclusions")).toContainText("Children's Emergency");
     for (const line of await page.getByTestId("ed-near").getByTestId("provenance-line").all()) await expect(line).toHaveText(AS_OF);
-    await expect(page.getByTestId("ed-near").getByRole("link", { name: /Analyst view/ })).toHaveAttribute("href", "/find?view=analyst");
+    await expect(page.getByTestId("ed-near").getByRole("link", { name: /every hospital/ })).toHaveAttribute("href", "/ed-trends");
   });
 
   test("the bed-wait help opens on keyboard focus, explains it isn't time to see a doctor, and closes on Escape", async ({ page }) => {

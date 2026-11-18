@@ -1,6 +1,6 @@
 # 0010: One home page with three views, chosen in the URL
 
-**Status:** Accepted · **Date:** 2026-11-11 · The public view was reworked by [0011](0011-public-view.md): the postcode search moved into the browser, and Public shows the nearest three EDs instead of every hospital.
+**Status:** Superseded by [0014] · **Date:** 2026-11-11 · Removed on 2026-11-18. Before that, the public view was reworked by [0011](0011-public-view.md): the postcode search moved into the browser, and Public shows the nearest three EDs instead of every hospital.
 
 ## Context
 
@@ -78,3 +78,5 @@ Three pages would mean three copies of the same cards and the same figures, whic
 - `web/components/ViewSwitch.test.tsx`: the radio group, the select and the form.
 - `web/e2e/views.spec.ts`: each view renders its sections and no others; the URL round trip; arrow
   keys; no JavaScript; axe (WCAG 2.2 AA) and no sideways scrolling at 375, 768 and 1280 px.
+
+[0014]: 0014-remove-planner-and-analyst-views.md

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { blockTiles } from "./helpers";
 
 /** Every page says the site isn't medical advice and to call 995 (audit H1): the same line in the footer, so it's on all of them (E5). */
-const ROUTES = ["/", "/find", "/find?view=planner", "/find?view=analyst", "/ed-trends", "/live", "/access-map", "/findings", "/summary", "/data-quality",
+const ROUTES = ["/", "/find", "/ed-trends", "/live", "/access-map", "/findings", "/summary", "/data-quality",
   "/methodology", "/glossary", "/case-study", "/about"];
 
 test.beforeEach(async ({ page }) => blockTiles(page));

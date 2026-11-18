@@ -10,7 +10,6 @@ import { KpiTile } from "@/components/KpiTile";
 import { PageHeader } from "@/components/PageHeader";
 import { ChartFrameSkeleton, EmptyState, ErrorState, Skeleton } from "@/components/States";
 import { AnnotatedChart, fromInsightChart } from "@/components/story/AnnotatedChart";
-import { ViewSwitch } from "@/components/ViewSwitch";
 import { DeltaNumber, deltaFromDisplay } from "@/components/story/DeltaNumber";
 import { HighlightPhrase } from "@/components/story/HighlightPhrase";
 import { api, settle } from "@/lib/api/client";
@@ -87,12 +86,8 @@ export default function ComponentsPage() {
         </Suspense>
       </Section>
 
-      <Section title="ViewSwitch and StatusBadge (home page views)">
-        <p className="mb-3 text-small text-muted">
-          The header control on the home page: a radio group from 640 px, a select below. Choosing a view here goes to the home page.
-        </p>
-        <ViewSwitch view="planner" home="/dev/components" />
-        <div className="mt-4 flex flex-wrap gap-2">
+      <Section title="StatusBadge">
+        <div className="flex flex-wrap gap-2">
           {LEVEL_ORDER.map((level) => <StatusBadge key={level} level={level} />)}
         </div>
       </Section>

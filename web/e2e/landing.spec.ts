@@ -128,9 +128,10 @@ test.describe("Landing", () => {
 
 test.describe("Old home addresses", () => {
   test("the finder's parameters are sent to /find, and nothing else is carried", async ({ page }) => {
+    // The Planner and Analyst views were removed on 18 Nov 2026: their ?view= is dropped, the map's own ?sort= is kept.
     await page.goto("/?view=planner&sort=hours&utm=x");
-    await expect(page).toHaveURL(/\/find\?view=planner&sort=hours$/);
-    await expect(page.getByTestId("home")).toHaveAttribute("data-view", "planner");
+    await expect(page).toHaveURL(/\/find\?sort=hours$/);
+    await expect(page.getByTestId("home")).toHaveAttribute("data-view", "public");
   });
 
   test("a plain address stays on the landing page", async ({ page }) => {

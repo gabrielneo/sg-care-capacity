@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import { MenuSheet } from "@/components/MenuSheet";
 import { Nav } from "@/components/Nav";
@@ -9,14 +8,12 @@ import { SITE } from "@/lib/site";
 /**
  * The site's header, kept quiet so the content leads.
  * - From 1024px: one 64px row (the hairline below included) on the page colour: the name (never wrapped) and, from 1280px, the tagline
- *   (cut with an ellipsis if a wide font leaves no room beside the home page's view switch) at the left,
- *   the five sections in the middle, the view switch at the far right (Home only).
- * - Below 1024px: 56px, the wordmark and a "Menu" button; the sheet holds the navigation, the view choice and the 995 link.
+ *   (cut with an ellipsis if a wide font leaves no room) at the left, the five sections in the middle.
+ * - Below 1024px: 56px, the wordmark and a "Menu" button; the sheet holds the navigation and the 995 link.
  *   (Until 2026-11-16 the row started at 768px. It never fit there: wordmark, nav, view switch and gaps need about 822px of
  *   the 736 available, so the wordmark wrapped onto three lines, and with Linux's wider fallback font the page scrolled sideways.)
- * `viewbar` is the home page's view switch (the @viewbar slot: a layout can't read ?view=).
  */
-export function SiteHeader({ viewbar }: { viewbar: ReactNode }) {
+export function SiteHeader() {
   return (
     <>
       <header className="header-h border-b border-line bg-page" data-testid="site-header">
@@ -26,7 +23,6 @@ export function SiteHeader({ viewbar }: { viewbar: ReactNode }) {
             <span className="hidden min-w-0 truncate text-small text-tertiary xl:inline">{SITE.tagline}</span>
           </Link>
           <div className="hidden h-full justify-self-center lg:block"><Nav /></div>
-          {viewbar}
           <MenuSheet />
         </div>
       </header>

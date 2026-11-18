@@ -14,7 +14,7 @@ const hrs = (v: number) => `${v.toFixed(1)} h`;
 /** Emergency departments a phone lists before "Show all". */
 export const PHONE_ROWS = 4;
 
-/** What each sortable column does, and the direction it reads in (the Planner cards' orders: lib/planner.ts). */
+/** What each sortable column does, and the direction it reads in (lib/planner.ts). */
 const COLUMNS: { sort: Sort; label: string; dir: "ascending" | "descending" }[] = [
   { sort: "name", label: "Hospital", dir: "ascending" },
   { sort: "usual", label: "Status against usual", dir: "descending" },

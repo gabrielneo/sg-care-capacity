@@ -165,15 +165,15 @@ describe("EdNearby", () => {
   const cards = Object.fromEntries(["SGH", "CGH", "AH", "NUH"].map((c) => [c, <p key={c}>card {c}</p>]));
 
   it("asks for a search before showing any hospital", () => {
-    render(<EdNearby cards={cards} notes={null} provenance={null} analystHref="/?view=analyst" />);
+    render(<EdNearby cards={cards} notes={null} provenance={null} allHref="/ed-trends" />);
     expect(screen.getByTestId("ed-prompt")).toHaveTextContent("Search for a postcode or area above");
     expect(screen.queryByTestId("ed-item")).toBeNull();
     expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(/^How long were bed waits at EDs.* near you in the latest complete week\?$/);
-    expect(screen.getByRole("link", { name: /Analyst view/ })).toHaveAttribute("href", "/?view=analyst");
+    expect(screen.getByRole("link", { name: /every hospital/ })).toHaveAttribute("href", "/ed-trends");
   });
 
   it("shows the three nearest, nearest first, with the straight-line distance", async () => {
-    render(<><Finder clinicAsOf={null} provenance={null} /><EdNearby cards={cards} notes={<p>notes</p>} provenance={<p>prov</p>} analystHref="/" /></>);
+    render(<><Finder clinicAsOf={null} provenance={null} /><EdNearby cards={cards} notes={<p>notes</p>} provenance={<p>prov</p>} allHref="/ed-trends" /></>);
     await searchFor("460001");
     const items = screen.getAllByTestId("ed-item");
     expect(items.map((i) => i.textContent?.match(/card (\w+)/)?.[1])).toEqual(["CGH", "SGH", "AH"]);   // NUH is the fourth
@@ -184,7 +184,7 @@ describe("EdNearby", () => {
 
 describe("HomeNotice: the public view", () => {
   it("opens with the page heading, has no red 995 banner, and still says it isn't medical advice", () => {
-    const { container } = render(<HomeNotice density="full" />);
+    const { container } = render(<HomeNotice />);
     expect(container.querySelector("section")!.firstElementChild).toBe(screen.getByRole("heading", { level: 1 }));
     expect(screen.queryByTestId("emergency-note")).toBeNull();
     expect(screen.queryByRole("link", { name: "Call 995" })).toBeNull();

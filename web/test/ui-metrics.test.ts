@@ -73,7 +73,7 @@ describe("visual routes", () => {
     const names = ROUTES.map((r) => r.name);
     expect(new Set(names).size).toBe(names.length);
     expect(ROUTES.map((r) => r.path)).toEqual([
-      "/", "/find?view=public", "/find?view=planner", "/find?view=analyst", "/project", "/findings", "/explore", "/ed-trends",
+      "/", "/find", "/project", "/findings", "/explore", "/ed-trends",
       "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/how-its-built", "/case-study",
       "/docs/insights-method",
     ]);

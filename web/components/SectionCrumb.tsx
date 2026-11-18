@@ -8,7 +8,7 @@ export function SectionCrumb({ section, href, page }: { section: string; href: s
   return (
     <nav aria-label="Breadcrumb" className="print-hide pt-2 text-small" data-testid="section-crumb">
       <ol className="flex flex-wrap items-center gap-x-2">
-        <li><Link href={href} className="inline-flex min-h-11 items-center font-semibold">{section}</Link></li>
+        <li><Link href={href} className="inline-flex min-h-11 min-w-11 items-center font-semibold">{section}</Link></li>
         <li aria-hidden="true" className="text-tertiary">›</li>
         <li aria-current="page" className="text-muted">{page}</li>
       </ol>

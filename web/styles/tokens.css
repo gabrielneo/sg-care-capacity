@@ -14,7 +14,6 @@
 
   /* Motion (audit D9): the only three durations the site uses. All are off under prefers-reduced-motion (globals.css). */
   --dur-hover: 120ms;      /* hover and focus colour changes */
-  --dur-accordion: 180ms;  /* an accordion's height */
   --dur-drawer: 200ms;     /* a drawer or sheet sliding in */
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   /* Landing-page motion (owner request, 16 Nov 2026). Used only in the landing block of globals.css, only with no-preference, and
@@ -28,7 +27,6 @@
 
   /* Heights of the site's frame and its map panels: components name them (header-h, strip-h, control-h, h-map), never a pixel value. */
   --h-header: 3.5rem;      /* 56px: the header below 768px (wordmark and Menu); 64px from 768px */
-  --h-strip: 2.5rem;       /* 40px: the sticky status strip */
   --h-control: 2.25rem;    /* 36px: the view switch */
   --h-map: 23.75rem;       /* 380px: the hospital map; 460px from 640px */
   --h-map-tall: 26.25rem;  /* 420px: the access maps; 520px from 640px */

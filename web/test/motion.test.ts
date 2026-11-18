@@ -27,7 +27,7 @@ function tsx(dir: string): string[] {
 describe("motion", () => {
   it("the keyframes are the drawer, the sheet, the loading placeholder and the landing page's own", () => {
     expect([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]).sort()).toEqual([
-      "care-drawer-in", "care-sheet-in", "landing-cue", "landing-draw", "landing-fade", "landing-grow",
+      "care-drawer-in", "care-sheet-in", "landing-draw", "landing-fade", "landing-grow",
       "landing-progress", "landing-pulse", "landing-rise", "landing-slide", "show-after-delay"]);
   });
 
@@ -35,7 +35,7 @@ describe("motion", () => {
     const start = css.indexOf("@media (prefers-reduced-motion: no-preference) {\n  @keyframes landing-rise");
     expect(start).toBeGreaterThan(-1);
     const block = css.slice(start, css.indexOf("\n}\n", start));
-    for (const k of ["landing-rise", "landing-draw", "landing-fade", "landing-pulse", "landing-slide", "landing-grow", "landing-cue", "landing-progress"]) {
+    for (const k of ["landing-rise", "landing-draw", "landing-fade", "landing-pulse", "landing-slide", "landing-grow", "landing-progress"]) {
       expect(block).toContain(`@keyframes ${k}`);
     }
     expect(css.slice(0, start)).not.toMatch(/animation:\s*landing-/);          // nothing outside it starts a landing animation
@@ -44,13 +44,13 @@ describe("motion", () => {
   it("every transition and animation duration is a motion token", () => {
     const bad = [...css.matchAll(/(?<![-\w])(?:transition|animation)(?:-duration)?\s*:\s*([^;}]+)/g)]
       .map((m) => m[1]!.trim())
-      .filter((v) => v !== "none" && !/var\(--dur-(hover|accordion|drawer|reveal|draw)\)/.test(v) && v !== "landing-progress linear both" && !/^show-after-delay 0s linear 1s forwards$/.test(v) && !/^none !important$/.test(v));
+      .filter((v) => v !== "none" && !/var\(--dur-(hover|drawer|reveal|draw)\)/.test(v) && v !== "landing-progress linear both" && !/^show-after-delay 0s linear 1s forwards$/.test(v) && !/^none !important$/.test(v));
     expect(bad).toEqual([]);
   });
 
   it("the interface durations are 120, 180 and 200 ms, and the landing page's are 700 ms and 1.6 s (the hero's background is still since 17 Nov 2026)", () => {
     expect(tokens).toMatch(/--dur-hover:\s*120ms/);
-    expect(tokens).toMatch(/--dur-accordion:\s*180ms/);
+    expect(tokens).not.toMatch(/--dur-accordion/);   // the accordions went with the Analyst view (18 Nov 2026)
     expect(tokens).toMatch(/--dur-drawer:\s*200ms/);
     expect(tokens).toMatch(/--dur-reveal:\s*700ms/);
     expect(tokens).toMatch(/--dur-draw:\s*1600ms/);
@@ -68,9 +68,8 @@ describe("motion", () => {
     expect(block).not.toBeNull();
   });
 
-  it("the drawer and accordion motion only runs with no-preference", () => {
+  it("the drawer motion only runs with no-preference", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: no-preference\)\s*\{\s*\.care-drawer\[open\]/);
-    expect(css).toMatch(/@media \(prefers-reduced-motion: no-preference\)\s*\{\s*@supports[\s\S]*?::details-content/);
   });
 
   it("no component hides content with a utility class, and none uses Tailwind's animation or transition classes", () => {
@@ -111,7 +110,7 @@ describe("motion", () => {
   it("IntersectionObserver is only used for page chrome, the lazy map and the landing page's reveals and counters, never for data", () => {
     const used = tsx("components").concat(tsx("app")).filter((f) => /IntersectionObserver/.test(readFileSync(path.join(root, f), "utf8")))
       .map((f) => f.replace(/\\/g, "/")).sort();
-    expect(used).toEqual(["components/OnThisPage.tsx", "components/SiteStrip.tsx", "components/home/CareMap.tsx", "components/motion/CountUp.tsx", "components/motion/Reveal.tsx"]);
+    expect(used).toEqual(["components/OnThisPage.tsx", "components/home/CareMap.tsx", "components/motion/CountUp.tsx", "components/motion/Reveal.tsx"]);
   });
 });
 
@@ -130,6 +129,6 @@ describe("print theme", () => {
   it("forces the light token values, whatever theme is set", () => expect(norm(printBlock)).toBe(norm(lightBlock)));
   it("the print rules hide the chrome and keep cards whole", () => {
     const print = css.slice(css.indexOf("@page"));
-    for (const must of ["body > header", "body > footer", ".site-strip", '[data-testid="view-switch"]', "break-inside: avoid"]) expect(print).toContain(must);
+    for (const must of ["body > header", "body > footer", "break-inside: avoid"]) expect(print).toContain(must);
   });
 });

@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import { FigureCadenceNote } from "./FigureCadenceNote";
 
 describe("FigureCadenceNote", () => {
-  it("says the case study moves with published data, not weekly, and links to the weekly summary", () => {
+  it("says the case study moves with published data, not weekly, and links to the one-page summary", () => {
     render(<FigureCadenceNote kind="case-study" />);
     expect(screen.getByTestId("cadence-note")).toHaveTextContent("not every week");
-    expect(screen.getByRole("link", { name: "weekly summary" })).toHaveAttribute("href", "/find?view=planner");
+    expect(screen.getByRole("link", { name: "one-page summary" })).toHaveAttribute("href", "/summary");
   });
 
   it("says findings are recomputed every Sunday and can repeat in a quiet week", () => {

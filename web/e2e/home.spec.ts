@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll, expectProvenanceOnEveryFrame } from "./helpers";
+import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
 
 /*
  * The home page on the API's fixture snapshot (api/tests/fixture_snapshot.py):
@@ -77,27 +77,6 @@ test.describe("Home", () => {
     // 3 hospitals + 2 polyclinics + 4 nearest active GP clinics + the search point.
     await expect(page.locator("path.leaflet-interactive")).toHaveCount(3 + 2 + 4 + 1);
     await expect(page.getByTestId("map-key")).toContainText("Your search");
-  });
-
-  test("the weekday pattern and takeaways come from the API (analyst view)", async ({ page, request }) => {
-    const body = await (await request.get("http://127.0.0.1:8791/api/v1/insights")).json() as
-      { data: { insight_id: string; headline_rank: number | null; chart: { callout: string } | null }[] };
-    const top = body.data.filter((i) => i.headline_rank != null && i.chart).sort((a, b) => a.headline_rank! - b.headline_rank!);
-    await page.goto("/find?view=analyst#section-weekdays");   // below 768px the heatmap is an accordion; the fragment opens it
-    // Wide: the hospital-by-weekday table; phone: the transposed one (days as rows).
-    await expect(page.getByTestId("week-pattern").locator("[data-testid=heatmap]:visible, [data-testid=heatmap-compact]:visible")).toHaveCount(1);
-    // The chart sits under the section's header: it inherits that line and adds none of its own.
-    const frame = page.getByTestId("week-pattern").getByTestId("chart-frame");
-    await expect(frame).toHaveAttribute("data-provenance", "section");
-    await expect(frame.getByTestId("provenance-line")).toHaveCount(0);
-    await expect(page.getByTestId("week-pattern").getByTestId("section-meta")).toContainText(/Data as of \d{1,2} [A-Z][a-z]{2} \d{4}/);
-    await expectProvenanceOnEveryFrame(page, 1);
-    const items = page.getByTestId("takeaway");
-    await expect(items).toHaveCount(Math.min(3, top.length));
-    for (let i = 0; i < Math.min(3, top.length); i++) {
-      await expect(items.nth(i)).toHaveAttribute("data-insight", top[i]!.insight_id);
-      await expect(items.nth(i).getByTestId("takeaway-title")).toHaveText(top[i]!.chart!.callout);
-    }
   });
 
   test("definitions and limits are in a closed drawer that opens", async ({ page }) => {

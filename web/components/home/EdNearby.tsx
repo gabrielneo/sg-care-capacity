@@ -15,8 +15,8 @@ import { kmText, locate, NEAREST, nearest } from "@/lib/nearby";
  * picks the nearest three in the browser. Before a search it asks for one: the page doesn't rank
  * every hospital for someone who is looking for a clinic.
  */
-export function EdNearby({ cards, notes, provenance, analystHref }: {
-  cards: Record<string, ReactNode>; notes: ReactNode; provenance: ReactNode; analystHref: string }) {
+export function EdNearby({ cards, notes, provenance, allHref }: {
+  cards: Record<string, ReactNode>; notes: ReactNode; provenance: ReactNode; allHref: string }) {
   const f = useFinder();
   const located = useMemo(() => (f.places && f.query.trim() ? locate(f.query, f.places) : null), [f.places, f.query]);
   const eds = useMemo(
@@ -49,7 +49,7 @@ export function EdNearby({ cards, notes, provenance, analystHref }: {
         </>
       ) : null}
       <p className="mt-4 text-body">
-        <Link href={analystHref} className="inline-flex min-h-11 items-center">See every hospital and the statistics: Analyst view</Link>
+        <Link href={allHref} className="inline-flex min-h-11 items-center">See every hospital&apos;s bed waits over time</Link>
       </p>
     </section>
   );
