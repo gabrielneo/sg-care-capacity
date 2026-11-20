@@ -466,6 +466,10 @@ td.todo-me, th.todo-me { border-left-width: 3px; }
   .phone-fold-toggle { display: block; }
   .phone-fold:not(:has(.phone-fold-toggle[open])) .phone-fold-hide { display: none; }
 }
+/* The same fold at every width, for controls that shouldn't fill the first screen anywhere (the ED trends filters: 9 hospital
+   boxes, two dates and a button). The summary line says what is shown; print shows only the page, not the controls. */
+.fold-toggle[open] .when-closed, .fold-toggle:not([open]) .when-open { display: none; }
+@media screen { .fold:not(:has(.fold-toggle[open])) .fold-hide { display: none; } }
 
 @media print {
   html, body { background: white !important; color: black !important; }

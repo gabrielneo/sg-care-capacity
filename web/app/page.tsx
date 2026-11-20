@@ -140,29 +140,27 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
               <span>{firstHero ? `${firstHero.label}: ${firstHero.value.toFixed(1)} hours` : null}</span>
               <span className="font-semibold text-ink">{newestName}: {newest?.wait?.toFixed(1)} hours</span>
             </p>
+            {/* The latest month's other figures, in the card rather than as a row of tiles below it (critique, 20 Nov 2026: the tiles
+                repeated the card's own latest value and added a block). The wait is the card's right-hand label above. */}
+            {newest ? (
+              <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4" data-testid="landing-stats">
+                {[
+                  { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, label: `emergency department visits, ${newestName}` },
+                  ...(newest.waitYoy != null
+                    ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />,
+                         label: `${yoyWord(newest.waitYoy)} bed wait than ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
+                ].map((t) => (
+                  <div key={t.id} data-testid="landing-stat" className="flex flex-col-reverse">
+                    <dt className="text-small text-muted">{t.label}</dt>
+                    <dd className="text-h2 font-semibold tabular-nums tracking-tight text-primary-text">{t.figure}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
             <p className="mt-2 text-meta text-muted" data-testid="hero-source">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
           </div>
         ) : null}
       </section>
-
-      {showHero && newest ? (
-        <section aria-label={`The latest month, ${newestName}`} data-testid="landing-stats" className="section">
-          <Reveal className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
-            {[
-              { id: "wait", figure: <CountUp value={newest.wait ?? 0} decimals={1} />, unit: "hours", label: `average bed wait, ${newestName}` },
-              { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, unit: "", label: `emergency department visits, ${newestName}` },
-              ...(newest.waitYoy != null
-                ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />, unit: "", label: `${yoyWord(newest.waitYoy)} bed wait than ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
-            ].map((t) => (
-              <p key={t.id} data-testid="landing-stat" className="rounded-xl border border-line bg-surface p-4 text-center">
-                <span className="block text-kpi font-semibold tracking-tight text-primary-text">{t.figure}{t.unit ? <span className="ml-1 text-small font-normal text-muted">{t.unit}</span> : null}</span>
-                <span className="mt-1 block text-small text-muted">{t.label}</span>
-              </p>
-            ))}
-          </Reveal>
-          <p className="mx-auto mt-3 max-w-prose text-center text-meta text-muted">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
-        </section>
-      ) : null}
 
       {waitsMeta && drawBedWaits ? (
         <section aria-labelledby="landing-waits" data-testid="landing-waits" className="section">
@@ -219,27 +217,6 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           <div className="mt-6"><ErrorState title="The clinic map can't be shown right now" error={plainError(areasRes.error)} /></div>
         </section>
       ) : null}
-
-      {/* The site's data-and-privacy promise, in the footer's own words and links, given a place on the front page. */}
-      <section aria-labelledby="landing-trust" className="section section-rule" data-testid="landing-trust">
-        <div className="grid gap-x-8 gap-y-4 rounded-xl border border-line bg-sunken card md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="hidden h-8 w-8 text-accent md:block" fill="none" stroke="currentColor" strokeWidth="1.75"
-               strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" /><path d="M9 12l2 2 4-4" />
-          </svg>
-          <div>
-            <h2 id="landing-trust" className="text-h3 font-semibold text-ink">Data and privacy</h2>
-            <p className="mt-1 max-w-prose text-small text-muted">
-              <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." />{" "}
-              Page views are counted without cookies, and searches aren&apos;t recorded.
-            </p>
-          </div>
-          <ul className="flex flex-wrap gap-x-6 md:block">
-            <li><Link href="/methodology" className="inline-flex min-h-11 items-center text-small font-semibold">How the figures are made</Link></li>
-            <li><Link href="/data-quality" className="inline-flex min-h-11 items-center text-small font-semibold">Data quality</Link></li>
-          </ul>
-        </div>
-      </section>
 
       <section aria-labelledby="landing-more" className="section" data-testid="landing-more">
         <h2 id="landing-more" className="sr-only">Where to go next</h2>

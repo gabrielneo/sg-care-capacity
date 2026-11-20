@@ -15,6 +15,9 @@ test.use({ viewport: { width: 375, height: 812 } });
 for (const route of ROUTES) {
   test(`${route}: primary controls are at least 44px at 375px`, async ({ page }) => {
     await blockTiles(page);
+    // The landing page is the only one with entrance motion (test/motion.test.ts): measure it settled, so no row is caught half
+    // way through growing in. With reduced motion it draws everything in place at once.
+    if (route === "/") await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(route);
     await page.waitForLoadState("networkidle");
     const small = await page.evaluate(() => {

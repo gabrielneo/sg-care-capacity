@@ -148,3 +148,61 @@ describe("SmallMultiples", () => {
     expect(screen.queryByText("usual", { exact: true })).toBeNull();
   });
 });
+
+describe("divergingClasses", () => {
+  it("is symmetric about 0, as many classes as the scale, rounded out to whole units", () => {
+    const c = divergingClasses([-7.8, 3.2, null, 11.6]);
+    expect(c).toHaveLength(divergingScale.length);
+    expect(c[0]!.min).toBe(-12);
+    expect(c.at(-1)!.max).toBe(12);
+    expect(c.map((k) => k.color)).toEqual([...divergingScale]);
+    for (let i = 1; i < c.length; i++) expect(c[i]!.min).toBeCloseTo(c[i - 1]!.max);          // ranges meet, no gap
+  });
+
+  it("still has a range with no figures", () => {
+    const c = divergingClasses([null]);
+    expect(c[0]!.min).toBe(-1);
+    expect(c.at(-1)!.max).toBe(1);
+  });
+});
+
+describe("ModeToggle", () => {
+  it("keeps the other parameters, marks the current mode, and drops ?mode for the default", () => {
+    render(<ModeToggle mode="raw" params={{ hospital: ["SGH", "NUH"], from: "2026-08-01", mode: "raw" }} />);
+    const usual = screen.getByRole("link", { name: "Each against its own usual level" });
+    const raw = screen.getByRole("link", { name: "Raw values across hospitals" });
+    expect(usual).toHaveAttribute("href", "/ed-trends?hospital=SGH&hospital=NUH&from=2026-08-01");
+    expect(raw).toHaveAttribute("href", "/ed-trends?hospital=SGH&hospital=NUH&from=2026-08-01&mode=raw");
+    expect(raw).toHaveAttribute("aria-current", "page");
+    expect(usual).not.toHaveAttribute("aria-current");
+  });
+});
+
+describe("WeekdayHeatmap", () => {
+  const profiles = [{ code: "SGH", values: [25, 10, 0, -5, -10, -15, null], weeks: 26 }];
+  it("colours each weekday from the diverging scale and leaves a missing day without colour", () => {
+    render(<WeekdayHeatmap profiles={profiles} hospitals={HOSPITALS} mode="usual" finding={null} />);
+    const cells = screen.getAllByTestId("heat-cell");
+    expect(cells).toHaveLength(7);
+    expect(cells[0]).toHaveAttribute("data-value", "25.00");
+    expect(divergingScale as readonly string[]).toContain(cells[0]!.getAttribute("data-color"));
+    expect(cells[6]).toHaveAttribute("data-value", "");
+    expect(cells[6]).toHaveAttribute("data-color", "");
+  });
+});
+
+describe("SlopeChart", () => {
+  const pair = (code: string, moh: number, nuhs: number, bound: "<" | ">" | null = null) =>
+    ({ code, moh: { value: moh, date: "2026-11-07" }, nuhs: { value: nuhs, at: "2026-11-17T22:01:30", bound } });
+  it("draws a slope per site with a figure on both sides, and names a bounded estimate instead of plotting it", () => {
+    render(<SlopeChart pairs={[pair("NUH", 3, 36), pair("NTFGH", 3.2, 9), pair("AH", 1.4, 1, "<")]} finding={null} />);
+    expect(screen.getAllByTestId("slope").map((g) => g.getAttribute("data-hospital"))).toEqual(["NUH", "NTFGH"]);
+    expect(screen.getByTestId("slope-bounded")).toHaveTextContent("AH");
+    expect(screen.getByTestId("slope-caveat")).toHaveTextContent("Different days and different measures");
+  });
+
+  it("says so when no site has both figures", () => {
+    render(<SlopeChart pairs={[]} finding={null} />);
+    expect(screen.queryByTestId("slope-chart")).toBeNull();
+  });
+});

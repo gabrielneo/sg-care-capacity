@@ -125,7 +125,7 @@ test.describe("ED Trends: difference-first charts", () => {
   test("filters by hospital through the form, keeping the URL shareable", async ({ page }) => {
     await page.goto("/ed-trends");
     // Below 768px the form is folded behind one line (review N12): open it first.
-    if ((page.viewportSize()?.width ?? 0) < 768) await page.getByTestId("ed-filters-toggle").locator("summary").click();
+    await page.getByTestId("ed-filters-toggle").locator("summary").click();
     await page.getByRole("checkbox", { name: /Alexandra Hospital/ }).uncheck();
     await page.getByRole("checkbox", { name: /National University Hospital/ }).uncheck();
     await page.getByRole("button", { name: "Show" }).click();
@@ -181,20 +181,15 @@ test.describe("ED Trends: difference-first charts", () => {
 });
 
 test.describe("ED trends on a phone (review N12)", () => {
-  test("the filters fold behind one line that says what is shown, and open in place; from 768px they are always open", async ({ page }) => {
+  test("the filters fold behind one line that says what is shown, at every width, and open in place", async ({ page }) => {
     await page.goto("/ed-trends");
     const form = page.getByTestId("ed-filters").locator("form");
     const toggle = page.getByTestId("ed-filters-toggle");
-    if ((page.viewportSize()?.width ?? 0) < 768) {
-      await expect(form).toBeHidden();
-      await expect(page.getByTestId("ed-filters-current")).toHaveText(/^All 3 hospitals, \d{1,2} [A-Z][a-z]{2,3} \d{4} to \d{1,2} [A-Z][a-z]{2,3} \d{4}$/);
-      await toggle.locator("summary").click();
-      await expect(form).toBeVisible();
-      await expect(toggle.locator("summary")).toContainText("Hide hospitals and dates");
-    } else {
-      await expect(toggle).toBeHidden();
-      await expect(form).toBeVisible();
-    }
+    await expect(form).toBeHidden();
+    await expect(page.getByTestId("ed-filters-current")).toHaveText(/^All 3 hospitals, \d{1,2} [A-Z][a-z]{2,3} \d{4} to \d{1,2} [A-Z][a-z]{2,3} \d{4}$/);
+    await toggle.locator("summary").click();
+    await expect(form).toBeVisible();
+    await expect(toggle.locator("summary")).toContainText("Hide hospitals and dates");
   });
 
   test("nothing moves after load: the fold is CSS, not script", async ({ page }) => {

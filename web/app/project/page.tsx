@@ -29,7 +29,8 @@ function Tile({ className = "", label, children, testId }: { className?: string;
   );
 }
 
-const Eyebrow = ({ children }: { children: ReactNode }) => <p className="text-meta font-semibold uppercase tracking-wide text-muted">{children}</p>;
+/** A tile's heading: plain sentence case, no number or all-caps label above it (critique, 20 Nov 2026). */
+const TileHeading = ({ children }: { children: ReactNode }) => <h2 className="text-small font-semibold text-muted">{children}</h2>;
 const BigNumber = ({ children }: { children: ReactNode }) => (
   <p className="mt-2 text-kpi font-semibold tabular-nums tracking-tight text-ink">{children}</p>
 );
@@ -64,7 +65,7 @@ export default async function ProjectPage() {
     <div data-testid="project">
       <SectionCrumb section="About" href="/about" page="The project in 60 seconds" />
       <header className="max-w-3xl pb-6 pt-2 sm:pt-4">
-        <Eyebrow>A public-data analytics project by {AUTHOR.name}</Eyebrow>
+        <p className="text-small text-muted">A public-data analytics project by {AUTHOR.name}</p>
         <h1 className="mt-2 font-semibold tracking-tight text-ink text-h1">
           I built a weekly, checked view of emergency bed waits and clinic access for Singapore&apos;s seniors.
         </h1>
@@ -100,7 +101,7 @@ export default async function ProjectPage() {
       <Section tone="band">
       <div className="card-grid sm:grid-cols-2 lg:grid-cols-4" data-testid="project-tiles">
         <Tile label="The problem" testId="project-context">
-          <Eyebrow>1 · The problem</Eyebrow>
+          <TileHeading>The problem</TileHeading>
           <BigNumber>{share ?? <Missing why="not available" />}</BigNumber>
           <p className="mt-1 flex-1 text-body text-ink">
             {share ? "of residents are 65 or over. This project asks where hospital and clinic capacity is under the most strain."
@@ -111,7 +112,7 @@ export default async function ProjectPage() {
 
         {findings.map((f, i) => (
           <Tile key={f.insight_id} label={`Finding ${i + 1}`} testId="project-finding">
-            <Eyebrow>{i === 0 ? "2 · What the data shows" : "\u00a0"}</Eyebrow>
+            {i === 0 ? <TileHeading>What the data shows</TileHeading> : <p aria-hidden="true" className="text-small">{"\u00a0"}</p>}
             <BigNumber>
               {f.display.value_text}
               {f.display.unit_text ? <span className="ml-2 text-h3 font-semibold text-muted">{f.display.unit_text}</span> : null}
@@ -128,7 +129,7 @@ export default async function ProjectPage() {
         ))}
         {!insights.ok || !findings.length ? (
           <Tile label="Findings" className="sm:col-span-1 lg:col-span-3">
-            <Eyebrow>2 · What the data shows</Eyebrow>
+            <TileHeading>What the data shows</TileHeading>
             <p className="mt-2 text-body text-ink">
               {insights.ok ? "No finding passed its statistical check in this data release, so none is shown here." : "The findings can't be shown right now."}{" "}
               <Link href="/findings">Open the findings page</Link>
@@ -137,7 +138,7 @@ export default async function ProjectPage() {
         ) : null}
 
         <Tile label="Why you can trust it" testId="project-build" className="sm:col-span-2 lg:col-span-4">
-          <Eyebrow>3 · Why you can trust it</Eyebrow>
+          <TileHeading>Why you can trust it</TileHeading>
           <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4">
             <div>
               <dt className="text-small text-muted">Data checks passed</dt>
@@ -175,7 +176,7 @@ export default async function ProjectPage() {
         </Tile>
 
         <Tile label="Try it" testId="project-tools" className="sm:col-span-2 lg:col-span-4">
-          <Eyebrow>4 · Try it</Eyebrow>
+          <TileHeading>Try it</TileHeading>
           <ul className="mt-2 grid gap-x-6 gap-y-1 text-body sm:grid-cols-2 lg:grid-cols-4">
             <li><Link href="/find">Find a clinic near you</Link></li>
             <li><Link href="/findings">Read the findings</Link></li>

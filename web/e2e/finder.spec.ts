@@ -174,4 +174,22 @@ test.describe("Public finder", () => {
     await expectNoHorizontalScroll(page);
     await expectNoA11yViolations(page, { wcag22: true });
   });
+
+  test("on a phone only the nearest three places show until 'Show all'; wider screens show every place", async ({ page }, info) => {
+    await page.goto("/find");
+    await page.getByLabel("Your postcode or area").fill("460002");
+    await page.getByRole("button", { name: "Find clinics" }).click();
+    const cards = page.getByTestId("nearby-place");
+    await expect(cards.first()).toBeVisible();
+    const n = await cards.count();
+    test.skip(n <= 4, "the fixture has too few places to fold");
+    if (info.project.name === "mobile-375") {
+      await expect(cards.nth(3)).toBeHidden();
+      await page.getByTestId("more-results").locator("summary").click();
+      await expect(cards.nth(3)).toBeVisible();
+    } else {
+      await expect(cards.nth(n - 1)).toBeVisible();
+      await expect(page.getByTestId("more-results")).toBeHidden();
+    }
+  });
 });

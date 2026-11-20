@@ -9,10 +9,13 @@ import { ensurePlaces, search, setType, useFinder } from "@/lib/finderStore";
 import { BASIS_NOTE, kmText, locate, NOT_FOUND } from "@/lib/nearby";
 
 /** One place: what it is, how far in a straight line, where, and a link to directions in a map app. */
-function PlaceCard({ place, nearest }: { place: Result; nearest: boolean }) {
+/** Results a phone shows before "Show all". */
+const PHONE_RESULTS = 3;
+
+function PlaceCard({ place, nearest, hideOnPhone = false }: { place: Result; nearest: boolean; hideOnPhone?: boolean }) {
   const where = [place.address, place.postal_code ? `Singapore ${place.postal_code}` : null].filter(Boolean).join(", ");
   return (
-    <li className="rounded-xl border border-line bg-surface card" data-testid="nearby-place" data-type={place.type}>
+    <li className={`rounded-xl border border-line bg-surface card ${hideOnPhone ? "phone-fold-hide" : ""}`} data-testid="nearby-place" data-type={place.type}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="font-semibold leading-snug text-ink text-h3">{place.name}</h3>
         {nearest ? (
@@ -120,9 +123,20 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
             ) : "."}
           </p>
           {results.length ? (
-            <ol className="mt-4 card-grid md:grid-cols-2" data-testid="results">
-              {results.map((r, i) => <PlaceCard key={r.key} place={r} nearest={i === 0} />)}
-            </ol>
+            // On a phone the first PHONE_RESULTS show and the rest are one tap away, so the nearest emergency departments below
+            // aren't pushed eight cards down (critique, 20 Nov 2026). Wider screens show them all.
+            <div className="phone-fold">
+              <ol className="mt-4 card-grid md:grid-cols-2" data-testid="results">
+                {results.map((r, i) => <PlaceCard key={r.key} place={r} nearest={i === 0} hideOnPhone={i >= PHONE_RESULTS && results.length > PHONE_RESULTS + 1} />)}
+              </ol>
+              {results.length > PHONE_RESULTS + 1 ? (
+                <details className="phone-fold-toggle mt-2" data-testid="more-results">
+                  <summary className="min-h-11 cursor-pointer select-none py-3 text-small font-semibold text-accent">
+                    <span className="when-closed">Show all {results.length} places</span><span className="when-open">Show the nearest {PHONE_RESULTS} only</span>
+                  </summary>
+                </details>
+              ) : null}
+            </div>
           ) : (
             <p className="mt-4 text-body text-ink" data-testid="nearby-message">No places of this kind are listed. Try &quot;All&quot;.</p>
           )}

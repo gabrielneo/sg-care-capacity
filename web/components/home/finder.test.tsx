@@ -52,6 +52,22 @@ async function searchFor(text: string) {
 }
 
 describe("Finder", () => {
+  it("folds results after the nearest three on a phone (CSS), and doesn't fold a short list", async () => {
+    const many = { ...PLACES, gps: Array.from({ length: 6 }, (_, k) => ({ ...PLACES.gps[0]!, name: `Clinic ${k}`, latitude: 1.3240 + k * 0.001 })) };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => many })));
+    render(<Finder clinicAsOf="2024-06-06" provenance={<p>prov</p>} />);
+    await searchFor("460001");
+    const cards = screen.getAllByTestId("nearby-place");
+    expect(cards.filter((c) => c.classList.contains("phone-fold-hide"))).toHaveLength(cards.length - 3);
+    expect(screen.getByTestId("more-results")).toHaveTextContent(`Show all ${cards.length} places`);
+  });
+
+  it("doesn't fold three places", async () => {
+    render(<Finder clinicAsOf="2024-06-06" provenance={<p>prov</p>} />);
+    await searchFor("460001");
+    expect(screen.queryByTestId("more-results")).toBeNull();
+  });
+
   it("lists clinics by straight-line distance, with a Nearest badge on the first only", async () => {
     render(<Finder clinicAsOf="2024-06-06" provenance={<p>prov</p>} />);
     await searchFor("460001");
