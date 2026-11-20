@@ -87,4 +87,16 @@ test.describe("shell", () => {
     expect(res?.status()).toBe(404);
   });
 
+  test("a wrong address offers the main ways on; a wrong hospital code lists the real hospitals", async ({ page, request }) => {
+    const res = await page.goto("/no-such-page");
+    expect(res?.status()).toBe(404);
+    await expect(page.getByTestId("not-found-links").getByRole("link")).toHaveCount(4);
+    const hospitals = await (await request.get("http://127.0.0.1:8791/api/v1/hospitals")).json() as { data: { hospital_code: string }[] };
+    const res2 = await page.goto("/hospital/NOPE");
+    expect(res2?.status()).toBe(404);
+    const list = page.getByTestId("hospital-not-found-list").getByRole("link");
+    await expect(list).toHaveCount(hospitals.data.length);
+    await expect(list.first()).toHaveAttribute("href", /^\/hospital\/[A-Z]+$/);
+  });
+
 });

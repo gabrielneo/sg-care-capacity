@@ -7,6 +7,8 @@ import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll, settleMot
  * finder and the Planner and Analyst views moved to /find. The fixture snapshot has 3 hospitals and 2 planning areas.
  */
 
+const API = "http://127.0.0.1:8791/api/v1";
+
 test.beforeEach(async ({ page }) => blockTiles(page));
 
 test.describe("Landing", () => {
@@ -19,6 +21,18 @@ test.describe("Landing", () => {
     await expect(page.getByTestId("emergency-note")).toHaveCount(0);
     await expect(page.getByTestId("footer-notice").getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
     await expect(page.getByTestId("landing-hero").getByTestId("not-advice")).toContainText("not medical advice");
+  });
+
+  test("the hero states the engine's top finding word for word, and its chart has a scale and both end values", async ({ page, request }) => {
+    const all = await (await request.get(`${API}/insights`)).json() as { data: { headline: string; headline_rank: number | null }[] };
+    const top = all.data.filter((i) => i.headline_rank != null && i.headline).sort((a, b) => a.headline_rank! - b.headline_rank!)[0];
+    await page.goto("/");
+    if (top) await expect(page.getByTestId("hero-claim")).toHaveText(`Top finding: ${top.headline}`);
+    else await expect(page.getByTestId("hero-claim")).toHaveCount(0);
+    const ticks = page.getByTestId("hero-ticks").locator("span");
+    await expect(ticks.first()).toHaveText("0");
+    await expect(ticks.last()).toHaveText(/ h$/);
+    await expect(page.getByTestId("hero-range").locator("span").first()).toHaveText(/: \d+\.\d hours$/);
   });
 
   test("the first screen has the claim and both buttons", async ({ page }) => {

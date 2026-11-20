@@ -10,7 +10,10 @@ import { Provenance } from "@/components/Provenance";
 import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
 import { AUTHOR, AUTHOR_LINKS, BUILD_FACTS, WHAT_I_DID } from "@/lib/author";
-import { checksSummary, findingTiles, shareText } from "@/lib/project";
+import { MonthLine } from "@/components/charts/MonthLine";
+import { provenanceText } from "@/components/Provenance";
+import { fromSystem, latestComplete, MONTHS_LONG, timeSeries } from "@/lib/monthly";
+import { checksBreakdown, checksSummary, findingTiles, shareText } from "@/lib/project";
 
 export const metadata: Metadata = {
   title: "The project",
@@ -38,12 +41,19 @@ const BigNumber = ({ children }: { children: ReactNode }) => (
  * code are the engineering facts in lib/author.ts, which a test checks against the README.
  */
 export default async function ProjectPage() {
-  const [insights, hospitals, population, quality] = await Promise.all([
+  const [insights, hospitals, population, quality, monthlyRes] = await Promise.all([
     settle(api.insights({ headline: true })),
     settle(api.hospitals()),
     settle(api.population()),
     settle(api.quality()),
+    settle(api.edSystemMonthly({ months: 36 })),
   ]);
+  // A live piece of the product instead of a screenshot: the landing page's monthly bed-wait line, from the same API call.
+  const monthly = monthlyRes.ok ? monthlyRes.value.data.map(fromSystem) : [];
+  const newest = latestComplete(monthly);
+  const line = timeSeries(monthly, "wait");
+  const newestName = newest ? `${MONTHS_LONG[newest.month - 1]} ${newest.year}` : "";
+  const showLine = monthlyRes.ok && newest?.wait != null && line.some((p) => p.value != null);
   const findings = insights.ok ? findingTiles(insights.value.data, hospitals.ok ? hospitals.value.data : []) : [];
   const share = population.ok ? shareText(population.value.data) : null;
   const checks = quality.ok ? checksSummary(quality.value.data) : null;
@@ -56,7 +66,7 @@ export default async function ProjectPage() {
       <header className="max-w-3xl pb-6 pt-2 sm:pt-4">
         <Eyebrow>A public-data analytics project by {AUTHOR.name}</Eyebrow>
         <h1 className="mt-2 font-semibold tracking-tight text-ink text-h1">
-          Singapore is ageing fast. Where do hospital waits run longest, and where are clinics for seniors scarce?
+          I built a weekly, checked view of emergency bed waits and clinic access for Singapore&apos;s seniors.
         </h1>
         <p className="mt-3 text-body text-muted">{AUTHOR.seeking}</p>
         <p className="mt-4 flex flex-wrap gap-3">
@@ -74,6 +84,18 @@ export default async function ProjectPage() {
           ) : null}
         </p>
       </header>
+
+      {showLine && monthlyRes.ok ? (
+        <figure className="mb-8 max-w-3xl rounded-xl border border-line bg-surface p-4 sm:p-6" data-testid="project-live">
+          <figcaption className="text-small font-semibold text-ink">From the live site: average bed wait at the full emergency departments, month by month</figcaption>
+          <MonthLine points={line} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
+          <p className="mt-1 flex flex-wrap justify-between gap-x-4 text-meta text-muted">
+            <span>{monthlyRes.value.meta ? provenanceText(monthlyRes.value.meta) : null}</span>
+            <span className="font-semibold text-ink">{newestName}: {newest?.wait?.toFixed(1)} hours</span>
+          </p>
+          <p className="mt-2 text-small"><Link href="/">Open the site</Link></p>
+        </figure>
+      ) : null}
 
       <Section tone="band">
       <div className="card-grid sm:grid-cols-2 lg:grid-cols-4" data-testid="project-tiles">
@@ -122,6 +144,13 @@ export default async function ProjectPage() {
               <dd className="text-kpi font-semibold tabular-nums text-ink" data-testid="project-checks">
                 {checks ? `${checks.passed}/${checks.total}` : <Missing why="not available" />}
               </dd>
+              {checks ? (
+                <dd className="mt-1 text-small text-muted" data-testid="project-checks-note">
+                  {checksBreakdown(checks) ? `${checksBreakdown(checks)}; ` : ""}
+                  {checks.blocking === 0 ? "none blocks publishing" : `${checks.blocking} ${checks.blocking === 1 ? "blocks" : "block"} publishing`}.{" "}
+                  <Link href="/data-quality">See every check</Link>
+                </dd>
+              ) : null}
             </div>
             <div>
               <dt className="text-small text-muted">Automated tests</dt>

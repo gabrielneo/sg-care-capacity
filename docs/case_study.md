@@ -30,8 +30,8 @@ are from weekly data release `data-2026-11-08` unless stated otherwise.
 - how many could have been handled in primary care;
 - whether clinic access affects ED use.
 
-The project makes both sides of the question visible and trustworthy. It doesn't answer the
-question.
+The project puts both sides of the question in one place, each figure checked and dated. It doesn't
+answer the question.
 
 **The problem.** Long waits for a ward bed in public emergency departments are a known pressure
 point, and Singapore's population is ageing quickly. Planners need a consistent, checked view of
@@ -88,6 +88,7 @@ stakeholders**: no one has been interviewed.
 The same placements as a grid:
 
 ```mermaid
+%% designed: stakeholder-map
 quadrantChart
   title Influence and interest, assessed from public roles
   x-axis Low interest --> High interest
@@ -106,9 +107,9 @@ quadrantChart
 ```
 
 **What the placements rest on:** desk research on each organisation's public role. **Assumptions to
-test:** that MOH and AIC planners want this view at all, and how they use it today. That clusters
-see bed waits and regional access as one picture. That Synapxe's interest is low until there is a
-proven use.
+test:** whether MOH and AIC planners want this view at all and how they work today, whether clusters
+read bed waits and regional access as one picture, and whether Synapxe's interest stays low until the
+analysis has a proven use.
 
 **Sources:**
 
@@ -170,6 +171,7 @@ figure? Then record here what each persona rests on.
 - **The steps before the ED** are a structure to validate, not research findings.
 
 ```mermaid
+%% designed: as-is-flow
 flowchart TD
   A["Older resident with a health concern"] --> B{"Where do they seek care?"}
   B --> C["GP clinic (CHAS / CDMP)"]
@@ -220,6 +222,7 @@ only analyses; it doesn't propose changes to care. The diagram marks where this 
 would show whether the intended flow is happening.
 
 ```mermaid
+%% designed: to-be-flow
 flowchart TD
   A["Older resident with a health concern"] --> B{"Life-threatening?"}
   B -- "Yes" --> C["Call 995: SCDF ambulance"]
@@ -366,17 +369,17 @@ Each record has the full technical reasoning; follow the number.
 1. **Travel-time access (S1).** The biggest gain in accuracy; it needs a routing service, such as
    OneMap's.
 2. **Access by subzone (S2),** once URA publishes the Master Plan 2025 subzone boundaries.
-3. **Validate the personas.** Not a build, but the most valuable step: talk to one MOH and one AIC
-   planner, with the three questions in the Personas section.
+3. **Validate the personas.** This builds nothing and is the most valuable step: talk to one MOH and
+   one AIC planner, with the three questions in the Personas section.
 4. **Look beyond the ED.** Data on other factors would strengthen the checks and the tests behind
    the findings: bed occupancy, discharges, and admissions by age or urgency.
 
 ### What surprised, what was hard, what would change
 
-- **What surprised:** how much bed waits differ. They differ between hospitals: the 2025 typical
-  wait ran from 2.5 hours (KTPH, NTFGH) to 6.2 hours (CGH). They differ by day of the week. At some
-  hospitals they also move with the number of ED visits. How beds are allocated isn't in the public
-  data, so why waits differ is still an open question.
+- **What surprised:** how much bed waits differ, between hospitals and by day of the week. The 2025
+  typical wait ran from 2.5 hours (KTPH, NTFGH) to 6.2 hours (CGH), and at some hospitals waits also
+  move with the number of ED visits. How beds are allocated isn't in
+  the public data, so why waits differ is still an open question.
 - **What was hardest:** getting the right data, and comparing it fairly. Each hospital is compared
   with its own usual level, not with the others. The urgent care centre and the adults-only ED are
   marked wherever they appear. Only complete weeks are used, and areas with too few seniors are left

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import type { QualityReport } from "./api/types";
 import { BUILD_FACTS } from "./author";
-import { checksSummary, shareText } from "./project";
+import { checksBreakdown, checksSummary, shareText } from "./project";
 
 const result = (status: "pass" | "fail" | "skipped") => ({
   blocks_publish: false, check_id: "c", details: null, failing_rows: 0, scope: "s", severity: "ERROR" as const, status, table: "t",
@@ -16,6 +16,14 @@ const report = (statuses: ("pass" | "fail" | "skipped")[], blocking = 0): Qualit
 describe("checksSummary", () => {
   it("counts passes out of every check that ran", () => {
     expect(checksSummary(report(["pass", "pass", "fail", "skipped"], 1))).toMatchObject({ passed: 2, total: 4, blocking: 1, runId: "run-1" });
+  });
+  it("names what didn't pass: warnings, issues (error level) and skipped checks", () => {
+    const r = report(["pass", "fail", "fail", "skipped"]);
+    (r.results[1] as { severity: string }).severity = "WARN";
+    const c = checksSummary(r)!;
+    expect(c).toMatchObject({ warnings: 1, issues: 1, skipped: 1 });
+    expect(checksBreakdown(c)).toBe("1 warning, 1 issue, 1 skipped");
+    expect(checksBreakdown({ ...c, warnings: 0, issues: 0, skipped: 0 })).toBe("");
   });
   it("says nothing when there are no results, rather than 0 of 0", () => {
     expect(checksSummary(report([]))).toBeNull();

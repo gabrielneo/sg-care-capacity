@@ -9,6 +9,7 @@ import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from "react-le
 import { MAX_BOUNDS, ONEMAP_ATTRIBUTION, ONEMAP_TILES } from "@/lib/onemap";
 import { cssColors as colors } from "@/lib/palette";
 import { type Level, LEVELS } from "@/lib/status";
+import { labelSide } from "@/lib/mapLabels";
 
 export interface MapPoint {
   name: string;
@@ -37,6 +38,8 @@ export const LEVEL_FILL: Record<Level, string> = {
   lower: colors["status-lower"],
   unknown: colors.muted,
 };
+
+const LABEL_OFFSET: Record<"right" | "left" | "bottom", [number, number]> = { right: [10, 0], left: [-10, 0], bottom: [0, 10] };
 
 /** Tab reaches the marker; Enter or Space opens the hospital's details, like a click. Re-runs harmlessly if the marker is re-added. */
 function makeButton(marker: L.CircleMarker, h: MapHospital, onOpen?: (code: string) => void) {
@@ -119,13 +122,16 @@ export default function CareMapLeaflet({ hospitals, polyclinics, gps, here, focu
       ))}
       {hospitals.map((h) => (
         <CircleMarker key={h.code} center={[h.latitude, h.longitude]} radius={11}
-                      pathOptions={{ color: colors.surface, weight: 2, fillColor: LEVEL_FILL[h.level], fillOpacity: 1 }}
+                      pathOptions={h.level === "unknown"
+                        // No comparison is not a level: a hollow pin with a dashed ring, so it can't be read as "about usual" (same grey).
+                        ? { color: colors.muted, weight: 2.5, dashArray: "4 3", fillColor: colors.surface, fillOpacity: 1 }
+                        : { color: colors.surface, weight: 2, fillColor: LEVEL_FILL[h.level], fillOpacity: 1 }}
                       eventHandlers={{
                         click: () => onOpen?.(h.code),
                         // A marker is an SVG path: make it a keyboard-reachable button, with its status in words.
                         add: (e) => makeButton(e.target as L.CircleMarker, h, onOpen),
                       }}>
-          <Tooltip permanent direction="right" offset={[10, 0]} className="!text-meta !font-semibold">
+          <Tooltip permanent direction={labelSide(h, hospitals)} offset={LABEL_OFFSET[labelSide(h, hospitals)]} className="!text-meta !font-semibold">
             <span aria-hidden="true">{LEVELS[h.level].icon} </span>{h.code}
           </Tooltip>
         </CircleMarker>

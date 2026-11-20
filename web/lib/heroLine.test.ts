@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { drawLine } from "./heroLine";
+import { drawLine, lineTicks } from "./heroLine";
 
 const pts = (...v: (number | null)[]) => v.map((value, i) => ({ label: `m${i}`, value }));
 
@@ -40,5 +40,20 @@ describe("drawLine", () => {
   it("draws nothing, and says there is no last point, when nothing is known", () => {
     expect(drawLine(pts(null, null), 100, 50)).toEqual({ paths: [], dots: [], areas: [], last: null, top: 0 });
     expect(drawLine([], 100, 50).last).toBeNull();
+  });
+});
+
+describe("lineTicks", () => {
+  it("gives 0 and round steps below the top, placed where drawLine puts those values", () => {
+    const ticks = lineTicks(6.6, 220);
+    expect(ticks.map((t) => t.value)).toEqual([0, 2, 4, 6]);
+    const line = drawLine([{ label: "a", value: 6 }, { label: "b", value: 0 }], 560, 220);
+    expect(line.top).toBeCloseTo(6.6);
+    // The tick for 0 sits on the baseline (220 - 8 px), as a % of the height.
+    expect(ticks[0]!.pct).toBeCloseTo((212 / 220) * 100);
+  });
+
+  it("has no ticks for an empty line", () => {
+    expect(lineTicks(0, 220)).toEqual([]);
   });
 });

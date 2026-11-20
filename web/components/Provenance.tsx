@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { Meta, Source } from "@/lib/api/types";
 import { formatAsOf, parseAsOf } from "@/lib/dates";
@@ -65,6 +66,7 @@ export function Provenance({
   tight = false,
   large = false,
   inherited = false,
+  actions,
 }: {
   meta: Meta;
   caveat?: string | null;
@@ -86,6 +88,8 @@ export function Provenance({
    * figure has notes or data-quality warnings of its own. Renders nothing when it has none.
    */
   inherited?: boolean;
+  /** Controls that share the badge's row (a chart's downloads), so a chart's footer is two rows, not four. */
+  actions?: ReactNode;
 }) {
   // Each source is judged by its own rule (docs/datasets.yml). One date for the figure: its badge is the least
   // fresh of its sources. By source: each publisher's own date and badge.
@@ -96,7 +100,7 @@ export function Provenance({
   const warnings = meta.dq_warnings;
   const extra = detail ? meta.caveats : notes;
   const count = extra.length + (detail ? warnings.length : warnings.length ? 1 : 0);
-  if (inherited && (compact || count === 0)) return null;
+  if (inherited && (compact || count === 0) && !actions) return null;
   return (
     <footer className={`${tight ? "mt-2 pt-2" : "mt-4 pt-3"} border-t border-line ${large ? "text-small" : "text-meta"} text-muted`}
             data-testid={inherited ? "provenance-inherited" : undefined}>
@@ -134,7 +138,7 @@ export function Provenance({
       )}
       {/* The freshness badge and "More about these figures" share one row (review, open item 5). The badge leaves out the date,
           which the line above already gives. An open list takes the whole row, below the toggle. */}
-      <div className={inherited ? undefined : "mt-1 flex flex-wrap items-center gap-x-4"}>
+      <div className={inherited && !actions ? undefined : "mt-1 flex flex-wrap items-center gap-x-4"}>
         {inherited || release || !freshness ? null : dates.map((d) => (
           <FreshnessBadge key={d.name || "all"} meta={{ sources: d.sources }} now={now} source={d.name || undefined} dateInLine />
         ))}
@@ -162,6 +166,7 @@ export function Provenance({
             </ul>
           </details>
         ) : null}
+        {actions}
       </div>
     </footer>
   );

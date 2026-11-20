@@ -326,6 +326,7 @@ export const GLOSSARY = [
       "bed wait",
       "bed waits",
       "Bed wait",
+      "Bed waits",
       "boarding"
     ],
     "public_wording": null,

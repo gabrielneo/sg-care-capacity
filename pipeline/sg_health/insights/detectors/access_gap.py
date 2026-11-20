@@ -75,7 +75,7 @@ def detect(areas: pd.DataFrame, cfg: dict[str, Any], min_completeness: float) ->
         short = float(r["shortfall"])
         as_of = pd.to_datetime(r.get("as_of")).date() if pd.notna(r.get("as_of")) else date.min
         rate = float(r["cdmp_clinics_per_1k_seniors"])
-        points = [point("area", str(r["planning_area"]), rate), point("national", "Singapore overall", national * 1000)]
+        points = [point("area", str(r["planning_area"]), rate), point("national", "Benchmark rate", national * 1000)]  # the rate across the areas compared, not all of Singapore
         out.candidates.append(Candidate(
             type="access_gap", entity=str(r["planning_area"]), variant="worse",
             method="Expected CDMP clinics at the benchmark rate per senior; priority = seniors percentile x (1 - access percentile)",

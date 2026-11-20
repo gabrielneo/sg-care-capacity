@@ -20,13 +20,16 @@ export interface LineSeries {
   strong?: boolean;
 }
 
-/** A round upper bound for the y axis and the tick step: 1, 2, 2.5 or 5 times a power of ten. */
+/**
+ * A round upper bound for the y axis and the tick step: 1, 2, 2.5 or 5 times a power of ten. The top is the first tick at or above
+ * the largest value (a 24-hour peak tops out at 30, not 40), so the plot isn't left with an empty band that flattens the line.
+ */
 export function niceScale(max: number, ticks = 4): { top: number; step: number } {
   if (!(max > 0)) return { top: 1, step: 1 / ticks };
   const raw = max / ticks;
   const mag = 10 ** Math.floor(Math.log10(raw));
   const step = ([1, 2, 2.5, 5, 10].find((m) => m * mag >= raw) as number) * mag;
-  return { top: step * ticks, step };
+  return { top: Math.max(step, Math.ceil(max / step - 1e-9) * step), step };
 }
 
 const compact = (v: number) => (Math.abs(v) >= 10_000 ? `${Math.round(v / 1000)}k` : v.toLocaleString("en-SG", { maximumFractionDigits: 1 }));

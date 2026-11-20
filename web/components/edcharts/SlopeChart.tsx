@@ -12,16 +12,24 @@ const TOP = 16;
 const BOTTOM = 16;
 const XL = 24;  // % of width
 const XR = 76;
-const GAP = 13;  // px between labels on the same side
+const GAP = 16;  // px between labels on the same side: a 13px label and a little air
 
-/** Label positions: each at its point, nudged apart where two would overlap (the points stay put). */
-export function spread(ys: number[], gap = GAP): number[] {
+/**
+ * Label positions: each at its point, nudged apart where two would overlap (the points stay put). Kept between `min` and `max`
+ * (the plot's edges): labels pushed past the bottom are moved back up as a group, so none falls under the chart.
+ */
+export function spread(ys: number[], gap = GAP, min = -Infinity, max = Infinity): number[] {
   const order = ys.map((y, i) => [y, i] as const).sort((a, b) => a[0] - b[0]);
   const out = [...ys];
-  let prev = -Infinity;
+  let prev = min - gap;
   for (const [y, i] of order) {
     out[i] = Math.max(y, prev + gap);
     prev = out[i] as number;
+  }
+  let next = max + gap;
+  for (const [, i] of [...order].reverse()) {
+    out[i] = Math.min(out[i] as number, next - gap);
+    next = out[i] as number;
   }
   return out;
 }
@@ -56,8 +64,8 @@ export function SlopeChart({ pairs, finding }: { pairs: SlopePair[]; finding: In
   const pct = (v: number) => `${v}%`;
   const mohDays = [...new Set(both.map((p) => shortDay(p.moh.date)))].join(", ");
   const nuhsAt = [...new Set(both.map((p) => formatAsOf(p.nuhs.at, { withTime: true })))].join(", ");
-  const left = spread(both.map((p) => y(p.moh.value)));
-  const right = spread(both.map((p) => y(p.nuhs.value)));
+  const left = spread(both.map((p) => y(p.moh.value)), GAP, TOP, H - 4);
+  const right = spread(both.map((p) => y(p.nuhs.value)), GAP, TOP, H - 4);
   const summary = both.map((p) => `${p.code}: MOH ${hours(p.moh.value)} hours, NUHS ${hours(p.nuhs.value)} hours`).join("; ");
 
   return (

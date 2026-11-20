@@ -26,6 +26,8 @@ test.describe("One-page summary", () => {
     for (const f of await findings.all()) await expect(f).toContainText(/Uses data to \d{1,2} [A-Z][a-z]{2} \d{4}\./);
 
     await expect(page.getByTestId("summary-area").locator("th")).toHaveText(gaps.data.map((g) => g.entity).slice(0, 5));
+    await expect(page.getByRole("heading", { name: "Priority areas: many seniors, few clinics" })).toBeVisible();
+    await expect(page.getByTestId("summary-rank-rule")).toContainText("weighs both");   // why the rank is not the rate order
     await expect(page.getByTestId("summary-limits").locator("li")).toHaveCount(3);
     // One "Data as of … · Source:" line for each block of figures: population, findings, areas.
     await expect(page.getByTestId("provenance-line")).toHaveCount(3);

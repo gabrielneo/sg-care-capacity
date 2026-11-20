@@ -20,7 +20,10 @@ const ROOT = path.resolve(WEB, "..");
 const USER_PROPS = new Set(["title", "label", "description", "caveat", "message", "intro", "aria-label", "placeholder", "alt", "summary"]);
 const WRAPPERS = new Set(["Term", "Glossed", "ClientTerm", "ClientGlossed"]);
 // The nav is site chrome; the glossary page shows terms as definitions; /dev is not public.
-const EXEMPT = [/^app\/dev\//, /^app\/glossary\//, /^components\/Nav\.tsx$/, /^components\/terms\//, /\.test\.tsx?$/];
+// Doc diagrams are SVG text, which can't hold a <Term> tooltip; the same words are glossed in the text version
+// that follows every diagram in the doc (docs/case_study.md).
+const EXEMPT = [/^app\/dev\//, /^app\/glossary\//, /^components\/Nav\.tsx$/, /^components\/terms\//, /^components\/docs\/diagrams\//,
+  /\.test\.tsx?$/];
 const COPY_MODULES = ["lib/copy.ts", "lib/story.ts"];
 const PUBLIC_DOCS = ["case_study.md", "methodology.md"];
 const MAX_WORDS = 25;

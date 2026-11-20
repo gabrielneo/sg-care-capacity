@@ -131,7 +131,7 @@ export default async function SummaryPage() {
       </section>
 
       <section aria-labelledby="s-areas" className="summary-block summary-gap">
-        <h2 id="s-areas" className="font-semibold text-ink text-h2">Areas with the least clinic access for seniors</h2>
+        <h2 id="s-areas" className="font-semibold text-ink text-h2">Priority areas: many seniors, few clinics</h2>
         {areaError || !areas.ok ? (
           <ErrorState title="The areas can't be shown" error={plainError(areaError ?? { message: "" })} />
         ) : rows.length === 0 ? (
@@ -140,6 +140,10 @@ export default async function SummaryPage() {
           <>
             <p className="mt-2 max-w-prose text-muted">
               <Glossed text="The priority areas from this week's findings: many residents aged 65+, few CDMP GP clinics per senior." />
+            </p>
+            {/* Why the order differs from the rate column: the rank weighs size and access together (docs/insights_method.md). */}
+            <p className="mt-2 max-w-prose text-small text-muted" data-testid="summary-rank-rule">
+              The rank weighs both, so an area with many seniors and a low rate can rank above a smaller area with an even lower rate.
             </p>
             {/* On a phone the five columns may be wider than the screen: the table scrolls inside its own labelled region. */}
             <div className="mt-3 overflow-x-auto" role="region" aria-labelledby="s-areas" tabIndex={0}>

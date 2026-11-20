@@ -13,6 +13,17 @@ export interface ChecksSummary {
   blocking: number;
   runId: string;
   checkedAt: string;
+  /** What the rest of the total is: warning-level failures, error-level failures, and checks that didn't run. */
+  warnings: number;
+  issues: number;
+  skipped: number;
+}
+
+/** The checks that didn't pass, in words ("5 warnings, 1 issue, 2 skipped"), so "79/87" isn't read as 8 failures. Empty parts are left out. */
+export function checksBreakdown(c: ChecksSummary): string {
+  const part = (n: number, one: string, many: string) => (n ? `${n} ${n === 1 ? one : many}` : null);
+  return [part(c.warnings, "warning", "warnings"), part(c.issues, "issue", "issues"), part(c.skipped, "skipped", "skipped")]
+    .filter(Boolean).join(", ");
 }
 
 /** "79 of 79 checks passed" from the latest run. Skipped checks count in the total and not as passed. */
@@ -25,6 +36,9 @@ export function checksSummary(report: QualityReport): ChecksSummary | null {
     blocking: report.blocking,
     runId: report.run_id,
     checkedAt: report.checked_at,
+    warnings: report.results.filter((r) => r.status === "fail" && r.severity !== "ERROR").length,
+    issues: report.results.filter((r) => r.status === "fail" && r.severity === "ERROR").length,
+    skipped: report.results.filter((r) => r.status === "skipped").length,
   };
 }
 

@@ -45,9 +45,10 @@ test.describe("Case Study", () => {
 
   test("draws the stakeholder grid and the as-is and to-be diagrams", async ({ page }) => {
     await page.goto("/case-study");
-    await expect(page.locator('[data-testid="mermaid"][data-rendered="true"]')).toHaveCount(3, { timeout: 20_000 });
-    await expect(page.locator('[data-testid="mermaid"] svg').first()).toContainText("Manage closely");
-    await expect(page.locator('[data-testid="mermaid"] svg').nth(1)).toContainText("decision to admit");
+    await expect(page.getByTestId("diagram")).toHaveCount(3);
+    await expect(page.getByTestId("diagram-svg").first()).toContainText("MANAGE CLOSELY");
+    await expect(page.getByTestId("diagram-svg").nth(1)).toContainText("decision to admit");
+    await expect(page.getByTestId("mermaid")).toHaveCount(0);
   });
 
   test("the decision log opens each ADR", async ({ page }) => {
@@ -60,7 +61,7 @@ test.describe("Case Study", () => {
 
   test("passes axe WCAG 2.1 AA checks", async ({ page }) => {
     await page.goto("/case-study");
-    await expect(page.locator('[data-testid="mermaid"][data-rendered="true"]')).toHaveCount(3, { timeout: 20_000 });
+    await expect(page.getByTestId("diagram")).toHaveCount(3);
     await expectNoA11yViolations(page);
   });
 });

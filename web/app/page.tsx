@@ -21,7 +21,7 @@ import { edPreview } from "@/lib/explore";
 import { FIND_PATH } from "@/lib/homeViews";
 import { systemFindings } from "@/lib/hospitals";
 import { styleAreas } from "@/lib/map3d";
-import { fromSystem, latestComplete, MONTHS_LONG, timeSeries } from "@/lib/monthly";
+import { fromSystem, latestComplete, MONTHS_LONG, timeSeries, yoyWord } from "@/lib/monthly";
 import { SITE_TITLE } from "@/lib/site";
 import { SPARK_WEEKS } from "@/lib/status";
 import { buildStrip } from "@/lib/strip";
@@ -67,6 +67,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
   const monthlyMeta = monthlyRes.ok ? monthlyRes.value.meta : null;
   const showHero = monthlyMeta != null && newest != null && heroLine.some((p) => p.value != null);
   const newestName = newest ? `${MONTHS_LONG[newest.month - 1]} ${newest.year}` : "";
+  const firstHero = heroLine.find((p): p is typeof p & { value: number } => p.value != null) ?? null;
 
   // Chart 1: the latest complete week against each hospital's usual level (the same figures as /ed-trends).
   const hospitals = hospitalsRes.ok ? hospitalsRes.value.data : [];
@@ -80,6 +81,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
     : null;
   const count = edPreview(strip, weeklyRes.ok ? weeklyRes.value.meta : null);
   const insights = insightsRes.ok ? insightsRes.value.data : [];
+  // The hero's claim: the engine's top-ranked finding, word for word (it passed its gates, or it isn't published). None, no claim.
+  const topFinding = [...insights].filter((i) => i.headline_rank != null && i.headline)
+    .sort((x, y) => (x.headline_rank as number) - (y.headline_rank as number))[0] ?? null;
   // A note only if the engine has a finding about this chart (the latest week against usual); a weekday finding is for another chart.
   const finding = systemFindings(insights, hospitals).filter((i) => i.type === "anomaly" || i.type === "usual_gap")
     .sort((x, y) => (x.headline_rank ?? 99) - (y.headline_rank ?? 99))[0] ?? null;
@@ -106,7 +110,13 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight">
             Emergency waits and clinic access for Singapore&apos;s seniors.
           </h1>
-          <p className="landing-rise mt-4 text-body text-on-hero-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows about bed waits and clinic access.</p>
+          {topFinding ? (
+            <p className="landing-rise mx-auto mt-4 max-w-prose text-body text-on-hero" data-testid="hero-claim" style={{ ["--delay" as string]: "120ms" }}>
+              <span className="font-semibold">Top finding:</span> <span className="text-on-hero-muted">{topFinding.headline}</span>
+            </p>
+          ) : (
+            <p className="landing-rise mt-4 text-body text-on-hero-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows about bed waits and clinic access.</p>
+          )}
           <p className="landing-rise mt-8 flex flex-wrap items-center justify-center gap-3" style={{ ["--delay" as string]: "240ms" }}>
             <Link href={FIND_PATH} data-testid="cta-find" className="btn btn-primary">
               Find a clinic near you
@@ -127,7 +137,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
             <p className="text-small font-semibold text-ink">Average bed wait at the full emergency departments, month by month</p>
             <HeroLine points={heroLine} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
             <p className="mt-1 flex justify-between text-meta text-muted" data-testid="hero-range">
-              <span>{heroLine.find((p) => p.value != null)?.label}</span>
+              <span>{firstHero ? `${firstHero.label}: ${firstHero.value.toFixed(1)} hours` : null}</span>
               <span className="font-semibold text-ink">{newestName}: {newest?.wait?.toFixed(1)} hours</span>
             </p>
             <p className="mt-2 text-meta text-muted" data-testid="hero-source">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
@@ -142,7 +152,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
               { id: "wait", figure: <CountUp value={newest.wait ?? 0} decimals={1} />, unit: "hours", label: `average bed wait, ${newestName}` },
               { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, unit: "", label: `emergency department visits, ${newestName}` },
               ...(newest.waitYoy != null
-                ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />, unit: "", label: `change in bed wait, against ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
+                ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />, unit: "", label: `${yoyWord(newest.waitYoy)} bed wait than ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
             ].map((t) => (
               <p key={t.id} data-testid="landing-stat" className="rounded-xl border border-line bg-surface p-4 text-center">
                 <span className="block text-kpi font-semibold tracking-tight text-primary-text">{t.figure}{t.unit ? <span className="ml-1 text-small font-normal text-muted">{t.unit}</span> : null}</span>
@@ -150,7 +160,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
               </p>
             ))}
           </Reveal>
-          <p className="mt-3 text-center text-meta text-muted">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
+          <p className="mx-auto mt-3 max-w-prose text-center text-meta text-muted">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
         </section>
       ) : null}
 
@@ -159,7 +169,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           <Reveal className="mx-auto max-w-3xl text-center">
             <h2 id="landing-waits" className="text-h2 font-semibold text-ink">Bed waits, against each hospital&apos;s usual.</h2>
             {count ? <p className="mt-3 text-body font-semibold text-ink" data-testid="landing-count">{count.figure}.</p> : null}
-            {finding ? <p className="mt-1 text-small text-muted" data-testid="landing-insight">{finding.headline}</p> : null}
+            {finding ? <p className="mt-1 text-small text-muted" data-testid="landing-insight"><Glossed text={finding.headline} /></p> : null}
           </Reveal>
           <Reveal className="mt-8" delay={120}>
             <ChartFrame title="Time waiting for a ward bed after the decision to admit, latest complete week against usual" slug="landing-waits" titleHidden headingLevel={3}

@@ -510,7 +510,7 @@ def test_the_volume_chart_groups_days_into_fifths():
 def test_the_access_gap_chart_compares_the_area_with_singapore():
     out = access_gap.detect(areas_frame(), thresholds()["access_gap"], MIN_C)
     first = out.candidates[0]
-    assert [p["label"] for p in first.chart["points"]] == ["Big Low", "Singapore overall"]
+    assert [p["label"] for p in first.chart["points"]] == ["Big Low", "Benchmark rate"]
     assert first.chart["points"][1]["value"] == pytest.approx(1000 * 53 / 48000, abs=1e-4)
     assert first.display["change"] == "down"
 

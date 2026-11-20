@@ -88,10 +88,11 @@ test.describe("Findings: one band per finding", () => {
     }
   });
 
-  test("each band has a one-line method, a quiet caveat and a closed drawer", async ({ page }) => {
+  test("each band has a quiet caveat and a closed drawer, with the method inside it", async ({ page }) => {
     await page.goto("/findings");
     const band = page.getByTestId("finding-band").nth(1);
-    await expect(band.getByTestId("finding-method")).toContainText("Method:");
+    await expect(band.getByTestId("finding-method")).toBeHidden();                         // in the drawer, not in the open
+    await expect(band.getByTestId("finding-more").getByTestId("finding-method")).toContainText("Method:");
     const caveat = band.getByTestId("finding-caveat");
     await expect(caveat).toContainText("One unusual week is not a trend.");
     await expect(caveat).not.toHaveAttribute("role", "alert");
@@ -106,7 +107,7 @@ test.describe("Findings: one band per finding", () => {
     await page.goto("/findings");
     const second = page.getByTestId("finding-band").nth(1);
     await expect(second.getByTestId("delta-change")).toContainText("▲ higher than usual");
-    await expect(second.getByTestId("delta-change")).toHaveClass(/text-status-much/);
+    await expect(second.getByTestId("delta-change")).toHaveClass(/text-status-higher/);
     await expect(page.getByTestId("finding-band").first().getByTestId("delta-change")).toHaveClass(/text-ink/);
   });
 

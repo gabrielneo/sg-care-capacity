@@ -42,3 +42,20 @@ export function drawLine(points: LinePoint[], width: number, height: number, pad
     top,
   };
 }
+
+/**
+ * Round values for the y axis of a line drawn by drawLine (which starts at 0 and runs to `top`): 0 and up to five steps of
+ * 1, 2 or 5 × 10^n, all below `top`, each with its height as a % of the drawing (for labels placed beside it in HTML).
+ */
+export function lineTicks(top: number, height: number, pad = 8): { value: number; pct: number }[] {
+  if (!(top > 0)) return [];
+  const raw = top / 5;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? 10 * mag;
+  const ticks: { value: number; pct: number }[] = [];
+  for (let v = 0; v < top; v += step) {
+    const y = height - pad - (v / top) * (height - 2 * pad);
+    ticks.push({ value: Number(v.toFixed(6)), pct: (y / height) * 100 });
+  }
+  return ticks;
+}

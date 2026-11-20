@@ -12,7 +12,8 @@ import { LineChart, type LineSeries } from "./LineChart";
 import { MonthlyTable } from "./MonthlyTable";
 import { YearSoFarTable } from "./YearSoFarTable";
 
-const YEAR_COLORS = ["cat-3", "cat-2", "cat-1"] as const;
+// Oldest to newest. No pink (cat-2): next to the crimson "much higher" status it read as an alarm (critique, 20 Nov 2026).
+const YEAR_COLORS = ["cat-3", "cat-4", "cat-1"] as const;
 
 /** The month-by-month charts, the same for the whole system and for one hospital: only the points and the words differ. */
 export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = null }: {
@@ -37,6 +38,7 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
   const visitsText = (v: number) => `${Math.round(v).toLocaleString("en-SG")} visits`;
   return (
     <Chapters first="band">
+      {/* The three charts share one caveat: it is given once, under the first chart's "More about these figures". */}
       <ChartFrame title={`${subject}: average bed wait, month by month`} slug="monthly-wait" meta={meta} caveat={caveat} csv={csv}
                   summary={`A line of ${subject}'s average bed wait for each complete month, in hours. A gap is a month that is partial or has no figure.`}
                   table={<MonthlyTable points={points} caption={`${subject}: bed wait and ED visits by month, with change against a year before and the month before`} />}
@@ -46,7 +48,7 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                    summary={`${subject}'s average bed wait by month, in hours, from ${labels[0] ?? "the first month"} to ${labels.at(-1) ?? "the latest"}.`} />
       </ChartFrame>
 
-      <ChartFrame title={`${subject}: the same month, year on year`} slug="monthly-year-on-year" meta={meta} caveat={caveat} csv={csv}
+      <ChartFrame title={`${subject}: the same month, year on year`} slug="monthly-year-on-year" meta={meta} csv={csv}
                   summary={`Lines for ${years.join(", ")} on one January to December axis, so each month can be read against the same month in other years.`}
                   table={<YearSoFarTable rows={sofar} />}
                   description={<Glossed text={`Each year is one line, January to December. Months differ through the year, so this compares each month with the same month in other years.${span ? ` The table counts only ${span}, the months complete in every year shown.` : ""}`} />}>
@@ -58,7 +60,7 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
         </div>
       </ChartFrame>
 
-      <ChartFrame title={`${subject}: change against the same month a year before`} slug="monthly-change" meta={meta} caveat={caveat} csv={csv}
+      <ChartFrame title={`${subject}: change against the same month a year before`} slug="monthly-change" meta={meta} csv={csv}
                   summary="Bars of the percentage change in the average bed wait, and in emergency department visits, against the same month a year earlier. A month with no complete month a year before has no bar."
                   table="self"
                   description={<Glossed text="Bars above 0 mean a longer wait (or more visits) than a year before. Only months complete in both years are drawn. This describes change; it does not show why." />}>

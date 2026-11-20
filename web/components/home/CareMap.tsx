@@ -39,7 +39,7 @@ export function CareMap(props: CareMapProps) {
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-meta text-muted" aria-label="Map key" data-testid="map-key">
         {(["much_higher", "higher", "usual", "lower", "unknown"] as const).map((l) => (
           <li key={l} className="flex items-center gap-2">
-            <span aria-hidden="true" className={`h-3 w-3 rounded-full ${{ much_higher: "bg-status-much", higher: "bg-status-higher", usual: "bg-status-usual", lower: "bg-status-lower", unknown: "bg-muted" }[l]}`} />
+            <span aria-hidden="true" className={`h-3 w-3 rounded-full ${{ much_higher: "bg-status-much", higher: "bg-status-higher", usual: "bg-status-usual", lower: "bg-status-lower", unknown: "border-2 border-dashed border-muted bg-surface" }[l]}`} />
             Hospital: {LEVELS[l].label.toLowerCase()}
           </li>
         ))}

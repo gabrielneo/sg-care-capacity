@@ -141,3 +141,9 @@ export function monthLede(subject: string, points: Point[]): string | null {
   const vs = changePhrase(m.waitYoy, `${MONTHS_LONG[m.month - 1]} ${m.year - 1}`);
   return `${subject}: the average bed wait in ${name} was ${hrs(m.wait)} hours${vs ? `, ${vs}` : ""}.`;
 }
+
+/** The year-on-year tile's word, so the sign is never the only cue (docs/language_rules.md, Rule 5). Rounds as the figure does. */
+export function yoyWord(pct: number): string {
+  const whole = Math.round(pct);
+  return whole < 0 ? "shorter" : whole > 0 ? "longer" : "about the same";
+}

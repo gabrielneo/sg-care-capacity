@@ -14,6 +14,7 @@ import * as runtime from "react/jsx-runtime";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 
+import { DesignedDiagram, designedName } from "@/components/docs/DesignedDiagram";
 import { MermaidDiagram } from "@/components/docs/MermaidDiagram";
 import { Term } from "@/components/terms/Term";
 
@@ -54,7 +55,9 @@ function components(fromFile: string) {
     pre: ({ children, ...rest }: ComponentProps<"pre">) => {
       const code = children as ReactElement<{ className?: string; children?: ReactNode }> | undefined;
       if (code?.props?.className?.includes("language-mermaid")) {
-        return <MermaidDiagram chart={String(code.props.children ?? "").trim()} />;
+        const chart = String(code.props.children ?? "").trim();
+        const designed = designedName(chart);
+        return designed ? <DesignedDiagram name={designed} /> : <MermaidDiagram chart={chart} />;
       }
       // Focusable so keyboard users can scroll a long line (WCAG 2.1.1).
       return <pre tabIndex={0} {...rest}>{children}</pre>;

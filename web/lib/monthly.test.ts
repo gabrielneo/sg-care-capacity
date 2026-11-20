@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { changePhrase, fromHospital, fromSystem, latestComplete, monthLede, monthsText, type Point, timeSeries, yearLines, yearsSoFar } from "./monthly";
+import { changePhrase, fromHospital, fromSystem, latestComplete, monthLede, monthsText, type Point, timeSeries, yearLines, yearsSoFar, yoyWord } from "./monthly";
 
 const pt = (year: number, month: number, wait: number | null, visits: number | null, o: Partial<Point> = {}): Point =>
   ({ year, month, complete: true, wait, visits, waitYoy: null, visitsYoy: null, waitMom: null, visitsMom: null, note: null, ...o });
@@ -89,5 +89,13 @@ describe("reading the API rows", () => {
       mean_of_hospital_mean_wait_hours: null, total_attendances: null, wait_yoy_pct: null, attendances_yoy_pct: null, wait_mom_pct: null,
       attendances_mom_pct: null, source_sha256: null, as_of: "2026-11-01T00:00:00", as_of_basis: "fetched" });
     expect(p).toMatchObject({ complete: false, wait: null, note: "5 of 7 hospitals complete" });
+  });
+});
+
+describe("yoyWord", () => {
+  it("names the direction the rounded figure shows", () => {
+    expect(yoyWord(-6.46)).toBe("shorter");
+    expect(yoyWord(19.1)).toBe("longer");
+    expect(yoyWord(0.4)).toBe("about the same");
   });
 });

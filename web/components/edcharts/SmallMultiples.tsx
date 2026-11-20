@@ -1,5 +1,6 @@
 import type { Hospital, Insight } from "@/lib/api/types";
 import { type Annotation, placeAnnotations } from "@/lib/annotations";
+import { rangeAxis, tickText } from "@/lib/axis";
 import type { BandPoint, DayValue, Mode } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
 import { cssColors as colors } from "@/lib/palette";
@@ -59,6 +60,15 @@ export function SmallMultiples({ panels, bandPoints, mode, finding, annotations 
   let hi = Math.max(...all, mode === "usual" ? 0 : -Infinity);
   if (mode === "raw") lo = Math.min(lo, 0);
   if (hi === lo) hi = lo + 1;
+  // Round ticks (+10, 0, −5) instead of the raw extremes: the scale widens to them, so every figure stays inside.
+  const axis = rangeAxis(lo, hi, 3);
+  lo = axis.min;
+  hi = axis.max;
+  const tickLabel = (t: number) => {
+    const text = tickText(Math.abs(t), axis.step);
+    if (t === 0) return "0";
+    return mode === "raw" ? tickText(t, axis.step) : `${t > 0 ? "+" : "−"}${text}`;
+  };
   const step = n > 1 ? 100 / (n - 1) : 100;
   const x = (i: number) => (n > 1 ? (100 * i) / (n - 1) : 50);
   const y = (v: number) => PAD + ((hi - v) / (hi - lo)) * (H - 2 * PAD);
@@ -106,7 +116,14 @@ export function SmallMultiples({ panels, bandPoints, mode, finding, annotations 
               {missingUsual ? (
                 <p className="mt-2 flex h-28 items-center justify-center rounded bg-page px-2 text-center text-meta text-muted">{missingUsual}</p>
               ) : (
-                <div className="relative mt-1">
+                <div className="mt-1 flex gap-1">
+                  {/* The scale, in a gutter beside the plot so no label sits on a line; hidden from screen readers (the panel's text says the figures). */}
+                  <div className="relative w-8 shrink-0 text-meta tabular-nums text-tertiary" aria-hidden="true" data-testid="panel-ticks" style={{ height: H }}>
+                    {axis.ticks.map((t) => (
+                      <span key={t} className="absolute right-0 -translate-y-1/2 whitespace-nowrap" style={{ top: y(t) }}>{tickLabel(t)}</span>
+                    ))}
+                  </div>
+                  <div className="relative min-w-0 flex-1">
                   <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" width="100%" height={H} aria-hidden="true" className="block">
                     <defs>{HATCH(`hatch-${code}`)}</defs>
                     {gapRuns.map((r) => (
@@ -137,11 +154,7 @@ export function SmallMultiples({ panels, bandPoints, mode, finding, annotations 
                                 data-testid="series" points={r.items.map((d, k) => `${x(r.start + k)},${y(d.value as number)}`).join(" ")} />
                     ))}
                   </svg>
-                  <span className="absolute left-0 top-0 text-meta tabular-nums text-tertiary">{fmt(hi)}</span>
-                  <span className="absolute bottom-0 left-0 text-meta tabular-nums text-tertiary">{fmt(lo)}</span>
-                  {mode === "usual" ? (
-                    <span className="absolute right-0 text-meta text-ink" style={{ top: Math.max(y(0) - 12, 0) }}>usual</span>
-                  ) : null}
+                  </div>
                 </div>
               )}
               <p className="sr-only">

@@ -156,7 +156,7 @@ terms:
     full_name: Bed wait / boarding
     plain_definition: Time a patient spends in the ED after a doctor decides to admit them, waiting for a ward bed.
     category: keep_and_explain
-    aliases: [bed wait, bed waits, Bed wait, boarding]
+    aliases: [bed wait, bed waits, Bed wait, Bed waits, boarding]
 
   # Rule 3: internal terms; public pages use public_wording instead
   - id: median_wait_hours

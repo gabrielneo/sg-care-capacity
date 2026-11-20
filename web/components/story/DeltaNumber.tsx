@@ -6,8 +6,12 @@ import { Glossed } from "../terms/Glossed";
 
 export type Direction = "better" | "worse" | "neutral";
 
-/** Colour comes from direction only (more clinics is better, a longer wait is worse); neutral has none. */
-const TONE: Record<Direction, string> = { better: "text-status-lower", worse: "text-status-much", neutral: "text-ink" };
+/**
+ * Colour comes from direction only (more clinics is better, a longer wait is worse); neutral has none. "Worse" is the amber of a
+ * "higher" badge, not crimson: crimson means "much higher" on this site and is kept for the explicit much_higher pill below, so a
+ * moderate gap never looks like an alarm.
+ */
+const TONE: Record<Direction, string> = { better: "text-status-lower", worse: "text-status-higher", neutral: "text-ink" };
 const ARROW = { up: "▲", down: "▼" } as const;
 /**
  * The pill takes the badge's level (lib/status.ts), so a chart row and a hospital badge look alike: its own colour on its own soft

@@ -43,7 +43,7 @@ export function FindingBand({ insight, index, total, meta, tone, section }: {
             <AnnotatedChart
               id={`${insight.insight_id}-chart`}
               title={chartTitle(insight)}
-              description={insight.chart.y_label}
+              description={insight.chart.y_label === chartTitle(insight) ? undefined : insight.chart.y_label}
               meta={own}
               bySource
               findingTo={insight.as_of}
@@ -59,7 +59,6 @@ export function FindingBand({ insight, index, total, meta, tone, section }: {
             <EvidenceChip level={evidenceOf(insight)} />
             <span>{sampleText(insight)}</span>
           </p>
-          <p className="mt-2 text-small text-muted" data-testid="finding-method"><span className="font-semibold text-ink">Method: </span>{insight.method}</p>
           {first ? (
             <aside className="mt-3 rounded-md bg-sunken px-3 py-2 text-small text-muted" aria-label="Caveat" data-testid="finding-caveat">
               <Glossed text={first} />
@@ -68,6 +67,8 @@ export function FindingBand({ insight, index, total, meta, tone, section }: {
           <details className="mt-2" data-testid="finding-more">
             <summary className="min-h-11 cursor-pointer select-none py-3 text-small font-semibold text-accent">More about these figures</summary>
             <div className="space-y-2 pb-2 text-small text-muted">
+              {/* The test's technical name sits here, not in the open (critique, 20 Nov 2026): the evidence label above says it in words. */}
+              <p data-testid="finding-method"><span className="font-semibold text-ink">Method: </span>{insight.method}</p>
               {more.map((c) => <p key={c}><Glossed text={c} /></p>)}
               <p data-testid="finding-window-range">
                 {insight.period_start && insight.period_end

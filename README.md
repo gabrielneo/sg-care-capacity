@@ -2,8 +2,8 @@
 
 **Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
 the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from
-public MOH, data.gov.sg and SingStat data. The site opens on the average bed wait month by month, then
-two pictures, each with a one-line note: each hospital's latest bed wait against its own usual level,
+public MOH, data.gov.sg and SingStat data. The site opens on the latest release's top finding and the
+average bed wait month by month, then two pictures, each with a one-line note: each hospital's latest bed wait against its own usual level,
 and clinics per senior by planning area. A separate page finds the nearest polyclinics and GP clinics
 for any postcode. Every figure comes from the latest weekly data release, with its date and source.**
 
@@ -12,7 +12,7 @@ for any postcode. Every figure comes from the latest weekly data release, with i
 [One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
 [Independent audit](docs/audit_report.md)
 
-[![The home page in light mode: on a deep-purple hero with a royal-blue glow, the claim, a "Find a clinic near you" button, a "Read the findings" button and the 995 line, then a card with the average bed wait at the full emergency departments month by month, its latest month, date and source](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+[![The home page in light mode: on a deep-purple hero with a royal-blue glow, the claim, the top finding (bed waits at National University Hospital peak on Tuesday and Wednesday, 34% and 26% above its weekly average), a "Find a clinic near you" button, a "Read the findings" button and the 995 line, then a card with the average bed wait at the full emergency departments month by month on a 0 to 8 hour scale, from December 2023 (8.2 hours) to October 2026 (5.4 hours), with its date and source](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
 
 <p align="center">
   <img src="docs/images/home-dark.png" width="62%" alt="The same home page in dark mode: the hero and the monthly bed-wait card on a near-black violet page">
@@ -25,11 +25,13 @@ for any postcode. Every figure comes from the latest weekly data release, with i
 
 | Page | What it is for |
 |---|---|
-| **Home** `/` | The claim, two buttons and the 995 line; the average bed wait month by month with three headline figures (when the data release has monthly figures); then two pictures with a short note each. **Bed waits against each hospital's usual**: one hour scale for every hospital, the latest week in royal blue, a status pill (▼ lower, ▬ about usual, ▲ higher, ▲▲ much higher), and a short note when a big move stays inside the hospital's own range of the 8 weeks before. **Clinics per 1,000 residents aged 65+** by planning area (plain SVG, no map script): a legend whose ranges meet with no gap, and why each unranked area isn't ranked. Each picture has its date and source, a table and CSV/Excel downloads. A "Data and privacy" panel repeats the footer's promise and links to the methods and data quality |
+| **Home** `/` | The claim; the release's top finding, word for word from the insight engine; two buttons and the 995 line; the average bed wait month by month, on an hour scale with its first and latest values, and three headline figures (when the data release has monthly figures); then two pictures with a short note each. **Bed waits against each hospital's usual**: one hour scale for every hospital, the latest week in royal blue, a status pill (▼ lower, ▬ about usual, ▲ higher, ▲▲ much higher), and a short note when a big move stays inside the hospital's own range of the 8 weeks before. **Clinics per 1,000 residents aged 65+** by planning area (plain SVG, no map script): a legend whose ranges meet with no gap, and why each unranked area isn't ranked. Each picture has its date and source, a table and CSV/Excel downloads. A "Data and privacy" panel repeats the footer's promise and links to the methods and data quality |
 | **Find a clinic** `/find` | A postcode search for the nearest polyclinics, CHAS GP clinics and emergency departments. The search runs in the browser and is never sent to a server. Then the nearest emergency departments, a map of every hospital against its usual, and how the figures are made |
 | **Findings** | What the latest data release shows, each finding computed by code and shown with how sure it is |
 | **Explore** | ED trends, the Access Map (3D, 2D and table) and the NUHS live estimates |
-| **Methods, About** | Where each number comes from and what it can't tell you; the case study and the decisions behind the build |
+| **Summary** `/summary` | One printable A4 page: the top findings, the priority areas (with how they are ranked) and the limits |
+| **Hospital** `/hospital/[code]` | One hospital month by month and year on year, with exact values on hover. An unknown code lists the real hospitals |
+| **Methods, About** | Where each number comes from and what it can't tell you; who built it, the project in 60 seconds (with a live chart and every data check counted), and the case study |
 
 ### Design
 
@@ -37,20 +39,26 @@ for any postcode. Every figure comes from the latest weekly data release, with i
   data marks; violet for links, focus rings and highlights; deep purple for the hero and, in light mode, headings. Status
   colours never use a brand hue (teal lower, grey about usual, amber higher, crimson much higher), and a status is always a
   mark and a word as well as a colour. The access maps use one lavender-to-deep-royal ramp in even steps.
-- **Checked, not eyeballed.** Every colour is a token in [`web/styles/tokens.css`](web/styles/tokens.css). Tests check text
+- **Colour checks.** Every colour is a token in [`web/styles/tokens.css`](web/styles/tokens.css). Tests check text
   at 4.5:1 and graphics at 3:1 on every surface in both themes, and that status, brand and chart colours stay apart under
   protanopia, deuteranopia and tritanopia simulation.
 - **Type.** Headings in a serif (Charter on Apple devices, Cambria on Windows), text in the device's own interface font. No
   web font is downloaded, so text never shifts as it loads.
+- **Charts.** Every chart starts its value axis at 0 and labels it with round ticks. Under each chart, one line gives the date
+  and source, and one row holds the freshness badge, "More about these figures" (caveats and notes) and the downloads.
+  Status colours follow one rule: a worse result is amber, and crimson is kept for "much higher".
+- **Diagrams.** The case study's stakeholder grid and patient flows are drawn as server-rendered SVG in the site's colours.
+  GitHub shows the Mermaid source of the same diagrams.
 - **Light and dark** follow the device setting; there is no theme switch. Print is always light.
-- **No alarm.** There is no red banner: the 995 emergency number and "not medical advice" share one small line on the home
+- **The 995 line.** There is no red banner: the 995 emergency number and "not medical advice" share one small line on the home
   page's first screen, and the 995 number is in the footer of every page.
 - **Plain words.** Abbreviations are spelled out on first use on each page (never twice), with a definition on hover or tap.
   Links underline only their own words.
 
 ## What the data shows
 
-From the [case study](docs/case_study.md), weekly data release `data-2026-11-08`:
+From the [case study](docs/case_study.md). Each figure was checked again against weekly data release
+`data-2026-11-17` on 20 Nov 2026 and is unchanged:
 
 1. **ED demand is high and steady.** The 8 sites MOH reported throughout (7 emergency departments
    and Alexandra Hospital's urgent care centre) recorded 868,644 visits in 2023, 863,988 in 2024
@@ -106,8 +114,13 @@ number with its "Data as of" date and source.
   to the exact raw cells: 19 matched; the 20th is an external citation. It rebuilt two tables from
   scratch, which matched. It found 1 critical, 1 high and 5 medium issues. All are fixed, each with
   a test ([audit report](docs/audit_report.md)).
-- **Tests on every push.** Over 2,500 automated tests run in CI: about 1,200 website unit tests, about
-  850 browser checks, about 380 pipeline tests and about 140 API tests. Another 100 acceptance checks run
+- **Recomputed from the data release.** On 20 Nov 2026 the published release `data-2026-11-17` was checked
+  with separate code that shares nothing with the pipeline. Weekly and monthly averages, totals, completeness flags and
+  year-on-year changes matched in every row. So did the all-hospital monthly series, the clinics per 1,000 seniors in every
+  area, and the three headline findings: the weekday test, the visits and bed-wait correlation, and the priority ranking.
+  The live API served the same values.
+- **Tests on every push.** Over 2,400 automated tests: about 1,130 website unit tests, about 680 browser
+  checks, about 380 pipeline tests and about 140 API tests run in CI, and about 100 acceptance checks run
   on the real built data (`make test`). The browser checks cover every page at 1280 and 375 px wide (with
   overflow checks at 768 and 1440 px), WCAG 2.1 AA accessibility with axe on every page (2.2 AA as well on
   the home page and the newer pages) in light and dark, and Lighthouse budgets for loading time and layout

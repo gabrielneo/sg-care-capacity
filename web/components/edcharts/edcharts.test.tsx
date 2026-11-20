@@ -116,3 +116,35 @@ describe("Dumbbell: the same words as the badge", () => {
     expect(dots).toEqual({ SKH: "lower", NUH: "usual" });
   });
 });
+
+describe("spread (slope-chart labels)", () => {
+  it("leaves labels that don't overlap where they are", () => {
+    expect(spread([20, 60, 100], 16)).toEqual([20, 60, 100]);
+  });
+
+  it("pushes overlapping labels apart by the gap, in their order", () => {
+    expect(spread([100, 102, 104], 16)).toEqual([100, 116, 132]);
+  });
+
+  it("keeps a crowded stack inside the plot: labels past the bottom move back up as a group", () => {
+    const out = spread([200, 201, 202], 16, 16, 216);
+    expect(Math.max(...out)).toBeLessThanOrEqual(216);
+    expect(out).toEqual([184, 200, 216]);
+  });
+});
+
+describe("SmallMultiples", () => {
+  const days = ["2026-11-01", "2026-11-02", "2026-11-03"];
+  const bandPoints = days.map((date) => ({ date, p25: -1, p50: 0, p75: 1 }));
+  const panel = { hospital: hospital("SGH"), series: [{ date: days[0]!, value: -7.8 }, { date: days[1]!, value: 11.6 }, { date: days[2]!, value: 0.4 }],
+                  missingUsual: null };
+
+  it("labels the scale with round ticks in a gutter, 0 among them, not the raw extremes or a 'usual' word on the line", () => {
+    render(<SmallMultiples panels={[panel]} bandPoints={bandPoints} mode="usual" finding={null} />);
+    const ticks = within(screen.getByTestId("panel-ticks")).getAllByText(/./).map((e) => e.textContent);
+    expect(ticks).toContain("0");
+    expect(ticks.some((t) => t === "+11.6" || t === "−7.8")).toBe(false);
+    expect(ticks.every((t) => /^(0|[+−]\d+(\.\d)?)$/.test(t ?? ""))).toBe(true);
+    expect(screen.queryByText("usual", { exact: true })).toBeNull();
+  });
+});

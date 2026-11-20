@@ -27,7 +27,7 @@ export function Nav({ variant = "bar", onNavigate }: { variant?: "bar" | "sheet"
                 aria-current={current ? "page" : undefined}
                 onClick={onNavigate}
                 className={bar
-                  ? `flex items-center border-b-2 px-2 text-small font-semibold link-quiet lg:px-3 ${
+                  ? `nav-bar-link flex items-center border-b-2 px-2 text-small font-semibold link-quiet lg:px-3 ${
                       current ? "border-primary text-primary-text" : "border-transparent text-muted hover:text-ink"}`
                   : `flex min-h-11 items-center text-body font-semibold link-quiet ${current ? "text-primary-text" : "text-ink"}`}
               >

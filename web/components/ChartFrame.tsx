@@ -77,6 +77,18 @@ export function ChartFrame({ title, slug, meta, children, summary, csv, table, d
   const Heading = headingLevel === 3 ? "h3" : "h2";
   const covered = section != null && inheritsFrom(section, meta);
   const hasTable = table !== "self" && !(typeof table === "object" && table !== null && "href" in table);
+  const allNotes = caveat ? [caveat, ...(notes ?? [])] : notes;
+  // One row at 375px (review N2): "Download" once, then the formats. Each link's name still starts with the verb, and contains its
+  // visible text (WCAG 2.5.3); the lead word is hidden from screen readers so it isn't read twice.
+  const downloads = state === "ready" ? (
+    <span className="inline-flex flex-wrap items-center gap-x-4 text-meta" data-testid="chart-downloads">
+      <span aria-hidden="true" className="text-muted">Download</span>
+      <a href={csv} download data-testid="csv-download" aria-label="Download CSV" className="inline-flex min-h-11 min-w-11 items-center justify-center">CSV</a>
+      <a href={`${csv}${csv.includes("?") ? "&" : "?"}format=xlsx`} download data-testid="xlsx-download" aria-label="Download Excel"
+         className="inline-flex min-h-11 min-w-11 items-center justify-center">Excel</a>
+      <CopyCaption headingId={id} summary={summary} provenance={provenanceText(meta)} />
+    </span>
+  ) : null;
   return (
     <section aria-labelledby={id} aria-describedby={`${id}-summary`} data-testid="chart-frame" data-state={problems.length ? "error" : state}
              data-provenance={covered ? "section" : "own"} className="rounded-lg border border-line bg-surface card">
@@ -113,26 +125,19 @@ export function ChartFrame({ title, slug, meta, children, summary, csv, table, d
           {state === "ready" && typeof table === "object" && table !== null && "href" in table ? (
             <p className="mt-3 border-t border-line pt-3 text-small"><Link href={table.href} className="font-semibold" data-testid="chart-table-link">{table.label ?? "Show as table"}</Link></p>
           ) : null}
+          {/* The footer, two rows (critique 20 Nov 2026): the date and source line, then the freshness badge, "More about these
+              figures" and the downloads. The caveat sits under "More about these figures" with the other notes, so the line that is
+              always in view is only the date and source (CLAUDE.md, data principle 4). Data Quality (detail) keeps it on the line. */}
           {covered ? (
             // The section's line gives the date and source; the chart keeps its own caveat, notes and data-quality warnings.
             <>
-              {caveat ? <p className="mt-3 text-meta text-muted" data-testid="card-caveat"><Glossed text={caveat} /></p> : null}
-              <Provenance meta={meta} notes={notes} detail={detail} inherited />
+              {detail && caveat ? <p className="mt-3 text-meta text-muted" data-testid="card-caveat"><Glossed text={caveat} /></p> : null}
+              <Provenance meta={meta} notes={allNotes} detail={detail} inherited actions={downloads} />
             </>
           ) : (
-            <Provenance meta={meta} caveat={caveat} notes={notes} detail={detail} now={now} bySource={bySource} findingTo={findingTo} release={release} />
+            <Provenance meta={meta} caveat={detail ? caveat : null} notes={detail ? notes : allNotes} detail={detail} now={now} bySource={bySource}
+                        findingTo={findingTo} release={release} actions={downloads} />
           )}
-          {state === "ready" ? (
-            <p className="mt-1 flex flex-wrap items-center gap-x-4 text-meta">
-              {/* One row at 375px (review N2): "Download" once, then the formats. Each link's name still starts with the verb, and
-                  contains its visible text (WCAG 2.5.3); the lead word is hidden from screen readers so it isn't read twice. */}
-              <span aria-hidden="true" className="text-muted">Download</span>
-              <a href={csv} download data-testid="csv-download" aria-label="Download CSV" className="inline-flex min-h-11 min-w-11 items-center justify-center">CSV</a>
-              <a href={`${csv}${csv.includes("?") ? "&" : "?"}format=xlsx`} download data-testid="xlsx-download" aria-label="Download Excel"
-                 className="inline-flex min-h-11 min-w-11 items-center justify-center">Excel</a>
-              <CopyCaption headingId={id} summary={summary} provenance={provenanceText(meta)} />
-            </p>
-          ) : null}
         </>
       )}
     </section>

@@ -20,7 +20,9 @@ describe("ChartFrame", () => {
     const link = screen.getByRole("link", { name: "Download CSV" });
     expect(link).toHaveAttribute("href", "/export/x.csv?context=1");
     expect(link).toHaveAttribute("download");
-    expect(screen.getByTestId("provenance-line")).toHaveTextContent("Data as of 31 Oct 2026 · Source: Ministry of Health (MOH) · A plain caveat.");
+    // The line in view is the date and source only; the caveat is the first note under "More about these figures" (20 Nov 2026).
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/^Data as of 31 Oct 2026 · Source: Ministry of Health \(MOH\)$/);
+    expect(screen.getByText(/More about these figures/).closest("details")).toHaveTextContent("A plain caveat.");
     // The freshness pill leaves out the date the line already gives; the date stays in its tooltip (review, open item 5).
     expect(screen.getByTestId("freshness-badge")).toHaveTextContent(/^Up to date · weekly$/);
     expect(screen.getByTestId("freshness-badge").getAttribute("title")).toMatch(/^As of 31 Oct 2026\. /);
@@ -34,6 +36,8 @@ describe("ChartFrame", () => {
     const more = screen.getByText(/More about these figures/).closest("details")!;
     expect(badge.parentElement).toBe(more.parentElement);
     expect(badge.parentElement!.previousElementSibling).toBe(screen.getByTestId("provenance-line"));
+    // The downloads share that row: a chart's footer is two rows (the line, then badge, notes and downloads).
+    expect(screen.getByTestId("chart-downloads").parentElement).toBe(badge.parentElement);
   });
 
   it("is described by its summary, which is not shown", () => {
@@ -44,7 +48,7 @@ describe("ChartFrame", () => {
   it("inside a section with the same date and sources it adds no line of its own, only its caveat", () => {
     render(<ChartFrame {...base} section={meta} caveat="A plain caveat."><p>chart</p></ChartFrame>);
     expect(screen.queryByTestId("provenance-line")).toBeNull();
-    expect(screen.getByTestId("card-caveat")).toHaveTextContent("A plain caveat.");
+    expect(screen.getByTestId("provenance-inherited").querySelector("details")).toHaveTextContent("A plain caveat.");
     expect(screen.getByTestId("chart-frame")).toHaveAttribute("data-provenance", "section");
   });
 
@@ -58,10 +62,13 @@ describe("ChartFrame", () => {
     expect(screen.getByTestId("provenance-inherited")).toHaveTextContent("1 data-quality warning applies to these figures.");
   });
 
-  it("inside a section with nothing of its own to add, it renders no footer at all", () => {
+  it("inside a section with nothing of its own to add, its footer is only the downloads", () => {
     const clean = { ...meta, dq_warnings: [] };                                // the sample meta carries one warning
     render(<ChartFrame {...base} meta={clean} section={clean}><p>chart</p></ChartFrame>);
-    expect(screen.queryByTestId("provenance-inherited")).toBeNull();
+    const footer = screen.getByTestId("provenance-inherited");
+    expect(footer.querySelector("details")).toBeNull();
+    expect(screen.queryByTestId("provenance-line")).toBeNull();
+    expect(within(footer).getByTestId("chart-downloads")).toBeInTheDocument();
   });
 
   it("inside a section whose date differs it shows its own line", () => {
@@ -146,11 +153,18 @@ describe("ChartFrame", () => {
     expect(screen.getByText("More about these figures (3)").closest("details")).toHaveTextContent("(63 rows): SGH, 2026-10-20: over 24 hours");
   });
 
-  it("lets the page choose the footer caveat, or none", () => {
+  it("lets the page choose the caveat, or none; it goes under 'More about these figures', never on the line", () => {
     const { rerender } = render(<ChartFrame {...base} caveat="Chosen caveat"><p>c</p></ChartFrame>);
-    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/· Chosen caveat$/);
+    expect(screen.getByText(/More about these figures/).closest("details")).toHaveTextContent("Chosen caveat");
+    expect(screen.getByTestId("provenance-line")).not.toHaveTextContent("Chosen caveat");
     rerender(<ChartFrame {...base} caveat={null}><p>c</p></ChartFrame>);
+    expect(screen.queryByText("Chosen caveat")).toBeNull();
     expect(screen.getByTestId("provenance-line")).toHaveTextContent(/Source: Ministry of Health \(MOH\)$/);
+  });
+
+  it("on Data Quality (detail) the caveat stays on the line", () => {
+    render(<ChartFrame {...base} caveat="Chosen caveat" detail><p>c</p></ChartFrame>);
+    expect(screen.getByTestId("provenance-line")).toHaveTextContent(/· Chosen caveat$/);
   });
 
   it.each([[{ ...meta, as_of: "" }, "its date is missing"], [{ ...meta, as_of: "not a date" }, "its date is missing"], [{ ...meta, sources: [] }, "its source is missing"]])(

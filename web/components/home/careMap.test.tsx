@@ -9,6 +9,8 @@ import { edMeta } from "@/test/fixtures/meta";
 
 import { ClusterChips, LayoutToggle } from "./CareControls";
 import { CareList } from "./CareList";
+import { labelSide } from "@/lib/mapLabels";
+
 import { HospitalDrawer } from "./HospitalDrawer";
 import { HospitalDrawerBody, sparkSummary } from "./HospitalDrawerBody";
 
@@ -179,5 +181,16 @@ describe("HospitalDrawer", () => {
     render(<HospitalDrawer code={null} title="" onClose={() => {}}><p>details</p></HospitalDrawer>);
     expect(screen.getByTestId("hospital-drawer")).not.toHaveAttribute("open");
     expect(screen.queryByText("details")).toBeNull();
+  });
+});
+
+describe("labelSide (hospital labels on the map)", () => {
+  const pin = (code: string, latitude: number, longitude: number) => ({ code, latitude, longitude });
+  const all = [pin("NUH", 1.2944, 103.7837), pin("AH", 1.2855, 103.8002), pin("SGH", 1.2784, 103.834), pin("TTSH", 1.3214, 103.8457)];
+  it("goes right when nothing is close, left with a neighbour to the east, below with neighbours on both sides", () => {
+    expect(labelSide(all[3]!, all)).toBe("right");
+    expect(labelSide(all[0]!, all)).toBe("left");
+    expect(labelSide(all[1]!, all)).toBe("bottom");
+    expect(labelSide(all[2]!, all)).toBe("right");
   });
 });

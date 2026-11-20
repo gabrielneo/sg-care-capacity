@@ -39,3 +39,17 @@ export function tickText(v: number, step: number): string {
   const digits = Number.isInteger(step) ? 0 : step * 10 === Math.round(step * 10) ? 1 : 2;
   return v.toLocaleString("en-SG", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
+
+/**
+ * An axis over [lo, hi] that need not start at 0 (a difference from usual: −7.8 to +11.6 becomes −10 to +15): both ends rounded
+ * outwards to the step, so every figure stays inside, and 0 is a tick whenever the range crosses it.
+ */
+export function rangeAxis(lo: number, hi: number, target = 3): Axis & { min: number } {
+  if (!(hi > lo)) hi = lo + 1;
+  const step = niceStep(hi - lo, target);
+  const min = Math.floor(lo / step + 1e-9) * step;
+  const max = Math.ceil(hi / step - 1e-9) * step;
+  const ticks: number[] = [];
+  for (let v = min; v <= max + 1e-9; v += step) ticks.push(Number(v.toPrecision(12)));
+  return { min, max, step, ticks };
+}

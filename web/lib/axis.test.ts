@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { niceAxis, niceStep, symmetricAxis, tickText } from "./axis";
+import { niceAxis, niceStep, rangeAxis, symmetricAxis, tickText } from "./axis";
 
 describe("axis", () => {
   it("picks a round step from the data's largest value", () => {
@@ -35,5 +35,21 @@ describe("axis", () => {
     expect(tickText(10, 5)).toBe("10");
     expect(tickText(0.5, 0.5)).toBe("0.5");
     expect(tickText(0.25, 0.25)).toBe("0.25");
+  });
+});
+
+describe("rangeAxis", () => {
+  it("rounds both ends outwards and keeps 0 as a tick", () => {
+    const a = rangeAxis(-7.8, 11.6);
+    expect(a.min).toBeLessThanOrEqual(-7.8);
+    expect(a.max).toBeGreaterThanOrEqual(11.6);
+    expect(a.ticks).toContain(0);
+    expect(a.ticks.length).toBeLessThanOrEqual(6);
+    expect(a.ticks.every((t) => Number.isInteger(t / a.step + 1e-9) || Math.abs(Math.round(t / a.step) - t / a.step) < 1e-6)).toBe(true);
+  });
+
+  it("works for a range above 0, and a flat one", () => {
+    expect(rangeAxis(0, 9.3).ticks).toEqual([0, 5, 10]);
+    expect(rangeAxis(2, 2).max).toBeGreaterThan(2);
   });
 });

@@ -88,7 +88,7 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
             ))}
           </div>
         </fieldset>
-        <p className="mt-2 text-small text-muted" data-testid="search-privacy">
+        <p className="mt-2 max-w-prose text-small text-muted" data-testid="search-privacy">
           What you type stays in this browser: it isn&apos;t sent to our server or saved. The map then loads tiles for your area from OneMap, which can see roughly which 1 km square you looked at.
         </p>
         {/* React doesn't render a noscript's children, so the markup is given as a string. */}

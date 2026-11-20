@@ -162,7 +162,7 @@ INSIGHTS = [
      {"endpoint": "/api/v1/areas/access", "query": "SELECT 5"}, date(2024, 6, 6), "source_updated", 0.1, None,
      _display("0.02", "per 1,000 residents aged 65+", "CDMP GP clinics per 1,000 residents aged 65+ in Bedok",
               "0.03, the benchmark rate", "down", "lower than the benchmark rate"),
-     _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Singapore overall", 0.0328)],
+     _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Benchmark rate", 0.0328)],
             ["area"], "About 1 clinic short of the benchmark rate", None)),
 ]
 # period_start, period_end and strength sit between headline_rank (column 22) and display (column 25).
