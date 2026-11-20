@@ -25,10 +25,10 @@ for any postcode. Every figure comes from the latest weekly data release, with i
 
 | Page | What it is for |
 |---|---|
-| **Home** `/` | The claim; the release's top finding, word for word from the insight engine; two buttons and the 995 line; the average bed wait month by month, on an hour scale with its first and latest values, and three headline figures (when the data release has monthly figures); then two pictures with a short note each. **Bed waits against each hospital's usual**: one hour scale for every hospital, the latest week in royal blue, a status pill (▼ lower, ▬ about usual, ▲ higher, ▲▲ much higher), and a short note when a big move stays inside the hospital's own range of the 8 weeks before. **Clinics per 1,000 residents aged 65+** by planning area (plain SVG, no map script): a legend whose ranges meet with no gap, and why each unranked area isn't ranked. Each picture has its date and source, a table and CSV/Excel downloads. A "Data and privacy" panel repeats the footer's promise and links to the methods and data quality |
-| **Find a clinic** `/find` | A postcode search for the nearest polyclinics, CHAS GP clinics and emergency departments. The search runs in the browser and is never sent to a server. Then the nearest emergency departments, a map of every hospital against its usual, and how the figures are made |
+| **Home** `/` | The claim; the release's top finding, word for word from the insight engine; two buttons and the 995 line; the average bed wait month by month, on an hour scale with its first and latest values, and in the same card the latest month's emergency department visits and its bed wait against a year before, in words as well as a sign (when the data release has monthly figures); then two pictures with a short note each. **Bed waits against each hospital's usual**: one hour scale for every hospital, the latest week in royal blue, a status pill (▼ lower, ▬ about usual, ▲ higher, ▲▲ much higher), and a short note when a big move stays inside the hospital's own range of the 8 weeks before. **Clinics per 1,000 residents aged 65+** by planning area (plain SVG, no map script): a legend whose ranges meet with no gap, and why each unranked area isn't ranked. Each picture has its date and source, a table and CSV/Excel downloads. Then the three ways on. The data and privacy promise is in the footer of every page |
+| **Find a clinic** `/find` | A postcode search for the nearest polyclinics, CHAS GP clinics and emergency departments. The search runs in the browser and is never sent to a server; until the page's script has loaded the button waits rather than reloading the page, and anything already typed is kept. A phone shows the nearest three places, with the rest one tap away. Then the nearest emergency departments, a map of every hospital against its usual, and how the figures are made |
 | **Findings** | What the latest data release shows, each finding computed by code and shown with how sure it is |
-| **Explore** | ED trends, the Access Map (3D, 2D and table) and the NUHS live estimates |
+| **Explore** | ED trends (the hospital and date filters fold behind one line that says what is shown), the Access Map (3D, 2D and table) and the NUHS live estimates |
 | **Summary** `/summary` | One printable A4 page: the top findings, the priority areas (with how they are ranked) and the limits |
 | **Hospital** `/hospital/[code]` | One hospital month by month and year on year, with exact values on hover. An unknown code lists the real hospitals |
 | **Methods, About** | Where each number comes from and what it can't tell you; who built it, the project in 60 seconds (with a live chart and every data check counted), and the case study |
@@ -48,7 +48,7 @@ for any postcode. Every figure comes from the latest weekly data release, with i
   and source, and one row holds the freshness badge, "More about these figures" (caveats and notes) and the downloads.
   Status colours follow one rule: a worse result is amber, and crimson is kept for "much higher".
 - **Diagrams.** The case study's stakeholder grid and patient flows are drawn as server-rendered SVG in the site's colours.
-  GitHub shows the Mermaid source of the same diagrams.
+  GitHub shows the Mermaid source of the same diagrams; no diagram script is sent to the browser.
 - **Light and dark** follow the device setting; there is no theme switch. Print is always light.
 - **The 995 line.** There is no red banner: the 995 emergency number and "not medical advice" share one small line on the home
   page's first screen, and the 995 number is in the footer of every page.
@@ -119,12 +119,13 @@ number with its "Data as of" date and source.
   year-on-year changes matched in every row. So did the all-hospital monthly series, the clinics per 1,000 seniors in every
   area, and the three headline findings: the weekday test, the visits and bed-wait correlation, and the priority ranking.
   The live API served the same values.
-- **Tests on every push.** Over 2,400 automated tests: about 1,130 website unit tests, about 680 browser
+- **Tests on every push.** Over 2,400 automated tests: about 1,140 website unit tests, about 690 browser
   checks, about 380 pipeline tests and about 140 API tests run in CI, and about 100 acceptance checks run
   on the real built data (`make test`). The browser checks cover every page at 1280 and 375 px wide (with
   overflow checks at 768 and 1440 px), WCAG 2.1 AA accessibility with axe on every page (2.2 AA as well on
-  the home page and the newer pages) in light and dark, and Lighthouse budgets for loading time and layout
-  shift.
+  the home page and the newer pages) in light and dark. Lighthouse checks the home, finder, findings and ED trends pages against budgets: largest paint
+  within 2.5 s (target 2.0 s), layout shift under 0.01 and under 200 kB of JavaScript. It applies a slow 4G network and a
+  4x slower CPU for real and measures the paint, which comes at about 1.5 s on each of these pages.
 
 ## Tech stack
 

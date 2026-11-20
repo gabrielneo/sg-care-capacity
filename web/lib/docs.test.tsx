@@ -44,7 +44,7 @@ describe("renderMarkdown", () => {
     expect(screen.getByRole("heading", { level: 2, name: "First part" })).toHaveAttribute("id", "first-part");
     expect(screen.getByRole("region", { name: "Table (scrolls sideways)" })).toContainElement(screen.getByRole("table"));
     expect(screen.getByRole("link", { name: "the checks" })).toHaveAttribute("href", "/docs/data-quality#how-it-works");
-    expect(screen.getByTestId("mermaid")).toHaveTextContent("flowchart TD");
+    expect(await screen.findByTestId("mermaid")).toHaveTextContent("flowchart TD");          // loaded on demand
   });
 
   it("extracts one section", () => {

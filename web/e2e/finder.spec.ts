@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll, finderReady } from "./helpers";
 
 /*
  * The public finder on the API's fixture snapshot (api/tests/fixture_snapshot.py): clinics in Bedok
@@ -17,6 +17,7 @@ test.describe("Public finder", () => {
     const requests: string[] = [];
     page.on("request", (r) => requests.push(r.url()));
     await page.goto("/find");
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").fill("460002");
     await page.getByRole("button", { name: "Find clinics" }).click();
 
@@ -52,6 +53,7 @@ test.describe("Public finder", () => {
 
   test("the type filter narrows the list and is announced", async ({ page }) => {
     await page.goto("/find");
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").fill("460002");
     await page.getByRole("button", { name: "Find clinics" }).click();
     await expect(page.getByTestId("nearby-place").first()).toBeVisible();
@@ -116,10 +118,12 @@ test.describe("Public finder", () => {
     await expect(page.getByTestId("nearby").getByRole("heading", { level: 2 })).toHaveText("Near Bedok");
     await expect(page.getByTestId("nearby-basis")).toContainText("approximate");
 
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").fill("4600");
     await page.getByRole("button", { name: "Find clinics" }).click();
     await expect(page.getByTestId("nearby-message")).toHaveText("Singapore postcodes have 6 digits. Check the number and try again.");
     await expect(page.getByTestId("live-region")).toHaveText(/6 digits/);
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").fill("990000");
     await page.getByRole("button", { name: "Find clinics" }).click();
     await expect(page.getByTestId("nearby-message")).toContainText("Try a nearby postcode");
@@ -129,6 +133,7 @@ test.describe("Public finder", () => {
   test("a shared link opens the search, and back and forward follow it", async ({ page }) => {
     await page.goto("/find#near=460002");
     await expect(page.getByTestId("nearby").getByRole("heading", { level: 2 })).toHaveText("Near 460002");
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").fill("bedok");
     await page.getByRole("button", { name: "Find clinics" }).click();
     await expect(page.getByTestId("nearby").getByRole("heading", { level: 2 })).toHaveText("Near Bedok");
@@ -139,6 +144,7 @@ test.describe("Public finder", () => {
 
   test("fully usable by keyboard, with 16px body text and 44px targets", async ({ page }) => {
     await page.goto("/find");
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").focus();
     await page.keyboard.type("460002");
     await page.keyboard.press("Enter");
@@ -177,6 +183,7 @@ test.describe("Public finder", () => {
 
   test("on a phone only the nearest three places show until 'Show all'; wider screens show every place", async ({ page }, info) => {
     await page.goto("/find");
+    await finderReady(page);
     await page.getByLabel("Your postcode or area").fill("460002");
     await page.getByRole("button", { name: "Find clinics" }).click();
     const cards = page.getByTestId("nearby-place");

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { ClientGlossed as Glossed } from "@/components/terms/ClientGlossed";
 import { formatAsOf } from "@/lib/dates";
@@ -52,6 +52,18 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
   // What is being typed, until it is searched; otherwise the box follows the address (back and forward).
   const [draft, setDraft] = useState<string | null>(null);
   const text = draft ?? f.query;
+  // Before the script has loaded the button isn't a submit button, so Enter or a click does nothing rather than reloading the page
+  // (a plain form submit would lose the search, and the box has no name so nothing typed could reach the server anyway). Once
+  // ready, anything already typed is kept. `data-ready` lets a test wait for this moment instead of racing it.
+  const [ready, setReady] = useState(false);
+  const box = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const typed = box.current?.value ?? "";
+    if (typed && typed !== f.query) setDraft(typed);
+    setReady(true);
+    // Once, on mount: later the box is controlled.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const located = useMemo(() => (f.places && f.query.trim() ? locate(f.query, f.places) : null), [f.places, f.query]);
   const results = useMemo(() => (located?.ok && f.places ? nearestPlaces(located, f.places, f.type) : []), [located, f.places, f.type]);
@@ -66,14 +78,14 @@ export function Finder({ clinicAsOf, provenance }: { clinicAsOf: string | null; 
 
   return (
     <section aria-label="Find a clinic" className="pb-6 pt-3" data-testid="clinic-finder">
-      <form role="search" className="max-w-xl" data-testid="near-form" noValidate
+      <form role="search" className="max-w-xl" data-testid="near-form" data-ready={ready ? "" : undefined} noValidate
             onSubmit={(e) => { e.preventDefault(); search(text); setDraft(null); }}>
         <label htmlFor="near" className="block text-body font-semibold text-ink">Your postcode or area</label>
         <div className="mt-1 flex gap-2">
-          <input id="near" type="text" value={text} onChange={(e) => setDraft(e.target.value)} onFocus={ensurePlaces}
+          <input id="near" ref={box} type="text" value={text} onChange={(e) => setDraft(e.target.value)} onFocus={ensurePlaces}
                  placeholder="e.g. 460123 or Bedok" autoComplete="postal-code" enterKeyHint="search" maxLength={60}
                  className="min-h-12 w-full min-w-0 rounded-lg border border-control bg-surface px-3 text-body text-ink placeholder:text-muted" />
-          <button type="submit" className="min-h-12 shrink-0 rounded-lg bg-primary px-6 text-body font-semibold text-on-primary hover:bg-primary-strong">
+          <button type={ready ? "submit" : "button"} className="min-h-12 shrink-0 rounded-lg bg-primary px-6 text-body font-semibold text-on-primary hover:bg-primary-strong">
             Find clinics
           </button>
         </div>

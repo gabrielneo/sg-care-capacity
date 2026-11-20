@@ -15,7 +15,6 @@ import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 
 import { DesignedDiagram, designedName } from "@/components/docs/DesignedDiagram";
-import { MermaidDiagram } from "@/components/docs/MermaidDiagram";
 import { Term } from "@/components/terms/Term";
 
 import { siteHref } from "./docLinks";
@@ -57,7 +56,15 @@ function components(fromFile: string) {
       if (code?.props?.className?.includes("language-mermaid")) {
         const chart = String(code.props.children ?? "").trim();
         const designed = designedName(chart);
-        return designed ? <DesignedDiagram name={designed} /> : <MermaidDiagram chart={chart} />;
+        if (designed) return <DesignedDiagram name={designed} />;
+        // A Mermaid block with no designed version shows its source, drawn on the server: no diagram script ships to any page
+        // (every docs page and /find import this file). Every diagram in docs/ has a designed version (20 Nov 2026).
+        return (
+          <figure className="doc-diagram" data-testid="mermaid">
+            <pre tabIndex={0} aria-label="Diagram source">{chart}</pre>
+            <figcaption className="text-meta text-muted">The diagram&apos;s source; the same steps are written out in the text that follows.</figcaption>
+          </figure>
+        );
       }
       // Focusable so keyboard users can scroll a long line (WCAG 2.1.1).
       return <pre tabIndex={0} {...rest}>{children}</pre>;

@@ -68,3 +68,11 @@ export async function expectNoHorizontalScroll(page: Page) {
 export async function seen(locator: Locator): Promise<string> {
   return (await locator.innerText()).replace(/\s+/g, " ").trim();
 }
+
+/**
+ * Wait until the clinic finder can take a search (components/home/Finder.tsx sets data-ready once its script has loaded). Before
+ * that, Enter and "Find clinics" deliberately do nothing, so a test that types too early would wait for results that never come.
+ */
+export async function finderReady(page: Page) {
+  await page.locator('[data-testid="near-form"][data-ready]').waitFor();
+}

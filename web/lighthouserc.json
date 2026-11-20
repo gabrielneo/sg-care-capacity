@@ -16,7 +16,8 @@
         "skipAudits": [
           "uses-http2",
           "redirects-http"
-        ]
+        ],
+        "throttlingMethod": "devtools"
       }
     },
     "assert": {

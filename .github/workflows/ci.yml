@@ -153,7 +153,10 @@ jobs:
 
   lighthouse:
     # Lighthouse CI on the Overview: the real API on its fixture snapshot, the production build,
-    # Lighthouse's mobile emulation, three runs. Budgets in web/lighthouserc.json: LCP <= 2.5 s (target 2.0 s, a warning),
+    # Lighthouse's mobile emulation, three runs, with the slow-4G network and 4x CPU slowdown applied for real ("devtools"
+    # throttling) so LCP is the paint as measured, not Lantern's estimate: the estimate charged every async script requested
+    # before the paint (about 2.3 s on every page, 2.5 s on a slow runner) although the paint doesn't wait for them (measured
+    # about 1.5 s; 20 Nov 2026). Budgets in web/lighthouserc.json: LCP <= 2.5 s (target 2.0 s, a warning),
     # CLS <= 0.01, JavaScript <= 200 kB transferred.
     runs-on: ubuntu-latest
     defaults:
