@@ -8,8 +8,8 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
 
 | Workflow | When | What it does | Where its output lives |
 |---|---|---|---|
-| `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or **Actions → Weekly pipeline → Run workflow** | test → ingest → validate → transform → publish → restart the API and check it serves the new release | Raw history: release **`data-latest`** (`raw.tar.gz`). Snapshots: releases **`data-YYYY-MM-DD`** (newest 12 kept) |
-| `live.yml` | Every 3 hours (at :15) | NUHS live waits only, into a separate store | Release **`live-latest`** (`live.tar.gz`, `nuhs_live_waits.parquet`). Never a snapshot |
+| `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or **Actions → Weekly pipeline → Run workflow** | test → ingest → validate → transform → publish → restart the API and check it serves the new release | Raw history: release **`data-latest`** (`raw.tar.gz`) in the private `sg-care-capacity-raw` repo ([Raw store](#raw-store)). Snapshots: releases **`data-YYYY-MM-DD`** (newest 12 kept) |
+| `live.yml` | Every 3 hours (at :15) | NUHS live waits only, into a separate store | Release **`live-latest`** (`live.tar.gz`, `nuhs_live_waits.parquet`) in the private `sg-care-capacity-raw` repo. Never a snapshot |
 | `ci.yml` | Every pull request and push to `main` | ruff, mypy, unit tests; guards against committed binaries or `.env` | Nothing (checks only) |
 | `restart-api.yml` | By hand: **Actions → Restart API → Run workflow** | Restarts the API (Render deploy hook) and checks which data release it serves; or only checks | Nothing |
 
@@ -17,7 +17,7 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
 region), the website on [Vercel](https://vercel.com) (`web/`). The website calls the API from its
 server only, so the API allows no browser origins. See [Deploying](#deploying).
 
-- **`data-latest` is history, not a snapshot.** It holds every raw file ever downloaded. Never delete it:
+- **`data-latest` is history, not a snapshot,** and it lives in the private raw-store repo. It holds every raw file ever downloaded. Never delete that copy:
   without it the next weekly run starts from nothing, and MOH only shows its latest week.
 - **No database is ever committed to git.** Snapshots are release assets. CI fails if a `.duckdb`,
   `.parquet`, `.xlsx`, `.db` or `.sqlite` file is tracked.
@@ -25,11 +25,14 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
 ## The weekly release, step by step
 
 1. **Test**: the offline unit tests. A failure stops the run before any data is touched.
-2. **Restore** `data/raw` from `data-latest`. If that release exists but can't be downloaded, the run
-   stops: continuing with an empty folder would overwrite history.
+2. **Restore** `data/raw` from `data-latest` in the private raw store. If `RAW_STORE_TOKEN` can't read
+   that repo, or the release exists but can't be downloaded, the run stops: continuing with an empty
+   folder would overwrite history.
 3. **Ingest**: `sg-health reparse` rebuilds the clean tables from history, then `sg-health run` fetches
    this week's MOH, NUHS, data.gov.sg and SingStat (from the committed reference file). A source being
-   down doesn't stop the run.
+   down doesn't stop the run. With the `IA_ACCESS_KEY` and `IA_SECRET_KEY` secrets set, it then asks the
+   Wayback Machine to keep a dated copy of each MOH and NUHS file it fetched (a failed save never
+   stops the run).
 4. **Archive raw history, always**: if the manifest didn't shrink, `raw.tar.gz` is re-uploaded to
    `data-latest`, even if a later step fails.
 5. **Validate**: `sg-health validate`. If any check **blocks publishing** (an ERROR at file or dataset
@@ -43,6 +46,8 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
    - `analytics.duckdb`: **only** the marts plus `dq_results`, built fresh, checkpointed, read-only;
    - `parquet/<mart>.parquet` for every mart;
    - `planning_area_access.geojson`;
+   - `fetch_log.json`: every file ever downloaded (URL, SHA-256, size, time; no local paths) and the
+     Wayback copies requested, so readers can check a figure against its source;
    - `manifest.json`: `snapshot_id`, `as_of` per source, row counts, coverage per hospital, check
      summary, SHA-256 and size of every file, pipeline git commit.
 
@@ -51,7 +56,8 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
    `parquet/fct_ed_daily.parquet`. A second run on the same day **replaces** that day's files.
    The snapshot also carries `insights.json` and `marts.fct_insight` from the insight engine
    ([insights_method.md](insights_method.md)). Skipped detectors are logged in `dq_results` as
-   `insight.*`; they never block publishing.
+   `insight.*`; they never block publishing. Every file is then signed with GitHub's build
+   provenance (`gh attestation verify <file> -R gabrielneo/sg-care-capacity`).
 8. **Prune**: snapshot releases beyond the newest 12 are deleted (`sg-health snapshots-to-prune`).
    `data-latest`, `live-latest` and any other tag are never touched.
    **Restart the API**: the workflow calls Render's deploy hook, then waits (up to 20 minutes) until
@@ -255,7 +261,7 @@ run, find the first red step, then:
 | Failed step | What it means | What to do |
 |---|---|---|
 | **weekly: Test** | The code is broken; no data was touched | Fix the test failure, push, run the workflow by hand |
-| **weekly: Restore data/raw** | `data-latest` exists but didn't download (usually a GitHub hiccup) | Re-run the job. Never delete `data-latest` to "fix" it |
+| **weekly: Restore data/raw** (or **live: Restore**) | `RAW_STORE_TOKEN` is missing, expired or can't read the private repo; or `data-latest` didn't download (usually a GitHub hiccup) | Renew the token ([Raw store](#raw-store)), or re-run the job. Never delete `data-latest` to "fix" it |
 | **weekly: Ingest** | A source failed in a way that stopped the run (one source being down doesn't). Raw history was still archived | Read the `source_summary` log lines; see [When publishing is blocked](#when-publishing-is-blocked) for parser problems |
 | **weekly: Validate**, with a `data-quality` issue | Publishing is blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked). The site keeps the last release |
 | **weekly: Transform / Publish** | A SQL or packaging error | Reproduce locally (`sg-health reparse && sg-health transform && sg-health publish`), fix, push, re-run |
@@ -264,12 +270,31 @@ run, find the first red step, then:
 | **live** | One NUHS reading was missed | Usually nothing: the next run is 3 hours later. If it keeps failing, NUHS changed its page: see the NUHS parser and its tests |
 | *No run at all* | GitHub disabled the schedule after 60 days without repository activity | **Actions → *workflow* → Enable workflow**, then run it by hand |
 
+## Raw store
+
+The raw downloads are kept in the **private** `sg-care-capacity-raw` repository, not on this repo's public releases:
+they are unchanged copies of source files, and NUHS's terms (and MOH's, for its non-dataset content)
+don't allow re-publishing them. The public snapshots carry `fetch_log.json` instead, so anyone can
+fetch a file from its source and check its SHA-256 ([methodology.md](methodology.md), "Verify a figure").
+
+- **Secret `RAW_STORE_TOKEN`:** a fine-grained token with **Contents: Read and write** on
+  `sg-care-capacity-raw` only. When it expires, both workflows stop at their Restore step: generate a new one with the
+  same settings and replace the secret.
+- **Optional secrets `IA_ACCESS_KEY`, `IA_SECRET_KEY`:** Internet Archive Save Page Now keys
+  (archive.org/account/s3.php). Without them no Wayback copies are requested.
+- **Moving off the public releases (one time):** the first run with the token finds no private release,
+  restores the old public copy and uploads it to the private repo (the log warns). After one
+  successful weekly and one live run, delete the `data-latest` and `live-latest` releases from this
+  repository.
+- `.github/scripts/raw-store.sh` does the restore and upload for both workflows, and refuses to run if
+  the token can't read the repo or the repo isn't private.
+
 ## Live waits store
 
 `live.yml` keeps every NUHS reading in its own raw store. To work with it locally:
 
 ```bash
-mkdir -p data-live && gh release download live-latest --pattern live.tar.gz && tar -xzf live.tar.gz -C data-live
+mkdir -p data-live && gh release download live-latest -R gabrielneo/sg-care-capacity-raw --pattern live.tar.gz && tar -xzf live.tar.gz -C data-live
 SG_HEALTH_DATA_DIR=$PWD/data-live sg-health reparse --no-transform --no-report
 ```
 
@@ -280,4 +305,4 @@ Or just read `nuhs_live_waits.parquet` from the same release.
 - **GitHub disables scheduled workflows after 60 days without repository activity** (it emails first).
   Re-enable under *Actions → <workflow> → Enable workflow*, or push any commit.
 - **Notifications:** make sure *Settings → Notifications → Actions* emails you about failed workflows.
-- **Restore raw history locally:** `gh release download data-latest --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data && sg-health reparse`.
+- **Restore raw history locally:** `gh release download data-latest -R gabrielneo/sg-care-capacity-raw --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data && sg-health reparse`.

@@ -183,11 +183,11 @@ Three GitHub Actions workflows. Nothing is ever committed back to the repo, and 
 | Workflow | When | What it does |
 |---|---|---|
 | `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or run by hand | test → ingest → validate → transform → publish |
-| `live.yml` | Every 3 hours | NUHS live waits only, into a separate store (`live-latest` release); never publishes a snapshot |
+| `live.yml` | Every 3 hours | NUHS live waits only, into a separate store (`live-latest` release in the private `sg-care-capacity-raw` repo); never publishes a snapshot |
 | `ci.yml` | Pull requests and pushes to `main` | ruff, mypy, unit tests; fails if a binary database or `.env` is tracked |
 
 **Weekly run:**
-- Raw history (`data/raw/`) is restored from, and re-uploaded to, `raw.tar.gz` on the rolling `data-latest` release.
+- Raw history (`data/raw/`) is restored from, and re-uploaded to, `raw.tar.gz` on the rolling `data-latest` release of the private `sg-care-capacity-raw` repo (some sources' terms don't allow re-publishing the files; see the runbook, "Raw store").
 - The archive is uploaded **before** validation, so a failed check can never lose raw history.
 - If validation finds a check that blocks publishing, nothing is published and an issue labelled `data-quality` lists the failures. The site keeps the last good snapshot.
 - Otherwise `sg-health publish` writes a snapshot and the job uploads it as a release tagged `data-YYYY-MM-DD`. Only the newest 12 are kept.
@@ -196,11 +196,12 @@ Three GitHub Actions workflows. Nothing is ever committed back to the repo, and 
 - `analytics.duckdb`: the marts plus `dq_results`, read-only.
 - One Parquet file per mart.
 - `planning_area_access.geojson`.
+- `fetch_log.json`: every download (URL, SHA-256, size, time) and the Wayback copies requested.
 - `manifest.json`: `as_of` per source, row counts, coverage per hospital, check summary, SHA-256 of every file, and the git commit.
 
 ```bash
 sg-health publish --out data/build/publish     # validates first; exit 1 = blocked
-gh release download data-latest --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data   # raw history locally
+gh release download data-latest -R gabrielneo/sg-care-capacity-raw --pattern raw.tar.gz && mkdir -p data && tar -xzf raw.tar.gz -C data   # raw history locally
 ```
 
 **Setup:**

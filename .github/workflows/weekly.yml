@@ -1,7 +1,8 @@
 name: Weekly pipeline
 
 # test -> ingest -> validate -> transform -> publish. See docs/runbook.md.
-# Raw history (data/raw) lives as raw.tar.gz on the rolling `data-latest` release and is archived
+# Raw history (data/raw) lives as raw.tar.gz on the rolling `data-latest` release of the PRIVATE
+# <repo>-raw repository (.github/scripts/raw-store.sh) and is archived
 # even when later steps fail. A snapshot is published as release data-YYYY-MM-DD only if
 # validation passes; otherwise an issue lists the failing checks. Only the newest 12 snapshots
 # are kept.
@@ -17,7 +18,9 @@ on:
         default: "moh,live,opendata,singstat"
 
 permissions:
-  contents: write               # releases (raw archive and snapshots)
+  contents: write               # snapshot releases (the raw archive is in the private raw store)
+  id-token: write               # sign the snapshot's files (build provenance)
+  attestations: write
   issues: write                 # open/update the issue when validation fails
 
 concurrency:
@@ -27,6 +30,7 @@ concurrency:
 env:
   RAW_RELEASE_TAG: data-latest
   RAW_ASSET: raw.tar.gz
+  RAW_STORE_REPO: ${{ github.repository }}-raw
   PUBLISH_DIR: data/build/publish
   KEEP_SNAPSHOTS: "12"
 
@@ -62,21 +66,16 @@ jobs:
         run: pytest -q pipeline/tests
 
       # -------------------------------------------------------------- ingest
-      - name: Restore data/raw from the release
+      - name: Restore data/raw from the private raw store
         id: restore
+        env:
+          RAW_STORE_TOKEN: ${{ secrets.RAW_STORE_TOKEN }}
+          PUBLIC_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p data
-          if gh release view "$RAW_RELEASE_TAG" >/dev/null 2>&1; then
-            # The release exists, so the archive must download: carrying on with an empty
-            # data/raw would overwrite history on upload.
-            gh release download "$RAW_RELEASE_TAG" --pattern "$RAW_ASSET" --dir "$RUNNER_TEMP"
-            tar -xzf "$RUNNER_TEMP/$RAW_ASSET" -C data
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No $RAW_RELEASE_TAG release yet: starting with an empty data/raw."
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          # Fails if the token can't read the store: carrying on with an empty data/raw would
+          # overwrite history on upload.
+          .github/scripts/raw-store.sh restore "$RAW_RELEASE_TAG" "$RAW_ASSET" data
           before=$(grep -c . data/raw/manifest.jsonl 2>/dev/null || true)
           echo "manifest_lines=${before:-0}" >> "$GITHUB_OUTPUT"
 
@@ -85,6 +84,9 @@ jobs:
       - name: Ingest
         id: ingest
         continue-on-error: true
+        env:
+          IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}               # optional; Wayback copies as evidence
+          IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
         run: |
           set -euo pipefail
           sg-health reparse --no-transform --no-report
@@ -104,17 +106,14 @@ jobs:
             exit 1
           fi
 
-      - name: Upload data/raw to the release
+      - name: Upload data/raw to the private raw store
         if: ${{ !cancelled() && steps.restore.outcome == 'success' && steps.grew.outcome == 'success' }}
+        env:
+          RAW_STORE_TOKEN: ${{ secrets.RAW_STORE_TOKEN }}
         run: |
           set -euo pipefail
           tar -czf "$RUNNER_TEMP/$RAW_ASSET" -C data raw
-          if [ "${{ steps.restore.outputs.exists }}" != "true" ]; then
-            gh release create "$RAW_RELEASE_TAG" --latest=false \
-              --title "Raw landing zone (rolling)" \
-              --notes "data/raw from the weekly pipeline: every downloaded file, unchanged, plus manifest.jsonl. Replaced on every run. Restore with: tar -xzf raw.tar.gz -C data && sg-health reparse"
-          fi
-          gh release upload "$RAW_RELEASE_TAG" "$RUNNER_TEMP/$RAW_ASSET" --clobber
+          .github/scripts/raw-store.sh upload "$RAW_RELEASE_TAG" "Raw landing zone (rolling)" "$RUNNER_TEMP/$RAW_ASSET"
 
       # ------------------------------------------------------------ validate
       - name: Validate
@@ -198,6 +197,18 @@ jobs:
           else
             gh release create "$tag" "${files[@]}" --title "Data snapshot ${tag#data-}" --notes-file "$RUNNER_TEMP/notes.md"
           fi
+
+      # Anyone can check a file came from this workflow at this commit, unedited:
+      #   gh attestation verify <file> -R <this repo>        (docs/methodology.md, "Verify a figure")
+      - name: Sign the snapshot's files
+        if: ${{ steps.upload.outcome == 'success' }}
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            ${{ env.PUBLISH_DIR }}/*.json
+            ${{ env.PUBLISH_DIR }}/*.duckdb
+            ${{ env.PUBLISH_DIR }}/*.geojson
+            ${{ env.PUBLISH_DIR }}/parquet/*.parquet
 
       - name: Keep only the newest snapshots
         if: ${{ steps.publish.outcome == 'success' }}

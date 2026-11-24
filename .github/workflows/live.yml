@@ -1,7 +1,9 @@
 name: Live ED waits (every 3 hours)
 
 # NUHS live wait estimates only, appended to a small separate store: its own raw zone, kept as
-# live.tar.gz on the rolling `live-latest` release, plus nuhs_live_waits.parquet for convenience.
+# live.tar.gz on the rolling `live-latest` release of the PRIVATE <repo>-raw repository, plus
+# nuhs_live_waits.parquet for convenience. Private because NUHS's terms don't allow re-publishing
+# its page (.github/scripts/raw-store.sh).
 # Never publishes a data-YYYY-MM-DD snapshot and never touches the weekly raw archive.
 
 on:
@@ -10,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write               # the live-latest release only
+  contents: read                # the store is in the private raw-store repository
 
 concurrency:
   group: live-store
@@ -19,6 +21,7 @@ concurrency:
 env:
   LIVE_TAG: live-latest
   LIVE_ASSET: live.tar.gz
+  RAW_STORE_REPO: ${{ github.repository }}-raw
   SG_HEALTH_DATA_DIR: ${{ github.workspace }}/data-live     # separate from the weekly data/
 
 jobs:
@@ -44,16 +47,12 @@ jobs:
 
       - name: Restore the live store
         id: restore
+        env:
+          RAW_STORE_TOKEN: ${{ secrets.RAW_STORE_TOKEN }}
+          PUBLIC_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p "$SG_HEALTH_DATA_DIR"
-          if gh release view "$LIVE_TAG" >/dev/null 2>&1; then
-            gh release download "$LIVE_TAG" --pattern "$LIVE_ASSET" --dir "$RUNNER_TEMP"
-            tar -xzf "$RUNNER_TEMP/$LIVE_ASSET" -C "$SG_HEALTH_DATA_DIR"
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          .github/scripts/raw-store.sh restore "$LIVE_TAG" "$LIVE_ASSET" "$SG_HEALTH_DATA_DIR"
           before=$(grep -c . "$SG_HEALTH_DATA_DIR/raw/manifest.jsonl" 2>/dev/null || true)
           echo "manifest_lines=${before:-0}" >> "$GITHUB_OUTPUT"
 
@@ -76,6 +75,8 @@ jobs:
 
       - name: Upload the live store
         if: ${{ !cancelled() && steps.restore.outcome == 'success' && steps.grew.outcome == 'success' }}
+        env:
+          RAW_STORE_TOKEN: ${{ secrets.RAW_STORE_TOKEN }}
         run: |
           set -euo pipefail
           tar -czf "$RUNNER_TEMP/$LIVE_ASSET" -C "$SG_HEALTH_DATA_DIR" raw
@@ -87,11 +88,8 @@ jobs:
           con.execute(f"COPY (SELECT * FROM nuhs_live_waits ORDER BY snapshot_timestamp, site_name, department) TO '{out}' (FORMAT parquet)")
           print("rows:", con.execute("SELECT count(*) FROM nuhs_live_waits").fetchall()[0][0])
           PY
-          if [ "${{ steps.restore.outputs.exists }}" != "true" ]; then
-            gh release create "$LIVE_TAG" --latest=false --title "Live ED waits store (rolling)" \
-              --notes "NUHS live wait estimates every 3 hours: live.tar.gz is the raw store (restore with tar -xzf live.tar.gz -C <dir>, then SG_HEALTH_DATA_DIR=<dir> sg-health reparse); nuhs_live_waits.parquet is every reading so far. Not a data snapshot."
-          fi
-          gh release upload "$LIVE_TAG" "$RUNNER_TEMP/$LIVE_ASSET" "$RUNNER_TEMP/nuhs_live_waits.parquet" --clobber
+          .github/scripts/raw-store.sh upload "$LIVE_TAG" "Live ED waits store (rolling)" \
+            "$RUNNER_TEMP/$LIVE_ASSET" "$RUNNER_TEMP/nuhs_live_waits.parquet"
 
       - name: Fail the job if the fetch failed
         if: ${{ !cancelled() && steps.fetch.outcome == 'failure' }}
