@@ -30,7 +30,8 @@ test.describe("Findings: one band per finding", () => {
     await expect(hero.getByTestId("hero-summary")).toHaveText(/^Three findings on emergency department bed waits/);
     await expect(hero.getByTestId("provenance-line")).toHaveText(AS_OF);
     await expect(hero.getByTestId("finding-window")).toHaveText(/^ · This finding uses data to \d{1,2} [A-Z][a-z]{2} \d{4}$/);
-    await expect(hero.getByTestId("freshness-badge")).toHaveText(/^Due an update · weekly$/);       // the date is the line's, stated once
+    // The level depends on today's date against the fixture's; the date itself is the line's, stated once.
+    await expect(hero.getByTestId("freshness-badge")).toHaveText(/^(Up to date|Due an update|Overdue) · weekly$/);
     // The big number is Finding 1's, once: the old hero callout is gone.
     await expect(page.getByTestId("hero-number")).toHaveCount(0);
     await expect(page.getByTestId("countup")).toHaveCount(0);
