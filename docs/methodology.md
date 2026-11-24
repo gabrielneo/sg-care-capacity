@@ -59,8 +59,10 @@ other information about any person.
 The raw files downloaded from these sources are kept privately, not re-published: some sources' terms
 don't allow it. You can check any of them against its source instead (next section).
 
-Pages on the MOH, NUHS and SingStat websites are cited by name and date rather than linked, because
-their terms ask for permission before linking. Every data file's full address is in `fetch_log.json`.
+Pages on Singapore government, university and public-healthcare websites are cited by name and date
+rather than linked, because their terms ask for permission before linking. The only such links kept
+are the licence page and the map credit, which the licences ask for. Every data file's full address
+is in `fetch_log.json`.
 
 ## Verify a figure
 

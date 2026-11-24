@@ -29,6 +29,7 @@ describe("GlossaryList", () => {
     render(<GlossaryList terms={[pending, ...GLOSSARY]} />);
     expect(screen.getByText(/TODO\(me\): one-sentence definition/)).toHaveClass("todo-me");
     const superAged = screen.getByText("Super-aged society").closest("div")!;
-    expect(within(superAged).getByRole("link", { name: "Source" })).toHaveAttribute("href", expect.stringContaining("population.gov.sg"));
+    expect(within(superAged).queryByRole("link", { name: /Source/ })).toBeNull();       // cited, not linked (lib/sourceLinks.ts)
+    expect(within(superAged).getByText("From population.gov.sg")).toHaveAttribute("title", expect.stringContaining("population.gov.sg"));
   });
 });

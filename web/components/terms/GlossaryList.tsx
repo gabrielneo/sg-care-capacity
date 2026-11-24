@@ -3,6 +3,7 @@
 import { useId, useMemo, useState } from "react";
 
 import { firstUseText, type GlossaryEntry, selfNamed } from "@/lib/glossary";
+import { linkable } from "@/lib/sourceLinks";
 
 const GROUPS: { category: GlossaryEntry["category"]; title: string; intro: string }[] = [
   { category: "keep_abbreviation", title: "Abbreviations we keep",
@@ -58,7 +59,8 @@ export function GlossaryList({ terms }: { terms: readonly GlossaryEntry[] }) {
                     )}
                     {t.public_wording ? <span className="mt-1 block text-muted">Public pages say: {t.public_wording}</span> : null}
                     {/* Inline, after the definition: on its own line it read as a term with no definition. */}
-                    {t.source_url ? <>{" "}<a href={t.source_url} className="text-meta">Source</a></> : null}
+                    {t.source_url ? <>{" "}{linkable(t.source_url) ? <a href={t.source_url} className="text-meta">Source</a>
+                      : <span className="text-meta" title={t.source_url}>From {new URL(t.source_url).hostname.replace(/^www\./, "")}</span>}</> : null}
                   </dd>
                 </div>
               ))}

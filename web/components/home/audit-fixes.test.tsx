@@ -7,7 +7,7 @@ import { Missing } from "@/components/Missing";
 import { LocationSource } from "./LocationSource";
 
 describe("LocationSource (audit L3)", () => {
-  const pin = { latitude: 1.3, location_checked: "2026-11-09", location_source_url: "https://www.onemap.gov.sg/api/common/elastic/search" };
+  const pin = { latitude: 1.3, location_checked: "2026-11-09" };
 
   it("names the source and the date the pins were checked", () => {
     render(<LocationSource hospitals={[pin, { ...pin, location_checked: "2026-11-01" }]} />);
@@ -17,7 +17,7 @@ describe("LocationSource (audit L3)", () => {
   });
 
   it("says nothing when a release has no pins: missing stays missing", () => {
-    const { container } = render(<LocationSource hospitals={[{ latitude: null, location_checked: null, location_source_url: null }]} />);
+    const { container } = render(<LocationSource hospitals={[{ latitude: null, location_checked: null }]} />);
     expect(container).toBeEmptyDOMElement();
   });
 });

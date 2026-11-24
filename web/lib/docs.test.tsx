@@ -65,11 +65,11 @@ describe("the real docs render", () => {
     expect(screen.getAllByRole("link").length).toBeGreaterThanOrEqual(5);
   });
 
-  it("cites MOH and NUHS pages by name instead of linking, and keeps other links (lib/sourceLinks.ts)", async () => {
+  it("cites public-sector pages by name instead of linking, and keeps the site's own links (lib/sourceLinks.ts)", async () => {
     render(<>{(await renderDoc("case_study.md")).content}</>);
     const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "");
-    expect(hrefs.filter((h) => /moh\.gov\.sg|nuhs\.edu\.sg|singstat\.gov\.sg/.test(h))).toEqual([]);
-    expect(hrefs.some((h) => h.includes("ntu.edu.sg"))).toBe(true);
+    expect(hrefs.filter((h) => /\.(gov|edu)\.sg/.test(h))).toEqual([]);
+    expect(hrefs.some((h) => h.startsWith("/"))).toBe(true);
     for (const cite of screen.getAllByText("Getting medical help")) {
       expect(cite).toHaveAttribute("title", "https://www.moh.gov.sg/seeking-healthcare/getting-medical-help/");
     }

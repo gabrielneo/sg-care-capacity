@@ -108,7 +108,7 @@ export function WhyNow({ years, meta }: { years: PopulationYear[]; meta: Meta })
             That is {share.latest.residents_65plus.toLocaleString("en-SG")} of {share.latest.residents_total.toLocaleString("en-SG")}{" "}
             residents (citizens and permanent residents). A <Term id="super_aged">super-aged society</Term> is{" "}
             {lowerFirst(term("super_aged").plain_definition).replace(/^a society /, "one ").replace(/\.$/, "")}.{" "}
-            {CITIZENS_SUPER_AGED} (<a href={term("super_aged").source_url ?? undefined}>population.gov.sg</a>).
+            {CITIZENS_SUPER_AGED} (<span title={term("super_aged").source_url ?? undefined}>population.gov.sg</span>).
             {share.earliest ? ` It was ${percentText(share.earliest.share_65plus)} in ${share.earliest.year}.` : null}
           </p>
           <div className="max-w-3xl">
