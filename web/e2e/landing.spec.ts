@@ -20,7 +20,7 @@ test.describe("Landing", () => {
     await expect(page.getByTestId("cta-findings")).toHaveAttribute("href", "/findings");
     await expect(page.getByTestId("emergency-note")).toHaveCount(0);
     await expect(page.getByTestId("footer-notice").getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
-    await expect(page.getByTestId("landing-hero").getByTestId("not-advice")).toContainText("not medical advice");
+    await expect(page.getByTestId("landing-hero").getByTestId("not-advice")).toContainText("isn't medical advice");
   });
 
   test("the hero states the engine's top finding word for word, and its chart has a scale and both end values", async ({ page, request }) => {
