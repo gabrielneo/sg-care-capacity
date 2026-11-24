@@ -19,7 +19,7 @@ import { Term } from "@/components/terms/Term";
 
 import { siteHref } from "./docLinks";
 import { segmentText } from "./glossary";
-import { type DocStats, rehypeGlossary, rehypeHeadings, rehypeTodo } from "./rehypeDocs";
+import { type DocStats, rehypeCiteOnly, rehypeGlossary, rehypeHeadings, rehypeTodo } from "./rehypeDocs";
 
 export const DOCS_DIR = path.resolve(process.cwd(), "..", "docs");
 
@@ -78,7 +78,7 @@ export async function renderMarkdown(source: string, fromFile: string): Promise<
     ...runtime,
     format: "md",
     remarkPlugins: [remarkGfm],
-    rehypePlugins: [rehypeSlug, rehypeTodo(stats), rehypeHeadings(stats), rehypeGlossary(segmentText)],
+    rehypePlugins: [rehypeSlug, rehypeCiteOnly, rehypeTodo(stats), rehypeHeadings(stats), rehypeGlossary(segmentText)],
   });
   return { ...stats, content: <Content components={components(fromFile)} /> };
 }

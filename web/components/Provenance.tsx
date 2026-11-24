@@ -5,6 +5,7 @@ import type { Meta, Source } from "@/lib/api/types";
 import { formatAsOf, parseAsOf } from "@/lib/dates";
 import { cadenceOf } from "@/lib/freshness";
 import { sourceDates } from "@/lib/provenance";
+import { linkable } from "@/lib/sourceLinks";
 
 import { FreshnessBadge } from "./FreshnessBadge";
 import { Glossed } from "./terms/Glossed";
@@ -118,12 +119,12 @@ export function Provenance({
           {publishers(meta.sources).map((p, i) => (
             <span key={p.name}>
               {i > 0 ? ", " : null}
-              {p.url ? (
-                <a href={p.url} title={p.full} className="underline">
+              {linkable(p.url) ? (
+                <a href={p.url ?? undefined} title={p.full} className="underline">
                   <Glossed text={p.name} plain />
                 </a>
               ) : (
-                <span title={p.full}><Glossed text={p.name} /></span>
+                <span title={p.url ?? p.full}><Glossed text={p.name} /></span>
               )}
             </span>
           ))}

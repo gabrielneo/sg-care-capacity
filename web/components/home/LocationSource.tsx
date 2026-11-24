@@ -6,11 +6,10 @@ export function LocationSource({ hospitals }: { hospitals: Pick<Hospital, "latit
   const pinned = hospitals.filter((h) => h.latitude != null && h.location_checked);
   if (!pinned.length) return null;
   const checked = pinned.map((h) => h.location_checked as string).sort().at(-1) as string;
-  const url = pinned.find((h) => h.location_source_url)?.location_source_url ?? null;
   return (
     <p className="mt-2 text-small text-muted" data-testid="location-source">
       Hospital locations: map pins from{" "}
-      {url ? <a href={url}>OneMap</a> : "OneMap"} (Singapore Land Authority), checked {formatAsOf(checked)}.
+      OneMap (Singapore Land Authority), checked {formatAsOf(checked)}.
     </p>
   );
 }

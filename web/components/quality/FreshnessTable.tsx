@@ -3,6 +3,7 @@ import type { Source } from "@/lib/api/types";
 import { formatAsOf } from "@/lib/dates";
 import { BASIS } from "@/lib/copy";
 import { cadenceOf, datasetFreshness, ruleText } from "@/lib/freshness";
+import { linkable } from "@/lib/sourceLinks";
 
 import { Glossed } from "../terms/Glossed";
 
@@ -25,7 +26,7 @@ export function FreshnessTable({ sources }: { sources: Source[] }) {
             return (
               <tr key={s.id} className="border-b border-line align-top">
                 <th scope="row" className="py-2 pr-3 text-left font-normal">
-                  {s.url ? <a href={s.url}><Glossed text={s.name} plain /></a> : <Glossed text={s.name} />}
+                  {linkable(s.url) ? <a href={s.url ?? undefined}><Glossed text={s.name} plain /></a> : <span title={s.url ?? undefined}><Glossed text={s.name} /></span>}
                 </th>
                 <td className="py-2 pr-3 tabular-nums">{s.as_of ? <Glossed text={formatAsOf(s.as_of, { withTime: cadence === "moment" })} /> : "Unknown"}</td>
                 <td className="py-2 pr-3 text-muted">{BASIS[s.id] ?? ""}</td>

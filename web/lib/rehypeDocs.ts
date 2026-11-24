@@ -8,6 +8,8 @@ import type { Element, Root } from "hast";
 import { toString } from "hast-util-to-string";
 import { SKIP, visit } from "unist-util-visit";
 
+import { linkable } from "./sourceLinks";
+
 export interface DocStats {
   todos: number;
   headings: { id: string; text: string }[];
@@ -36,6 +38,19 @@ export function rehypeHeadings(stats: DocStats) {
     visit(tree, "element", (node: Element) => {
       if (node.tagName === "h2" && typeof node.properties.id === "string") {
         stats.headings.push({ id: node.properties.id, text: toString(node) });
+      }
+    });
+  };
+}
+
+/** A link to a site that asks for permission before linking (lib/sourceLinks.ts) becomes a citation: its text, with the address as a tooltip. */
+export function rehypeCiteOnly() {
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element) => {
+      const href = node.tagName === "a" ? node.properties.href : undefined;
+      if (typeof href === "string" && !linkable(href)) {
+        node.tagName = "span";
+        node.properties = { title: href, "data-cited": "" };
       }
     });
   };

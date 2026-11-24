@@ -13,7 +13,7 @@ describe("LocationSource (audit L3)", () => {
     render(<LocationSource hospitals={[pin, { ...pin, location_checked: "2026-11-01" }]} />);
     const line = screen.getByTestId("location-source");
     expect(line).toHaveTextContent("Hospital locations: map pins from OneMap (Singapore Land Authority), checked 9 Nov 2026.");
-    expect(line.querySelector("a")).toHaveAttribute("href", pin.location_source_url);
+    expect(line.querySelector("a")).toBeNull();          // OneMap allows links to its home page only (lib/sourceLinks.ts)
   });
 
   it("says nothing when a release has no pins: missing stays missing", () => {

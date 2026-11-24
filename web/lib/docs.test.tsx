@@ -65,6 +65,16 @@ describe("the real docs render", () => {
     expect(screen.getAllByRole("link").length).toBeGreaterThanOrEqual(5);
   });
 
+  it("cites MOH and NUHS pages by name instead of linking, and keeps other links (lib/sourceLinks.ts)", async () => {
+    render(<>{(await renderDoc("case_study.md")).content}</>);
+    const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "");
+    expect(hrefs.filter((h) => /moh\.gov\.sg|nuhs\.edu\.sg|singstat\.gov\.sg/.test(h))).toEqual([]);
+    expect(hrefs.some((h) => h.includes("ntu.edu.sg"))).toBe(true);
+    for (const cite of screen.getAllByText("Getting medical help")) {
+      expect(cite).toHaveAttribute("title", "https://www.moh.gov.sg/seeking-healthcare/getting-medical-help/");
+    }
+  });
+
   it("the case study and the methodology have no TODO(me) left", async () => {
     expect((await renderDoc("case_study.md")).todos).toBe(0);                // the author has written every section
     expect((await renderDoc("methodology.md")).todos).toBe(0);
