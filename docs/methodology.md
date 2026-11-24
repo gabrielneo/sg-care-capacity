@@ -25,6 +25,66 @@ populations. **No personal or patient-level data is collected.**
 Every figure on the site shows the date its data was current (`as_of`) and its source. The Data
 Quality page shows each source's current date and how fresh it is for how often it changes.
 
+## Licences and attribution
+
+This is an independent, non-commercial project. It is not affiliated with or endorsed by MOH, NUHS,
+SingStat, SLA or any other agency, and nothing on it is official.
+
+**Singapore Open Data Licence.** The datasets below are used under its terms. Each is downloaded
+every week; the date of each download is in `fetch_log.json` in every data release.
+
+- Contains information from CHAS Clinics; Master Plan 2025 Planning Area Boundary (No Sea); Cervical
+  Screening Centres; Singapore Public Holidays; and Hospital Admissions and Public Sector Outpatient
+  Attendances, accessed from data.gov.sg, which is made available under the terms of the
+  [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
+- Contains information from Waiting Time for Admission to Ward and Attendances at Emergency Medicine
+  Departments, accessed from the Ministry of Health's website, which is made available under the terms
+  of the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
+
+**Other sources.**
+
+- **NUHS:** the waiting estimates are figures read from NUHS's public ED waiting time page. The page
+  itself is not copied onto this site or into its data releases.
+- **SingStat:** Source: Department of Statistics Singapore, resident population by planning area.
+- **OneMap:** the map and the hospital map pins come from OneMap, © Singapore Land Authority. The map
+  shows OneMap's own attribution.
+
+The raw files downloaded from these sources are kept privately, not re-published: some sources' terms
+don't allow it. You can check any of them against its source instead (next section).
+
+## Verify a figure
+
+Every data release (`data-YYYY-MM-DD` on GitHub) lets you check a figure without trusting this site.
+
+1. **Find the file.** Every row in the data has a `source_url` and a `source_sha256`. That pair is also
+   in `fetch_log.json` with when it was downloaded. The SHA-256 is a fingerprint: any change to a
+   file changes it.
+2. **Download it from the source yourself and compare.** For example, MOH's bed-wait workbook for
+   week 44 of 2026 was downloaded on 16 Nov 2026:
+
+   ```bash
+   curl -sL -o wt.xlsx "https://isomer-user-content.by.gov.sg/3/c0b55002-fd32-4451-9456-3beb7ea1bed1/WT%20for%20Admission%20to%20Ward_week44Y2026.xlsx"
+   shasum -a 256 wt.xlsx
+   # b5fe18be6a50505ced2211a32bd79f05efdc189495028022f89498dd2fcfb8fc  (as in fetch_log.json)
+   ```
+
+   If the source has since replaced or removed the file, use the Wayback Machine copy listed under
+   `archive_captures` in `fetch_log.json`. The Internet Archive made that copy itself, a few seconds
+   after this site's download, so it doesn't depend on this site. The NUHS page changes all the time,
+   so its copy can show slightly different figures.
+3. **Check the release wasn't edited.** Each file in a release is signed by the GitHub workflow that
+   built it:
+
+   ```bash
+   gh attestation verify fct_ed_daily.parquet -R gabrielneo/sg-care-capacity
+   ```
+
+   This shows the workflow and the commit that built it. A file edited by hand fails the check.
+   `manifest.json` also lists the SHA-256 of every file in the release.
+
+Releases up to `data-2026-11-22` have no `fetch_log.json` and no signatures. Their rows still carry
+`source_url` and `source_sha256`.
+
 ## From download to published figure
 
 1. **Raw landing zone.** Every downloaded file is stored unchanged under `data/raw/<source>/<date>/`,

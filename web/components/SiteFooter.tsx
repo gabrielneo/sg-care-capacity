@@ -51,6 +51,10 @@ export function SiteFooter() {
               <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
               Page views are counted without cookies, and searches aren&apos;t recorded.
             </p>
+            <p className="mt-2 max-w-prose" data-testid="footer-licence">
+              An independent project, not affiliated with or endorsed by any of these agencies. Data used under the{" "}
+              <Link href="/methodology#licences-and-attribution">Singapore Open Data Licence</Link> and each source&apos;s terms.
+            </p>
             <Links>
               {item("/methodology", "How the figures are made")}
               {item("/data-quality", "Data quality")}

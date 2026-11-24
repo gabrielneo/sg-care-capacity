@@ -33,6 +33,11 @@ describe("SiteFooter", () => {
     expect(about.getByRole("link", { name: /60 seconds/ })).toHaveAttribute("href", "/project");
     const help = within(columns[2]!);
     expect(help.getByTestId("footer-notice")).toHaveTextContent(NOTICE_995_LINE);
+    // The Open Data Licence asks for a conspicuous notice; the agencies' terms forbid implying endorsement.
+    const licence = screen.getByTestId("footer-licence");
+    expect(licence).toHaveTextContent(/not affiliated with or endorsed by/);
+    expect(within(licence).getByRole("link", { name: "Singapore Open Data Licence" }))
+      .toHaveAttribute("href", "/methodology#licences-and-attribution");
     expect(help.getByRole("link", { name: "Glossary" })).toHaveAttribute("href", "/glossary");
     expect(within(columns[0]!).getByText(/No personal or patient-level data/)).toBeInTheDocument();
     expect(screen.queryAllByRole("heading")).toHaveLength(0);   // a footer adds nothing to the page's outline
