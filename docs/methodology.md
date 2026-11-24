@@ -71,7 +71,9 @@ Every data release (`data-YYYY-MM-DD` on GitHub) lets you check a figure without
 
 1. **Find the file.** Every row in the data has a `source_url` and a `source_sha256`. That pair is also
    in `fetch_log.json` with when it was downloaded. The SHA-256 is a fingerprint: any change to a
-   file changes it.
+   file changes it. (Three small reference tables, the hospital list, the measure definitions and the
+   event dates, are built from this project's own published code instead; their fingerprint is of
+   that code.)
 2. **Download it from the source yourself and compare.** For example, MOH's bed-wait workbook for
    week 44 of 2026 was downloaded on 16 Nov 2026:
 
