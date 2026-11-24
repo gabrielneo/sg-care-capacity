@@ -29,7 +29,8 @@ diffs), made the repository grow every week, and mixed tested code with untested
   - the pipeline's git commit.
 - **Publishing refuses** if any check that blocks publishing fails (see [0002](0002-validation-gate.md)).
 - **Each snapshot is a GitHub Release** tagged `data-YYYY-MM-DD`. The newest 12 are kept.
-  Raw downloads are kept separately, as `raw.tar.gz` on a rolling `data-latest` release.
+  Raw downloads are kept separately, as `raw.tar.gz` on a rolling `data-latest` release (since
+  24 Nov 2026 in the private `sg-care-capacity-raw` repository; see the runbook, "Raw store").
 - **The API serves exactly one snapshot**, named by `DATA_SNAPSHOT`. The default is the newest
   dated release that isn't marked pre-release. At startup the API checks every file's hash and
   every mart's row count against the manifest, then opens the database `read_only=True`.

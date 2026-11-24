@@ -40,14 +40,21 @@ every week; the date of each download is in `fetch_log.json` in every data relea
 - Contains information from Waiting Time for Admission to Ward and Attendances at Emergency Medicine
   Departments, accessed from the Ministry of Health's website, which is made available under the terms
   of the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
+- Contains information from Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling,
+  accessed from the Department of Statistics Singapore (SingStat), which is made available under the
+  terms of the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
+- Contains information from OneMap's search service (the hospital map pins), accessed from the
+  Singapore Land Authority (SLA), which is made available under the terms of the
+  [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
 
 **Other sources.**
 
 - **NUHS:** the waiting estimates are figures read from NUHS's public ED waiting time page. The page
   itself is not copied onto this site or into its data releases.
-- **SingStat:** Source: Department of Statistics Singapore, resident population by planning area.
-- **OneMap:** the map and the hospital map pins come from OneMap, © Singapore Land Authority. The map
-  shows OneMap's own attribution.
+- **OneMap:** the base map is OneMap's, © Singapore Land Authority, and shows OneMap's own attribution.
+
+Clinic names are published by MOH as business names; some include a doctor's name. The site holds no
+other information about any person.
 
 The raw files downloaded from these sources are kept privately, not re-published: some sources' terms
 don't allow it. You can check any of them against its source instead (next section).

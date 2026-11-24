@@ -83,11 +83,11 @@ flowchart LR
     NUHS["NUHS<br/>ED wait estimates"]
   end
   subgraph Pipeline["Weekly pipeline (GitHub Actions)"]
-    RAW[("Raw zone<br/>every file unchanged,<br/>SHA-256 hashed")]
+    RAW[("Raw zone (private)<br/>every file unchanged,<br/>SHA-256 hashed")]
     DQ{"87 data checks<br/>error = don't publish"}
     MART["DuckDB marts<br/>+ insight engine"]
   end
-  REL[("Data release<br/>GitHub Release,<br/>hash manifest")]
+  REL[("Data release<br/>GitHub Release, signed,<br/>hashes + download log")]
   API["API<br/>FastAPI on Render<br/>verifies every hash"]
   WEB["Website<br/>Next.js on Vercel"]
   MOH & DG & SS & NUHS --> RAW --> DQ --> MART --> REL --> API --> WEB
@@ -101,7 +101,13 @@ number with its "Data as of" date and source.
 ## How accuracy is ensured
 
 - **Raw zone.** Every downloaded file is kept unchanged, with its SHA-256 hash. Every table can be
-  rebuilt offline from these files, and every row records the file it came from.
+  rebuilt offline from these files, and every row records the file it came from. The files are kept
+  in a private repository, because some sources' terms don't allow re-publishing them.
+- **Checkable by anyone.** Each data release lists every download (URL, SHA-256, time) in
+  `fetch_log.json`, so a reader can fetch the same file from MOH or data.gov.sg and compare. The
+  Wayback Machine keeps its own dated copy of each MOH and NUHS file, and every release file is signed
+  by the workflow that built it (`gh attestation verify`). Steps:
+  [Verify a figure](docs/methodology.md#verify-a-figure).
 - **Data checks that can stop a release.** 87 checks ran on the latest release: units, ranges,
   completeness, freshness and reconciliation between sources. A failing error-level check blocks
   publishing, and the site keeps serving the last good release. Bad rows are set aside, never
@@ -126,6 +132,15 @@ number with its "Data as of" date and source.
   the home page and the newer pages) in light and dark. Lighthouse checks the home, finder, findings and ED trends pages against budgets: largest paint
   within 2.5 s (target 2.0 s), layout shift under 0.01 and under 200 kB of JavaScript. It applies a slow 4G network and a
   4x slower CPU for real and measures the paint, which comes at about 1.5 s on each of these pages.
+
+## Data use and licences
+
+An independent, non-commercial project, not affiliated with or endorsed by any agency. Only aggregate
+public data is used; there is no personal or patient-level data. The data.gov.sg, MOH, SingStat and
+OneMap data is used under the [Singapore Open Data Licence](https://data.gov.sg/open-data-licence),
+with the notices in [Licences and attribution](docs/methodology.md#licences-and-attribution). NUHS's
+page is read for its figures only and never re-published. The crawler names itself, keeps to
+robots.txt and waits between requests.
 
 ## Tech stack
 
@@ -182,3 +197,7 @@ make test                                                         # pipeline, AP
 | [Design tokens](web/styles/tokens.css) | Every colour, with its role, for light, dark and print; the type scale and spacing |
 | [Pipeline guide](docs/pipeline.md) | Installing and running the pipeline, the raw zone and the history backfill |
 | [Runbook](docs/runbook.md) | Deploying, rolling back a data release, rotating keys, failed runs |
+
+## Licence
+
+The code and documentation are [MIT-licensed](LICENSE). The data stays under its publishers' terms.
