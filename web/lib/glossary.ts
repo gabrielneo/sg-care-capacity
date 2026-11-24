@@ -74,7 +74,3 @@ export function segmentText(text: string): Segment[] {
   if (last < text.length) out.push(text.slice(last));
   return out;
 }
-
-/** Abbreviations the lint requires a <Term> for (Rule 1 terms with a short form). */
-export const ABBREVIATIONS = GLOSSARY.filter((t) => t.category === "keep_abbreviation" && t.abbreviation && !selfNamed(t))
-  .map((t) => t.abbreviation as string);

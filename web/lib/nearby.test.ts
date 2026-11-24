@@ -33,6 +33,7 @@ describe("locate", () => {
     expect(locate("bedok", places)).toMatchObject({ ok: true, basis: "area", label: "Bedok" });
     expect(locate("Jurong", places)).toMatchObject({ ok: true, basis: "area", label: "Jurong West" });
     expect(locate("Atlantis", places)).toEqual({ ok: false, reason: "unknown_area" });
+    expect(locate(".", places)).toEqual({ ok: false, reason: "unknown_area" });
   });
 });
 

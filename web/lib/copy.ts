@@ -13,8 +13,6 @@ export const BED_WAIT_LABEL = "Time waiting for a ward bed after the decision to
  */
 export const BED_WAIT_WEEKLY_WHY =
   "A week's figure averages its daily medians, because MOH publishes only daily medians and a weekly median can't be rebuilt from them.";
-export const BED_WAIT_UNIT_DAILY = "hours, daily median";
-export const BED_WAIT_UNIT_WEEKLY = "hours, average of each day's median";
 export const BED_WAIT_EXPLAINER =
   "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed. "
   + BED_WAIT_WEEKLY_WHY;

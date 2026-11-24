@@ -65,6 +65,7 @@ export function locate(query: string, places: Places): Located {
     return { ok: false, reason: "unknown_postcode" };
   }
   const wanted = normal(q);
+  if (!wanted) return { ok: false, reason: "unknown_area" }; // "." normalises to "", which every name starts with
   const areas = [...new Set(places.gps.map((g) => g.planning_area).filter((a): a is string => !!a))];
   const area = areas.find((a) => normal(a) === wanted) ?? areas.find((a) => normal(a).startsWith(wanted))
     ?? (wanted.length >= 4 ? areas.find((a) => normal(a).includes(wanted)) : undefined);

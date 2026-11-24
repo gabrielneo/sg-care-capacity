@@ -114,12 +114,6 @@ export function monthsText(n: number): string {
   return n <= 1 ? MONTHS[0] : `${MONTHS[0]}–${MONTHS[n - 1]}`;
 }
 
-/** The months counted are not always Jan to the newest (a gap year leaves out its months): say which. */
-export function monthsList(points: Point[], years = 3): string {
-  const rows = yearsSoFar(points, years);
-  return rows.length ? monthsText(rows[0]!.months) : "";
-}
-
 const pct = (v: number) => `${Math.round(Math.abs(v)).toLocaleString("en-SG")}%`;
 const hrs = (v: number) => v.toLocaleString("en-SG", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
