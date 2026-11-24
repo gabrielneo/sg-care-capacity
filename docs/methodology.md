@@ -31,20 +31,21 @@ This is an independent, non-commercial project. It is not affiliated with or end
 SingStat, SLA or any other agency, and nothing on it is official.
 
 **Singapore Open Data Licence.** The datasets below are used under its terms. Each is downloaded
-every week; the date of each download is in `fetch_log.json` in every data release.
+again with every weekly data release, so its access date is the latest download, shown on the Data
+Quality page; every past download is listed in `fetch_log.json`.
 
 - Contains information from CHAS Clinics; Master Plan 2025 Planning Area Boundary (No Sea); Cervical
   Screening Centres; Singapore Public Holidays; and Hospital Admissions and Public Sector Outpatient
-  Attendances, accessed from data.gov.sg, which is made available under the terms of the
+  Attendances, accessed on the date shown under "Last downloaded" on the [Data Quality](https://sg-care-capacity-web.vercel.app/data-quality) page, from data.gov.sg, which is made available under the terms of the
   [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
 - Contains information from Waiting Time for Admission to Ward and Attendances at Emergency Medicine
-  Departments, accessed from the Ministry of Health's website, which is made available under the terms
+  Departments, accessed on the date shown under "Last downloaded" on the [Data Quality](https://sg-care-capacity-web.vercel.app/data-quality) page, from the Ministry of Health's website, which is made available under the terms
   of the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
 - Contains information from Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling,
-  accessed from the Department of Statistics Singapore (SingStat), which is made available under the
+  accessed on the date shown under "Last downloaded" on the [Data Quality](https://sg-care-capacity-web.vercel.app/data-quality) page, from the Department of Statistics Singapore (SingStat), which is made available under the
   terms of the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
-- Contains information from OneMap's search service (the hospital map pins), accessed from the
-  Singapore Land Authority (SLA), which is made available under the terms of the
+- Contains information from OneMap's search service (the hospital map pins), accessed on the date
+  in the "Hospital locations" line on the [Find a clinic](https://sg-care-capacity-web.vercel.app/find) page, from the Singapore Land Authority (SLA), which is made available under the terms of the
   [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
 
 **Other sources.**

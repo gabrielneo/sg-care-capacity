@@ -2,7 +2,7 @@
  * The emergency line and "not medical advice", in one sentence, in the footer of every page (the landing page's hero has its own
  * short line). 995 is always a tel: link.
  */
-export const NOTICE_995_LINE = "This site shows public statistics, not medical advice.";
+export const NOTICE_995_LINE = "This site shows public statistics for information only. It isn't medical advice and doesn't show current hospital availability.";
 
 export function Notice995({ className = "" }: { variant?: "footer"; className?: string }) {
   return (

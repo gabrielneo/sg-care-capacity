@@ -12,11 +12,11 @@ import { formatAsOf } from "@/lib/dates";
 import { estimateCell } from "@/lib/estimates";
 import { Glossed } from "@/components/terms/Glossed";
 
-export const metadata: Metadata = { title: "Live" };
+export const metadata: Metadata = { title: "NUHS estimates" };
 export const dynamic = "force-dynamic";
 
 const INTRO = <Glossed text="Waiting estimates that NUHS publishes for its emergency departments at Alexandra, National University and Ng Teng Fong hospitals." />;
-const TITLE = <Glossed text="Live: NUHS estimates" />;
+const TITLE = <Glossed text="NUHS estimates (weekly reading)" />;
 
 
 function Reading({ r }: { r: LiveReading }) {

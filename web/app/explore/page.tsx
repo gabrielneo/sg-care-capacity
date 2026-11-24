@@ -36,7 +36,7 @@ export default async function ExplorePage() {
              preview: shown(edPreview(strip, weekly.ok ? weekly.value.meta : null)) },
            { href: "/access-map", title: "See clinic access for seniors", text: "Clinics for each 1,000 residents aged 65 and over, by planning area, on a map or in a table.",
              preview: shown(accessPreview(areas.ok ? areas.value.data : null, areas.ok ? areas.value.meta : null)) },
-           { href: "/live", title: "Check live waits", text: "The latest wait estimates some hospitals publish, next to the weekly figures.",
+           { href: "/live", title: "NUHS wait estimates", text: "The wait estimates NUHS publishes, read once a week, next to the weekly figures.",
              preview: shown(livePreview(live.ok ? live.value.data : null, live.ok ? live.value.meta : null)) },
          ]} />
   );

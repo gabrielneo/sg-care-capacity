@@ -49,7 +49,9 @@ export function SiteFooter() {
             <p className="mt-2 max-w-prose">
               {/* Standalone: the footer is site chrome, so it doesn't use up the page's first use of a term. */}
               <Glossed text="Aggregate public data only (MOH, data.gov.sg, SingStat, NUHS). No personal or patient-level data." standalone />{" "}
-              Page views are counted without cookies, and searches aren&apos;t recorded.
+              Page views are counted without cookies, and postcode searches stay in your browser. The map is loaded
+              from OneMap (Singapore Land Authority) and the site is hosted on Vercel and Render, so those services
+              receive your IP address as part of normal web traffic.
             </p>
             <p className="mt-2 max-w-prose" data-testid="footer-licence">
               An independent project, not affiliated with or endorsed by any of these agencies. Data used under the{" "}

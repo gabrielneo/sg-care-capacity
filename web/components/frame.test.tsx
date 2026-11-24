@@ -13,12 +13,12 @@ import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 
 describe("Notice995", () => {
-  it("is one sentence, and 995 is a tel: link with a 44px target", () => {
+  it("is one short notice, and 995 is a tel: link with a 44px target", () => {
     render(<Notice995 variant="footer" />);
     const note = screen.getByTestId("footer-notice");
     expect(note).toHaveTextContent(`✚ Emergency? Call 995. ${NOTICE_995_LINE}`);
     expect(within(note).getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
-    expect(NOTICE_995_LINE).toBe("This site shows public statistics, not medical advice.");
+    expect(NOTICE_995_LINE).toBe("This site shows public statistics for information only. It isn't medical advice and doesn't show current hospital availability.");
   });
 });
 
@@ -34,6 +34,7 @@ describe("SiteFooter", () => {
     const help = within(columns[2]!);
     expect(help.getByTestId("footer-notice")).toHaveTextContent(NOTICE_995_LINE);
     // The Open Data Licence asks for a conspicuous notice; the agencies' terms forbid implying endorsement.
+    expect(columns[0]).toHaveTextContent(/receive your IP address as part of normal web traffic/);   // PDPA: say who sees what
     const licence = screen.getByTestId("footer-licence");
     expect(licence).toHaveTextContent(/not affiliated with or endorsed by/);
     expect(within(licence).getByRole("link", { name: "Singapore Open Data Licence" }))
