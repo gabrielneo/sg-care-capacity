@@ -7,7 +7,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from . import logs
+from . import config, logs
 from .config import DEFAULT_DB, DEFAULT_REPORT, RAW_DIR
 from .http import PoliteHttp
 from .load import Loader, reparse
@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "publish":
             from .publish import PublishBlocked, build_snapshot
             try:
-                manifest = build_snapshot(wh, Path(args.out))
+                manifest = build_snapshot(wh, Path(args.out), raw_dir=store.root)
             except PublishBlocked as exc:
                 LOG.error("%s", exc, extra={"fields": {"event": "publish_blocked"}})
                 return 1
@@ -174,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
             assert loader is not None and http is not None      # set above for run/backfill
             for step in wanted:
                 loader.expect(*STEP_SOURCES[step])
+            started = config.now_sgt()
             if "moh" in wanted:
                 results["moh"] = _run_step("moh", ingest_moh, http, loader)
             if "live" in wanted:
@@ -182,6 +183,11 @@ def main(argv: list[str] | None = None) -> int:
                 results["opendata"] = _run_step("opendata", ingest_opendata, http, loader)
             if "singstat" in wanted:
                 results["singstat"] = _run_step("singstat", ingest_singstat, http, loader)
+            if config.IA_ACCESS_KEY and config.IA_SECRET_KEY:
+                from .sources.archive import archive_run
+                _run_step("archive", lambda: archive_run(http.session, store.root, store.records(), started,
+                                                         access_key=config.IA_ACCESS_KEY,
+                                                         secret_key=config.IA_SECRET_KEY))
             if not args.no_report:
                 export_report(wh, args.report)
             # Record data quality for this run. The exit code is left to `sg-health validate`,

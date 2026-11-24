@@ -51,6 +51,25 @@ def test_parquet_for_every_mart_with_matching_rows(built, tmp_path):
         assert duckdb.sql(f"SELECT count(*) FROM read_parquet('{path}')").fetchall()[0][0] == n
 
 
+def test_fetch_log_lists_every_download_without_local_paths_plus_wayback_copies(built, tmp_path):
+    from sg_health.raw import RawStore
+    (built["raw"] / "wayback_captures.jsonl").write_text(
+        '{"archive_url": null, "requested_at": "2026-10-27T09:00:00", "url": "https://www.nuhs.edu.sg/x"}\n')
+    out = tmp_path / "publish"
+    wh = Warehouse(built["db"])
+    try:
+        m = build_snapshot(wh, out, day=date(2026, 10, 27), raw_dir=built["raw"])
+    finally:
+        wh.close()
+    log = json.loads((out / "fetch_log.json").read_text())
+    recs = RawStore(built["raw"]).records()
+    assert [(f["url"], f["sha256"]) for f in log["fetches"]] == [(r.url, r.sha256) for r in recs]
+    assert all("path" not in f for f in log["fetches"])                  # where it sits on disk is private
+    assert log["archive_captures"] == [{"archive_url": None, "requested_at": "2026-10-27T09:00:00",
+                                        "url": "https://www.nuhs.edu.sg/x"}]
+    assert "fetch_log.json" in m["artefacts"] and verify_manifest(out) == []
+
+
 def test_manifest_contents_and_hashes(built, tmp_path):
     out = tmp_path / "publish"
     m = publish(built, out)

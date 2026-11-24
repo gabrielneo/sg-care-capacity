@@ -5,6 +5,8 @@
       parquet/<mart>.parquet           one per mart
       planning_area_access.geojson     the web map layer
       planning_area_access_svy21.geojson   the 3D map layer (SVY21 metres)
+      fetch_log.json                   every file ever downloaded (URL, sha256, size, time) and the
+                                       Wayback copies requested for them: the evidence a reader checks
       manifest.json                    snapshot_id, as_of per source, row counts, coverage per hospital,
                                        check summary, sha256 of every artefact, pipeline git commit
 
@@ -32,6 +34,7 @@ from .warehouse import Warehouse
 ANALYTICS_DB = "analytics.duckdb"
 MANIFEST = "manifest.json"
 INSIGHTS_JSON = "insights.json"
+FETCH_LOG = "fetch_log.json"
 SNAPSHOT_PREFIX = "data-"
 KEEP_SNAPSHOTS = 12
 
@@ -82,6 +85,20 @@ def mart_names(wh: Warehouse) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Manifest sections
 # --------------------------------------------------------------------------- #
+
+FETCH_LOG_COLUMNS = ("seq", "source", "url", "sha256", "bytes", "http_status", "content_type", "fetched_at")
+
+
+def fetch_log(wh: Warehouse, raw_dir: Path | None) -> dict:
+    """Every download (data/raw/manifest.jsonl without local paths) and the Wayback copies requested.
+
+    A reader downloads a file from its `url`, computes its sha256 and compares: the raw files themselves
+    are kept private, because some sources' terms don't allow re-publishing them."""
+    from .sources.archive import read_captures
+    rows = wh.con.execute(f"SELECT {', '.join(FETCH_LOG_COLUMNS)} FROM main.raw_manifest ORDER BY seq").fetchall()
+    return {"fetches": [dict(zip(FETCH_LOG_COLUMNS, r)) for r in rows],
+            "archive_captures": read_captures(raw_dir) if raw_dir else []}
+
 
 def sources_as_of(wh: Warehouse) -> dict:
     """For each raw source: when it was last fetched, and how current its data is (with basis)."""
@@ -169,7 +186,7 @@ def _fresh_dir(path: Path) -> None:
     path.mkdir(parents=True)
 
 
-def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dict:
+def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None, raw_dir: Path | None = None) -> dict:
     """Validate, then write the snapshot into a fresh out_dir. Returns the manifest."""
     results = dq.run_validation(wh)
     blocking = [r for r in results if r.blocking]
@@ -216,6 +233,8 @@ def build_snapshot(wh: Warehouse, out_dir: Path, day: date | None = None) -> dic
         if layer.exists():
             shutil.copyfile(layer, out_dir / name)
     (out_dir / INSIGHTS_JSON).write_text(json.dumps(insights.to_json(insight_run), indent=2, sort_keys=True, default=str) + "\n")
+
+    (out_dir / FETCH_LOG).write_text(json.dumps(fetch_log(wh, raw_dir), indent=2, sort_keys=True, default=str) + "\n")
 
     manifest = {
         "snapshot_id": snapshot_id(day),

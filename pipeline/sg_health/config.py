@@ -101,6 +101,9 @@ ANNUAL_AE_SERIES = "Accident & Emergency Departments"   # exact level_1 label in
 # for that dataset: the CHAS file, for instance, was last updated upstream on 2024-06-06.
 DATAGOV_METADATA_URL = "https://api-production.data.gov.sg/v2/public/api/datasets/{dataset_id}/metadata"
 DATAGOV_API_KEY = os.getenv("DATAGOV_API_KEY")      # optional, gives higher rate limits
+# Internet Archive Save Page Now keys (optional): without both, `run` saves no Wayback copies.
+IA_ACCESS_KEY = os.getenv("IA_ACCESS_KEY")
+IA_SECRET_KEY = os.getenv("IA_SECRET_KEY")
 
 # SingStat "Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling,
 # June 2026" (zip of CSVs), from the geographic distribution page below. Annual: update the URL
