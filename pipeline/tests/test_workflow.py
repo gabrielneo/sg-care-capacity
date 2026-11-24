@@ -25,8 +25,8 @@ def test_weekly_runs_sundays_and_its_stages_are_in_order():
     text = (WF / "weekly.yml").read_text()
     assert 'cron: "0 0 * * 0"' in text and not (WF / "weekly_scraper.yml").exists()
     order = list(steps("weekly.yml"))
-    for a, b in [("Test", "Ingest"), ("Ingest", "Upload data/raw to the release"),
-                 ("Upload data/raw to the release", "Validate"), ("Validate", "Transform"),
+    for a, b in [("Test", "Ingest"), ("Ingest", "Upload data/raw to the private raw store"),
+                 ("Upload data/raw to the private raw store", "Validate"), ("Validate", "Transform"),
                  ("Transform", "Publish snapshot"), ("Publish snapshot", "Upload snapshot release"),
                  ("Upload snapshot release", "Keep only the newest snapshots"),
                  ("Upload snapshot release", "Fail the job if any stage failed")]:
@@ -36,7 +36,7 @@ def test_weekly_runs_sundays_and_its_stages_are_in_order():
 def test_weekly_archives_raw_history_even_when_later_stages_fail():
     s = steps("weekly.yml")
     assert "continue-on-error: true" in s["Ingest"]
-    for name in ("Check data/raw only grew", "Upload data/raw to the release"):
+    for name in ("Check data/raw only grew", "Upload data/raw to the private raw store"):
         cond = condition(s[name])
         assert "!cancelled()" in cond and "steps.restore.outcome == 'success'" in cond
         assert "steps.ingest" not in cond and "steps.validate" not in cond and "steps.transform" not in cond
@@ -122,6 +122,21 @@ def test_live_runs_every_3_hours_into_its_own_store_and_never_publishes():
     assert "--sources live" in text and "SG_HEALTH_DATA_DIR" in text and "live-latest" in text
     assert "sg-health publish" not in text and "data-latest" not in text and "RAW_RELEASE_TAG" not in text
     assert "group: live-store" in text
+
+
+def test_raw_stores_go_only_to_the_private_raw_repo_and_snapshots_are_signed():
+    # Raw files hold unchanged source pages; NUHS's terms don't allow re-publishing them.
+    for wf in ("weekly.yml", "live.yml"):
+        text = (WF / wf).read_text()
+        assert "RAW_STORE_REPO: ${{ github.repository }}-raw" in text and "secrets.RAW_STORE_TOKEN" in text
+        assert "raw-store.sh restore" in text and "raw-store.sh upload" in text
+        assert "gh release upload \"$RAW" not in text and "gh release upload \"$LIVE" not in text
+    assert "contents: write" not in (WF / "live.yml").read_text()
+    script = (WF.parent / "scripts" / "raw-store.sh").read_text()
+    assert "--jq .private | grep -qx true" in script          # refuses a repo that isn't private
+    s = steps("weekly.yml")
+    assert "attest-build-provenance" in s["Sign the snapshot's files"]
+    assert "steps.upload.outcome == 'success'" in condition(s["Sign the snapshot's files"])
 
 
 # ----------------------------------------------------------------------- ci #
