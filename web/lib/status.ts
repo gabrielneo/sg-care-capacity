@@ -1,6 +1,12 @@
 /**
  * The home page's hospital status: last week's bed wait against the hospital's own usual level.
  *
+ * THE RULE (changed 25 Nov 2026). A week is flagged only when it is far outside what that hospital's own last 26 complete weeks
+ * look like: a robust z-score (median and MAD, lib/edCompare.ts robustZ) of 2.5 or more is "higher", 4 or more "much higher",
+ * -2.5 or less "lower". Simulated over every past week, this flags a hospital about 5% of weeks (1.5% for "much higher") where the
+ * 8-week rule below flagged 13%, so "0 of 8 above usual" is a plain result, not a missed alarm. The 8-week rule is kept ONLY for a
+ * hospital with fewer than 20 of those 26 weeks (or no spread): shortcut, remove when every hospital has the history.
+ *
  * "Usual" is ED Trends' and the insight engine's usual level (lib/edCompare.ts, usualLevels): the
  * median of the 8 complete weeks before the latest complete week. The badge is a plain comparison,
  * not a tested finding (docs/data_dictionary.md, "Computed by the site"):
@@ -20,12 +26,14 @@
  * Missing stays missing: no usual level means no badge colour, never "about usual".
  */
 import type { EdWeek } from "./api/types";
-import type { Usual } from "./edCompare";
+import { type Usual, Z_HIGHER } from "./edCompare";
 import { SPARK_WEEKS } from "./windows";
 
 export { SPARK_WEEKS };
 export const HIGHER_PCT = 15;
 export const MUCH_HIGHER_PCT = 30;
+/** The robust-z lines of the 26-week rule. */
+export const Z_MUCH_HIGHER = 4;
 
 export type Level = "much_higher" | "higher" | "usual" | "lower" | "unknown";
 
@@ -45,8 +53,9 @@ export const LEVELS: Record<Level, LevelInfo> = {
   unknown: { label: "No comparison", icon: "–", tone: "none", sentence: "Not enough complete weeks to compare with usual." },
 };
 
-export function levelFor(pct: number | null | undefined, position: -1 | 0 | 1 | null | undefined = null): Level {
+export function levelFor(pct: number | null | undefined, position: -1 | 0 | 1 | null | undefined = null, z: number | null | undefined = null): Level {
   if (pct == null || !Number.isFinite(pct)) return "unknown";
+  if (z != null && Number.isFinite(z)) return z >= Z_MUCH_HIGHER ? "much_higher" : z >= Z_HIGHER ? "higher" : z <= -Z_HIGHER ? "lower" : "usual";
   // No position given (a caller with only a %): the % line alone decides.
   const above = position == null || position === 1;
   const below = position == null || position === -1;
@@ -66,6 +75,8 @@ export interface HospitalStatus {
   /** The lowest and highest of the 8 usual weeks (hours), for the usual band; absent where unknown. */
   low?: number | null;
   high?: number | null;
+  /** The hours between which the week reads "about usual" (the 26-week rule); absent where the older rule applies. */
+  band?: [number, number] | null;
   /** The last SPARK_WEEKS weeks, oldest first; null for a week that isn't complete. */
   spark: (number | null)[];
 }
@@ -86,8 +97,8 @@ export function hospitalStatus(code: string, usual: Usual | undefined, weekly: E
         return w?.is_complete_week && w.mean_of_daily_median_wait_hours != null ? w.mean_of_daily_median_wait_hours : null;
       })
     : [];
-  return { code, level: levelFor(pct, usual?.position), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct,
-           low: usual?.low ?? null, high: usual?.high ?? null, spark };
+  return { code, level: levelFor(pct, usual?.position, usual?.z), latest: usual?.latest ?? null, usual: usual?.usual ?? null, pct,
+           low: usual?.low ?? null, high: usual?.high ?? null, band: usual?.band ?? null, spark };
 }
 
 /** Largest change against usual first; no comparison last; ties by code. */

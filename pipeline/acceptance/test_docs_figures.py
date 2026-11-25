@@ -56,6 +56,14 @@ CLAIMS = [
     ("methodology.md", "area_km2", "total {} km²"),
     ("methodology.md", "areas_without_residents", "{} planning areas have no residents"),
     ("methodology.md", "polyclinics", "all {} polyclinics"),
+    # The README repeats the headline figures; "../README.md" is the repo root's, beside docs/.
+    ("../README.md", "att_2023", "recorded {} visits in 2023"),
+    ("../README.md", "att_2024_ex_wh", "{} in 2024"),
+    ("../README.md", "att_2025_ex_wh", "and {} in 2025"),
+    ("../README.md", "ranked_areas", "Across the {} planning areas"),
+    ("../README.md", "max_rate", "**{}** (Rochor)"),
+    ("../README.md", "median_rate", "with a median of {}."),
+    ("../README.md", "share_65plus", "{} of residents were aged 65"),
 ]
 
 

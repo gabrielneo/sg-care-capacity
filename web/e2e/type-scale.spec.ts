@@ -9,7 +9,7 @@ import { blockTiles } from "./helpers";
  * as `npm run ui:metrics`, so the report and the check can't disagree.
  */
 const ROUTES = ["/", "/find", "/project", "/findings", "/explore", "/ed-trends",
-  "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/how-its-built", "/case-study", "/docs/insights-method",
+  "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/case-study", "/docs/insights-method",
   "/summary", "/about", "/styleguide"];
 
 for (const route of ROUTES) {

@@ -11,7 +11,7 @@ test.describe("The project page", () => {
     const expected = headline.data.filter((i) => i.headline_rank != null && i.display && i.chart).slice(0, 3);
 
     await page.goto("/project");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("I built a weekly, checked view");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("I built a checked view of hospital bed waits");
     await expect(page.getByTestId("project")).toContainText("by Gabriel Neo");
     await expect(page.getByRole("link", { name: /Connect on LinkedIn/ })).toHaveAttribute("href", /linkedin\.com/);
     await expect(page.getByTestId("project-what-i-did").getByRole("listitem")).toHaveCount(3);
@@ -67,7 +67,7 @@ test.describe("The project page", () => {
     await expect(glance).toContainText(/\d+ minutes to read/);
   });
 
-  test("no product view has the CV or LinkedIn line (E2): it lives in the footer and on /about", async ({ page }) => {
+  test("no product view has the CV or LinkedIn line (E2): it lives on /about", async ({ page }) => {
     for (const path of ["/find"]) {
       await page.goto(path);
       await expect(page.getByTestId("home")).not.toContainText("Here from a CV or LinkedIn");
@@ -79,11 +79,11 @@ test.describe("The project page", () => {
     const author = page.getByTestId("about-author");
     await expect(author).toContainText("Gabriel Neo");
     await expect(author.getByRole("link", { name: /Read the CV/ })).toHaveAttribute("href", /docs\.google\.com/);
-    // About doesn't repeat /project's "what I did" lines; the author card comes first, above the three cards.
+    // About doesn't repeat /project's "what I did" lines; the author card comes first, above the two cards.
     await expect(page.getByTestId("project-what-i-did")).toHaveCount(0);
     const [card, hub] = await Promise.all([author.boundingBox(), page.getByTestId("hub").locator(".card-grid").boundingBox()]);
     expect(card!.y).toBeLessThan(hub!.y);
-    await expect(page.getByTestId("hub").locator(".card-grid li")).toHaveCount(3);
+    await expect(page.getByTestId("hub").locator(".card-grid li")).toHaveCount(2);
   });
 
   test("findings say why their hours can sit above the case study's typical waits", async ({ page }) => {

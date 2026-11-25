@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
 import { api, settle } from "@/lib/api/client";
 import type { Clinic, Meta } from "@/lib/api/types";
-import { CAVEAT, plainError } from "@/lib/copy";
+import { CAVEAT, clinicScope, plainError } from "@/lib/copy";
 import { priorityAreas, quadrant, shortfallBars } from "@/lib/accessCharts";
 import { fetchAllPages } from "@/lib/paging";
 import { Glossed } from "@/components/terms/Glossed";
@@ -94,7 +94,7 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
           <ViewTabs active="table" />
           <ChartFrame title="Clinic access by area (table)" meta={areas.meta} caveat={CAVEAT.clinics} csv="/export/areas.csv?context=1" table="self"
                       summary={`A table of ${features.length} planning areas with their clinics, residents aged 65+ and the measures of access, sortable by column.`}
-                     description="The same figures as the maps. Select a column heading to sort.">
+                     description={<Glossed text={`${clinicScope(areas.meta)} The same figures as the maps. Select a column heading to sort.`} />}>
             <AreaTable areas={props} sort={first(params.sort)} dir={first(params.dir)} />
           </ChartFrame>
         </>
@@ -103,7 +103,7 @@ export default async function AccessMapPage({ searchParams }: { searchParams: Se
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <ChartFrame title="Clinic access by area" meta={areas.meta} caveat={CAVEAT.clinics} csv="/export/areas.csv?context=1" table={{ href: "/access-map?view=table", label: "Show as table" }}
                       summary={`A map of ${features.length} planning areas shaded by Chronic Disease Management Programme clinics per 1,000 residents aged 65+, darker where there are fewer, with each clinic as a point. The same figures are in the table view.`}
-                     description="Counts where clinics are, not where their patients live: residents use clinics in neighbouring areas too.">
+                     description={<Glossed text={`${clinicScope(areas.meta)} Counts where clinics are, not where their patients live: residents use clinics in neighbouring areas too.`} />}>
             <AccessViews requested={view === "3d" ? "3d" : view === "2d" ? "2d" : "auto"} areas={areas.data}
                          clinics={(clinics?.items ?? []).map((c) => ({ clinic_key: c.clinic_key, clinic_name: c.clinic_name,
                                                                         latitude: c.latitude, longitude: c.longitude, has_cdmp: c.has_cdmp }))}

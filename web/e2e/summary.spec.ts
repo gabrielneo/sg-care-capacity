@@ -13,7 +13,7 @@ test.describe("One-page summary", () => {
     const gaps = await (await request.get(`${API}/insights?type=access_gap&top=5`)).json() as { data: { entity: string }[] };
 
     await page.goto("/summary");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Care-pacity: emergency waits and clinic access in a super-aged Singapore");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Care-pacity: hospital bed waits and clinic access in a super-aged Singapore");
     await expect(page.getByTestId("summary-release")).toContainText(`weekly data release ${headline.meta.snapshot_id}`);
 
     const findings = page.getByTestId("summary-finding");

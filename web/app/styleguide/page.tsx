@@ -9,7 +9,8 @@ import { formatAsOf } from "@/lib/dates";
 import { latestCompleteWeek, usualLevels } from "@/lib/edCompare";
 import { rankableCodes } from "@/lib/hospitals";
 import { divergingScale, mapScale, TOKEN_VARS } from "@/lib/palette";
-import { type Level, LEVELS, hospitalStatus, SPARK_WEEKS, usualBand } from "@/lib/status";
+import { type Level, LEVELS, hospitalStatus, usualBand } from "@/lib/status";
+import { RANGE_FETCH_WEEKS } from "@/lib/windows";
 
 // The sample chart is real data, read per request (the API response is cached for an hour), so a build made while the API was down cannot freeze an error into the page.
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ const TYPE_SCALE = [
 
 /** Real figures for the sample chart: the same call and status function the home page uses. Never invented. */
 async function sample() {
-  const [hospitals, weekly] = await Promise.all([settle(api.hospitals()), settle(api.edWeekly({ weeks: SPARK_WEEKS + 1 }))]);
+  const [hospitals, weekly] = await Promise.all([settle(api.hospitals()), settle(api.edWeekly({ weeks: RANGE_FETCH_WEEKS }))]);
   if (!hospitals.ok || !weekly.ok) return null;
   const codes = rankableCodes(hospitals.value.data);
   const first = hospitals.value.data.find((h) => codes.includes(h.hospital_code));

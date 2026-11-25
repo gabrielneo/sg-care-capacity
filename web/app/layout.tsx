@@ -7,10 +7,10 @@ import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { colors, darkColors } from "@/lib/palette";
-import { SITE, SITE_TITLE } from "@/lib/site";
+import { SEO_TITLE, SITE, SITE_TITLE } from "@/lib/site";
 
-const DESCRIPTION = "A public-data analytics project by Gabriel Neo: where Singapore's emergency departments wait longest for ward beds, "
-  + "and where seniors have the fewest clinics. Also check how long ED bed waits were in the latest complete week and find a clinic near you.";
+const DESCRIPTION = "A public-data analytics project by Gabriel Neo: which public hospitals take longest to find admitted patients a ward bed, "
+  + "and where seniors have the fewest GP clinics. Two separate sets of figures, shown side by side; the site does not test a link between them.";
 
 // Absolute links for the share preview. Vercel sets VERCEL_PROJECT_PRODUCTION_URL on every deploy.
 const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -18,7 +18,7 @@ const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: SITE_TITLE, template: `%s · ${SITE.name}` },
+  title: { default: SEO_TITLE, template: `%s · ${SITE.name}` },
   description: DESCRIPTION,
   openGraph: { title: SITE_TITLE, description: DESCRIPTION, siteName: SITE.name, locale: "en_SG", type: "website" },
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: DESCRIPTION },

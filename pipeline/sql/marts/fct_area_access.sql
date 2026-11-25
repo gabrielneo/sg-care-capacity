@@ -68,6 +68,14 @@ SELECT
         CASE WHEN residents_total > 0 AND residents_65plus = 0 THEN 'No residents aged 65+: ratios not applicable' END,
         CASE WHEN residents_65plus > 0 AND residents_65plus < 1000
              THEN 'Fewer than 1,000 residents aged 65+: ratios are unstable and rounding (to 10) matters' END,
+        -- Ranked, but a single clinic moves the rate by 1000/3000 = 0.33 or more (docs/methodology.md, "Small areas").
+        CASE WHEN residents_65plus >= 1000 AND residents_65plus < 3000
+             THEN 'Fewer than 3,000 residents aged 65+: one clinic more or fewer moves the rate by 0.33 or more per 1,000 seniors' END,
+        -- Clinics far outnumber residents (over twice the island-wide clinics per resident): offices and hospitals draw
+        -- people who live elsewhere, so a residents-only ratio overstates access here.
+        CASE WHEN residents_65plus >= 1000 AND cdmp_clinics > 0
+              AND 1.0 * cdmp_clinics / residents_total > 2 * (sum(cdmp_clinics) OVER () * 1.0 / sum(residents_total) OVER ())
+             THEN 'Many clinics for its residents (over twice the island-wide rate): they likely serve people who work or visit here, so the ratio overstates access for residents' END,
         CASE WHEN residents_65plus > 0 AND cdmp_clinics = 0
              THEN 'No CDMP clinic inside the area; residents may use clinics nearby (see % within 1 km)' END,
         CASE WHEN NOT centroid_in_area

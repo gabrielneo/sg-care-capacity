@@ -15,19 +15,19 @@ import { provenanceText } from "@/components/Provenance";
 import { ErrorState } from "@/components/States";
 import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
-import { CAVEAT, plainError } from "@/lib/copy";
+import { BED_WAIT_AVERAGE_NOTE, BED_WAIT_NOT_MEASURED, CAVEAT, clinicScope, plainError, SITE_SCOPE, USUAL_RANGE_NOTE } from "@/lib/copy";
 import { latestCompleteWeek, profileWindow, usualLevels } from "@/lib/edCompare";
 import { edPreview } from "@/lib/explore";
 import { FIND_PATH } from "@/lib/homeViews";
 import { systemFindings } from "@/lib/hospitals";
 import { styleAreas } from "@/lib/map3d";
-import { fromSystem, latestComplete, MONTHS_LONG, timeSeries, yoyWord } from "@/lib/monthly";
-import { SITE_TITLE } from "@/lib/site";
-import { SPARK_WEEKS } from "@/lib/status";
+import { fromSystem, latestComplete, MONTHS_LONG, timeSeries, yoyContext, yoyWord } from "@/lib/monthly";
+import { heroClaim } from "@/lib/heroClaim";
+import { SEO_TITLE } from "@/lib/site";
 import { buildStrip } from "@/lib/strip";
-import { USUAL_WEEKS, formatWindow } from "@/lib/windows";
+import { USUAL_WEEKS, formatWindow, RANGE_FETCH_WEEKS } from "@/lib/windows";
 
-export const metadata: Metadata = { title: { absolute: SITE_TITLE } };
+export const metadata: Metadata = { title: { absolute: SEO_TITLE } };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -52,7 +52,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
 
   const [hospitalsRes, weeklyRes, liveRes, insightsRes, areasRes, gapRes, monthlyRes] = await Promise.all([
     settle(api.hospitals()),
-    settle(api.edWeekly({ weeks: SPARK_WEEKS + 1 })),
+    settle(api.edWeekly({ weeks: RANGE_FETCH_WEEKS })),
     settle(api.liveNuhsLatest()),
     settle(api.insights()),
     settle(api.areasAccessSvy21()),
@@ -82,8 +82,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
   const count = edPreview(strip, weeklyRes.ok ? weeklyRes.value.meta : null);
   const insights = insightsRes.ok ? insightsRes.value.data : [];
   // The hero's claim: the engine's top-ranked finding, word for word (it passed its gates, or it isn't published). None, no claim.
-  const topFinding = [...insights].filter((i) => i.headline_rank != null && i.headline)
-    .sort((x, y) => (x.headline_rank as number) - (y.headline_rank as number))[0] ?? null;
+  const topFinding = heroClaim(insights);
   // A note only if the engine has a finding about this chart (the latest week against usual); a weekday finding is for another chart.
   const finding = systemFindings(insights, hospitals).filter((i) => i.type === "anomaly" || i.type === "usual_gap")
     .sort((x, y) => (x.headline_rank ?? 99) - (y.headline_rank ?? 99))[0] ?? null;
@@ -108,14 +107,17 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
                className="hero-glow on-hero relative isolate -mt-3 pb-16 pt-12 sm:-mt-4 sm:pb-24 sm:pt-16">
         <div className="mx-auto max-w-3xl text-center">
           <h1 id="landing-title" className="landing-rise text-kpi font-semibold tracking-tight">
-            Emergency waits and clinic access for Singapore&apos;s seniors.
+            Hospital bed waits in Singapore, and clinic access for seniors.
           </h1>
           {topFinding ? (
             <p className="landing-rise mx-auto mt-4 max-w-prose text-body text-on-hero" data-testid="hero-claim" style={{ ["--delay" as string]: "120ms" }}>
               <span className="font-semibold">Top finding:</span> <span className="text-on-hero-muted">{topFinding.headline}</span>
+              {topFinding.caveat ? <span className="block text-meta text-on-hero-muted" data-testid="hero-caveat">{topFinding.caveat}</span> : null}
             </p>
           ) : (
-            <p className="landing-rise mt-4 text-body text-on-hero-muted" style={{ ["--delay" as string]: "120ms" }}>What public data shows about bed waits and clinic access.</p>
+            <p className="landing-rise mx-auto mt-4 max-w-prose text-body text-on-hero-muted" data-testid="no-top-finding" style={{ ["--delay" as string]: "120ms" }}>
+              No unusual pattern passed this release&apos;s checks, so there is no top finding to show.
+            </p>
           )}
           <p className="landing-rise mt-8 flex flex-wrap items-center justify-center gap-3" style={{ ["--delay" as string]: "240ms" }}>
             <Link href={FIND_PATH} data-testid="cta-find" className="btn btn-primary">
@@ -130,6 +132,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
              data-testid="not-advice" style={{ ["--delay" as string]: "360ms" }}>
             <span className="font-semibold text-on-hero">Emergency? <a href="tel:995" className="inline-flex min-h-11 items-center">Call 995</a>.</span>
             <span>{NOTICE_995_LINE}</span>
+          </p>
+          {/* What the two pictures are, and are not (the ED figures have no age split; no link between them is tested). */}
+          <p className="landing-rise mx-auto mt-4 max-w-prose text-meta text-on-hero-muted" data-testid="scope-note" style={{ ["--delay" as string]: "420ms" }}>
+            {SITE_SCOPE} {BED_WAIT_NOT_MEASURED}
           </p>
         </div>
         {showHero ? (
@@ -157,6 +163,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
                 ))}
               </dl>
             ) : null}
+            {newest?.waitYoy != null && yoyContext(monthly, newest.waitYoy) ? (
+              <p className="mt-2 text-meta text-muted" data-testid="hero-yoy-context">{yoyContext(monthly, newest.waitYoy)}</p>
+            ) : null}
+            <p className="mt-2 text-meta text-muted" data-testid="hero-average-note">{BED_WAIT_AVERAGE_NOTE}</p>
             <p className="mt-2 text-meta text-muted" data-testid="hero-source">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
           </div>
         ) : null}
@@ -171,7 +181,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           </Reveal>
           <Reveal className="mt-8" delay={120}>
             <ChartFrame title="Time waiting for a ward bed after the decision to admit, latest complete week against usual" slug="landing-waits" titleHidden headingLevel={3}
-                        meta={waitsMeta} caveat={CAVEAT.weeklyAverage}
+                        meta={waitsMeta} caveat={CAVEAT.weeklyAverage} description={`${BED_WAIT_AVERAGE_NOTE} ${USUAL_RANGE_NOTE}`}
                         csv="/export/ed-weekly.csv?weeks=10&context=1" table={<UsualTable usuals={usuals} hospitals={hospitals} />}
                         summary={`For each hospital, the ${formatWindow({ kind: "latest_week", week: latestWeek })} as hours against its usual level, the median of the ${USUAL_WEEKS} complete weeks before it, largest difference first.`}>
               <Dumbbell usuals={usuals} hospitals={hospitals} mode="raw" finding={null} animate />
@@ -201,7 +211,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           </Reveal>
           <Reveal className="mt-8" delay={120}>
             <ChartFrame title="Chronic-care clinics for each 1,000 residents aged 65 and over, by planning area" slug="landing-access" titleHidden headingLevel={3}
-                        meta={accessMeta} caveat={CAVEAT.clinics}
+                        meta={accessMeta} caveat={CAVEAT.clinics} description={<Glossed text={clinicScope(accessMeta)} />}
                         csv="/export/areas.csv?context=1" table={{ href: "/access-map?view=table" }}
                         summary={`A map of ${styled.areas.length} planning areas shaded by chronic-care clinics for each 1,000 residents aged 65 and over; darker means fewer. ${ranked} are ranked.`}>
               <LandingMap features={features} areas={styled.areas} classes={styled.classes} excluded={styled.excluded} />
@@ -223,7 +233,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
         <Reveal as="ul" className="card-grid md:grid-cols-3">
           {[
             { href: "/findings", title: "Findings", text: "What the latest data release shows, and how sure we are." },
-            { href: "/explore", title: "Explore the data", text: "Compare hospitals, see clinic access and check live waits." },
+            { href: "/explore", title: "Explore the data", text: "Compare hospitals, see clinic access and read the wait estimates NUHS publishes." },
             { href: "/methodology", title: "How it is made", text: "Where each number comes from and what it can't tell you." },
           ].map((c) => (
             <li key={c.href} className="rounded-xl border border-line bg-surface card" data-testid="landing-card">

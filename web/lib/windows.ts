@@ -11,6 +11,13 @@ import { formatWeek, type WeekRange } from "./weeks";
 
 /** The usual level: the median of this many complete weeks before the latest (lib/edCompare.ts). */
 export const USUAL_WEEKS = 8;
+/**
+ * A hospital's own range: the latest week is judged against its last 26 complete weeks (robust z-score), needing at least 20 of them.
+ * Pages fetch RANGE_FETCH_WEEKS weekly rows (those 26 plus the latest) so the range can be drawn.
+ */
+export const RANGE_WEEKS = 26;
+export const MIN_RANGE_WEEKS = 20;
+export const RANGE_FETCH_WEEKS = RANGE_WEEKS + 1;
 /** The cards' line and the summary sparkline. */
 export const SPARK_WEEKS = 12;
 /** The weekday pattern. */

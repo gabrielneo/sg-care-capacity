@@ -37,7 +37,7 @@ test.describe("Findings: one band per finding", () => {
     await expect(page.getByTestId("countup")).toHaveCount(0);
     expect(await plain(page.getByTestId("site-purpose"))).toBe("Care-pacity looks at right-siting: treating people in the most suitable place, "
       + "such as a general practitioner (GP) clinic rather than a hospital, when it is safe to do so. "
-      + "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.");
+      + "This site shows two sets of figures side by side: bed waits for admitted patients at public hospitals, and clinics per senior. It does not test whether one affects the other.");
   });
 
   test("the bed wait is defined in the findings section, and is not the time to see a doctor", async ({ page }) => {

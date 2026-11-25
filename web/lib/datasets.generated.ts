@@ -21,10 +21,10 @@ export const DATASETS: Record<string, DatasetRule> = {
     "publisher": "MOH",
     "cadence": "weekly",
     "due_after": {
-      "days": 10
+      "days": 21
     },
     "overdue_after": {
-      "days": 21
+      "days": 35
     }
   },
   "moh_ed_attendances": {
@@ -32,10 +32,10 @@ export const DATASETS: Record<string, DatasetRule> = {
     "publisher": "MOH",
     "cadence": "weekly",
     "due_after": {
-      "days": 10
+      "days": 21
     },
     "overdue_after": {
-      "days": 21
+      "days": 35
     }
   },
   "nuhs_live": {

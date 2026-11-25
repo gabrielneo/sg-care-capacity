@@ -76,7 +76,7 @@ Tailwind theme). Components use no raw hex values and no arbitrary Tailwind valu
 | `/data-quality` | Data quality |
 | `/methodology` | Methodology |
 | `/glossary` | Glossary |
-| `/how-its-built` | How it's built |
+| `/how-its-built` | (removed 25 Nov 2026: redirects to /methodology) |
 | `/case-study` | Case study |
 | `/docs/insights-method` | Insights method |
 

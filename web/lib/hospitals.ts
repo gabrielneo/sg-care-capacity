@@ -12,7 +12,7 @@ type Typed = Pick<Hospital, "hospital_code" | "facility_type">;
 
 /** The group's heading and its one-line caveat, the same wherever the group appears. */
 export const URGENT_CARE_HEADING = "Urgent care centre";
-export const URGENT_CARE_NOTE = "Not compared with full emergency departments";
+export const URGENT_CARE_NOTE = "Not compared with full emergency departments: it sees less serious cases, so its waits are shorter";
 
 export const isUrgentCare = (h: Pick<Hospital, "facility_type">): boolean => h.facility_type === "UCC";
 

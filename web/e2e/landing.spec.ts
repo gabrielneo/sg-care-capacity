@@ -15,7 +15,7 @@ test.describe("Landing", () => {
   test("opens with one heading, two ways on, and no red 995 banner", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Emergency waits and clinic access/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Hospital bed waits in Singapore, and clinic access for seniors/);
     await expect(page.getByTestId("cta-find")).toHaveAttribute("href", "/find");
     await expect(page.getByTestId("cta-findings")).toHaveAttribute("href", "/findings");
     await expect(page.getByTestId("emergency-note")).toHaveCount(0);

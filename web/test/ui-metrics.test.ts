@@ -74,7 +74,7 @@ describe("visual routes", () => {
     expect(new Set(names).size).toBe(names.length);
     expect(ROUTES.map((r) => r.path)).toEqual([
       "/", "/find", "/project", "/findings", "/explore", "/ed-trends",
-      "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/how-its-built", "/case-study",
+      "/access-map", "/live", "/data-quality", "/methodology", "/glossary", "/case-study",
       "/docs/insights-method",
     ]);
   });

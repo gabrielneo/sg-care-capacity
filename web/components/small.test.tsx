@@ -10,7 +10,7 @@ import { ChartFrameSkeleton, EmptyState, ErrorState, Skeleton } from "./States";
 describe("FreshnessBadge", () => {
   it.each([
     ["2026-10-31", "up_to_date", "Up to date · weekly · as of 31 Oct 2026"],
-    ["2026-10-20", "due", "Due an update · weekly · as of 20 Oct 2026"],
+    ["2026-10-10", "due", "Due an update · weekly · as of 10 Oct 2026"],
     ["2026-09-01", "overdue", "Overdue · weekly · as of 1 Sept 2026"],
     ["", "unknown", "Date unknown"],
   ] as const)("%s is %s with a text label, the cadence and the date", (asOf, level, text) => {
@@ -21,7 +21,7 @@ describe("FreshnessBadge", () => {
   });
 
   it("judges a meta by the least fresh of its sources", () => {
-    const meta = { sources: [{ id: "nuhs_live", as_of: "2026-11-06T08:00:00" }, { id: "moh_bed_waits", as_of: "2026-10-20" }] };
+    const meta = { sources: [{ id: "nuhs_live", as_of: "2026-11-06T08:00:00" }, { id: "moh_bed_waits", as_of: "2026-10-10" }] };
     render(<FreshnessBadge meta={meta as never} now={new Date("2026-11-06T12:00:00+08:00")} />);
     expect(screen.getByTestId("freshness-badge")).toHaveAttribute("data-level", "due");
   });

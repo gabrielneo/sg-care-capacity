@@ -25,9 +25,10 @@ const TARGET = "inline-flex min-h-11 min-w-11 items-center sm:min-h-0 sm:min-w-0
 const item = (href: string, label: string) => <li key={href}><Link href={href} className={TARGET}>{label}</Link></li>;
 
 /**
- * The footer, on every page: the page's last band. Three columns: data and privacy, about this project, and help (995 and the glossary); the style guide and decision
- * records sit in a smaller, muted developer line beside the credits.
- * The 60-second overview, case study, GitHub and CV live here, not in the product's pages. Credits are one line.
+ * The footer, on every page: the page's last band. Three columns: data and privacy, about this project, and help (995 and the glossary).
+ * The 60-second overview, case study and GitHub live here, not in the product's pages; the CV is on About only. The style guide and
+ * decision records are developer pages, kept out of the footer (the style guide is noindex; the decision records are under Methods).
+ * Credits are one line.
  */
 export function SiteFooter() {
   const link = (id: string) => AUTHOR_LINKS.find((l) => l.id === id);
@@ -69,7 +70,6 @@ export function SiteFooter() {
               {item("/project", "The project in 60 seconds")}
               {item("/case-study", "Case study")}
               {external("github", "GitHub")}
-              {external("cv", "CV")}
             </Links>
           </Column>
           <Column id="footer-help" title="Help">
@@ -82,12 +82,6 @@ export function SiteFooter() {
         <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line pt-4">
           <p data-testid="footer-credits">
             <span>Built by <strong className="font-semibold text-ink">{AUTHOR.name}</strong>, {AUTHOR.role}.</span>
-          </p>
-          {/* For people reviewing the build, not for readers of the figures: kept, but muted next to the columns. */}
-          <p className="flex flex-wrap items-center gap-x-4 text-meta text-tertiary" data-testid="footer-dev">
-            <span>For developers:</span>
-            <Link href="/styleguide" className={`${TARGET} text-tertiary`}>Style guide</Link>
-            <Link href="/decisions" className={`${TARGET} text-tertiary`}>Decision records</Link>
           </p>
         </div>
       </div>

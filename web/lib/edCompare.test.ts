@@ -21,6 +21,22 @@ import {
   weekdayProfile,
 } from "./edCompare";
 import { divergingScale } from "./palette";
+import { robustZ } from "./edCompare";
+
+describe("robustZ: the latest week against a hospital's own last 26 weeks", () => {
+  const history = Array.from({ length: 26 }, (_, i) => 4 + (i % 2 ? 0.3 : -0.3));      // median 4.0, MAD 0.3 -> swing 0.4448
+  it("is (x - median) / (1.4826 x MAD), with the swing in hours", () => {
+    const { z, swing } = robustZ(5.5, history);
+    expect(swing).toBeCloseTo(0.4448, 3);
+    expect(z).toBeCloseTo(1.5 / 0.4448, 2);
+  });
+  it("needs 20 weeks and some spread: missing stays missing, never a z of 0", () => {
+    expect(robustZ(5.5, history.slice(0, 19))).toEqual({ z: null, swing: null, band: null });
+    expect(robustZ(5.5, history.slice(0, 20)).z).not.toBeNull();
+    expect(robustZ(5.5, Array(26).fill(4))).toEqual({ z: null, swing: null, band: null });
+    expect(robustZ(null, history)).toEqual({ z: null, swing: null, band: null });
+  });
+});
 
 const week = (code: string, start: string, v: number | null, complete = true): EdWeek => ({
   hospital_code: code, hospital_name: code, iso_year: 2026, iso_week: 0, week_start: start, week_end: start,

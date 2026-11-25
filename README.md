@@ -1,25 +1,27 @@
-# Care-pacity: emergency waits and clinic access in a super-aged Singapore
+# Care-pacity: hospital bed waits and clinic access in a super-aged Singapore
 
-**Where do Singapore's emergency departments wait longest for ward beds, and where do seniors have
-the fewest chronic-care clinics? A tested, weekly-updated pipeline, API and website built from
-public MOH, data.gov.sg and SingStat data. The site opens on the latest release's top finding and the
+**Which public hospitals take longest to find admitted patients a ward bed, and where do seniors have
+the fewest chronic-care GP clinics? A tested pipeline, API and website built from
+public MOH, data.gov.sg and SingStat data. The two are separate sets of figures shown side by side: the bed-wait
+data has no age breakdown and does not cover time to see a doctor, and this project does not test a link between the two.
+The pipeline checks the sources every Sunday and publishes a release when MOH has new figures; MOH's figures end 6 to 11 days before each release. The site opens on the latest release's top finding and the
 average bed wait month by month, then two pictures, each with a one-line note: each hospital's latest bed wait against its own usual level,
 and clinics per senior by planning area. A separate page finds the nearest polyclinics and GP clinics
-for any postcode. Every figure comes from the latest weekly data release, with its date and source.**
+for any postcode. Every figure comes from the latest data release, with its date and source.**
 
 **Live site: [sg-care-capacity-web.vercel.app](https://sg-care-capacity-web.vercel.app/)** ·
 [Case study](https://sg-care-capacity-web.vercel.app/case-study) ·
 [One-page summary](https://sg-care-capacity-web.vercel.app/summary) ·
-[Independent audit](docs/audit_report.md)
+[AI-assisted traceability audit](docs/audit_report.md)
 
-[![The home page in light mode: on a deep-purple hero with a royal-blue glow, the claim, the top finding (bed waits at National University Hospital peak on Tuesday and Wednesday, 34% and 26% above its weekly average), a "Find a clinic near you" button, a "Read the findings" button and the 995 line, then a card with the average bed wait at the full emergency departments month by month on a 0 to 8 hour scale, from December 2023 (8.2 hours) to October 2026 (5.4 hours), with its date and source](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
+[![The home page in light mode: on a deep-purple hero with a royal-blue glow, the heading "Hospital bed waits in Singapore, and clinic access for seniors", the top finding (bed waits at National University Hospital peak on Tuesday and Wednesday, 35% and 26% above its weekly average, with an adults-only note), two buttons, the 995 line, a line saying the bed-wait and clinic figures are shown side by side with no link tested, then a card with the average bed wait at the full emergency departments month by month, from December 2023 (8.2 hours) to October 2026 (5.4 hours)](docs/images/home.png)](https://sg-care-capacity-web.vercel.app/)
 
 <p align="center">
   <img src="docs/images/home-dark.png" width="62%" alt="The same home page in dark mode: the hero and the monthly bed-wait card on a near-black violet page">
   <img src="docs/images/home-phones.png" width="34%" alt="The home page on a 375 px phone, light and dark side by side: the claim, the two buttons stacked, the 995 line and the monthly card">
 </p>
 
-<sub>Screenshots from data release `data-2026-11-17`. Light and dark follow the device setting.</sub>
+<sub>Screenshots from data release `data-2026-11-24`, made with `web/scripts/readme-screenshots.mjs`. Light and dark follow the device setting.</sub>
 
 ## The site
 
@@ -57,8 +59,8 @@ for any postcode. Every figure comes from the latest weekly data release, with i
 
 ## What the data shows
 
-From the [case study](docs/case_study.md). Each figure was checked again against weekly data release
-`data-2026-11-17` on 20 Nov 2026 and is unchanged:
+From the [case study](docs/case_study.md). Each figure was checked again against data release
+`data-2026-11-17` on 20 Nov 2026 and against `data-2026-11-24` on 25 Nov 2026, and is unchanged:
 
 1. **ED demand is high and steady.** The 8 sites MOH reported throughout (7 emergency departments
    and Alexandra Hospital's urgent care centre) recorded 868,644 visits in 2023, 863,988 in 2024
@@ -116,12 +118,13 @@ number with its "Data as of" date and source.
 - **Findings are computed, not written.** Each finding is produced by fixed code from the data and
   published only if it passes a statistical test, corrected for the number of tests run. Findings
   never use causal words.
-- **Independent audit.** An agent that never saw the code traced 20 random numbers on the site back
+- **AI-assisted traceability audit, run by the author.** An AI agent that was not given the code traced 20 random numbers on the site back
   to the exact raw cells: 19 matched; the 20th is an external citation. It rebuilt two tables from
   scratch, which matched. It found 1 critical, 1 high and 5 medium issues. All are fixed, each with
-  a test ([audit report](docs/audit_report.md)).
-- **Recomputed from the data release.** On 20 Nov 2026 the published release `data-2026-11-17` was checked
-  with separate code that shares nothing with the pipeline. Weekly and monthly averages, totals, completeness flags and
+  a test ([audit report](docs/audit_report.md)). Limits: a sample of 20 numbers, set up and run by the project's author, with no
+  human reviewer. It is a traceability check, not an independent third-party audit.
+- **Recomputed from the data release.** On 20 Nov 2026 the published release `data-2026-11-17` was checked by an AI agent
+  (set up by the author) with separate code that shares nothing with the pipeline. Weekly and monthly averages, totals, completeness flags and
   year-on-year changes matched in every row. So did the all-hospital monthly series, the clinics per 1,000 seniors in every
   area, and the three headline findings: the weekday test, the visits and bed-wait correlation, and the priority ranking.
   The live API served the same values.
@@ -132,6 +135,39 @@ number with its "Data as of" date and source.
   the home page and the newer pages) in light and dark. Lighthouse checks the home, finder, findings and ED trends pages against budgets: largest paint
   within 2.5 s (target 2.0 s), layout shift under 0.01 and under 200 kB of JavaScript. It applies a slow 4G network and a
   4x slower CPU for real and measures the paint, which comes at about 1.5 s on each of these pages.
+
+## How this was built: AI assistance
+
+This project was built with an AI coding assistant (Claude Code; the working rules it follows are in [`CLAUDE.md`](CLAUDE.md)).
+The assistant wrote most of the code, tests and documentation drafts. The checks described above (the data checks, the
+recomputation and the traceability audit) were also run by AI agents, set up by the author. None of them is a human review.
+
+What the author did, as the record of the work shows:
+
+- **Set the question and the rules.** The author chose the topic, the audience, and the working rules in `CLAUDE.md`: no
+  patient-level data, nothing filled in or guessed, a date and source on every figure, and no causal wording.
+- **Decided between options.** The author approved or chose the plans: which claims to reword, to keep small clinic areas
+  ranked but marked, to label (not add) polyclinics, and to treat the site as a public tool with portfolio material on About.
+- **Commissioned the reviews and acted on them.** The author ran the traceability audit, a plain-language comprehension test and
+  a UX critique, and had each finding fixed with a test.
+- **Pushed back on the site's own claims.** A pre-publish critique led to rewording "emergency waits" and "seniors", renaming
+  the audit, and changing the "usual" rule, which flagged a hospital in 13% of weeks.
+- **Not done by the author:** writing the code line by line, or reading every figure against the source files. The AI agents did
+  the checks described above, and no human has reviewed them.
+
+## Limitations and what I would do next
+
+- **No age split in the ED data.** MOH's bed-wait and visit figures do not say how old the patients are, so the site cannot say
+  anything about seniors' emergency waits. The two halves of the site are shown side by side; no link between them is tested.
+- **Bed waits, not total waits.** The figure is the wait for a ward bed after the decision to admit. It leaves out time to
+  be seen, and patients who go home.
+- **Noisy weekly figures.** A week is an average of seven daily medians. It understates busy days and the longest waits, and
+  some hospitals swing widely week to week; the site marks a week only when it is far outside the hospital's own range.
+- **CDMP GP clinics only.** The clinic ratio leaves out polyclinics, opening hours, doctors, cost and transport, and uses a
+  clinic list that is about two years older than the resident counts.
+- **Small areas.** A few planning areas have few seniors, so one clinic changes their rate a lot; they are marked, not hidden.
+- **Next:** an age-specific ED source if one is ever published; polyclinics in the access measure; a human reviewer for the
+  audit; MOH's own longest-wait figures if they become available.
 
 ## Data use and licences
 
@@ -191,7 +227,7 @@ make test                                                         # pipeline, AP
 | [Methodology](docs/methodology.md) | Sources, measures, the map method and what the data can't tell you |
 | [Data dictionary](docs/data_dictionary.md) | Every column: definition, unit, source and caveats |
 | [Data quality](docs/data_quality.md) | Every check, its threshold and why |
-| [Audit report](docs/audit_report.md) | The independent audit and how each finding was resolved |
+| [Audit report](docs/audit_report.md) | The AI-assisted traceability audit and how each finding was resolved |
 | [Decisions](docs/adr/) | Architecture decision records |
 | [Redesign brief](docs/design/redesign_brief.md) and [review](docs/design/review_2026-11-16.md) | The "calm & clear" redesign: principles, measurements before and after, and what is still open |
 | [Design tokens](web/styles/tokens.css) | Every colour, with its role, for light, dark and print; the type scale and spacing |

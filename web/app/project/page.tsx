@@ -17,7 +17,7 @@ import { checksBreakdown, checksSummary, findingTiles, shareText } from "@/lib/p
 
 export const metadata: Metadata = {
   title: "The project",
-  description: "A public-data analytics project by Gabriel Neo: where Singapore's emergency departments wait longest for ward beds, and where seniors have the fewest clinics.",
+  description: "A public-data analytics project by Gabriel Neo: which public hospitals take longest to find admitted patients a ward bed, and where seniors have the fewest GP clinics.",
 };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
@@ -67,7 +67,7 @@ export default async function ProjectPage() {
       <header className="max-w-3xl pb-6 pt-2 sm:pt-4">
         <p className="text-small text-muted">A public-data analytics project by {AUTHOR.name}</p>
         <h1 className="mt-2 font-semibold tracking-tight text-ink text-h1">
-          I built a weekly, checked view of emergency bed waits and clinic access for Singapore&apos;s seniors.
+          I built a checked view of hospital bed waits, and of clinic access for Singapore&apos;s seniors.
         </h1>
         <p className="mt-3 text-body text-muted">{AUTHOR.seeking}</p>
         <p className="mt-4 flex flex-wrap gap-3">
@@ -170,7 +170,7 @@ export default async function ProjectPage() {
             {WHAT_I_DID.map((line) => <li key={line}><Glossed text={line} /></li>)}
           </ul>
           <p className="mt-3 text-small">
-            <Link href="/how-its-built">See how it&apos;s built</Link>
+            <Link href="/methodology">See how the figures are made</Link>
             {" · "}<a href={github?.href} target="_blank" rel="noopener noreferrer">Browse the code<span className="sr-only"> (opens in a new tab)</span></a>
           </p>
         </Tile>

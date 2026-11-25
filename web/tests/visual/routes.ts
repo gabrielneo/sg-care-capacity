@@ -21,7 +21,6 @@ export const ROUTES: readonly VisualRoute[] = [
   { name: "data-quality", path: "/data-quality" },
   { name: "methodology", path: "/methodology" },
   { name: "glossary", path: "/glossary" },
-  { name: "how-its-built", path: "/how-its-built" },
   { name: "case-study", path: "/case-study" },
   { name: "docs-insights-method", path: "/docs/insights-method" },
 ];

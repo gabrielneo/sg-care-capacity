@@ -5,6 +5,7 @@ engine:
   alpha: 0.05                 # Benjamini-Hochberg across every p-value in one run
   min_completeness: 0.80      # skip a hospital or area below this share of expected data
   headline_count: 3           # top findings, at most one per detector
+  headline_min_score: 0.30    # a finding scoring below this is published but never a headline: with none left, the home page says no pattern cleared the bar
   never_headline: [monthly_yoy]   # published, but never a headline: its months overlap, so it is the weakest test here
   # 95% confidence intervals: percentile bootstrap, seeded so a run is reproducible (docs/insights_method.md).
   bootstrap: {resamples: 2000, level: 0.95, seed: 20261114}
@@ -13,6 +14,10 @@ ranking:
   # rank_score = normalised effect x (1 - p_adjusted) x completeness x recency
   # Recency comes from the source's freshness (same rules as the site's badge).
   recency: {up_to_date: 1.0, due: 0.7, overdue: 0.4}   # freshness levels from docs/datasets.yml
+  # Usefulness to a general reader, 0-1, multiplied into rank_score. A weekday pattern at one hospital saturates the effect scale
+  # (every hospital scored 1.0), so without this it always led. A finding about one site's own weekday rhythm is the least useful;
+  # a finding on a hospital whose figures cover adults only (NUH) is a partial picture of that site.
+  relevance: {weekday_hospital: 0.6, adult_only_hospital: 0.8}
   normalise:
     anomaly_z_full: 7.0       # |robust z| at which the effect counts as 1
     weekday_eps2_full: 0.14   # epsilon-squared of a "large" effect counts as 1
@@ -57,8 +62,14 @@ source_gap:
 
 usual_gap:
   trailing_weeks: 8           # the usual level: median of the 8 complete weeks before the latest (as the site's badge)
-  min_pct_above: 0.30         # "much higher" line of the site's status badge; a plain comparison, no p-value
-  beyond_range: true          # and higher than every one of those 8 weeks: the badge's second line
+  # The flag is the site's status badge rule (web/lib/status.ts): the latest week's robust z-score (median and MAD, scaled like a
+  # standard deviation) against the hospital's own previous `range_weeks` complete weeks. Simulated over every past week this flags a
+  # hospital about 5% of the time; the 8-week rule below flagged 13%. A plain comparison, no p-value.
+  range_weeks: 26
+  min_range_weeks: 20         # needs this many of them; with fewer, the older rule below applies (shortcut: remove when all hospitals have the history)
+  min_z: 2.5
+  min_pct_above: 0.30         # older rule, used only without enough history: 30% above the usual level ...
+  beyond_range: true          # ... and higher than every one of the 8 weeks before it
 
 monthly_yoy:
   window_months: 36           # the latest 36 calendar months

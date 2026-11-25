@@ -46,13 +46,16 @@ def hospital_name(h: pd.Series) -> str:
     return str(h["hospital_name"]).replace(" (UCC)", "")
 
 
+ADULT_ONLY_CAVEAT = "MOH's figures for this hospital cover adults only."
+
+
 def hospital_caveats(h: pd.Series) -> list[str]:
     out = []
     if h.get("facility_type") == "UCC":
         out.append("Alexandra Hospital runs an urgent care centre, not a full emergency department.")
     note = h.get("coverage_note")
     if isinstance(note, str) and note.lower().startswith("adult"):
-        out.append("MOH's figures for this hospital cover adults only.")
+        out.append(ADULT_ONLY_CAVEAT)
     return out
 
 

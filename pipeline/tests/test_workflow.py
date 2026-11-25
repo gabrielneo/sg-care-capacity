@@ -187,3 +187,13 @@ def test_weekly_installs_no_browser():
     # The Playwright fallback was removed (NUHS's page needs no browser); the job shouldn't pay for Chromium.
     text = (WF / "weekly.yml").read_text().lower()
     assert "playwright" not in text and "[dev,browser]" not in text
+
+
+# --------------------------------------------------------- stale release alert #
+
+def test_stale_release_alert_is_scheduled_and_opens_one_issue():
+    text = (WF / "stale-release.yml").read_text()
+    assert 'cron: "0 1 * * 1"' in text and "issues: write" in text
+    assert 'MAX_AGE_DAYS: "10"' in text
+    # One open issue is updated, not a new one every week.
+    assert "gh issue list --label stale-release --state open" in text and "gh issue comment" in text

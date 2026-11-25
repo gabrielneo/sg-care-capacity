@@ -13,11 +13,11 @@ const at = (iso: string) => new Date(iso);
 
 describe("one freshness function, per dataset (docs/datasets.yml)", () => {
   it.each([
-    // MOH weekly bed waits: due an update after 10 days, overdue after 21
+    // MOH weekly bed waits: due an update after 21 days, overdue after 35
     ["moh_bed_waits", "2026-10-31", "2026-11-06T12:00:00+08:00", "up_to_date"],
-    ["moh_bed_waits", "2026-10-31", "2026-11-10T00:00:00+08:00", "up_to_date"],
-    ["moh_bed_waits", "2026-10-31", "2026-11-10T00:00:01+08:00", "due"],
-    ["moh_bed_waits", "2026-10-31", "2026-11-21T00:00:01+08:00", "overdue"],
+    ["moh_bed_waits", "2026-10-31", "2026-11-21T00:00:00+08:00", "up_to_date"],
+    ["moh_bed_waits", "2026-10-31", "2026-11-21T00:00:01+08:00", "due"],
+    ["moh_bed_waits", "2026-10-31", "2026-12-05T00:00:01+08:00", "overdue"],
     // NUHS doctor-wait estimates: a reading at one moment
     ["nuhs_live", "2026-11-06T12:01:49", "2026-11-06T20:00:00+08:00", "up_to_date"],
     ["nuhs_live", "2026-11-06T12:01:49", "2026-11-09T12:00:00+08:00", "due"],
@@ -54,20 +54,20 @@ describe("one freshness function, per dataset (docs/datasets.yml)", () => {
   });
 
   it("shows the label, the cadence and the as-of date, in words", () => {
-    const f = datasetFreshness("moh_bed_waits", "2026-10-31", at("2026-11-14T12:00:00+08:00"));
+    const f = datasetFreshness("moh_bed_waits", "2026-10-31", at("2026-11-24T12:00:00+08:00"));
     expect(freshnessText(f)).toBe("Due an update · weekly · as of 31 Oct 2026");
     expect(freshnessText(f, { withDate: false })).toBe("Due an update · weekly");
-    expect(f.age).toBe("2 weeks");
+    expect(f.age).toBe("3 weeks");
     const nuhs = datasetFreshness("nuhs_live", "2026-11-08T22:00:44", at("2026-11-09T12:00:00+08:00"));
     expect(freshnessText(nuhs)).toBe("Up to date · a reading at one moment · as of 8 Nov 2026, 10:00 pm SGT");
-    expect(ruleText("moh_bed_waits")).toBe("weekly: due an update after 10 days, overdue after 21 days");
+    expect(ruleText("moh_bed_waits")).toBe("weekly: due an update after 21 days, overdue after 35 days");
     expect(ruleText("insight_findings")).toMatch(/least fresh/);
   });
 
   it("counts the age from the dataset's own as-of date, not the release date", () => {
-    // The release is from 9 Nov; MOH's figures run to 31 Oct. 14 Nov is 14 days after the data: due an update.
+    // The release is from 9 Nov; MOH's figures run to 31 Oct. 24 Nov is 24 days after the data: due an update.
     const meta = { ...edMeta, as_of: "2026-11-09T02:40:56" };
-    expect(metaFreshness(meta, at("2026-11-14T12:00:00+08:00"))).toMatchObject({ level: "due", asOf: "2026-10-31" });
+    expect(metaFreshness(meta, at("2026-11-24T12:00:00+08:00"))).toMatchObject({ level: "due", asOf: "2026-10-31" });
   });
 
   it("describes the age in words", () => {
@@ -79,9 +79,9 @@ describe("one freshness function, per dataset (docs/datasets.yml)", () => {
 });
 
 describe("a combined figure inherits the least fresh of its datasets", () => {
-  const now = at("2026-11-14T12:00:00+08:00");
-  const moh = { id: "moh_bed_waits", as_of: "2026-10-31" };      // due an update on 14 Nov
-  const nuhs = { id: "nuhs_live", as_of: "2026-11-14T08:00:00" }; // up to date
+  const now = at("2026-11-24T12:00:00+08:00");
+  const moh = { id: "moh_bed_waits", as_of: "2026-10-31" };      // due an update on 24 Nov
+  const nuhs = { id: "nuhs_live", as_of: "2026-11-24T08:00:00" }; // up to date
 
   it("a finding from MOH's data can't be up to date while MOH is due an update", () => {
     expect(sourcesFreshness([nuhs, moh], now)).toMatchObject({ level: "due", sourceId: "moh_bed_waits" });

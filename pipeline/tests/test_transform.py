@@ -475,3 +475,13 @@ def test_system_monthly_covers_only_the_full_eds_and_is_null_until_all_are_compl
     assert len(sysm) == 1
     # Only CGH and SGH are loaded, but the group is every full ED in dim_hospital: the month is not complete.
     assert pd.isna(sysm.iloc[0]["mean_of_hospital_mean_wait_hours"]) and not sysm.iloc[0]["is_complete_month"]
+
+
+def test_small_and_commuter_areas_are_flagged_but_still_ranked(built):
+    """A ranked area with 1,000 to 2,999 seniors gets a note; so does one whose clinics outnumber its residents."""
+    a = q(built, "SELECT planning_area, residents_65plus, cdmp_clinics, cdmp_clinics_per_1k_seniors, dq_note "
+                 "FROM marts.fct_area_access WHERE residents_65plus >= 1000").set_index("planning_area")
+    assert len(a) and a["cdmp_clinics_per_1k_seniors"].notna().all()                 # flagged, never dropped
+    small = a[a["residents_65plus"] < 3000]
+    assert len(small) and small["dq_note"].str.contains("Fewer than 3,000 residents aged 65+").all()
+    assert not a[a["residents_65plus"] >= 3000]["dq_note"].fillna("").str.contains("Fewer than 3,000").any()

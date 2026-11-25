@@ -34,7 +34,7 @@ describe("buildStrip", () => {
 
   it("gives the bed-wait pill its own date and age, with no doctor pill when NUHS has no reading", () => {
     const s = buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: nuhsMeta, now: NOW })!;
-    expect(s.pills).toEqual([{ id: "bed", dataset: "Bed waits", source: "MOH", level: "due", label: "Due an update",
+    expect(s.pills).toEqual([{ id: "bed", dataset: "Bed waits", source: "MOH", level: "up_to_date", label: "Up to date",
       detail: "weekly · as of 31 Oct 2026 · 12 days old", asOf: "2026-10-31" }]);
     expect(s.bed).toEqual({ source: "MOH", asOf: "2026-10-31" });
   });
@@ -49,9 +49,9 @@ describe("buildStrip", () => {
 
   it("turns amber to green to red as the injected date moves", () => {
     const at = (iso: string) => buildStrip({ hospitals, weekly, weeklyMeta: mohMeta, live: [], liveMeta: null, now: new Date(iso) })!.pills[0]!.level;
-    expect(at("2026-11-10T00:00:00+08:00")).toBe("up_to_date");
-    expect(at("2026-11-12T00:00:00+08:00")).toBe("due");
-    expect(at("2026-11-22T00:00:00+08:00")).toBe("overdue");
+    expect(at("2026-11-21T00:00:00+08:00")).toBe("up_to_date");
+    expect(at("2026-11-24T00:00:00+08:00")).toBe("due");
+    expect(at("2026-12-06T00:00:00+08:00")).toBe("overdue");
   });
 
   it("keeps hospitals with no comparison separate from 'not above usual'", () => {

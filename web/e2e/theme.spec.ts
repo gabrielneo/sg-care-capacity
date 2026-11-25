@@ -53,9 +53,9 @@ test.describe("/styleguide", () => {
     await expectNoHorizontalScroll(page);
   });
 
-  test("is linked from the footer and nowhere in the main navigation", async ({ page }) => {
+  test("is in neither the footer nor the main navigation: a developer page, reached by its address", async ({ page }) => {
     await page.goto("/methodology");
-    await expect(page.locator("footer").getByRole("link", { name: "Style guide" })).toHaveAttribute("href", "/styleguide");
+    await expect(page.locator("footer").getByRole("link", { name: "Style guide" })).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "Main" }).locator('a[href="/styleguide"]')).toHaveCount(0);
   });
 

@@ -184,7 +184,7 @@ Gated tables: `moh_bed_waits`, `moh_ed_attendances`, `chas_clinics`, `nuhs_live_
   means half the admitted patients that day waited no time at all for a ward bed.
 - **Threshold:** `median_wait_hours = 0`.
 - **Why:** MOH does publish it, so it is kept as published (never changed or dropped) and flagged
-  for review. **On real data:** Woodlands on 22 and 29 Dec 2025. Raised by the independent audit
+  for review. **On real data:** Woodlands on 22 and 29 Dec 2025. Raised by the AI-assisted audit
   (`audit_report.md`, I-2).
 
 ### `range.attendances_negative`: ERROR, row
@@ -302,7 +302,7 @@ movement.
 - **Why:** the reading is real, so it is kept and shown as "under 1 hour", never as 1 hour. It is
   left out of anything that needs a value: the NUHS-vs-MOH chart, `reconcile.nuhs_vs_moh_nuh` and
   the `source_gap` finding. **On real data:** 3 cells on the 8 Nov 2026, 10:00 pm page (Alexandra's
-  two estimates and NUH Children's bed wait). Found by the independent audit (`audit_report.md`, C-1).
+  two estimates and NUH Children's bed wait). Found by the AI-assisted audit (`audit_report.md`, C-1).
 
 ## Population checks (`pop_65plus_by_area`, `pop_65plus_by_subzone`)
 

@@ -39,6 +39,14 @@ describe("LandingMap", () => {
     expect(getByTestId("landing-not-ranked-reasons")).toHaveTextContent("no residents aged 65+ (2)fewer than 1,000 residents aged 65+ (1)");
   });
 
+  it("names the fewest and the most clinics beside the map, and says when an area has few seniors", () => {
+    const rated = (code: string, rate: number, note: string | null = null) => ({ ...a(code, code), props: { planning_area: code, cdmp_clinics_per_1k_seniors: rate, dq_note: note } as unknown as AreaStyle["props"] });
+    const { getByTestId } = render(<LandingMap features={[f("A", 0)]}
+      areas={[rated("Low", 0, "Fewer than 3,000 residents aged 65+: one clinic"), rated("Mid", 1.2), rated("Mid2", 1.3), rated("High", 5.02, "Fewer than 3,000 residents aged 65+: x"), { ...a("X", "X", true), props: { cdmp_clinics_per_1k_seniors: null } as unknown as AreaStyle["props"] }]}
+      classes={[{ index: 0, min: 0, max: 5.02, count: 4, color: "#440154" }]} excluded={1} />);
+    expect(getByTestId("landing-extremes")).toHaveTextContent("Fewest: Low 0.00 (few seniors), Mid 1.20.Most: High 5.02 (few seniors), Mid2 1.30.");
+  });
+
   it("draws nothing when there is no geometry", () => {
     const { container } = render(<LandingMap features={[]} areas={[]} classes={[]} excluded={0} />);
     expect(container).toBeEmptyDOMElement();

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Hospital, Insight } from "@/lib/api/types";
 import type { Mode, Usual } from "@/lib/edCompare";
 import { pinnedCaveat } from "@/lib/hospitalNotes";
-import { splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
+import { isUrgentCare, splitByCare, URGENT_CARE_HEADING, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { HIGHER_PCT, type Level, levelFor } from "@/lib/status";
 
 import { CaveatChip } from "../CaveatChip";
@@ -57,7 +57,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
     const note = pinnedCaveat(h);
     // The word, arrow and colour are the badge's (lib/status.ts: 15% or more AND outside the range of the 8 weeks before), so this chart,
     // the badge and "N of M above usual" always agree. A smaller move is "about usual": the figures still show it.
-    const level = levelFor(u.pct, u.position);
+    const level = levelFor(u.pct, u.position, u.z);
     const sign = level === "much_higher" || level === "higher" ? 1 : level === "lower" ? -1 : 0;
     const direction = sign > 0 ? "worse" : sign < 0 ? "better" : "neutral";
     return (
@@ -88,8 +88,10 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
                        unit={mode === "raw" ? `vs ${hours(u.usual)} usual` : null}
                        word={WORD[level]} />
           {/* Why a big move still reads "about usual": the week sits inside the range of the weeks before (lib/status.ts). */}
-          {level === "usual" && Math.abs(u.pct) >= HIGHER_PCT && u.position === 0 ? (
-            <span className="block text-meta text-muted" data-testid="within-range">within the range of its {USUAL_WEEKS} weeks before</span>
+          {level === "usual" && Math.abs(u.pct) >= HIGHER_PCT && (u.z != null || u.position === 0) ? (
+            <span className="block text-meta text-muted" data-testid="within-range">
+              {u.z != null ? `within its own usual swing of about ±${hours(u.swing ?? 0)} (previous ${u.rangeWeeks} complete weeks)` : `within the range of its ${USUAL_WEEKS} weeks before`}
+            </span>
           ) : null}
         </span>
         {annotated && finding?.chart ? (
@@ -97,7 +99,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
             <span aria-hidden="true">↑ </span>{finding.chart.callout} (the unusual-week finding)
           </p>
         ) : null}
-        {mode === "raw" && note ? (
+        {note && (mode === "raw" || !isUrgentCare(h)) ? (
           <div className="sm:col-span-2 lg:col-span-1 lg:col-start-2" data-testid="pinned-caveat"><CaveatChip><Glossed text={note} /></CaveatChip></div>
         ) : null}
       </li>
@@ -106,7 +108,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
 
   const counts = { higher: 0, usual: 0, lower: 0 };
   for (const { u } of eds) {
-    const level = levelFor(u.pct, u.position);
+    const level = levelFor(u.pct, u.position, u.z);
     counts[level === "much_higher" || level === "higher" ? "higher" : level === "lower" ? "lower" : "usual"] += 1;
   }
   const edMissing = missing.filter((h) => splitByCare([h], (x) => x.hospital_code, hospitals).rankable.length).length;

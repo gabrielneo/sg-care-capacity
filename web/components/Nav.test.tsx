@@ -26,8 +26,8 @@ describe("Nav", () => {
     expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
   });
 
-  it("puts the project, how it's built and the case study under About; the checks and methods under Methods", () => {
-    for (const [path, label] of [["/project", "About"], ["/how-its-built", "About"], ["/case-study", "About"], ["/about", "About"],
+  it("puts the project and the case study under About; the checks and methods under Methods", () => {
+    for (const [path, label] of [["/project", "About"], ["/case-study", "About"], ["/about", "About"],
       ["/methodology", "Methods"], ["/data-quality", "Methods"], ["/glossary", "Methods"], ["/docs/insights-method", "Methods"]] as const) {
       pathname.value = path;
       const { unmount } = render(<Nav />);

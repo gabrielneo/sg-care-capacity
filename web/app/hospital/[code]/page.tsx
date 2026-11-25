@@ -63,7 +63,7 @@ export default async function HospitalPage({ params }: { params: Params }) {
   return (
     <>
       <PageHeader title={name} intro="Bed wait and emergency department visits by month, and this month against the same month a year before." />
-      {isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="ucc-note">{URGENT_CARE_NOTE}. It is an urgent care centre, not a full emergency department.</p> : null}
+      {isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="ucc-note">{URGENT_CARE_NOTE}.</p> : null}
       {note && !isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="coverage-note">{note}</p> : null}
       {lede ? <p className="max-w-prose text-ink" data-testid="monthly-lede">{lede}</p> : null}
       {back}

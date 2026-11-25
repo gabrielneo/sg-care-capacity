@@ -66,7 +66,7 @@ export function Hero({ insight, meta, count }: { insight: StoryInsight; meta: Me
       <h1 className="max-w-3xl font-semibold leading-snug tracking-tight text-ink text-h1">Findings from the latest data release</h1>
       <p className="mt-3 max-w-prose text-body text-ink" data-testid="hero-summary">
         {count === 1 ? "One finding" : `${NUMBER_WORDS[count] ? NUMBER_WORDS[count]!.charAt(0).toUpperCase() + NUMBER_WORDS[count]!.slice(1) : count} findings`}{" "}
-        on emergency department bed waits and clinic access for seniors, each published only after a fixed statistical check.
+        on emergency department bed waits, and on clinic access for seniors, each published only after a fixed statistical check.
       </p>
       {/* The page's one action, where a planner looks first: the same findings on one printable page. */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2" data-testid="summary-cta">

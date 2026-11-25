@@ -20,6 +20,13 @@ export function LandingMap({ features, areas, classes, excluded }: {
   // Why areas are not ranked, in the API's own words, with how many areas each reason covers.
   const reasons = [...areas.filter((a) => a.excluded && a.props.excluded_reason)
     .reduce((m, a) => m.set(a.props.excluded_reason!, (m.get(a.props.excluded_reason!) ?? 0) + 1), new Map<string, number>())];
+  // The two lowest and two highest ranked areas, named beside the map (a name on a shape is unreadable at 375px). An area
+  // with few seniors is said so: its rate moves a lot with one clinic.
+  const ranked = areas.filter((a) => !a.excluded && a.props.cdmp_clinics_per_1k_seniors != null)
+    .sort((x, y) => x.props.cdmp_clinics_per_1k_seniors! - y.props.cdmp_clinics_per_1k_seniors!);
+  const extreme = (a: AreaStyle) => `${a.props.planning_area} ${formatValue(a.props.cdmp_clinics_per_1k_seniors, METRIC.decimals)}${a.props.dq_note?.includes("Fewer than 3,000") ? " (few seniors)" : ""}`;
+  const lowest = ranked.slice(0, 2);
+  const highest = ranked.slice(-2).reverse();
   return (
     <div data-testid="landing-map" className="grid items-center gap-x-8 gap-y-6 md:grid-cols-[minmax(0,1fr)_15rem]">
       <svg viewBox={`0 0 ${map.width} ${map.height}`} role="img" className="landing-map mx-auto h-auto w-full max-w-xl"
@@ -53,6 +60,12 @@ export function LandingMap({ features, areas, classes, excluded }: {
             </li>
           ))}
         </ul>
+        {lowest.length ? (
+          <p className="mt-3" data-testid="landing-extremes">
+            <span className="font-semibold">Fewest:</span> {lowest.map(extreme).join(", ")}.<br />
+            <span className="font-semibold">Most:</span> {highest.map(extreme).join(", ")}.
+          </p>
+        ) : null}
         {excluded > 0 ? (
           <p className="mt-3 flex items-center gap-3">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6 shrink-0 rounded-sm border border-line">

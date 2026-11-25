@@ -54,7 +54,7 @@ function addSpan(d: Date, span: Span): Date {
 
 const spanText = (s: Span) => (s.months ? `${s.months} months` : `${s.days} day${s.days === 1 ? "" : "s"}`);
 
-/** "weekly: due an update after 10 days, overdue after 21 days", for the Data Quality page and the badge's tooltip. */
+/** "weekly: due an update after 21 days, overdue after 35 days", for the Data Quality page and the badge's tooltip. */
 export function ruleText(sourceId: string): string {
   const r = datasetRule(sourceId);
   if (r.inherits) return `${CADENCE_TEXT[r.cadence]}: as fresh as the least fresh data it uses`;

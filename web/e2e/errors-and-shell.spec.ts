@@ -70,10 +70,16 @@ test.describe("shell", () => {
   });
 
   test("the pages that moved under About are still there and mark About", async ({ page }) => {
-    for (const path of ["/about", "/project", "/how-its-built", "/case-study"]) {
+    for (const path of ["/about", "/project", "/case-study"]) {
       await page.goto(path);
       if (page.viewportSize()!.width >= 1024) await expect(page.getByRole("navigation", { name: "Main" }).locator('a[aria-current="page"]')).toHaveText("About");
     }
+  });
+
+  test("the retired /how-its-built address goes to Methods, permanently", async ({ request }) => {
+    const res = await request.get("/how-its-built", { maxRedirects: 0 });
+    expect(res.status()).toBe(308);
+    expect(res.headers().location).toMatch(/\/methodology$/);
   });
 
   test("the skip link is the first thing a keyboard user reaches", async ({ page }) => {

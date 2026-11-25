@@ -16,7 +16,7 @@ export const generateStaticParams = () => adrs().map((slug) => ({ slug }));
 type Params = Promise<{ slug: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  return { title: `ADR ${(await params).slug.slice(0, 4)}` };
+  return { title: `ADR ${(await params).slug.slice(0, 4)}`, robots: { index: false, follow: true } };
 }
 
 export default async function DecisionPage({ params }: { params: Params }) {

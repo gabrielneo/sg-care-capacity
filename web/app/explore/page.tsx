@@ -4,7 +4,7 @@ import { Hub } from "@/components/Hub";
 import { provenanceText } from "@/components/Provenance";
 import { api, settle } from "@/lib/api/client";
 import { accessPreview, edPreview, livePreview, type Preview } from "@/lib/explore";
-import { SPARK_WEEKS } from "@/lib/status";
+import { RANGE_FETCH_WEEKS } from "@/lib/windows";
 import { buildStrip } from "@/lib/strip";
 
 export const metadata: Metadata = { title: "Explore" };
@@ -19,7 +19,7 @@ const shown = (p: Preview | null) => (p ? { figure: p.figure, provenance: proven
 export default async function ExplorePage() {
   const [hospitals, weekly, live, areas] = await Promise.all([
     settle(api.hospitals()),
-    settle(api.edWeekly({ weeks: SPARK_WEEKS + 1 })),
+    settle(api.edWeekly({ weeks: RANGE_FETCH_WEEKS })),
     settle(api.liveNuhsLatest()),
     settle(api.areasAccess()),
   ]);

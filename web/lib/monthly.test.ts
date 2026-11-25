@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { changePhrase, fromHospital, fromSystem, latestComplete, monthLede, monthsText, type Point, timeSeries, yearLines, yearsSoFar, yoyWord } from "./monthly";
+import { changePhrase, fromHospital, fromSystem, latestComplete, monthLede, monthsText, type Point, timeSeries, yearLines, yearsSoFar, yoyContext, yoyWord } from "./monthly";
 
 const pt = (year: number, month: number, wait: number | null, visits: number | null, o: Partial<Point> = {}): Point =>
   ({ year, month, complete: true, wait, visits, waitYoy: null, visitsYoy: null, waitMom: null, visitsMom: null, note: null, ...o });
@@ -89,6 +89,20 @@ describe("reading the API rows", () => {
       mean_of_hospital_mean_wait_hours: null, total_attendances: null, wait_yoy_pct: null, attendances_yoy_pct: null, wait_mom_pct: null,
       attendances_mom_pct: null, source_sha256: null, as_of: "2026-11-01T00:00:00", as_of_basis: "fetched" });
     expect(p).toMatchObject({ complete: false, wait: null, note: "5 of 7 hospitals complete" });
+  });
+});
+
+describe("yoyContext", () => {
+  const month = (i: number, waitYoy: number | null): Point =>
+    ({ year: 2025 + Math.floor(i / 12), month: (i % 12) + 1, complete: true, wait: 5, visits: 1, waitYoy, visitsYoy: null, waitMom: null, visitsMom: null, note: null });
+  const swings = Array.from({ length: 13 }, (_, i) => month(i, i % 2 ? -25 : 25));      // the middle |change| is 25
+  it("says a small change is within the usual swing, and a large one is not", () => {
+    expect(yoyContext(swings, -6)).toMatch(/within the usual swing.*about 25%/);
+    expect(yoyContext(swings, 40)).toMatch(/larger than the usual swing.*about 25%/);
+  });
+  it("gives no sentence with fewer than 12 months to judge by, and ignores months with no change", () => {
+    expect(yoyContext(swings.slice(0, 11), 5)).toBeNull();
+    expect(yoyContext([...swings.slice(0, 11), month(11, null)], 5)).toBeNull();
   });
 });
 

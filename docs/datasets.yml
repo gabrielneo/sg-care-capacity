@@ -22,15 +22,18 @@ datasets:
     label: Bed waits
     publisher: MOH
     cadence: weekly
-    # MOH files cover Sunday to Saturday and appear a few days later.
-    due_after: {days: 10}
-    overdue_after: {days: 21}
+    # MOH files cover Sunday to Saturday. Measured on the 8 data releases of 6 to 24 Nov 2026: a release was made 6 to 11 days after
+    # the last day of MOH data it holds, and a week's data arrives about weekly, so the newest data is at most about 17 days old
+    # just before the next arrives. Due after 21 days = that, plus a margin; overdue after 35 days = five weeks. (Changed from 10
+    # and 21 days on 25 Nov 2026, when the old limits made an ordinary week read "Due an update".)
+    due_after: {days: 21}
+    overdue_after: {days: 35}
   moh_ed_attendances:
     label: ED visits
     publisher: MOH
     cadence: weekly
-    due_after: {days: 10}
-    overdue_after: {days: 21}
+    due_after: {days: 21}
+    overdue_after: {days: 35}
   nuhs_live:
     label: Time-to-see-a-doctor estimates
     publisher: NUHS

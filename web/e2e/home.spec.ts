@@ -55,7 +55,7 @@ test.describe("Home", () => {
     const res = await request.get(new URL(image!).pathname + new URL(image!).search);
     expect(res.status()).toBe(200);
     expect(res.headers()["content-type"]).toContain("image/png");
-    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /analytics project by Gabriel Neo.*find a clinic near you/);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /analytics project by Gabriel Neo.*does not test a link between them/);
   });
 
   test("without JavaScript the 995 number is still in the footer, and the finder says it needs JavaScript", async ({ browser }) => {

@@ -375,10 +375,11 @@ def test_an_urgent_care_finding_is_published_scoped_and_never_a_headline():
         assert r["scope"] == "urgent_care" and r["headline_rank"] is None
         assert r["caveats"][0] == engine.SCOPE_CAVEAT
     assert all(r["scope"] == "system" for r in result.insights if r["entity"] != "AH")
-    # It scores as high as a headline would need, yet the headlines are all system-wide findings.
+    # It scores as high as the other hospitals' weekday findings, yet the headlines are all system-wide findings.
     heads = [r for r in result.insights if r["headline_rank"]]
     assert heads and all(r["entity"] != "AH" for r in heads)
-    assert max(r["rank_score"] for r in ah) >= min(r["rank_score"] for r in heads)
+    others = [r for r in result.insights if r["type"] == "weekday" and r["entity"] not in ("AH", "All hospitals")]
+    assert max(r["rank_score"] for r in ah) >= min(r["rank_score"] for r in others)
 
 
 def test_the_pooled_weekday_finding_leaves_the_urgent_care_centre_out():
@@ -394,6 +395,28 @@ def test_headline_ranks_skip_urgent_care_rows():
             {"insight_id": "c", "type": "weekday", "rank_score": 0.4, "effect_size": 1, "scope": "system"}]
     from sg_health.insights import ranking
     assert ranking.headline_ranks(rows) == {"b": 1, "c": 2}
+
+
+def test_one_hospitals_weekday_pattern_ranks_below_a_system_wide_finding_and_adults_only_counts_for_less():
+    from sg_health.insights import ranking
+    from sg_health.insights.detectors.common import ADULT_ONLY_CAVEAT
+    assert ranking.relevance("weekday", "pooled", []) == 1.0
+    assert ranking.relevance("weekday", "hospital", []) == 0.6 == ranking.relevance("weekday", "hospital_tie", [])
+    assert ranking.relevance("weekday", "hospital", [ADULT_ONLY_CAVEAT]) == pytest.approx(0.48)
+    assert ranking.relevance("trend", "up", [ADULT_ONLY_CAVEAT]) == pytest.approx(0.8)
+    # Both saturate the effect scale (effect_norm 1.0); only the relevance separates them.
+    site = ranking.rank_score(1.0, 0.0, 1.0, 1.0, ranking.relevance("weekday", "hospital", []))
+    everyone = ranking.rank_score(1.0, 0.0, 1.0, 1.0, ranking.relevance("weekday", "pooled", []))
+    assert site < everyone
+
+
+def test_no_headline_when_nothing_clears_the_bar():
+    from sg_health.insights import ranking
+    rows = [{"insight_id": "a", "type": "weekday", "rank_score": 0.29, "effect_size": 1, "scope": "system"},
+            {"insight_id": "b", "type": "trend", "rank_score": 0.10, "effect_size": 1, "scope": "system"}]
+    assert ranking.headline_ranks(rows) == {}          # published, but none is promoted: the home page then says so
+    rows[0]["rank_score"] = 0.30
+    assert ranking.headline_ranks(rows) == {"a": 1}
 
 
 def test_the_same_input_gives_the_same_output():
@@ -678,10 +701,10 @@ def test_a_finding_with_a_bad_period_or_strength_stops_the_build(change):
 # --------------------------------------------------------------------------- #
 
 @pytest.mark.parametrize("source, as_of, today, expected", [
-    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 10), "up_to_date"),     # 10 days
-    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 11), "due"),
-    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 21), "due"),            # 21 days
-    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 22), "overdue"),
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 21), "up_to_date"),     # 21 days
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 11, 22), "due"),
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 12, 5), "due"),             # 35 days
+    ("moh_bed_waits", date(2026, 10, 31), date(2026, 12, 6), "overdue"),
     ("datagov_chas", date(2024, 6, 6), date(2025, 6, 6), "up_to_date"),          # 12 calendar months
     ("datagov_chas", date(2024, 6, 6), date(2025, 6, 7), "due"),
     ("datagov_chas", date(2024, 6, 6), date(2026, 11, 14), "overdue"),
@@ -939,3 +962,24 @@ def test_the_block_bootstrap_interval_is_reproducible_and_needs_enough_months():
     a = stats.block_bootstrap_spearman_ci(x, y, block=6)
     assert a == stats.block_bootstrap_spearman_ci(x, y, block=6) and a[0] < stats.spearman(x, y)[0] < a[1]
     assert stats.block_bootstrap_spearman_ci(x[:10], y[:10], block=6) is None
+
+
+def test_with_26_weeks_of_history_a_noisy_hospital_is_not_flagged_and_a_steady_one_is():
+    cfg = thresholds()["usual_gap"]
+    hosp = hospitals("SGH")
+    n = 27
+    starts = [date(2026, 4, 20) + timedelta(weeks=i) for i in range(n)]
+    full = float(thresholds()["ranking"]["normalise"]["usual_gap_pct_full"])
+
+    def frame(values):
+        return pd.DataFrame({"hospital_code": "SGH", "week_start": starts, "week_end": starts, "total_attendances": 1,
+                             "mean_of_daily_median_wait_hours": values, "is_complete_week": True})
+    steady = [4.0 + 0.1 * (i % 3) for i in range(n - 1)] + [5.6]            # +36% above a calm history
+    noisy = [4.0 + 3.0 * (i % 2) for i in range(n - 1)]                        # swings between 4 and 7 every week
+    noisy = noisy[:-2] + [4.0, 7.0] + [5.8]                                    # +29% on its 8-week usual, ordinary for it
+    assert usual_gap.detect(frame(steady), hosp, cfg, MIN_C, full).candidates[0].passes_effect
+    assert not usual_gap.detect(frame(noisy), hosp, cfg, MIN_C, full).candidates[0].passes_effect
+    # Beyond +30% and above all 8 weeks before, but inside its own 26-week swing: the old rule flagged it, this one does not.
+    wild = [3.0 + 5.0 * (i % 2) for i in range(n - 1)] + [8.4]
+    c = usual_gap.detect(frame(wild), hosp, cfg, MIN_C, full).candidates[0]
+    assert c.values["pct"] and not c.passes_effect

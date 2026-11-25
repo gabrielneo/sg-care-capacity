@@ -1,7 +1,14 @@
 # Data accuracy audit: Care-pacity
 
 **Date:** 2026-11-08
-**Auditor note:** independent; implementation not read. Every figure below was recomputed with the auditor's own Python (stdlib, duckdb, pandas, pyarrow, openpyxl) from the raw files and staging tables. No pipeline, API or web source code, SQL, tests or other project docs were opened. The only project doc read was `docs/data_dictionary.md`. The case study was read through the website.
+**Auditor note:** AI-assisted and run by the project's author; the auditing agent was not given the implementation. Every figure below was recomputed with the auditor's own Python (stdlib, duckdb, pandas, pyarrow, openpyxl) from the raw files and staging tables. No pipeline, API or web source code, SQL, tests or other project docs were opened. The only project doc read was `docs/data_dictionary.md`. The case study was read through the website.
+
+**Limits of this audit (added 25 Nov 2026)**
+
+- The auditor was an AI agent set up and run by the project's author. It is not an independent third-party audit.
+- It traced a sample of 20 numbers, not every figure on the site.
+- No human reviewed the result.
+- A human reviewer should check: (1) a fresh sample of site figures against the raw MOH and data.gov.sg files; (2) the clinic-to-planning-area assignment for clinics near area borders; (3) that each caveat on the site matches what the source says; (4) that every "Data as of" date matches its source's own date.
 
 **Inputs audited**
 

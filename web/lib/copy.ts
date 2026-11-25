@@ -3,6 +3,8 @@
  * users and can name database columns, so public pages show these instead; the API's caveats are
  * kept for the Data Quality detail section.
  */
+import { parseAsOf } from "./dates";
+import { RANGE_WEEKS } from "./windows";
 
 // Rule 4: the bed-wait metric, everywhere.
 export const BED_WAIT_LABEL = "Time waiting for a ward bed after the decision to admit";
@@ -27,7 +29,27 @@ export const AVERAGE_VS_TYPICAL =
 
 // The Overview's opening lines (comprehension report: testers didn't know "right-siting", or what the
 // bed wait measured, from the first screen).
-export const SITE_SCOPE = "This site tracks both sides for Singapore's seniors: hospital emergency departments and nearby clinics.";
+export const SITE_SCOPE = "This site shows two sets of figures side by side: bed waits for admitted patients at public hospitals, and clinics per senior. It does not test whether one affects the other.";
+/** What the bed wait leaves out (the ED data has no age split and no time-to-see-a-doctor measure). */
+export const BED_WAIT_NOT_MEASURED = "Bed waits cover only patients admitted to a ward. They don't show how long anyone waited to be seen by a doctor, or patients who went home.";
+/**
+ * What the clinic measure counts, with each source's own date (from the response's meta, never typed in). Shown as the lede of every
+ * clinic-access chart, so the two dates and the "not polyclinics" limit are in view, not only under "More about these figures".
+ */
+export function clinicScope(meta: { sources: readonly { id: string; as_of?: string | null }[] }): string {
+  const month = (id: string) => {
+    const d = parseAsOf(meta.sources.find((s) => s.id === id)?.as_of);
+    return d ? ` ${d.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "Asia/Singapore" })}` : "";
+  };
+  return `Counts CDMP GP clinics only: polyclinics are not included. The clinic list is from${month("datagov_chas") || " an earlier date"} and the resident counts from${month("singstat_residents") || " a later date"}. `
+    + "Clinic counts do not show opening hours, doctors, cost or transport.";
+}
+/** Under every bed-wait chart (not hidden in "More about these figures"): what an average of daily medians hides. */
+export const BED_WAIT_AVERAGE_NOTE =
+  "Each figure averages the daily medians MOH publishes. An average of medians understates the days when waits ran longest, and says nothing about the longest waits.";
+/** Why "about usual" is not "stable": under the chart that marks a week above or below a hospital's usual. */
+export const USUAL_RANGE_NOTE =
+  `A hospital is marked above or below usual only when its latest week is far outside the swing of its own previous ${RANGE_WEEKS} complete weeks. Some hospitals swing widely from week to week, so a large change can still be ordinary for them; the table shows each one's usual swing.`;
 export const BED_WAIT_SHORT = "The bed wait is the time an admitted patient waits in the ED for a ward bed. It is not the time to see a doctor.";
 /** Cited on the page (population.gov.sg): the 21% line is crossed by citizens, not yet by all residents. */
 export const CITIZENS_SUPER_AGED = "Among citizens alone, Singapore passed that mark in 2026";
@@ -37,7 +59,7 @@ export const CAVEAT = {
   bedWaitUnit: "MOH doesn't state the unit. We read the values as hours, because a typical value is about 4.",
   weeklyAverage: BED_WAIT_WEEKLY_WHY,
   edVisits: "ED visits include non-urgent cases. Alexandra Hospital runs a UCC, not a full ED.",
-  clinics: "The clinic list dates from June 2024, and the resident count from June 2026. Clinics are counted where they are, not where their patients live.",
+  clinics: "Clinics are counted where they are, not where their patients live. Areas marked as small, or as having many clinics for their residents, have less reliable rates.",
   live: "NUHS lists adult and children's emergency separately. These are estimates at one moment, up to 7 days old.",
   childrensEmergency: "Children's emergency is not part of MOH's NUH figures, which cover adults only.",
   quality: "These are the checks behind this week's data release. Failed checks set data aside; they never change it.",

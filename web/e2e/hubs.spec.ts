@@ -4,7 +4,6 @@ import { DOWN, expectNoA11yViolations, expectNoHorizontalScroll } from "./helper
 
 const HUBS = [
   { path: "/explore", links: ["/ed-trends", "/access-map", "/live"] },
-  { path: "/how-its-built", links: ["/data-quality", "/methodology", "/docs/insights-method", "/decisions", "/glossary"] },
 ];
 
 for (const hub of HUBS) {

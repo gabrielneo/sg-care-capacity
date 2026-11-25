@@ -157,6 +157,19 @@ of urgency of medical conditions"* (MOH). It measures demand, not acuity: it inc
 end on a Saturday, so the newest ISO week (Monday to Sunday) is usually 6 of 7 days. The Overview
 compares only complete weeks.
 
+**Average of daily medians, and whether to weight it by visits (checked 25 Nov 2026).** MOH publishes only daily medians, so a
+weekly figure averages seven medians. That understates the days when waits ran longest and says nothing about the longest waits; the site
+says so beside each bed-wait chart. A version weighted by each day's visits was compared on 1,523 complete hospital-weeks
+(7 days of both measures; Alexandra's urgent care centre left out). It is slightly higher (0.04 to 0.20 hours on average by
+hospital) and differs from the plain average by 1.9% on average, and by 5% or less in 95% of weeks (largest 13.6%, one
+KTPH week). The plain average is kept: the difference is small, the plain average can be rebuilt by anyone from MOH's file, and
+a visit-weighted average of medians is still not a median of waits.
+
+**Year-on-year change and normal variation.** A month's change against the same month a year earlier is shown with the typical
+size of such a change in the same series (the middle absolute change across the months that have one: about 25% in the data
+release of 24 Nov 2026), so a change of 6% reads as inside the usual swing between years. This is a comparison with the
+series' own history, not a significance test.
+
 **Month by month and year on year.** The Month by month page and each hospital's page show the average bed wait and the ED
 visits for each calendar month. A month's wait is the average of its daily medians (not a monthly median), and a month counts
 only when every day of both measures is in; a partial month is a gap, never a figure. Each month is also set against the same
@@ -186,11 +199,16 @@ match the insight engine's, so a chart and its finding agree ([insights_method.m
   the average of its daily medians. All 8 weeks must be complete; otherwise the hospital has no usual
   level, and the charts say so rather than guess.
 - **Latest week against usual:** the latest complete week as hours, or as a % of the usual level.
-- **Status badges and unusual-week findings** need two things, not one: the week is at least 15% (badge) or 30%
-  (finding) away from usual, **and** beyond every one of the 8 weeks before it (higher than all of them, or lower than all
-  of them). A hospital whose weeks swing widely then needs a bigger move than a steady one. On the % lines alone, CGH and SGH
-  carried a badge in 83% of weeks since 2025; with the second rule it is 30%. The chart of the latest week against usual uses the
-  same words as the badge, so a move too small or too ordinary to earn a badge reads "about usual" there too.
+- **Status badges and unusual-week findings** (rule changed 25 Nov 2026). A week is marked only when it is far outside what that
+  hospital's own previous 26 complete weeks look like: a robust z-score (the distance from the hospital's median, in units of
+  1.4826 x the median absolute deviation, so a few odd weeks do not widen it) of 2.5 or more is "higher", 4 or more "much higher",
+  and -2.5 or less "lower". The "usual" hours shown are still the median of the 8 weeks before the latest. Simulated over every past
+  week of the data (173 weeks per hospital, 96 for Woodlands), the old rule (15% and outside the 8 weeks before) marked a hospital
+  higher in 13% of weeks and lower in 11%; the new rule marks about 5% higher (1.5% much higher) and 1% lower. Waits are
+  right-skewed, so "lower" rarely triggers. A hospital needs at least 20 of the 26 weeks and some spread; with fewer, the old rule
+  applies (a documented shortcut). The table gives each hospital's usual week-to-week swing in hours, so "about usual" is not read
+  as "steady": the same % change can be ordinary at one hospital and rare at another. The chart of the latest week against usual
+  uses the same words as the badge.
 - **Weekday pattern:** each weekday's average of daily medians, as a % above or below the hospital's
   own average. It uses the complete weeks among the 26 up to the latest complete week. A hospital
   with fewer than 4 complete weeks there is not shown.
@@ -224,6 +242,58 @@ For each of Singapore's 55 planning areas (URA Master Plan 2025):
 Inputs: CHAS clinic locations (data.gov.sg, June 2024), SingStat residents by planning area and age
 (June 2026), URA Master Plan 2025 planning-area boundaries, and HPB's cervical screening centre list as
 the polyclinic list (all 26 polyclinics, January 2026).
+
+### Scope of the lead measure, small areas and daytime effects (added 25 Nov 2026)
+
+- **CDMP GP clinics only.** The ratio counts clinics in the Chronic Disease Management Programme. The 26 polyclinics are
+  not in it (they are used only for the distance measure), so the ratio is not total chronic-care capacity. The site says so
+  beside every clinic chart and table.
+- **Two dates.** The clinic list is from June 2024 and the resident counts from June 2026. Both dates are shown under the
+  chart (read from each source's own date), not only in the notes.
+- **Small areas stay ranked, with a note.** An area needs at least 1,000 residents aged 65+ to be ranked. Between 1,000 and
+  2,999, the area is ranked but carries a note: one clinic more or fewer moves its rate by 0.33 or more per 1,000
+  seniors, against a median of 1.16. Sensitivity of the ranked set (data release `data-2026-11-09`):
+
+  | Minimum 65+ residents | Areas ranked | Median per 1,000 | Range | Areas at 0 |
+  |---|---|---|---|---|
+  | 1,000 (used) | 32 | 1.16 | 0 to 5.02 | River Valley, Tengah |
+  | 2,000 | 30 | 1.16 | 0 to 5.02 | Tengah |
+  | 3,000 | 28 | 1.16 | 0.73 to 2.80 | none |
+
+  The median does not move. Only the two ends do: both zeros and the highest rate (Rochor, 2,990 seniors) come from areas
+  under 3,000 seniors. Read the ends of the range with that in mind.
+- **Daytime and commuter effect.** An area whose clinics are more than twice the island-wide clinics per resident
+  (Rochor and Outram in this release) is noted: offices and hospitals draw people who live elsewhere, so a residents-only
+  ratio overstates access for the people who live there. The 2x line is a judgement, not a tested threshold.
+- **The benchmark rate** is the CDMP clinics divided by the residents aged 65+ of the ranked areas (1.18 per 1,000 in
+  this release). The finding sentences state it.
+- **Colour direction.** Darker means fewer clinics, on every map. A plain legend says so, and the two lowest and two highest
+  areas are named beside the map. The alternative (darker means more) would suit a "capacity" map, but this project's question
+  is where access is scarce, and the eye should go to scarcity first. It is a design choice, tested with the legend text rather
+  than colour alone.
+- **What clinic counts leave out:** opening hours, number of doctors, cost and transport.
+
+### How the judgement thresholds were checked (25 Nov 2026)
+
+These are choices, not tested limits. Each was run against the real history to see how much it matters.
+
+- **The z-score line (2.5).** Share of hospital-weeks marked "higher" / "lower", over every past week with 26 weeks of history:
+  2.0 marks 9.5% / 2.5% (at least one hospital in 43% of weeks); 2.5 marks 5.3% / 1.1% (28% of weeks); 3.0 marks 3.3% / 0.6% (21%).
+  2.5 was kept: a week flagged about 1 hospital-week in 19, and some hospital in about 3 weeks in 10. At 2.0 the badge would fire
+  about as often as the rule it replaced.
+- **"Much higher" (4).** About 1.5% of hospital-weeks. A rarer mark for a rare week; there is no tested reason for 4 over 3.5.
+- **The headline bar (0.30) and the relevance weights (0.6 for one hospital's weekday pattern, a further 0.8 for adults-only
+  figures).** Re-run on the engine's inputs with data to 31 Oct 2026: the top finding moves from NUH's weekday pattern to the
+  all-hospital weekday pattern (a system-wide finding), and two findings are headlines. With the bar at 0.2 a third is added
+  (an access gap); at 0.4 or 0.5 only the all-hospital weekday pattern is left. The bar mainly decides how many headlines
+  show; the weights decide which one leads.
+- **Freshness limits (21 and 35 days).** The 8 data releases of 6 to 24 Nov 2026 were made 6 to 11 days after the last day of MOH
+  data they hold (4 distinct data weeks). With new data about weekly, the newest data is at most about 17 days old just before the
+  next arrives; 21 days is that plus a margin, 35 is five weeks. Eight releases over three weeks is a short record: re-check
+  when more exist. (An earlier version of this note said 13 to 16 days, from two raw MOH bed-wait files; the release dates above
+  are the better measure of what the badge sees.)
+- **Daytime areas (2x the island-wide clinics per resident).** Flags Rochor and Outram in the data to 31 Oct. Novena (a hospital
+  district) is just under the line. A different multiple would add or drop areas near it.
 
 ## Why a choropleth, not a heatmap
 

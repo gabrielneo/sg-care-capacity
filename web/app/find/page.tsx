@@ -22,8 +22,8 @@ import { latestCompleteWeek, usualLevels } from "@/lib/edCompare";
 import { FIND_PATH, type SectionId, sectionAnchor } from "@/lib/homeViews";
 import { shortNote } from "@/lib/hospitalNotes";
 import { isUrgentCare } from "@/lib/hospitals";
-import { hospitalStatus, SPARK_WEEKS } from "@/lib/status";
-import { formatWindow } from "@/lib/windows";
+import { hospitalStatus } from "@/lib/status";
+import { formatWindow, RANGE_FETCH_WEEKS } from "@/lib/windows";
 
 export const metadata: Metadata = { title: "Find a clinic and check bed waits" };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
@@ -64,7 +64,7 @@ export default async function FindPage({ searchParams }: { searchParams: Search 
 
   const [hospitalsRes, weeklyRes, liveRes, polyRes, clinicMetaRes, limits] = await Promise.all([
     settle(api.hospitals()),
-    settle(api.edWeekly({ weeks: SPARK_WEEKS + 1 })),
+    settle(api.edWeekly({ weeks: RANGE_FETCH_WEEKS })),
     settle(api.liveNuhsLatest()),
     settle(api.polyclinics()),
     // Only the clinic list's date and source: the places themselves are fetched by the browser (app/places.json).

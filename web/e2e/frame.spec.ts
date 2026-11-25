@@ -163,7 +163,7 @@ test.describe("footer", () => {
     await expect(columns).toHaveCount(3);
     await expect(columns.locator("[data-footer-title]")).toHaveText(["Data and privacy", "About this project", "Help"]);
     for (const c of await columns.all()) expect(await c.getByRole("link").count()).toBeLessThanOrEqual(6);
-    await expect(columns.nth(1).getByRole("link")).toHaveText([/^The project in 60 seconds/, /^Case study/, /^GitHub/, /^CV/]);
+    await expect(columns.nth(1).getByRole("link")).toHaveText([/^The project in 60 seconds/, /^Case study/, /^GitHub/]);
     await expect(columns.nth(2).getByRole("link", { name: "Glossary" })).toHaveAttribute("href", "/glossary");
     await expect(columns.nth(2).getByTestId("footer-notice").getByRole("link", { name: "Call 995" })).toHaveAttribute("href", "tel:995");
     expect(await footer.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBe(14);   // text-small

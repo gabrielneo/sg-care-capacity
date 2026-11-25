@@ -8,7 +8,7 @@ import { SITE, SITE_TITLE } from "./site";
 describe("one site name (audit G3)", () => {
   it("is \"Care-pacity\", with the tagline \"in a super-aged Singapore\"", () => {
     expect(SITE.name).toBe("Care-pacity");
-    expect(SITE_TITLE).toBe("Care-pacity: emergency waits and clinic access in a super-aged Singapore");
+    expect(SITE_TITLE).toBe("Care-pacity: hospital bed waits and clinic access in a super-aged Singapore");
   });
 
   it("is never typed outside lib/site.ts", () => {
@@ -22,5 +22,13 @@ describe("one site name (audit G3)", () => {
       .filter((f) => readFileSync(f, "utf8").replace(/^\s*(\*|\/\/).*$/gm, "").includes(SITE.name)
         || /super-aged Singapore/.test(readFileSync(f, "utf8").replace(/^\s*(\*|\/\/).*$/gm, "")));
     expect(hits.map((f) => path.relative(ROOT, f))).toEqual([]);
+  });
+});
+
+describe("SEO_TITLE", () => {
+  it("is under 60 characters and says what the site is about", async () => {
+    const { SEO_TITLE } = await import("./site");
+    expect(SEO_TITLE.length).toBeLessThan(60);
+    expect(SEO_TITLE).toMatch(/Singapore.*bed waits.*clinic access/);
   });
 });

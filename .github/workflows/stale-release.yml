@@ -1,0 +1,41 @@
+name: Stale release alert
+
+# Opens (or comments on) one issue when the newest data-YYYY-MM-DD release is more than 10 days old, so a
+# silent pipeline failure is noticed. weekly.yml normally publishes every Sunday; MOH's own files run about
+# two weeks behind, which is not a reason for an alert: only the date this repository last published counts.
+
+on:
+  schedule:
+    - cron: "0 1 * * 1"        # Mondays 01:00 UTC, the day after the weekly run
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAX_AGE_DAYS: "10"
+    steps:
+      - name: Open an issue if the newest data release is too old
+        run: |
+          set -euo pipefail
+          latest=$(gh release list --limit 50 --json tagName,publishedAt \
+            --jq '[.[] | select(.tagName | test("^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$"))] | sort_by(.publishedAt) | last | .publishedAt // empty')
+          if [ -z "$latest" ]; then echo "::error::No data-YYYY-MM-DD release found."; exit 1; fi
+          age=$(( ( $(date -u +%s) - $(date -u -d "$latest" +%s) ) / 86400 ))
+          echo "Newest data release: $latest ($age days old; limit $MAX_AGE_DAYS)"
+          if [ "$age" -le "$MAX_AGE_DAYS" ]; then exit 0; fi
+          title="No new data release for more than $MAX_AGE_DAYS days"
+          body="The newest data release was published on ${latest%%T*} ($age days ago). Check the Weekly pipeline runs and docs/runbook.md."
+          existing=$(gh issue list --label stale-release --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh label create stale-release --description "No recent data release" 2>/dev/null || true
+            gh issue create --title "$title" --label stale-release --body "$body"
+          fi

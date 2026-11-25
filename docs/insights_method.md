@@ -62,7 +62,13 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
 8. **Actions:** `who_acts` and `action` come from [insight_actions.yml](insight_actions.yml), and
    only from entries marked `reviewed: true`. The engine never writes them. Until an entry is
    reviewed, the insight is published without an action, and a caveat says so.
-9. **Ranking:** `rank_score` = normalised effect × (1 − p_adjusted) × completeness × recency.
+9. **Ranking:** `rank_score` = normalised effect × (1 − p_adjusted) × completeness × recency × relevance.
+   - **Relevance** (`ranking.relevance` in `thresholds.yml`) is how useful a finding is to a general reader. One hospital's weekday
+     pattern counts 0.6, because the weekday effect saturates the scale (every hospital scored 1.0, so one site's weekday
+     rhythm always led); a hospital whose MOH figures cover adults only (NUH) counts a further 0.8. System-wide findings count 1.0.
+   - **A bar for headlines:** a finding scoring under `headline_min_score` (0.30) is still published but is never a headline. With
+     none left, the home page says no pattern cleared this week's checks, instead of promoting a weak one.
+   - Both numbers are judgements, not tested thresholds. NUH's adults-only caveat is shown next to its finding on the home page.
    - The **normalised effect** puts each detector on a 0–1 scale:
      - trend: |Kendall's τ|;
      - anomaly: |z| / 7, capped at 1;
@@ -347,9 +353,11 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - **Size:** the percentage above usual.
 - **Gate:**
   - the latest week and all 8 weeks before it must be complete;
-  - at least **30% above** usual (the badge's "much higher" line, `usual_gap.min_pct_above`), **and** higher
-    than every one of the 8 weeks before it (`usual_gap.beyond_range`, the badge's second line): a volatile
-    hospital's ordinary weeks clear 30% often;
+  - a robust z-score of **2.5 or more** against the hospital's previous 26 complete weeks (`usual_gap.min_z`, needs 20 of
+    them: the badge's own rule since 25 Nov 2026). A volatile hospital's ordinary weeks often clear 30% above usual, so a % line
+    flagged noise: simulated over past weeks, the old rule flagged 13% of hospital-weeks and this one about 5%. The size shown is
+    still the % above the 8-week usual. With fewer than 20 weeks the older rule applies: 30% above usual and higher than all 8
+    weeks before (`usual_gap.min_pct_above`, `beyond_range`);
   - only a rise is published; there is no p-value, so the finding is outside the Benjamini-Hochberg
     correction and is worded as a plain comparison, never as a significant result.
 - **Why this method:** it is the figure a planner already sees on the home page, so a finding and the badge

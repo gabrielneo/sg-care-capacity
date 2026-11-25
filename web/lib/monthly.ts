@@ -136,6 +136,20 @@ export function monthLede(subject: string, points: Point[]): string | null {
   return `${subject}: the average bed wait in ${name} was ${hrs(m.wait)} hours${vs ? `, ${vs}` : ""}.`;
 }
 
+/**
+ * How big a year-on-year change is, set against the same series: the middle |change| across every month that has one.
+ * Null with fewer than 12 months to judge by (never a guess). `pct` is the change being described.
+ */
+export function yoyContext(points: Point[], pct: number): string | null {
+  const swings = points.flatMap((p) => (p.complete && p.waitYoy != null ? [Math.abs(p.waitYoy)] : [])).sort((a, b) => a - b);
+  if (swings.length < 12) return null;
+  const mid = swings.length % 2 ? swings[(swings.length - 1) / 2]! : (swings[swings.length / 2 - 1]! + swings[swings.length / 2]!) / 2;
+  const typical = Math.round(mid);
+  return Math.abs(pct) <= mid
+    ? `A change this size is within the usual swing between years: the typical month differs by about ${typical}%.`
+    : `A change this size is larger than the usual swing between years: the typical month differs by about ${typical}%.`;
+}
+
 /** The year-on-year tile's word, so the sign is never the only cue (docs/language_rules.md, Rule 5). Rounds as the figure does. */
 export function yoyWord(pct: number): string {
   const whole = Math.round(pct);

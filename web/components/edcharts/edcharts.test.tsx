@@ -17,7 +17,7 @@ const hospital = (code: string, facility_type: "ED" | "UCC" = "ED", coverage_not
 const HOSPITALS = [hospital("AH", "UCC"), hospital("NUH", "ED", "Adult emergency department only."), hospital("SGH"), hospital("SKH")];
 const usual = (code: string, u: number | null, latest: number | null, weeks = 8): Usual => ({
   code, usual: u, latest, weeks, low: null, high: null, position: null, diff: u != null && latest != null ? latest - u : null,
-  pct: u != null && latest != null ? ((latest - u) / u) * 100 : null });
+  pct: u != null && latest != null ? ((latest - u) / u) * 100 : null, z: null, swing: null, rangeWeeks: 0, band: null });
 const finding = (type: Insight["type"], entity: string, callout: string, key = "tue") =>
   ({ type, entity, rank_score: 1, chart: { highlight: [key], callout } } as unknown as Insight);
 
@@ -84,6 +84,14 @@ describe("Dumbbell: the same words as the badge", () => {
     expect(word("SKH")).toHaveTextContent("about usual");
     expect(word("NUH")).toHaveTextContent("▲ higher than usual");
     expect(screen.getByTestId("dumbbell-tally")).toHaveTextContent("1 higher than usual, 1 about usual, 0 lower than usual");
+  });
+
+  it("with a 26-week range, a +20% week inside the hospital's own swing says so, and +20% beyond it is higher", () => {
+    const ranged = (code: string, z: number) => ({ ...usual(code, 5, 6), position: 1 as const, z, swing: 0.9, rangeWeeks: 26, band: [3, 7] as [number, number] });
+    render8({ SKH: ranged("SKH", 1.1), NUH: ranged("NUH", 2.6) });
+    expect(word("SKH")).toHaveTextContent("about usual");
+    expect(word("NUH")).toHaveTextContent("▲ higher than usual");
+    expect(screen.getAllByTestId("within-range")[0]).toHaveTextContent("within its own usual swing of about ±0.9 (previous 26 complete weeks)");
   });
 
   it("the urgent care centre is shown apart and not counted, and the tally says so", () => {

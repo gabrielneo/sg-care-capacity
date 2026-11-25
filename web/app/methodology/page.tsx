@@ -18,6 +18,7 @@ export default async function MethodologyPage() {
                <ul className="space-y-1 border-t border-line pt-3">
                  <li><Link href="/docs/data-dictionary">Full data dictionary</Link></li>
                  <li><Link href="/docs/data-quality">Every data-quality check</Link></li>
+                 <li><Link href="/docs/insights-method">How findings are tested</Link></li>
                  <li><Link href="/decisions">Decision records</Link></li>
                  <li><Link href="/glossary">Glossary</Link></li>
                </ul>

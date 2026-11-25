@@ -43,7 +43,7 @@ import { eachDay, missingDays } from "@/lib/series";
 import { levelSplitLede } from "@/lib/ledes";
 import { hospitalStatus, levelCounts } from "@/lib/status";
 import { formatWeek } from "@/lib/weeks";
-import { formatWindow, PROFILE_WEEKS, USUAL_WEEKS } from "@/lib/windows";
+import { formatWindow, PROFILE_WEEKS, USUAL_WEEKS, RANGE_FETCH_WEEKS } from "@/lib/windows";
 
 export const metadata: Metadata = { title: "ED Trends" };
 export const dynamic = "force-dynamic";
@@ -70,7 +70,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const mode = parseMode(params.mode);
   const [dailyRes, weeklyRes, liveRes, insightsRes] = await Promise.all([
     settle(api.edDaily({ from: filters.from ?? undefined, to: filters.to ?? undefined })),
-    settle(api.edWeekly({ weeks: 10 })),
+    settle(api.edWeekly({ weeks: RANGE_FETCH_WEEKS })),
     settle(api.liveNuhsLatest()),
     settle(api.insights()),
   ]);

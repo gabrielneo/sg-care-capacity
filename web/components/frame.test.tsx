@@ -29,7 +29,7 @@ describe("SiteFooter", () => {
     expect(columns.map((c) => c.querySelector("[data-footer-title]")?.textContent)).toEqual(["Data and privacy", "About this project", "Help"]);
     for (const c of columns) expect(within(c).getAllByRole("link").length).toBeLessThanOrEqual(6);
     const about = within(columns[1]!);
-    expect(about.getAllByRole("link").map((a) => a.textContent?.replace(/\s*\(opens in a new tab\)/, ""))).toEqual(["The project in 60 seconds", "Case study", "GitHub", "CV"]);
+    expect(about.getAllByRole("link").map((a) => a.textContent?.replace(/\s*\(opens in a new tab\)/, ""))).toEqual(["The project in 60 seconds", "Case study", "GitHub"]);
     expect(about.getByRole("link", { name: /60 seconds/ })).toHaveAttribute("href", "/project");
     const help = within(columns[2]!);
     expect(help.getByTestId("footer-notice")).toHaveTextContent(NOTICE_995_LINE);

@@ -5,12 +5,12 @@ import { AUTHOR, AUTHOR_LINKS } from "@/lib/author";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Who built this site, the project in 60 seconds, how the figures are made, and the case study.",
+  description: "Who built this site, the project in 60 seconds, and the case study.",
 };
 export const dynamic = "force-static";
 
 /**
- * About: who built it first, then the three pages that tell the project's story. Static, no data, so nothing here can be stale.
+ * About: who built it first, then the two pages that tell the project's story. Static, no data, so nothing here can be stale.
  * The "what I did" lines live on /project only (critique, 20 Nov 2026: the two pages repeated each other word for word).
  */
 export default function AboutPage() {
@@ -18,10 +18,9 @@ export default function AboutPage() {
   const [cv, linkedin] = [link("cv"), link("linkedin")];
   return (
     <div data-testid="about">
-      <Hub title="About this project" intro="A public-data analytics project. Three pages tell its story: the short version, how it is built, and the full case study."
+      <Hub title="About this project" intro="A public-data analytics project. Two pages tell its story: the short version and the full case study. How the figures are made is under Methods."
            items={[
              { href: "/project", title: "The project", text: "The headline findings, the checks behind them and the tools, on one page." },
-             { href: "/how-its-built", title: "How it's built", text: "Where each number comes from, how it is checked, and what the data can't tell you." },
              { href: "/case-study", title: "Case study", text: "The full story: the question, the data, the decisions and what was learned." },
            ]}
            lead={

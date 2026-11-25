@@ -19,6 +19,15 @@ describe("levelFor: the badge thresholds", () => {
     [-14.9, "usual"], [-15, "lower"], [-40, "lower"],
   ] as const)("%s%% vs usual is %s", (pct, level) => expect(levelFor(pct)).toBe(level));
 
+  it("with 20+ weeks of history the robust z decides: 2.5 higher, 4 much higher, -2.5 lower, and the 8-week position is ignored", () => {
+    expect(levelFor(50, 0, 2.5)).toBe("higher");
+    expect(levelFor(50, 1, 2.49)).toBe("usual");           // +50% and above all 8 weeks, but inside its own 26-week swing
+    expect(levelFor(10, 0, 4)).toBe("much_higher");
+    expect(levelFor(-10, 0, -2.5)).toBe("lower");
+    expect(levelFor(-60, -1, -2.4)).toBe("usual");
+    expect(levelFor(null, 0, 5)).toBe("unknown");          // no latest week, no badge
+  });
+
   it("a big % move inside the range of the 8 weeks before is not a badge", () => {
     expect(levelFor(35, 0)).toBe("usual");
     expect(levelFor(35, 1)).toBe("much_higher");

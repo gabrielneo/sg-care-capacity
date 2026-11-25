@@ -16,7 +16,10 @@
 import type { EdDay, EdWeek, Hospital, Insight, LiveReading } from "./api/types";
 import { rankableCodes, systemFindings } from "./hospitals";
 import { colors, contrast, divergingScale, mapScale } from "./palette";
-import { PROFILE_WEEKS, USUAL_WEEKS } from "./windows";
+import { MIN_RANGE_WEEKS, PROFILE_WEEKS, RANGE_WEEKS, USUAL_WEEKS } from "./windows";
+
+/** The robust-z line of the status badge: 2.5 of a hospital's own typical swings (lib/status.ts). */
+export const Z_HIGHER = 2.5;
 
 export { PROFILE_WEEKS, USUAL_WEEKS };
 /** A weekday profile from fewer complete weeks than this is too thin to show. */
@@ -70,6 +73,26 @@ export interface Usual {
   position: -1 | 0 | 1 | null;
   /** Complete weeks found among the 8 before the latest. */
   weeks: number;
+  /**
+   * The latest week against the hospital's own range: (latest - median) / (1.4826 x MAD) of its last 26 complete weeks. Null with
+   * fewer than 20 of them, or with no spread at all (a flat history has no "usual swing" to measure against).
+   */
+  z: number | null;
+  /** One typical week-to-week swing in hours (1.4826 x MAD of those weeks); null as for z. */
+  swing: number | null;
+  /** Complete weeks found among the 26 before the latest. */
+  rangeWeeks: number;
+  /** The hours between which a week reads "about usual" under the 26-week rule: its median ± 2.5 swings; null as for z. */
+  band: [number, number] | null;
+}
+
+/** Robust z of x against a history (median and MAD, scaled to match a standard deviation); null when it can't be judged. */
+export function robustZ(x: number | null, history: number[]): { z: number | null; swing: number | null; band: [number, number] | null } {
+  const none = { z: null, swing: null, band: null };
+  if (x == null || history.length < MIN_RANGE_WEEKS) return none;
+  const mid = median(history) as number;
+  const swing = 1.4826 * (median(history.map((v) => Math.abs(v - mid))) as number);
+  return swing > 0 ? { z: (x - mid) / swing, swing, band: [mid - Z_HIGHER * swing, mid + Z_HIGHER * swing] } : none;
 }
 
 export function usualLevels(weekly: EdWeek[], codes: string[], latestWeek: string | null): Record<string, Usual> {
@@ -78,6 +101,7 @@ export function usualLevels(weekly: EdWeek[], codes: string[], latestWeek: strin
     const w = weekly.find((r) => r.hospital_code === code && r.week_start === start);
     return w?.is_complete_week && w.mean_of_daily_median_wait_hours != null ? w.mean_of_daily_median_wait_hours : null;
   };
+  const range = latestWeek ? Array.from({ length: RANGE_WEEKS }, (_, k) => addDays(latestWeek, -7 * (RANGE_WEEKS - k))) : [];
   return Object.fromEntries(codes.map((code) => {
     const before = trailing.map((s) => value(code, s)).filter((v): v is number => v != null);
     const usual = before.length === USUAL_WEEKS ? median(before) : null;
@@ -87,7 +111,10 @@ export function usualLevels(weekly: EdWeek[], codes: string[], latestWeek: strin
     const low = full ? Math.min(...before) : null;
     const high = full ? Math.max(...before) : null;
     const position = latest != null && low != null && high != null ? (latest > high ? 1 : latest < low ? -1 : 0) : null;
-    return [code, { code, usual, latest, diff, pct: diff != null && usual ? (diff / usual) * 100 : null, low, high, position, weeks: before.length }];
+    const history = range.map((s) => value(code, s)).filter((v): v is number => v != null);
+    const { z, swing, band } = robustZ(latest, history);
+    return [code, { code, usual, latest, diff, pct: diff != null && usual ? (diff / usual) * 100 : null, low, high, position, weeks: before.length,
+                    z, swing, rangeWeeks: history.length, band }];
   }));
 }
 
