@@ -6,16 +6,16 @@ import { ShortfallTable } from "./ChartTables";
 import { Glossed } from "../terms/Glossed";
 
 /**
- * The priority areas' shortfall: CDMP GP clinics the benchmark rate would give each area's seniors,
+ * The priority areas' shortfall: CDMP GP clinics the average rate would give each area's seniors,
  * minus the clinics it has. Bars are plain HTML (a list), so they read in order without a chart.
  */
 export function ShortfallBars({ bars, meta, top }: { bars: ShortfallBar[]; meta: Meta; top: string | null }) {
   const max = Math.max(1, ...bars.map((b) => b.shortfall));
   return (
-    <ChartFrame title="Clinics short of the benchmark rate" slug="shortfall" meta={meta} headingLevel={3} csv="/export/areas.csv?context=1"
-               summary={`Bars of the clinics each of the ${bars.length} priority areas is short of the benchmark rate, largest first: ${bars.map((b) => `${b.name} about ${Math.round(b.shortfall)}`).join("; ")}.`}
+    <ChartFrame title="Clinics short of the average rate" slug="shortfall" meta={meta} headingLevel={3} csv="/export/areas.csv?context=1"
+               summary={`Bars of the clinics each of the ${bars.length} priority areas is short of the average rate, largest first: ${bars.map((b) => `${b.name} about ${Math.round(b.shortfall)}`).join("; ")}.`}
                table={<ShortfallTable bars={bars} />}
-               description={<Glossed text={`The ${bars.length} priority areas from this week's findings: CDMP GP clinics the benchmark rate would give their residents aged 65+, minus the clinics they have. Largest first.`} />}>
+               description={<Glossed text={`The ${bars.length} priority areas from this week's findings: CDMP GP clinics the average rate would give their residents aged 65+, minus the clinics they have. Largest first.`} />}>
       <ol className="space-y-2 text-small" data-testid="shortfall-bars">
         {bars.map((b) => (
           <li key={b.name} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-2" data-testid="shortfall-bar"

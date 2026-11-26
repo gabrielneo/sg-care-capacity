@@ -12,7 +12,7 @@ from ..wording import count
 SQL = ("SELECT planning_area, residents_65plus, cdmp_clinics, cdmp_clinics_per_1k_seniors FROM marts.fct_area_access "
        "WHERE planning_area = '{area}'")
 AXIS = "CDMP GP clinics per 1,000 residents aged 65+"
-CAVEATS = ["The benchmark rate here is the rate across the areas compared, those with at least 1,000 residents aged 65+.",
+CAVEATS = ["The average rate here is the rate across the areas compared, those with at least 1,000 residents aged 65+.",
            "The clinic list dates from June 2024 and residents from June 2026.",
            "Clinics are counted where they are, not where their patients live.",
            "Area averages don't describe individual people.", "Resident counts are rounded to the nearest 10."]
@@ -38,7 +38,7 @@ def excluded_reason(seniors: Any, min_seniors: int) -> str | None:
 
 
 def shortfall(seniors: float, clinics: float, national: float) -> float:
-    """Clinics the benchmark rate would give the area's seniors, minus the clinics it has (negative: more)."""
+    """Clinics the average rate would give the area's seniors, minus the clinics it has (negative: more)."""
     return seniors * national - clinics
 
 
@@ -78,7 +78,7 @@ def detect(areas: pd.DataFrame, cfg: dict[str, Any], min_completeness: float) ->
         points = [point("area", str(r["planning_area"]), rate), point("national", "Benchmark rate", national * 1000)]  # the rate across the areas compared, not all of Singapore
         out.candidates.append(Candidate(
             type="access_gap", entity=str(r["planning_area"]), variant="worse",
-            method="Expected CDMP clinics at the benchmark rate per senior; priority = seniors percentile x (1 - access percentile)",
+            method="Expected CDMP clinics at the average rate per senior; priority = seniors percentile x (1 - access percentile)",
             n=int(r["residents_65plus"]), effect_size=float(r["priority"]), effect_norm=float(r["priority"]),
             metric_value=rate, unit="CDMP GP clinics per 1,000 residents aged 65+",
             comparison_value=national * 1000, direction="worse", p_value=None,

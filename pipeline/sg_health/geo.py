@@ -206,8 +206,8 @@ def access_gap_columns(a: pd.DataFrame) -> pd.DataFrame:
     """excluded_reason and cdmp_shortfall for each area, from the insight engine's access-gap code.
 
     excluded_reason: why the area is left out of the ranking (too few seniors), else null.
-    cdmp_shortfall: CDMP clinics the benchmark rate (across the compared areas) would give its seniors minus the
-    clinics it has (negative = more than the benchmark rate); null for excluded areas and missing counts.
+    cdmp_shortfall: CDMP clinics the average rate (across the compared areas) would give its seniors minus the
+    clinics it has (negative = more than the average rate); null for excluded areas and missing counts.
     """
     from .insights.detectors import access_gap
     from .insights.model import thresholds

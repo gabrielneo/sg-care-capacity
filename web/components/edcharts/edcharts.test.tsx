@@ -91,7 +91,7 @@ describe("Dumbbell: the same words as the badge", () => {
     render8({ SKH: ranged("SKH", 1.1), NUH: ranged("NUH", 2.6) });
     expect(word("SKH")).toHaveTextContent("about usual");
     expect(word("NUH")).toHaveTextContent("▲ higher than usual");
-    expect(screen.getAllByTestId("within-range")[0]).toHaveTextContent("within its own usual swing of about ±0.9 (previous 26 complete weeks)");
+    expect(screen.getAllByTestId("within-range")[0]).toHaveTextContent("within its own usual swing of about ±0.9 (26 complete weeks)");
   });
 
   it("the urgent care centre is shown apart and not counted, and the tally says so", () => {

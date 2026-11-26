@@ -15,7 +15,7 @@ import { provenanceText } from "@/components/Provenance";
 import { ErrorState } from "@/components/States";
 import { Glossed } from "@/components/terms/Glossed";
 import { api, settle } from "@/lib/api/client";
-import { BED_WAIT_AVERAGE_NOTE, BED_WAIT_NOT_MEASURED, CAVEAT, clinicScope, plainError, SITE_SCOPE, USUAL_RANGE_NOTE } from "@/lib/copy";
+import { BED_WAIT_AVERAGE_NOTE, BED_WAIT_NOT_MEASURED, CAVEAT, clinicScope, plainError, SITE_SCOPE, SYSTEM_MONTHLY_SCOPE, USUAL_RANGE_NOTE } from "@/lib/copy";
 import { latestCompleteWeek, profileWindow, usualLevels } from "@/lib/edCompare";
 import { edPreview } from "@/lib/explore";
 import { FIND_PATH } from "@/lib/homeViews";
@@ -65,6 +65,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
   const newest = latestComplete(monthly);
   const heroLine = timeSeries(monthly, "wait");
   const monthlyMeta = monthlyRes.ok ? monthlyRes.value.meta : null;
+  const eds = monthlyRes.ok ? `the ${monthlyRes.value.data.at(-1)?.n_hospitals ?? ""} full emergency departments` : "the full emergency departments";
   const showHero = monthlyMeta != null && newest != null && heroLine.some((p) => p.value != null);
   const newestName = newest ? `${MONTHS_LONG[newest.month - 1]} ${newest.year}` : "";
   const firstHero = heroLine.find((p): p is typeof p & { value: number } => p.value != null) ?? null;
@@ -140,8 +141,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
         </div>
         {showHero ? (
           <div className="landing-rise mx-auto mt-12 max-w-3xl rounded-xl border border-line bg-surface p-4 sm:p-6" data-testid="hero-card" style={{ ["--delay" as string]: "300ms" }}>
-            <p className="text-small font-semibold text-ink">Average bed wait at the full emergency departments, month by month</p>
-            <HeroLine points={heroLine} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
+            <p className="text-small font-semibold text-ink">Average bed wait at {eds}, month by month</p>
+            <HeroLine points={heroLine} summary={`The average bed wait at ${eds}, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
             <p className="mt-1 flex justify-between text-meta text-muted" data-testid="hero-range">
               <span>{firstHero ? `${firstHero.label}: ${firstHero.value.toFixed(1)} hours` : null}</span>
               <span className="font-semibold text-ink">{newestName}: {newest?.wait?.toFixed(1)} hours</span>
@@ -151,9 +152,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
             {newest ? (
               <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4" data-testid="landing-stats">
                 {[
-                  { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, label: `emergency department visits, ${newestName}` },
+                  { id: "visits", figure: <CountUp value={newest.visits ?? 0} />, label: `visits to these emergency departments, ${newestName}` },
                   ...(newest.waitYoy != null
-                    ? [{ id: "yoy", figure: <CountUp value={newest.waitYoy} signed suffix="%" />,
+                    ? [{ id: "yoy", figure: <CountUp value={Math.abs(newest.waitYoy)} suffix="%" />,
                          label: `${yoyWord(newest.waitYoy)} bed wait than ${MONTHS_LONG[newest.month - 1]} ${newest.year - 1}` }] : []),
                 ].map((t) => (
                   <div key={t.id} data-testid="landing-stat" className="flex flex-col-reverse">
@@ -166,7 +167,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
             {newest?.waitYoy != null && yoyContext(monthly, newest.waitYoy) ? (
               <p className="mt-2 text-meta text-muted" data-testid="hero-yoy-context">{yoyContext(monthly, newest.waitYoy)}</p>
             ) : null}
-            <p className="mt-2 text-meta text-muted" data-testid="hero-average-note">{BED_WAIT_AVERAGE_NOTE}</p>
+            <p className="mt-2 text-meta text-muted" data-testid="hero-average-note">{SYSTEM_MONTHLY_SCOPE} {BED_WAIT_AVERAGE_NOTE}</p>
             <p className="mt-2 text-meta text-muted" data-testid="hero-source">{monthlyMeta ? provenanceText(monthlyMeta) : null}</p>
           </div>
         ) : null}

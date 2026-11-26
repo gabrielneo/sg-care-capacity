@@ -60,7 +60,8 @@ published statements and from the public data.
   threshold ([population.gov.sg](https://www.population.gov.sg/our-population/population-trends/longevity/);
   [NTU, 26 Sep 2026](https://www.ntu.edu.sg/sss/news-events/news/detail/singapore-is-now-a-super-aged-society)).
 - **ED bed waits are a recognised pressure point.** In November 2022, MOH told Parliament that the
-  median wait for a ward bed averaged about seven hours. About 40% of ED attendances were non-urgent
+  median wait for a ward bed was about seven hours (January to September 2022). Non-urgent cases
+  made up about 40% of ED attendances
   ([MOH, 8 Nov 2022](https://www.moh.gov.sg/news-highlights/details/bed-capacity-and-emergency-departments)).
 - **Primary care is part of MOH's response.** Its measures included strengthening primary care and
   diverting less serious cases to nearby clinics. That shift of suitable care to the community is
@@ -115,7 +116,7 @@ analysis has a proven use.
 
 - MOH, [White Paper on Healthier SG](https://www.moh.gov.sg/newsroom/white-paper-on-healthier-sg/)
   (21 Sep 2022): clusters as regional health managers; family doctors as the first point of
-  contact. It also notes that people with a regular family doctor have fewer ED and hospital visits.
+  contact. It also notes that people with a regular family doctor are generally healthier and have fewer ED and hospital visits.
 - AIC, [About us](https://www.aic.sg/about-us): National Care Integrator under MOH Holdings; the
   single agency coordinating aged care services since 2018.
 - MOH, [National Electronic Health Record](https://www.healthinfo.gov.sg/nehr/): Synapxe manages and
@@ -273,7 +274,8 @@ The same flow in text:
 - MOH, [White Paper on Healthier SG](https://www.moh.gov.sg/newsroom/white-paper-on-healthier-sg/)
   (21 Sep 2022): the family doctor as the first point of contact.
 - NUHS, [Alexandra Hospital to receive eligible non-life-threatening cases](https://www.nuhs.edu.sg/about-nuhs/news-and-stories/news-and-stories-details/alexandra-hospital-(ah)-to-receive-eligible-non-life-threatening-cases-from-1-october-2025--streamlining-emergency-care)
-  (29 Sep 2025): SCDF conveys eligible cases to its UCC; full ED operations from 2028.
+  (29 Sep 2025): from 1 Oct 2025, its UCC receives eligible non-life-threatening SCDF cases on weekdays, 8 am to 5 pm;
+  a full ED follows as the redeveloped hospital opens progressively from 2028.
 - MOH, [Bed capacity and emergency departments](https://www.moh.gov.sg/news-highlights/details/bed-capacity-and-emergency-departments)
   (8 Nov 2022): transitional care facilities and diverting less serious cases.
 

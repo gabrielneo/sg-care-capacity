@@ -148,14 +148,14 @@ export default async function SummaryPage() {
             {/* On a phone the five columns may be wider than the screen: the table scrolls inside its own labelled region. */}
             <div className="mt-3 overflow-x-auto" role="region" aria-labelledby="s-areas" tabIndex={0}>
             <table className="summary-table w-full text-left text-small tabular-nums" data-testid="summary-areas">
-              <caption className="sr-only">Priority areas, ranked: residents aged 65+, clinics per 1,000 of them, and clinics short of the benchmark rate</caption>
+              <caption className="sr-only">Priority areas, ranked: residents aged 65+, clinics per 1,000 of them, and clinics short of the average rate</caption>
               <thead className="text-muted">
                 <tr>
                   <th scope="col" className="py-2 pr-2 font-semibold">Rank</th>
                   <th scope="col" className="py-2 pr-2 font-semibold">Area</th>
                   <th scope="col" className="py-2 pr-2 text-right font-semibold">Residents aged 65+</th>
                   <th scope="col" className="py-2 pr-2 text-right font-semibold"><Glossed text="CDMP clinics per 1,000 aged 65+" plain /></th>
-                  <th scope="col" className="py-2 text-right font-semibold">Clinics short of the benchmark rate</th>
+                  <th scope="col" className="py-2 text-right font-semibold">Clinics short of the average rate</th>
                 </tr>
               </thead>
               <tbody>

@@ -152,18 +152,18 @@ INSIGHTS = [
      {"endpoint": "/api/v1/ed/daily?hospital=AH", "query": "SELECT 3"}, date(2026, 10, 25), "latest_data", 0.3, None,
      _display("2.2", "hours", "Average of daily median bed waits on Tuesdays", "2.0 hours, its weekly average", "up", "higher than average"),
      _weekday_chart([2.0, 2.2, 2.0, 1.9, 2.0, 1.9, 2.0], "tue", 2.0, "Tuesdays: 10% above average")),
-    # Bedok: 1 CDMP clinic for 61,000 seniors; the benchmark rate (2 clinics / 61,000) would give it 2.
+    # Bedok: 1 CDMP clinic for 61,000 seniors; the average rate (2 clinics / 61,000) would give it 2.
     ("access_gap-eeeeeeeeee", "access_gap", "Bedok",
-     "Bedok has about 1 fewer CDMP GP clinic than the benchmark rate would give its seniors.",
-     "It has 1 clinic for 61,000 residents aged 65+, where the benchmark rate suggests 2. Clinics are counted where they are, not where patients go.",
+     "Bedok has about 1 fewer CDMP GP clinic than the average rate would give its seniors.",
+     "It has 1 clinic for 61,000 residents aged 65+, where the average rate suggests 2. Clinics are counted where they are, not where patients go.",
      0.0164, "CDMP GP clinics per 1,000 residents aged 65+", 0.0328, "worse", 0.25, None, None, 61000,
-     "Expected CDMP clinics at the benchmark rate per senior; priority = seniors percentile x (1 - access percentile)",
+     "Expected CDMP clinics at the average rate per senior; priority = seniors percentile x (1 - access percentile)",
      ["The clinic list dates from June 2024 and residents from June 2026."], None, None,
      {"endpoint": "/api/v1/areas/access", "query": "SELECT 5"}, date(2024, 6, 6), "source_updated", 0.1, None,
      _display("0.02", "per 1,000 residents aged 65+", "CDMP GP clinics per 1,000 residents aged 65+ in Bedok",
-              "0.03, the benchmark rate", "down", "lower than the benchmark rate"),
+              "0.03, the average rate", "down", "lower than the average rate"),
      _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Benchmark rate", 0.0328)],
-            ["area"], "About 1 clinic short of the benchmark rate", None)),
+            ["area"], "About 1 clinic short of the average rate", None)),
 ]
 # period_start, period_end and strength sit between headline_rank (column 22) and display (column 25).
 _PERIOD = {"weekday": (date(2026, 4, 27), date(2026, 10, 25), "moderate"), "anomaly": (date(2026, 10, 19), date(2026, 10, 25), "strong"),
@@ -301,7 +301,7 @@ def _square(lon: float, lat: float, d: float = 0.01) -> dict:
     return {"type": "Polygon", "coordinates": [ring]}
 
 
-# The benchmark rate is all CDMP clinics over all residents aged 65+ (2 / 61,000): Bedok is 1 short;
+# The average rate is all CDMP clinics over all residents aged 65+ (2 / 61,000): Bedok is 1 short;
 # Tuas has no residents aged 65+, so it isn't ranked.
 ACCESS_GAP = {"BD": (None, 1.0), "TS": ("no residents aged 65+", None)}
 SVY21_ORIGIN = [29537, 33000]

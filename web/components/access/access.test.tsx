@@ -53,8 +53,8 @@ describe("ShortfallBars", () => {
 describe("QuadrantChart", () => {
   it("marks the priority areas, labels the top ones and points at the top finding", () => {
     const q = quadrant(AREAS, ["Hougang", "Bedok"])!;
-    render(<QuadrantChart {...q} meta={clinicMeta} callout={{ name: "Hougang", text: "About 13 clinics short of the benchmark rate" }} />);
-    expect(screen.getByTestId("chart-callout")).toHaveTextContent("Hougang: About 13 clinics short of the benchmark rate");
+    render(<QuadrantChart {...q} meta={clinicMeta} callout={{ name: "Hougang", text: "About 13 clinics short of the average rate" }} />);
+    expect(screen.getByTestId("chart-callout")).toHaveTextContent("Hougang: About 13 clinics short of the average rate");
     expect(screen.getByTestId("chart-callout-arrow")).toHaveAttribute("data-target", "Hougang");
     expect(screen.getAllByTestId("quadrant-dot").filter((d) => d.hasAttribute("data-rank"))).toHaveLength(2);
     expect(screen.getByRole("img")).toHaveAccessibleName(/^4 areas\. 1\. Hougang: 50,140 aged 65\+, 1\.00 per 1,000; 2\. Bedok/);

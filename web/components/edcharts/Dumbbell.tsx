@@ -90,7 +90,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
           {/* Why a big move still reads "about usual": the week sits inside the range of the weeks before (lib/status.ts). */}
           {level === "usual" && Math.abs(u.pct) >= HIGHER_PCT && (u.z != null || u.position === 0) ? (
             <span className="block text-meta text-muted" data-testid="within-range">
-              {u.z != null ? `within its own usual swing of about ±${hours(u.swing ?? 0)} (previous ${u.rangeWeeks} complete weeks)` : `within the range of its ${USUAL_WEEKS} weeks before`}
+              {u.z != null ? `within its own usual swing of about ±${hours(u.swing ?? 0)} (${u.rangeWeeks} complete weeks)` : `within the range of its ${USUAL_WEEKS} weeks before`}
             </span>
           ) : null}
         </span>
@@ -170,7 +170,7 @@ export function Dumbbell({ usuals, hospitals, mode, finding, animate = false }: 
         {mode === "raw"
           ? "Hollow dot: usual level. Filled dot: the latest complete week. Hours, average of each day's median."
           : "Dot: the latest complete week, as a % above (right) or below (left) the hospital's own usual level (the line)."}
-        {" "}{`A hospital counts as higher or lower than usual only when the move is at least ${HIGHER_PCT}% and takes it beyond every one of the ${USUAL_WEEKS} weeks before; otherwise it reads "about usual".`}
+        {" "}{`A hospital counts as higher or lower than usual only when its latest week is far outside its own week-to-week swing (with too few weeks to judge the swing: at least ${HIGHER_PCT}% away and beyond every one of the ${USUAL_WEEKS} weeks before); otherwise it reads "about usual".`}
       </p>
       {missing.length ? (
         <p className="mt-1 text-meta text-muted" data-testid="dumbbell-missing">

@@ -265,7 +265,7 @@ the polyclinic list (all 26 polyclinics, January 2026).
 - **Daytime and commuter effect.** An area whose clinics are more than twice the island-wide clinics per resident
   (Rochor and Outram in this release) is noted: offices and hospitals draw people who live elsewhere, so a residents-only
   ratio overstates access for the people who live there. The 2x line is a judgement, not a tested threshold.
-- **The benchmark rate** is the CDMP clinics divided by the residents aged 65+ of the ranked areas (1.18 per 1,000 in
+- **The average rate** is the CDMP clinics divided by the residents aged 65+ of the ranked areas (1.18 per 1,000 in
   this release). The finding sentences state it.
 - **Colour direction.** Darker means fewer clinics, on every map. A plain legend says so, and the two lowest and two highest
   areas are named beside the map. The alternative (darker means more) would suit a "capacity" map, but this project's question

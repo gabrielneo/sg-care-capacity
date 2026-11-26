@@ -88,7 +88,7 @@ export default async function ProjectPage() {
 
       {showLine && monthlyRes.ok ? (
         <figure className="mb-8 max-w-3xl rounded-xl border border-line bg-surface p-4 sm:p-6" data-testid="project-live">
-          <figcaption className="text-small font-semibold text-ink">From the live site: average bed wait at the full emergency departments, month by month</figcaption>
+          <figcaption className="text-small font-semibold text-ink">From the live site: average bed wait at the {monthlyRes.value.data.at(-1)?.n_hospitals} full emergency departments reported every month since 2023, month by month</figcaption>
           <MonthLine points={line} summary={`The average bed wait at the full emergency departments, by month, in hours: ${newestName} was ${newest?.wait?.toFixed(1)} hours.`} />
           <p className="mt-1 flex flex-wrap justify-between gap-x-4 text-meta text-muted">
             <span>{monthlyRes.value.meta ? provenanceText(monthlyRes.value.meta) : null}</span>
@@ -104,7 +104,7 @@ export default async function ProjectPage() {
           <TileHeading>The problem</TileHeading>
           <BigNumber>{share ?? <Missing why="not available" />}</BigNumber>
           <p className="mt-1 flex-1 text-body text-ink">
-            {share ? "of residents are 65 or over. This project asks where hospital and clinic capacity is under the most strain."
+            {share ? "of residents are 65 or over. This project tracks hospital bed waits and clinic access for seniors, side by side."
               : "The population figure can't be shown right now."}
           </p>
           {population.ok ? <div className="mt-3 text-meta text-muted"><Provenance meta={population.value.meta} compact /></div> : null}

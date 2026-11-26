@@ -15,6 +15,9 @@ export const BED_WAIT_LABEL = "Time waiting for a ward bed after the decision to
  */
 export const BED_WAIT_WEEKLY_WHY =
   "A week's figure averages its daily medians, because MOH publishes only daily medians and a weekly median can't be rebuilt from them.";
+/** The monthly series covers the same hospitals every month (pipeline/sql/marts/fct_ed_system_monthly.sql). */
+export const SYSTEM_MONTHLY_SCOPE =
+  "Woodlands Hospital, reported only from June 2024, and Alexandra's urgent care centre are left out, so every month compares the same hospitals.";
 export const BED_WAIT_EXPLAINER =
   "This is not the time to see a doctor. It measures how long admitted patients wait in the ED for a ward bed. "
   + BED_WAIT_WEEKLY_WHY;
@@ -49,7 +52,7 @@ export const BED_WAIT_AVERAGE_NOTE =
   "Each figure averages the daily medians MOH publishes. An average of medians understates the days when waits ran longest, and says nothing about the longest waits.";
 /** Why "about usual" is not "stable": under the chart that marks a week above or below a hospital's usual. */
 export const USUAL_RANGE_NOTE =
-  `A hospital is marked above or below usual only when its latest week is far outside the swing of its own previous ${RANGE_WEEKS} complete weeks. Some hospitals swing widely from week to week, so a large change can still be ordinary for them; the table shows each one's usual swing.`;
+  `A hospital is marked above or below usual only when its latest week is far outside the swing of its own complete weeks among the previous ${RANGE_WEEKS}. Some hospitals swing widely from week to week, so a large change can still be ordinary for them; the table shows each one's usual swing.`;
 export const BED_WAIT_SHORT = "The bed wait is the time an admitted patient waits in the ED for a ward bed. It is not the time to see a doctor.";
 /** Cited on the page (population.gov.sg): the 21% line is crossed by citizens, not yet by all residents. */
 export const CITIZENS_SUPER_AGED = "Among citizens alone, Singapore passed that mark in 2026";

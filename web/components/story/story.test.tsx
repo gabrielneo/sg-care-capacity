@@ -30,12 +30,12 @@ describe("DeltaNumber", () => {
     expect(screen.getByTestId("delta-change")).toHaveClass("text-status-higher");
     expect(screen.getByTestId("delta-change")).not.toHaveClass("text-status-much");
     expect(screen.getByTestId("delta-change")).toHaveTextContent("(worse)");
-    rerender(<DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" change="up" word="higher than the benchmark rate" direction="better" />);
+    rerender(<DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" change="up" word="higher than the average rate" direction="better" />);
     expect(screen.getByTestId("delta-change")).toHaveClass("text-status-lower");
-    expect(screen.getByTestId("delta-change")).toHaveTextContent("▲ higher than the benchmark rate (better)");
-    rerender(<DeltaNumber value="1.00" unit="per 1,000 residents aged 65+" change="down" word="lower than the benchmark rate" direction="worse" />);
+    expect(screen.getByTestId("delta-change")).toHaveTextContent("▲ higher than the average rate (better)");
+    rerender(<DeltaNumber value="1.00" unit="per 1,000 residents aged 65+" change="down" word="lower than the average rate" direction="worse" />);
     expect(screen.getByTestId("delta-change")).toHaveClass("text-status-higher");
-    expect(screen.getByTestId("delta-change")).toHaveTextContent("▼ lower than the benchmark rate");
+    expect(screen.getByTestId("delta-change")).toHaveTextContent("▼ lower than the average rate");
   });
 
   it("a neutral finding has no colour; no arrow without a change", () => {

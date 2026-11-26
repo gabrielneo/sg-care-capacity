@@ -169,7 +169,7 @@ export default function ComponentsPage() {
           ))}
           <div className="rounded-lg border border-line bg-surface card">
             <DeltaNumber value="1.40" unit="per 1,000 residents aged 65+" label="Sample: clinics in an area that gained some"
-                         comparison="1.27, the benchmark rate" change="up" word="higher than the benchmark rate" direction="better" />
+                         comparison="1.27, the average rate" change="up" word="higher than the average rate" direction="better" />
           </div>
         </div>
       </Section>

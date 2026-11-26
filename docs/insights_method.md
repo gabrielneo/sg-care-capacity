@@ -277,7 +277,7 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
     their 76 clinics (Downtown Core 35, Orchard 18) lifted the rate from 1.18 to 1.27 per 1,000 and
     made 22 of 32 areas look short. Today it is 1.18; it replaces the older name "national rate", and every finding says
     which areas it covers.
-  - **Expected** = residents aged 65+ × the benchmark rate.
+  - **Expected** = residents aged 65+ × the average rate.
   - **Shortfall** = expected − actual.
   - **Priority** = percentile rank of residents aged 65+ × (1 − percentile rank of CDMP clinics
     per 1,000 seniors). Both ranks are among the included areas.
@@ -289,12 +289,12 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - there's no p-value: this is a ranking of measured figures, not a test.
 - **Why this method:** the priority score favours areas that are both **large** (many seniors) and
   **under-served** (low access). A small area with an extreme ratio doesn't top the list, and a
-  large area at the benchmark rate doesn't either.
+  large area at the average rate doesn't either.
 - **Limitations:**
   - **The data are from different dates:** clinics from June 2024, residents from June 2026.
   - **Clinics are counted where they are, not where patients go.**
   - **Area figures don't describe individual people.**
-  - **The "benchmark rate" is a reference point, not a target.**
+  - **The "average rate" is a reference point, not a target.**
 
 ## 6. regional
 

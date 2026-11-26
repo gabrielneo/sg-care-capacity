@@ -152,7 +152,7 @@ test.describe("Access Map in 3D", () => {
     await page.goto("/access-map");
     await expect(page.getByTestId("quadrant-chart")).toBeVisible();
     await expect(page.locator("[data-testid=chart-frame]").filter({ hasText: "Many seniors, few clinics" })
-      .getByTestId("chart-callout")).toHaveText("Bedok: About 1 clinic short of the benchmark rate");
+      .getByTestId("chart-callout")).toHaveText("Bedok: About 1 clinic short of the average rate");
     await expect(page.getByTestId("shortfall-bar")).toHaveText(["Bedokabout 1"]);
     await expectProvenanceOnEveryFrame(page, 3);                                              // map, quadrant, shortfall
   });
