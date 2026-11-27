@@ -187,3 +187,17 @@ def test_monthly_is_404_for_a_release_from_before_the_monthly_figures(tmp_path):
         for path in ("/ed/monthly", "/ed/system/monthly"):
             r = c.get(f"{API}{path}")
             assert r.status_code == 404 and r.json()["error"]["code"] == "not_in_release"
+
+
+def test_the_default_today_is_singapores_date_not_the_servers(monkeypatch):
+    # R17: Render's clock is UTC. From 00:00 to 08:00 SGT, its date.today() is still yesterday in Singapore.
+    from datetime import UTC, date, datetime
+
+    from sg_health_api.routes import ed
+
+    class _Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 11, 27, 17, 0, tzinfo=UTC).astimezone(tz)   # 01:00 on 28 Nov in SGT
+    monkeypatch.setattr(ed, "datetime", _Clock)
+    assert ed.today_sgt() == date(2026, 11, 28)

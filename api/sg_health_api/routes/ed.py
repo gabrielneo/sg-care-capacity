@@ -1,7 +1,7 @@
 """/hospitals, /ed/daily, /ed/weekly, /ed/monthly, /ed/system/monthly, /ed/summary. MOH figures; see docs/data_dictionary.md."""
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from statistics import median
 from typing import Any
 
@@ -124,6 +124,14 @@ def add_years(d: date, years: int) -> date:
 # Endpoints
 # --------------------------------------------------------------------------- #
 
+SGT = timezone(timedelta(hours=8))          # Singapore has no DST
+
+
+def today_sgt() -> date:
+    """Today in Singapore: the fallback end date when a release has no MOH day (the server's clock is UTC)."""
+    return datetime.now(SGT).date()
+
+
 @router.get("/hospitals", response_model=HospitalsResponse, summary="The sites MOH reports, with coverage notes")
 def hospitals(ctx: Context = Depends(get_ctx)) -> HospitalsResponse:
     rows = list(ctx.hospitals.values())
@@ -143,7 +151,7 @@ def ed_daily(
 ) -> EdDailyResponse:
     code = known_hospital(ctx, hospital)
     latest = static(ctx, "latest_day", LATEST_DAY_SQL)
-    end = to or latest or date.today()
+    end = to or latest or today_sgt()
     start = from_ or end - timedelta(days=DEFAULT_DAYS - 1)
     if start > end:
         raise ApiError(400, "invalid_range", f"from ({start}) is after to ({end})"
@@ -182,7 +190,7 @@ def events(
     from_: date | None = Query(None, alias="from", description=f"First day (YYYY-MM-DD). Default: {DEFAULT_DAYS} days before `to`"),
     to: date | None = Query(None, description="Last day (YYYY-MM-DD). Default: the latest day MOH has published"),
 ) -> EventsResponse:
-    to = to or static(ctx, "latest_day", LATEST_DAY_SQL) or date.today()
+    to = to or static(ctx, "latest_day", LATEST_DAY_SQL) or today_sgt()
     from_ = from_ or to - timedelta(days=DEFAULT_DAYS - 1)
     if from_ > to:
         raise ApiError(400, "invalid_range", f"from ({from_}) is after to ({to})", "from")
