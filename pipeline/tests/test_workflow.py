@@ -75,7 +75,7 @@ def test_weekly_opens_an_issue_when_validation_fails():
 
 def test_weekly_fails_the_job_after_archiving_if_any_stage_failed():
     fail = steps("weekly.yml")["Fail the job if any stage failed"]
-    for stage in ("ingest", "validate", "transform", "publish"):
+    for stage in ("ingest", "validate", "transform", "publish", "upload"):
         assert f"steps.{stage}.outcome == 'failure'" in fail
     assert "exit 1" in fail
 

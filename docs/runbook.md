@@ -53,7 +53,9 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
 
    The run verifies every hash, then uploads the files to release **`data-YYYY-MM-DD`**. Parquet files
    are uploaded under their mart name (`fct_ed_daily.parquet`); in the manifest they appear as
-   `parquet/fct_ed_daily.parquet`. A second run on the same day **replaces** that day's files.
+   `parquet/fct_ed_daily.parquet`. A published snapshot is **never replaced in place**: a second run on the
+   same day fails at *Upload snapshot release* and changes nothing (see [Run it by hand](#run-it-by-hand)). If an
+   earlier upload failed part-way, its leftover **draft** is finished and published by the next run.
    The snapshot also carries `insights.json` and `marts.fct_insight` from the insight engine
    ([insights_method.md](insights_method.md)). Skipped detectors are logged in `dq_results` as
    `insight.*`; they never block publishing. Every file is then signed with GitHub's build
@@ -75,6 +77,12 @@ sg-health validate                                # exit 1 = publishing blocked
 sg-health transform
 sg-health publish                                 # -> data/build/publish/ (exit 1 if blocked)
 ```
+
+**Replacing today's snapshot.** The workflow refuses to overwrite a published `data-YYYY-MM-DD`: swapping files
+one at a time would leave a release that doesn't match its manifest (an API starting meanwhile refuses it),
+and the new figures would keep the old `snapshot_id`, which caches use as the ETag. To publish again the same
+day, withdraw the first one deliberately: `gh release delete data-YYYY-MM-DD --yes --cleanup-tag` (it is lost:
+download it first if you need it), then run the workflow by hand. Otherwise wait for the next day's run.
 
 ### Check a published snapshot
 

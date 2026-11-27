@@ -191,10 +191,19 @@ jobs:
           # (A failure inside <( ) doesn't stop the script, so check the list isn't empty.)
           [ "${#files[@]}" -ge 2 ] || { echo "::error::could not list the snapshot's files from manifest.json"; exit 1; }
           for f in "${files[@]}"; do [ -f "$f" ] || { echo "::error::$f is in the manifest but missing"; exit 1; }; done
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "${files[@]}" --clobber          # same-day rerun replaces the files
-            gh release edit "$tag" --notes-file "$RUNNER_TEMP/notes.md"
+          state=$(gh release view "$tag" --json isDraft --jq '.isDraft' 2>/dev/null || echo missing)
+          if [ "$state" = "false" ]; then
+            # A published snapshot is never changed in place: replacing files one by one leaves the release not
+            # matching its manifest meanwhile (an API starting then refuses it), and the new content would keep the
+            # old snapshot_id, which is also the API's ETag. docs/runbook.md, "Run it by hand".
+            echo "::error::$tag is already published; a snapshot is never replaced in place. To replace it, withdraw it first (docs/runbook.md, \"Run it by hand\")."
+            exit 1
+          elif [ "$state" = "true" ]; then
+            # A draft left by an upload that failed part-way: finish it, then publish it.
+            gh release upload "$tag" "${files[@]}" --clobber
+            gh release edit "$tag" --notes-file "$RUNNER_TEMP/notes.md" --title "Data snapshot ${tag#data-}" --draft=false
           else
+            # gh uploads the files to a draft and publishes it only once every file is up.
             gh release create "$tag" "${files[@]}" --title "Data snapshot ${tag#data-}" --notes-file "$RUNNER_TEMP/notes.md"
           fi
 
@@ -258,7 +267,7 @@ jobs:
 
       # Report the result now that raw history is archived.
       - name: Fail the job if any stage failed
-        if: ${{ !cancelled() && (steps.ingest.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.transform.outcome == 'failure' || steps.publish.outcome == 'failure') }}
+        if: ${{ !cancelled() && (steps.ingest.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.transform.outcome == 'failure' || steps.publish.outcome == 'failure' || steps.upload.outcome == 'failure') }}
         run: |
-          echo "::error::ingest: ${{ steps.ingest.outcome }}, validate: ${{ steps.validate.outcome }}, transform: ${{ steps.transform.outcome }}, publish: ${{ steps.publish.outcome }}. Raw data was archived."
+          echo "::error::ingest: ${{ steps.ingest.outcome }}, validate: ${{ steps.validate.outcome }}, transform: ${{ steps.transform.outcome }}, publish: ${{ steps.publish.outcome }}, upload: ${{ steps.upload.outcome }}. Raw data was archived."
           exit 1
