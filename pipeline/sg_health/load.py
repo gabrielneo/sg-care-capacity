@@ -96,7 +96,8 @@ def _moh_loader(metric: str) -> LoaderFn:
             LOG.warning("MOH %s: %s is not an .xlsx workbook, skipping", metric, rec.url)
             stats.files_skipped["not_a_workbook"] += 1
             return 0
-        df = parse_moh_workbook(content, metric, source_file=rec.url.rsplit("/", 1)[-1], stats=stats)
+        df = parse_moh_workbook(content, metric, source_file=rec.url.rsplit("/", 1)[-1], stats=stats,
+                                fallback_year=rec.fetched_at.year)     # never the clock: reparse must be repeatable
         n = _load(wh, table, df, rec, stats)
         if n:
             LOG.debug("MOH %s: %d rows (%s to %s) from %s", metric, n,

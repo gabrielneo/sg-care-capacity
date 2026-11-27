@@ -131,11 +131,14 @@ def extract_sheet_records(grid: pd.DataFrame, default_year: int,
 
 
 def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
-                       stats: ParseStats | None = None) -> pd.DataFrame:
+                       stats: ParseStats | None = None, fallback_year: int | None = None) -> pd.DataFrame:
     """Parse an MOH .xlsx (any sheet, any of the supported layouts) into tidy rows.
 
     metric="bed_waits"      -> columns: hospital_code, hospital_name, report_date, median_wait_hours
     metric="ed_attendances" -> columns: hospital_code, hospital_name, report_date, total_attendances
+
+    ``fallback_year`` dates a sheet whose header names no year: the loader passes the year the raw file was
+    fetched, so a reparse in a later year rebuilds the same rows. Only direct callers fall back to the clock.
 
     If ``stats`` is given, every candidate (hospital, date) cell is counted as read, and every
     cell not returned is counted as dropped with its reason.
@@ -156,7 +159,7 @@ def parse_moh_workbook(content: bytes, metric: str, source_file: str = "",
         header_text = f"{sheet_name} " + " ".join(
             str(v) for v in grid.head(12).to_numpy().ravel() if not is_blank(v))
         year_match = re.search(r"\b(20\d{2})\b", header_text)
-        default_year = int(year_match.group(1)) if year_match else datetime.now(SGT).year
+        default_year = int(year_match.group(1)) if year_match else (fallback_year or datetime.now(SGT).year)
         recs = extract_sheet_records(grid, default_year, unrecognised)
         if not recs:
             LOG.debug("No records found in sheet %r of %s", sheet_name, source_file)
