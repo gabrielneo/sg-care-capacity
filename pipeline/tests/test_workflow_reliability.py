@@ -1,7 +1,6 @@
 """Reliability fixes to the workflows (docs/runbook.md): failure modes found in the Nov 2026 QA/SRE pass."""
 from test_workflow import WF, condition, steps  # noqa: F401
 
-
 # ------------------------------------------------------- reliability (R1) #
 
 def test_weekly_never_replaces_a_published_snapshot_in_place_and_finishes_a_leftover_draft():
@@ -15,3 +14,22 @@ def test_weekly_never_replaces_a_published_snapshot_in_place_and_finishes_a_left
     draft = upload.split('elif [ "$state" = "true" ]', 1)[1].split("else", 1)[0]
     assert "gh release upload" in draft and "--clobber" in draft and "--draft=false" in draft
     assert "gh release create" in upload.rsplit("else", 1)[1]
+
+
+# ------------------------------------------------------- reliability (R2) #
+
+def test_weekly_reports_a_partial_ingest_and_any_failed_step_in_one_issue():
+    s = steps("weekly.yml")
+    ingest = s["Ingest"]
+    assert '"$rc" -eq 3' in ingest and "partial=true" in ingest and "PIPESTATUS[0]" in ingest
+    issue = s["Open or update the pipeline-failure issue"]
+    cond = condition(issue)
+    assert "failure()" in cond and "steps.ingest.outputs.partial == 'true'" in cond and "!cancelled()" in cond
+    for step in ("test", "restore", "ingest", "validate", "transform", "publish", "upload", "restart", "apicheck"):
+        assert f"steps.{step}.outcome" in issue, step
+    assert "source_failed" in issue and "When a scheduled run fails" in issue
+    assert "gh issue list --label pipeline-failure --state open" in issue and "gh issue comment" in issue
+    assert "continue-on-error: true" in issue
+    order = list(s)
+    assert order.index("Open or update the pipeline-failure issue") < order.index("Fail the job if any stage failed")
+    assert "steps.ingest.outputs.partial == 'true'" in condition(s["Fail the job if any stage failed"])

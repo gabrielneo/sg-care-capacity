@@ -30,7 +30,10 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
    folder would overwrite history.
 3. **Ingest**: `sg-health reparse` rebuilds the clean tables from history, then `sg-health run` fetches
    this week's MOH, NUHS, data.gov.sg and SingStat (from the committed reference file). A source being
-   down doesn't stop the run. With the `IA_ACCESS_KEY` and `IA_SECRET_KEY` secrets set, it then asks the
+   down doesn't stop the run, but it isn't silent either: a source that landed nothing usable (down, blocked
+   by robots.txt, an error page served instead of the file, no rows) logs a `source_failed` line, `sg-health
+   run` exits **3** ("partial"), publishing still goes ahead with the other sources, and the run ends red with
+   a `pipeline-failure` issue naming the source. With the `IA_ACCESS_KEY` and `IA_SECRET_KEY` secrets set, it then asks the
    Wayback Machine to keep a dated copy of each MOH and NUHS file it fetched (a failed save never
    stops the run).
 4. **Archive raw history, always**: if the manifest didn't shrink, `raw.tar.gz` is re-uploaded to
@@ -66,7 +69,10 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
    `/api/v1/health` reports the new `snapshot_id`. If it never does, the job fails; the API keeps
    serving the previous release. Without the `RENDER_DEPLOY_HOOK_URL` secret this is skipped with a
    notice. The website picks up the new figures within an hour (its cache, `API_REVALIDATE_SECONDS`).
-9. **Fail the job** if any stage failed, after the archive is safe, so GitHub emails you.
+9. **Report it**: if any step failed, or a source landed nothing, one issue labelled **`pipeline-failure`**
+   lists every step's outcome and the failed sources (a new comment if one is already open). Close it once a
+   run is clean.
+10. **Fail the job** if any stage failed, after the archive is safe, so GitHub emails you.
 
 ### Run it by hand
 
@@ -263,14 +269,16 @@ automatically with python-dotenv, never required, and a real environment variabl
 
 ## When a scheduled run fails
 
-GitHub emails you when a workflow fails (check **Settings → Notifications → Actions**). Open the
-run, find the first red step, then:
+GitHub emails you when a workflow fails (check **Settings → Notifications → Actions**), and the weekly run
+also opens or comments on a **`pipeline-failure`** issue listing each step's outcome and any source that
+landed nothing. Open the run, find the first red step, then:
 
 | Failed step | What it means | What to do |
 |---|---|---|
 | **weekly: Test** | The code is broken; no data was touched | Fix the test failure, push, run the workflow by hand |
 | **weekly: Restore data/raw** (or **live: Restore**) | `RAW_STORE_TOKEN` is missing, expired or can't read the private repo; or `data-latest` didn't download (usually a GitHub hiccup) | Renew the token ([Raw store](#raw-store)), or re-run the job. Never delete `data-latest` to "fix" it |
 | **weekly: Ingest** | A source failed in a way that stopped the run (one source being down doesn't). Raw history was still archived | Read the `source_summary` log lines; see [When publishing is blocked](#when-publishing-is-blocked) for parser problems |
+| **weekly: Fail the job**, with `partial ingest: true` | A source landed nothing usable (the issue names it): down, blocked by robots.txt, an error page instead of the file, or a changed layout. The other sources were published; that source's figures are last week's | Open the source's URL from `fetch_log.json` or the log. A one-off outage fixes itself next week; a changed page or file needs a parser fix and a test, then a run by hand |
 | **weekly: Validate**, with a `data-quality` issue | Publishing is blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked). The site keeps the last release |
 | **weekly: Transform / Publish** | A SQL or packaging error | Reproduce locally (`sg-health reparse && sg-health transform && sg-health publish`), fix, push, re-run |
 | **weekly: Check the API serves the new snapshot** | The release is published, but the API didn't switch to it within 20 minutes. It keeps serving the previous one | Render → **sg-health-api → Events / Logs**: the API logs why it refused to start (e.g. a file failed verification). Fix, then **Actions → Restart API**. If the new release itself is bad, [roll back](#rolling-back-to-an-earlier-snapshot) |

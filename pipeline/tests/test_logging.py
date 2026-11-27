@@ -59,7 +59,7 @@ def test_unchanged_file_shows_as_skipped(monkeypatch, paths, capsys):
 
 def test_source_that_returned_nothing_still_gets_a_line(monkeypatch, paths, capsys):
     from test_ingest import run_cli
-    run_cli(monkeypatch, paths, {}, "run", "--sources", "live", "--no-report")   # every URL misses
+    run_cli(monkeypatch, paths, {}, "run", "--sources", "live", "--no-report", expect=3)   # every URL misses: partial
     lines = summaries(capsys)
     assert {line["source"] for line in lines} == {"nuhs_live"}
     assert all(line["files"] == 0 and line["rows_read"] == 0 for line in lines)

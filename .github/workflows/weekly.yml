@@ -63,6 +63,7 @@ jobs:
 
       # ---------------------------------------------------------------- test
       - name: Test
+        id: test
         run: pytest -q pipeline/tests
 
       # -------------------------------------------------------------- ingest
@@ -90,8 +91,19 @@ jobs:
         run: |
           set -euo pipefail
           sg-health reparse --no-transform --no-report
+          # Exit 3 = partial: a source landed nothing usable (down, blocked, an error page instead of the file)
+          # while others worked. Publishing may go ahead; the pipeline-failure issue below names the source.
+          set +e
           sg-health run --sources "${{ github.event.inputs.sources || 'moh,live,opendata,singstat' }}" \
-            --no-validate --no-transform --no-report
+            --no-validate --no-transform --no-report 2>&1 | tee "$RUNNER_TEMP/ingest.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [ "$rc" -eq 3 ]; then
+            echo "partial=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::some sources landed nothing usable; see the source_failed lines above"
+            exit 0
+          fi
+          exit "$rc"
 
       - name: Check data/raw only grew
         id: grew
@@ -247,6 +259,7 @@ jobs:
           echo "restarted=true" >> "$GITHUB_OUTPUT"
 
       - name: Check the API serves the new snapshot
+        id: apicheck
         if: ${{ !cancelled() && steps.restart.outputs.restarted == 'true' }}
         env:
           API_URL: ${{ vars.API_PUBLIC_URL }}
@@ -265,9 +278,41 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      # Any failure, or a source that landed nothing, opens (or comments on) one issue saying what failed and where
+      # to look. A red run alone is easy to miss: GitHub's emails go to whoever last edited the schedule.
+      - name: Open or update the pipeline-failure issue
+        continue-on-error: true
+        if: ${{ !cancelled() && (failure() || steps.ingest.outputs.partial == 'true' || steps.ingest.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.transform.outcome == 'failure' || steps.publish.outcome == 'failure') }}
+        env:
+          OUTCOMES: >-
+            test=${{ steps.test.outcome }} restore=${{ steps.restore.outcome }} ingest=${{ steps.ingest.outcome }}
+            raw-archive-check=${{ steps.grew.outcome }} validate=${{ steps.validate.outcome }}
+            transform=${{ steps.transform.outcome }} publish=${{ steps.publish.outcome }} upload=${{ steps.upload.outcome }}
+            restart=${{ steps.restart.outcome }} api-check=${{ steps.apicheck.outcome }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; echo
+            echo "Step outcomes (skipped = an earlier step decided it should not run):"; echo
+            for kv in $OUTCOMES; do echo "- \`${kv%%=*}\`: ${kv#*=}"; done; echo
+            failed=$(python3 -c 'import json, sys; print("\n".join(sorted({json.loads(l)["source"] for l in open(sys.argv[1]) if "\"source_failed\"" in l})))' "$RUNNER_TEMP/ingest.log" 2>/dev/null || true)
+            if [ -n "$failed" ]; then
+              echo "Sources that landed nothing usable this run (last week's data stays in use for them):"; echo
+              printf -- '- `%s`\n' $failed; echo
+            fi
+            echo "What each failure means and what to do: docs/runbook.md, \"When a scheduled run fails\"."
+          } > "$RUNNER_TEMP/failure.md"
+          gh label create pipeline-failure --color D93F0B --description "A weekly pipeline step failed" 2>/dev/null || true
+          existing=$(gh issue list --label pipeline-failure --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/failure.md"
+          else
+            gh issue create --title "Weekly pipeline: a step failed" --label pipeline-failure --body-file "$RUNNER_TEMP/failure.md"
+          fi
+
       # Report the result now that raw history is archived.
       - name: Fail the job if any stage failed
-        if: ${{ !cancelled() && (steps.ingest.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.transform.outcome == 'failure' || steps.publish.outcome == 'failure' || steps.upload.outcome == 'failure') }}
+        if: ${{ !cancelled() && (steps.ingest.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.transform.outcome == 'failure' || steps.publish.outcome == 'failure' || steps.upload.outcome == 'failure' || steps.ingest.outputs.partial == 'true') }}
         run: |
-          echo "::error::ingest: ${{ steps.ingest.outcome }}, validate: ${{ steps.validate.outcome }}, transform: ${{ steps.transform.outcome }}, publish: ${{ steps.publish.outcome }}, upload: ${{ steps.upload.outcome }}. Raw data was archived."
+          echo "::error::ingest: ${{ steps.ingest.outcome }}, validate: ${{ steps.validate.outcome }}, transform: ${{ steps.transform.outcome }}, publish: ${{ steps.publish.outcome }}, upload: ${{ steps.upload.outcome }}, partial ingest: ${{ steps.ingest.outputs.partial }}. Raw data was archived."
           exit 1

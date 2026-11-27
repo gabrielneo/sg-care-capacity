@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from collections.abc import Iterable
 from datetime import date
 from pathlib import Path
 
@@ -33,6 +34,29 @@ STEP_SOURCES = {
                  "datagov_public_holidays", "datagov_metadata"),
     "singstat": ("singstat_residents",),
 }
+
+
+# Exit code of `run` when at least one requested source landed nothing usable but others did: the run may
+# still publish (the other sources are fine), but CI reports it (weekly.yml opens a pipeline-failure issue).
+EXIT_PARTIAL = 3
+# files_skipped reasons that mean a fetched file was not the data (an error page, a changed layout).
+FILE_FAILURES = frozenset({"not_a_workbook", "unreadable_workbook", "no_tables_found", "load_error",
+                           "series_not_found", "no_rows", "not_json", "no_dataset_id"})
+
+
+def failed_sources(loader: Loader, steps: Iterable[str]) -> list[str]:
+    """Requested sources that landed nothing usable: nothing fetched (down, blocked by robots.txt, HTTP error),
+    a file that wasn't the data, or (for sources that restate their whole state each fetch) no rows at all.
+    An MOH file seen before is skipped as unchanged on purpose, so it isn't a failure."""
+    from .load import INCREMENTAL_SOURCES
+    out = []
+    for step in sorted(steps):
+        for source in STEP_SOURCES[step]:
+            st = loader.stats_for(source)
+            if (st.files == 0 or any(st.files_skipped[r] for r in FILE_FAILURES)
+                    or (source not in INCREMENTAL_SOURCES and st.parsed == 0)):
+                out.append(source)
+    return out
 
 
 def _run_step(name: str, fn, *args) -> int:
@@ -121,6 +145,7 @@ def main(argv: list[str] | None = None) -> int:
     results: dict[str, int] = {}
     failed_records = 0
     loader = None
+    partial = False
     try:
         if args.command == "validate":
             checks = dq.run_validation(wh)
@@ -197,6 +222,11 @@ def main(argv: list[str] | None = None) -> int:
                 _log_validation(checks, dq.record(wh, checks))
             if not args.no_transform and not _transform(wh):
                 return 1
+            for source in failed_sources(loader, wanted):
+                LOG.error("%s: nothing usable landed this run", source,
+                          extra={"fields": {"event": "source_failed", "source": source,
+                                            **loader.stats_for(source).as_fields()}})
+                partial = True
         elif args.command == "backfill":
             assert loader is not None and http is not None
             loader.expect(*STEP_SOURCES["moh"])
@@ -215,7 +245,9 @@ def main(argv: list[str] | None = None) -> int:
                  extra={"fields": {"event": "command_done", "command": args.command, "results": results}})
 
     # Exit with 1 only if every step failed, so partial data still gets published in CI.
-    return 1 if results and all(v < 0 for v in results.values()) else 0
+    if results and all(v < 0 for v in results.values()):
+        return 1
+    return EXIT_PARTIAL if partial else 0
 
 
 if __name__ == "__main__":

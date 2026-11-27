@@ -10,17 +10,18 @@ from sg_health.warehouse import Warehouse
 pytest.importorskip("duckdb")
 
 
-def run_cli(monkeypatch, paths, routes, *args):
+def run_cli(monkeypatch, paths, routes, *args, expect=0):
+    """expect: cli.EXIT_PARTIAL when the test leaves a source with nothing usable on purpose."""
     fake = FakeHttp(routes)
     monkeypatch.setattr(cli, "PoliteHttp", lambda: fake)
     code = cli.main(["--db", str(paths["db"]), "--raw-dir", str(paths["raw"]),
                      "--report", str(paths["report"]), *args])
-    assert code == 0
+    assert code == expect
     return fake
 
 
-def full_run(monkeypatch, paths, routes=None):
-    return run_cli(monkeypatch, paths, routes or source_routes(), "run")
+def full_run(monkeypatch, paths, routes=None, expect=0):
+    return run_cli(monkeypatch, paths, routes or source_routes(), "run", expect=expect)
 
 
 def query(paths, sql):
@@ -116,13 +117,13 @@ def test_singstat_is_read_from_the_reference_file_and_never_downloaded(monkeypat
 
 def test_reference_file_with_the_wrong_hash_is_refused(monkeypatch, paths):
     monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_SHA256", "0" * 64)
-    full_run(monkeypatch, paths)
+    full_run(monkeypatch, paths, expect=cli.EXIT_PARTIAL)
     assert _singstat_records(paths) == [] and query(paths, "SELECT * FROM pop_65plus_by_area").empty
 
 
 def test_missing_reference_file_loads_nothing_and_does_not_crash(monkeypatch, paths):
     monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_FILE", paths["raw"] / "missing.zip")
-    full_run(monkeypatch, paths)
+    full_run(monkeypatch, paths, expect=cli.EXIT_PARTIAL)
     assert _singstat_records(paths) == []
 
 

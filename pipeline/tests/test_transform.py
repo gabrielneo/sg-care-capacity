@@ -209,7 +209,7 @@ def test_dim_clinic_as_of_is_the_upstream_update_not_our_download(built):
 def test_dim_clinic_falls_back_to_fetch_time_without_metadata(monkeypatch, paths):
     from conftest import source_routes
     routes = {u: v for u, v in source_routes().items() if "/metadata" not in u}
-    full_run(monkeypatch, paths, routes)
+    full_run(monkeypatch, paths, routes, expect=3)                 # cli.EXIT_PARTIAL: no metadata landed
     wh = Warehouse(paths["db"])
     try:
         rows = q(wh, "SELECT as_of, as_of_basis, fetched_at FROM marts.dim_clinic")
@@ -405,7 +405,7 @@ def test_access_keeps_every_area_with_empty_ratios_when_population_is_missing(mo
     routes = source_routes(chas=chas_geojson([("C1", "A", "CHAS,CDMP", (103.68, 1.33))]))
     del routes[config.SINGSTAT_RESIDENTS_URL]
     monkeypatch.setattr("sg_health.sources.singstat.SINGSTAT_RESIDENTS_FILE", paths["raw"] / "missing.zip")
-    full_run(monkeypatch, paths, routes)
+    full_run(monkeypatch, paths, routes, expect=3)                 # cli.EXIT_PARTIAL: SingStat landed nothing
     wh = Warehouse(paths["db"])
     try:
         access = q(wh, "SELECT * FROM marts.fct_area_access ORDER BY planning_area")
