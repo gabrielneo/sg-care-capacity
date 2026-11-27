@@ -104,3 +104,17 @@ def test_wait_fails_if_the_api_cant_be_reached():
 def test_wait_only_warns_when_the_api_url_isnt_configured():
     r = wait("", "data-2026-11-08")
     assert r.returncode == 0 and "::warning::API_PUBLIC_URL is not set" in r.stdout
+
+
+# ------------------------------------------------------------ version parity #
+
+def test_the_pipeline_and_the_api_allow_the_same_duckdb_versions():
+    # R13: the pipeline writes analytics.duckdb and the API opens it. A pipeline free to install a newer major than
+    # the API allows writes a file the API can't read, and then every new release is refused.
+    import re
+    spec = {}
+    for part in ("pipeline", "api"):
+        text = (ROOT / part / "pyproject.toml").read_text()
+        spec[part] = re.search(r'"duckdb([^"]*)"', text).group(1)
+    assert spec["pipeline"] == spec["api"], spec
+    assert "<" in spec["api"]

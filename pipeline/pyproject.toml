@@ -13,7 +13,7 @@ dependencies = [
     "lxml>=5.0",
     "pandas>=2.1",
     "openpyxl>=3.1",
-    "duckdb>=1.0",
+    "duckdb>=2.0,<3",        # the range the API reads analytics.duckdb with (api/pyproject.toml): keep them equal
     # Geospatial marts: every distance and area is computed in SVY21 (EPSG:3414), which needs
     # pyproj for reprojection; geopandas gives buffers, overlays and spatial joins on top of shapely.
     # Pipeline only (CLAUDE.md): the API never imports these.
