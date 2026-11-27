@@ -55,7 +55,24 @@ export async function settleMotion(page: Page) {
       .filter((a) => a.timeline instanceof DocumentTimeline && a.effect?.getComputedTiming().iterations !== Infinity)   // not the scroll-linked bar, which only finishes at the bottom
       .map((a) => a.finished.catch(() => undefined)));
   });
-  await page.waitForTimeout(900);          // the reveal transitions (700 ms) that were started by the last scroll
+  await animationsSettled(page);           // the reveal transitions that the last scroll started
+}
+
+/**
+ * Wait until every finite animation and CSS transition on the page has finished, including any that start in the next
+ * frames (a scroll or a class change starts its transition a frame later). A wait on the page's state, not on a guess
+ * of how long the motion takes.
+ */
+export async function animationsSettled(page: Page) {
+  await page.evaluate(async () => {
+    const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (let pass = 0; pass < 2; pass += 1) {
+      await frames();
+      await Promise.all(document.getAnimations()
+        .filter((a) => a.timeline instanceof DocumentTimeline && a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)));
+    }
+  });
 }
 
 /** No sideways scrolling of the page itself. */

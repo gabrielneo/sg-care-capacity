@@ -216,7 +216,7 @@ test.describe("The details drawer", () => {
     await page.goBack();
     await expect(drawer(page)).toBeHidden();
     await expect(page).not.toHaveURL(/hospital=/);
-    await page.waitForTimeout(300);                                       // Next's router finishes handling Back before Forward
+    // No pause before Forward: a quick Back-then-Forward must reopen it (HospitalDrawer ignores the close Back caused).
     await page.goForward();
     await expect(drawer(page)).toBeVisible();
   });

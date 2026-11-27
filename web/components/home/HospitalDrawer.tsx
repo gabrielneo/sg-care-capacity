@@ -6,8 +6,8 @@ import { type KeyboardEvent, type ReactNode, useEffect, useRef } from "react";
  * A slide-over for one hospital's details, on the browser's own <dialog>: showModal() traps focus
  * inside, makes the rest of the page inert, closes on Esc and puts focus back where it was.
  * - It overlays (position: fixed), so opening it moves nothing on the page.
- * - `code` null = closed. `onClose` runs for Esc, the Close button and a click on the backdrop;
- *   the caller owns the address (?hospital=).
+ * - `code` null = closed. `onClose` runs for Esc, the Close button and a click on the backdrop, never
+ *   when the caller closed it by setting `code` to null; the caller owns the address (?hospital=).
  * - After it closes, focus returns to the control that opened it (`[data-hospital-trigger]`), also
  *   when the page was loaded with the drawer already open and there was no opener to remember.
  * - The slide-in is in globals.css (.care-drawer) and is switched off for prefers-reduced-motion.
@@ -31,6 +31,9 @@ export function HospitalDrawer({ code, title, children, onClose }: {
   const ref = useRef<HTMLDialogElement>(null);
   const closing = useRef(onClose);
   const last = useRef<string | null>(null);
+  // Set when the address closed it (code -> null, e.g. Back). Its "close" event arrives a task later, by when a quick
+  // Forward may have reopened the address: telling the owner then would strip ?hospital= again (seen in e2e).
+  const byAddress = useRef(false);
   useEffect(() => { closing.current = onClose; }, [onClose]);
 
   useEffect(() => {
@@ -38,7 +41,7 @@ export function HospitalDrawer({ code, title, children, onClose }: {
     if (!dialog) return;
     if (code) last.current = code;
     if (code && !dialog.open) dialog.showModal();
-    if (!code && dialog.open) dialog.close();
+    if (!code && dialog.open) { byAddress.current = true; dialog.close(); }
   }, [code]);
 
   // The browser closes the dialog itself on Esc; tell the owner so the address follows.
@@ -46,7 +49,8 @@ export function HospitalDrawer({ code, title, children, onClose }: {
     const dialog = ref.current;
     if (!dialog) return;
     const done = () => {
-      closing.current();
+      if (byAddress.current) byAddress.current = false;   // the owner already knows: it changed the address
+      else closing.current();
       const opener = last.current;
       requestAnimationFrame(() => {
         // The browser restores focus to the opener when it is still on the page; otherwise do it here.

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
+import { animationsSettled, blockTiles, expectNoA11yViolations, expectNoHorizontalScroll } from "./helpers";
 
 const ROUTES = ["/", "/find", "/ed-trends", "/access-map", "/live", "/data-quality"];
 
@@ -13,7 +13,7 @@ for (const scheme of ["light", "dark"] as const) {
         await blockTiles(page);
         await page.goto(route);
         await page.waitForLoadState("networkidle");
-        await page.waitForTimeout(400);       // a drawer or story step still fading in would be read half transparent
+        await animationsSettled(page);        // a drawer or story step still fading in would be read half transparent
         const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
         expect(bg).toBe(scheme === "light" ? "rgb(250, 249, 255)" : "rgb(13, 10, 34)");
         await expectNoA11yViolations(page, { wcag22: true });
