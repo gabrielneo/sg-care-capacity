@@ -64,6 +64,7 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 # Pipeline (run from the repo root; package: pipeline/sg_health, CLI: sg-health)
 # setup:        python3.12 -m venv .venv && source .venv/bin/activate && pip install -e "pipeline[dev]"
 # run ETL:      sg-health run [--sources moh,live,opendata,singstat]   # fetch → data/raw → parse → warehouse
+#               exit 3 = partial: a source landed nothing usable ("source_failed" log line); others were loaded
 # backfill:     sg-health backfill --start 2024-01-01 --max-snapshots 80   # MOH history via Wayback
 # reparse:      sg-health reparse        # rebuild all tables from data/raw only; no network
 # report:       sg-health report         # Excel summary from the warehouse
@@ -74,6 +75,8 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 # transform:    sg-health transform    # SQL in pipeline/sql/{staging,marts}; marts.* = what the API reads
 # insights:     sg-health insights     # validate + insight engine -> marts.fct_insight, data/build/insights.json (also runs inside publish)
 # publish:      sg-health publish --out data/build/publish   # validates first; refuses if blocked (docs/runbook.md)
+#               CI never replaces a published data-YYYY-MM-DD in place (runbook, "Run it by hand")
+# overdue:      sg-health overdue --manifest manifest.json   # weekly sources past their overdue limit; exit 1 if any
 # all checks:   make test (pipeline, api, web, acceptance) · make lint · make check   # not bare `pytest` at the root
 # tests:        pytest -q pipeline/tests            # offline unit tests (fixtures only)
 # acceptance:   pytest -q pipeline/acceptance       # the real built data, checked as the site would use it
@@ -111,5 +114,8 @@ Method and gates per detector: `docs/insights_method.md`. Suggested actions come
 # new release:  weekly.yml POSTs secrets.RENDER_DEPLOY_HOOK_URL, then .github/scripts/wait-for-api.sh
 #               waits until vars.API_PUBLIC_URL /api/v1/health serves the new snapshot_id
 # restart:      Actions -> Restart API (restart-api.yml), or: gh workflow run restart-api.yml -f expect=data-YYYY-MM-DD
-# roll back:    Render env DATA_SNAPSHOT=data-YYYY-MM-DD (saving redeploys) + purge Vercel's Data Cache
+# roll back:    Render env DATA_SNAPSHOT=data-YYYY-MM-DD (saving redeploys); the site follows within a minute
+#               (its API cache is keyed by the served snapshot_id; no Data Cache purge needed)
+# alerts:       issues labelled pipeline-failure, data-quality, stale-release, api-stale, data-overdue, api-down
+#               (docs/runbook.md, "Alerts"); stale-release.yml runs daily, keep-api-awake.yml every 10 min
 ```
