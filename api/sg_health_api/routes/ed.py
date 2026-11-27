@@ -36,7 +36,7 @@ MOH_SOURCES = ("moh_bed_waits", "moh_ed_attendances")
 MOH_TABLES = ("moh_bed_waits", "moh_ed_attendances")
 DEFAULT_DAYS = 90
 MAX_YEARS = 2
-DEFAULT_WEEKS, MAX_WEEKS = 12, 104
+DEFAULT_WEEKS, MAX_WEEKS = 12, 260          # 260: five years, so the long-run charts reach back to the start of the data
 BASELINE_WEEKS = 8             # the site's usual level: the median of the 8 complete weeks before the latest
 
 DAILY_SQL = """

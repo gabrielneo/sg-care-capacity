@@ -29,14 +29,14 @@ trend:
 anomaly:
   worse:
     headline: "Bed waits at {hospital} were unusually long in the week of {week}: {value}."
-    detail: "The usual level over the {trailing} weeks before was {usual}."
+    detail: "That is far above anything usual in its previous {range} weeks; the usual level over the {trailing} weeks before was {usual}."
     metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "higher than usual"
     callout: "{week}: {value}"
   better:
     headline: "Bed waits at {hospital} were unusually short in the week of {week}: {value}."
-    detail: "The usual level over the {trailing} weeks before was {usual}; one good week is not yet a trend."
+    detail: "That is far below anything usual in its previous {range} weeks; the usual level over the {trailing} weeks before was {usual}. One good week is not yet a trend."
     metric_label: "Average of daily median bed waits, week of {week}"
     comparison_label: "{usual}, usual for this hospital"
     change_word: "lower than usual"

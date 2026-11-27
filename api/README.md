@@ -85,7 +85,7 @@ Definitions of every field are in [`docs/data_dictionary.md`](../docs/data_dicti
 | `GET /health` | | `{"status": "ok", "snapshot_id"}` (never cached) |
 | `GET /hospitals` | | The 9 MOH-reported sites, with coverage notes (AH is a UCC) and a map pin (postcode, latitude, longitude; null in releases before 2026-11-09) |
 | `GET /ed/daily` | `hospital`, `from`, `to` | Daily median bed wait and attendances. Default: the 90 days up to the latest published day. At most 2 years |
-| `GET /ed/weekly` | `hospital`, `weeks` (1–104, default 12) | ISO-week aggregates with day counts and a completeness flag |
+| `GET /ed/weekly` | `hospital`, `weeks` (1–260, default 12) | ISO-week aggregates with day counts and a completeness flag |
 | `GET /ed/monthly` | `hospital`, `months` (1–120, default 36) | Calendar-month aggregates per hospital with day counts, a completeness flag and year-on-year / month-on-month change (only between complete months). 404 `not_in_release` for releases from before it |
 | `GET /ed/system/monthly` | `months` | The same by month for the average of the full EDs MOH reported throughout (Alexandra and Woodlands left out), null until every one has the month complete |
 | `GET /ed/summary` | | Latest **complete** week per hospital vs the median of the 8 complete weeks before it (see below) |
@@ -97,6 +97,7 @@ Definitions of every field are in [`docs/data_dictionary.md`](../docs/data_dicti
 | `GET /live/nuhs/latest` | | Each NUHS site's latest wait estimate **in the snapshot** |
 | `GET /population` | | Residents and the share aged 65+ for each year in the snapshot (the sum of SingStat's planning areas) |
 | `GET /insights` | `type`, `entity`, `top`, `headline` | Findings that passed their statistical gates, each with its key number, labels and chart data ([method](../docs/insights_method.md)) |
+| `GET /insights/tests` | `type` | Every result the engine weighed, published or not, with its 95% interval and why, and a published correlation's tested pairs (from `insights.json`) |
 
 `hospital` takes the codes from `/hospitals`, case-insensitive. `bbox` is
 `minLon,minLat,maxLon,maxLat`. `cdmp=false` returns clinics known not to be in CDMP; clinics with

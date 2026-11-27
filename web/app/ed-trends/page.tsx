@@ -11,6 +11,8 @@ import { ModeToggle } from "@/components/edcharts/ModeToggle";
 import { type Panel, SmallMultiples } from "@/components/edcharts/SmallMultiples";
 import { SlopeChart } from "@/components/edcharts/SlopeChart";
 import { SlopeTable } from "@/components/edcharts/SlopeTable";
+import { SpreadChart, SpreadTable } from "@/components/edcharts/SpreadChart";
+import { UnusualWeeks, UnusualWeeksTable } from "@/components/edcharts/UnusualWeeks";
 import { UsualTable } from "@/components/edcharts/UsualTable";
 import { WeekdayHeatmap } from "@/components/edcharts/WeekdayHeatmap";
 import { EdFilterForm } from "@/components/EdFilterForm";
@@ -43,7 +45,9 @@ import { eachDay, missingDays } from "@/lib/series";
 import { levelSplitLede } from "@/lib/ledes";
 import { hospitalStatus, levelCounts } from "@/lib/status";
 import { formatWeek } from "@/lib/weeks";
-import { formatWindow, PROFILE_WEEKS, USUAL_WEEKS, RANGE_FETCH_WEEKS } from "@/lib/windows";
+import { spreads } from "@/lib/spread";
+import { weekGrid } from "@/lib/unusualWeeks";
+import { formatWindow, HISTORY_WEEKS, PROFILE_WEEKS, RANGE_WEEKS, USUAL_WEEKS } from "@/lib/windows";
 
 export const metadata: Metadata = { title: "ED Trends" };
 export const dynamic = "force-dynamic";
@@ -70,7 +74,7 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const mode = parseMode(params.mode);
   const [dailyRes, weeklyRes, liveRes, insightsRes] = await Promise.all([
     settle(api.edDaily({ from: filters.from ?? undefined, to: filters.to ?? undefined })),
-    settle(api.edWeekly({ weeks: RANGE_FETCH_WEEKS })),
+    settle(api.edWeekly({ weeks: HISTORY_WEEKS })),         // every week: the latest against usual, and the unusual-weeks timeline
     settle(api.liveNuhsLatest()),
     settle(api.insights()),
   ]);
@@ -120,6 +124,8 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const latestRange = latest ? { week_start: latest, week_end: profileWindow(latest).to } : null;
   const latestText = latestRange ? formatWeek(latestRange) : "the latest complete week";
   const findings = insightsRes.ok ? insightsRes.value.data : [];
+  // Every past week, judged as the badge judges the latest (lib/unusualWeeks.ts).
+  const grid = weekGrid(weekly, chosen);
   // Short findings above each chart (at most two each, strongest first); the engine writes every word of them.
   const callouts = (types: Insight["type"][], label: string) => insightsRes.ok
     ? <Callouts insights={findings} types={types} codes={chosen.map((h) => h.hospital_code)} hospitals={hospitals} meta={insightsRes.value.meta} label={label} /> : null;
@@ -152,6 +158,9 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
   const profiles = profileRes?.ok && window
     ? chosen.map((h) => weekdayProfile(profileRes.value.data, h.hospital_code, window.from, window.to, mode)).filter((p): p is Profile => p != null)
     : [];
+
+  // 3b. How each hospital's days spread around its weekly figures, over the same window (lib/spread.ts).
+  const spread = profileRes?.ok && window ? spreads(profileRes.value.data, chosen.map((h) => h.hospital_code), window.from, window.to) : [];
 
   // 4. NUHS vs MOH. Two sources current at different times: the card shows each one's own date (audit H-1).
   const pairs = liveRes.ok ? slopePairs(daily, liveRes.value.data).filter((p) => selected.includes(p.code)) : [];
@@ -202,6 +211,16 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
           </ChartFrame>
         ) : <ErrorState title="The weekly figures can't be shown" error={plainError(weeklyRes.error)} />}
 
+        {weeklyRes.ok && grid.weeks.length ? (
+          <ChartFrame title={`Unusual weeks, ${formatWindow({ kind: "days", from: grid.weeks[0] as string, to: weekly.find((w) => w.week_start === grid.weeks.at(-1))?.week_end ?? (grid.weeks.at(-1) as string) })}`}
+                     slug="unusual-weeks" meta={weeklyRes.value.meta} caveat={CAVEAT.weeklyAverage}
+                     csv={`/export/ed-weekly.csv?weeks=${HISTORY_WEEKS}&context=1`} table={<UnusualWeeksTable grid={grid} hospitals={chosen} />}
+                     summary={`For each hospital, every complete week since the data starts, marked when it was higher or lower than that hospital's usual, by the same rule as the status badge.`}
+                     description={<Glossed text={`Every complete week, judged as the status badge judges the latest: against the hospital's own previous ${RANGE_WEEKS} complete weeks. A coloured mark is a week far from that hospital's usual. Most weeks are about usual, which is the point: a mark is rare.`} />}>
+            <UnusualWeeks grid={grid} hospitals={chosen} />
+          </ChartFrame>
+        ) : null}
+
         {profileRes?.ok && window ? (
           <ChartFrame title={`Bed wait by day of the week, ${formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}`} slug="weekday" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
                      csv={csv("/export/ed-daily.csv", { from: window.from, to: window.to, context: "1" })} table="self"
@@ -209,6 +228,15 @@ export default async function EdTrendsPage({ searchParams }: { searchParams: Sea
                      description={<Glossed text={`${mode === "usual" ? "Each weekday against the hospital's own average" : "The average bed wait on each weekday"}, over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)} (up to 26).`} />}>
             {callouts(["weekday"], "day of the week")}
             <WeekdayHeatmap profiles={profiles} hospitals={chosen} mode={mode} finding={findingFor(findings, "weekday", hospitals)} />
+          </ChartFrame>
+        ) : null}
+
+        {profileRes?.ok && window && spread.length ? (
+          <ChartFrame title={`How the days spread, ${formatWindow({ kind: "weeks", n: PROFILE_WEEKS })}`} slug="spread" meta={profileRes.value.meta} caveat={CAVEAT.weeklyAverage}
+                     csv={csv("/export/ed-daily.csv", { from: window.from, to: window.to, context: "1" })} table={<SpreadTable rows={spread} hospitals={chosen} />}
+                     summary={`For each hospital, a box plot of its daily median bed waits over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)}: the middle half of days, the 10th to 90th percentile, the middle day, the average and the longest day.`}
+                     description={<Glossed text={`Each hospital's daily medians over the complete weeks from ${dayText(window.from)} to ${dayText(window.to)}. The weekly figures average these days, and an average hides the long ones: this shows them. Middle day first.`} />}>
+            <SpreadChart rows={spread} hospitals={chosen} />
           </ChartFrame>
         ) : null}
 

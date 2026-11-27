@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { HospitalLongRun } from "@/components/edcharts/HospitalLongRun";
 import { MONTHLY_CAVEAT, MonthlyCharts } from "@/components/monthly/MonthlyCharts";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorState } from "@/components/States";
@@ -10,6 +11,7 @@ import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
 import { fullName, isUrgentCare, URGENT_CARE_NOTE } from "@/lib/hospitals";
 import { fromHospital, monthLede } from "@/lib/monthly";
+import { HISTORY_WEEKS } from "@/lib/windows";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,11 @@ export default async function HospitalPage({ params }: { params: Params }) {
   const hospital = hospitalsRes.value.data.find((h) => h.hospital_code === code);
   if (!hospital) notFound();
   const name = fullName(hospital);
-  const monthlyRes = await settle(api.edMonthly({ hospital: code, months: MONTHS_SHOWN }));
+  const [monthlyRes, weeklyRes, testsRes] = await Promise.all([
+    settle(api.edMonthly({ hospital: code, months: MONTHS_SHOWN })),
+    settle(api.edWeekly({ hospital: code, weeks: HISTORY_WEEKS })),
+    settle(api.insightTests()),
+  ]);
   const back = (
     <p className="mt-2 flex flex-wrap gap-x-4 text-small">
       <Link href={`/ed-trends?hospital=${code}`}><Glossed text="Daily figures on ED Trends" /></Link>
@@ -62,7 +68,7 @@ export default async function HospitalPage({ params }: { params: Params }) {
   const note = hospital.coverage_note;
   return (
     <>
-      <PageHeader title={name} intro="Bed wait and emergency department visits by month, and this month against the same month a year before." />
+      <PageHeader title={name} intro="Bed wait and emergency department visits by month, this month against the same month a year before, and every week since the Ministry of Health's data starts." />
       {isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="ucc-note">{URGENT_CARE_NOTE}.</p> : null}
       {note && !isUrgentCare(hospital) ? <p className="mb-2 text-small text-muted" data-testid="coverage-note">{note}</p> : null}
       {lede ? <p className="max-w-prose text-ink" data-testid="monthly-lede">{lede}</p> : null}
@@ -70,6 +76,10 @@ export default async function HospitalPage({ params }: { params: Params }) {
       <div className="mt-6">
         <MonthlyCharts points={points} meta={monthlyRes.value.meta} subject={name}
                        csv={`/export/ed-monthly.csv?hospital=${code}&months=${MONTHS_SHOWN}&context=1`} caveat={MONTHLY_CAVEAT} />
+        {weeklyRes.ok ? (
+          <HospitalLongRun code={code} name={name} weekly={weeklyRes.value.data} weeklyMeta={weeklyRes.value.meta}
+                           tests={testsRes.ok ? testsRes.value.data : []} testsMeta={testsRes.ok ? testsRes.value.meta : null} />
+        ) : null}
       </div>
     </>
   );

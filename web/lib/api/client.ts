@@ -112,6 +112,8 @@ export const api = {
   liveNuhsLatest: () => call(() => client().GET("/api/v1/live/nuhs/latest")),
   insights: (query: Query<"/api/v1/insights"> = {}) =>
     call(() => client().GET("/api/v1/insights", { params: { query } })),
+  insightTests: (query: Query<"/api/v1/insights/tests"> = {}) =>
+    call(() => client().GET("/api/v1/insights/tests", { params: { query } })),
   population: () => call(() => client().GET("/api/v1/population")),
 };
 

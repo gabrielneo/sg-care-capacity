@@ -155,3 +155,29 @@ export function yoyWord(pct: number): string {
   const whole = Math.round(pct);
   return whole < 0 ? "shorter" : whole > 0 ? "longer" : "about the same";
 }
+
+const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
+const NUMBER_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+/**
+ * Which month had the longest and the shortest average bed wait in each full calendar year (all 12 months complete), and on
+ * average over those years. Said as a description, never as a pattern: a handful of years can't show one, and the order changes
+ * from year to year. Null with fewer than two full years.
+ */
+export function seasonSentence(points: Point[]): string | null {
+  const full = [...new Set(points.map((p) => p.year))].sort((a, b) => a - b).flatMap((year) => {
+    const values = MONTHS.map((_, i) => points.find((p) => p.year === year && p.month === i + 1 && p.complete)?.wait ?? null);
+    return values.every((v) => v != null) ? [{ year, values: values as number[] }] : [];
+  });
+  if (full.length < 2) return null;
+  const at = (vs: number[], pick: (a: number, b: number) => boolean) => vs.reduce((best, v, i) => (pick(v, vs[best] as number) ? i : best), 0);
+  const longest = full.map((y) => MONTHS_LONG[at(y.values, (a, b) => a > b)] as string);
+  const shortest = full.map((y) => MONTHS_LONG[at(y.values, (a, b) => a < b)] as string);
+  const avg = MONTHS.map((_, i) => full.reduce((s, y) => s + (y.values[i] as number), 0) / full.length);
+  const years = full.map((y) => String(y.year));
+  const same = (xs: string[]) => new Set(xs).size === 1;
+  return `In each full year (${list(years)}), the longest average bed wait was in ${list(longest)}, and the shortest in ${list(shortest)}. ` +
+    `Averaged over those ${NUMBER_WORDS[full.length] ?? full.length} years, ${MONTHS_LONG[at(avg, (a, b) => a > b)]} is the longest and ` +
+    `${MONTHS_LONG[at(avg, (a, b) => a < b)]} the shortest` +
+    (same(longest) && same(shortest) ? "." : ", but the order changes from year to year, so this is a description, not a tested seasonal pattern.");
+}

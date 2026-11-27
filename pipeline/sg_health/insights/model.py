@@ -57,9 +57,10 @@ class Candidate:
     n_unit: str = "days"               # what n counts: days, weeks, readings, residents aged 65+ ...
     ci: tuple[float, float] | None = None    # 95% CI of metric_value, where the method gives one
     ci_null: float | None = None       # the metric_value that means "no difference" (0 slope, the weekly mean ...)
-    ci_fn: Any = None                  # computes `ci` later, only for a published finding (a bootstrap is slow)
+    ci_fn: Any = None                  # computes `ci` later: for every tested candidate and every published finding (a bootstrap is slow)
     p_adjusted: float | None = None
     reason: str = ""                   # why it was not published (filled by the engine)
+    pairs: list[tuple[str, float, float]] | None = None   # a correlation's tested pairs (date, x, y): the site's scatter plot
 
     @property
     def insight_id(self) -> str:

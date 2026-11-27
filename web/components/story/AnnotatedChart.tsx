@@ -43,7 +43,7 @@ export interface AnnotatedChartProps {
   format: (v: number) => string;
   xLabel?: string | null;
   caveat?: string | null;
-  headingLevel?: 2 | 3;
+  headingLevel?: 2 | 3 | 4;
   /** For a finding's chart: each source's own date, and the finding's data window (see Provenance). */
   bySource?: boolean;
   findingTo?: string | null;

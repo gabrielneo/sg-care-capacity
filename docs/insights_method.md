@@ -57,8 +57,10 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
    - **n and intervals.** Every finding carries `n` with what it counts (`n_unit`), and a 95%
      confidence interval of its key number where the method gives one (`ci_low`, `ci_high`): the
      Theil-Sen interval for a trend; a percentile bootstrap (2,000 resamples, fixed seed, so a run is
-     reproducible) for the weekday peak's average, the correlation and the median gap. A one-week
-     comparison has no sample to resample, so it has no interval.
+     reproducible) for the weekday peak's average and the median gap; a moving-block bootstrap for the
+     two correlations (blocks of 14 days, or 6 months), so runs of similar days stay together. A one-week
+     comparison has no sample to resample, so it has no interval. **Every test gets its interval,
+     published or not**, so the Findings page can chart each one, including those that found nothing.
 8. **Actions:** `who_acts` and `action` come from [insight_actions.yml](insight_actions.yml), and
    only from entries marked `reviewed: true`. The engine never writes them. Until an entry is
    reviewed, the insight is published without an action, and a caveat says so.
@@ -91,7 +93,11 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
     - Every skip becomes a `dq_results` row in the published validation run. Its check is
       `insight.<detector>.<entity>`, with status `skipped` and the reason.
     - Every candidate, published or not, is listed with its outcome in `insights.json` (under
-      `candidates`).
+      `candidates`), with its key number, unit, 95% interval and the value that means no difference.
+      A published correlation also carries the pairs it was tested on (`pairs`: date, x, y), which the site
+      plots as a scatter: the engine's numbers, never a re-computation.
+      The API serves the list at `/api/v1/insights/tests`, and the Findings page charts it ("Every test
+      run, including the ones that found nothing").
     - **Outputs:** `marts.fct_insight` and `insights.json` (a release file, hashed in the
       manifest).
 
@@ -137,8 +143,9 @@ the engine, so the website writes no finding text and computes no finding number
     complete month's change in visits and in average bed wait against the same month a year earlier, over the latest
     36 months. A month counts only when it and the month a year before are both complete.
   - **Statistic:** Spearman's correlation between the two changes. Strength labels as for `volume_vs_wait`.
-  - **Why year on year:** setting each month against the same month a year earlier removes the yearly pattern (May
-    runs long, August short), which would otherwise make visits and waits look linked.
+  - **Why year on year:** setting each month against the same month a year earlier removes differences between months of
+    the year (on average May runs long and August short, though not every year), which would otherwise make visits and waits
+    look linked.
   - **Significance:** neighbouring months' changes overlap and drift together, so the usual p-value, which assumes
     independent pairs, would be too small. The test rotates one series against the other by every possible shift
     and counts how often a rotation links them as strongly as the real months do. That keeps each series' own serial
@@ -198,19 +205,23 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
 ## 2. anomaly
 
 - **Question:** Was the latest complete week unusual for that hospital?
-- **Method:** the robust z-score of the latest complete week's bed wait, compared with the 8
-  complete weeks before it: z = 0.6745 (x − median) / MAD (Iglewicz and Hoaglin).
+- **Method:** the robust z-score of the latest complete week's bed wait against the hospital's
+  previous 26 complete weeks: z = 0.6745 (x − median) / MAD (Iglewicz and Hoaglin). This is the same
+  z-score as the site's status badge (changed 27 Nov 2026; it was the 8 weeks before), so a finding and
+  the badge can never disagree. The "usual level" shown is still the median of the 8 weeks before, as on
+  the badge.
 - **Gate:**
-  - the latest week and all 8 weeks before it must be complete;
-  - |z| ≥ 3.5;
-  - if the 8 weeks don't vary at all (MAD = 0), the hospital is skipped rather than given an
+  - the latest week and all 8 weeks before it must be complete, and at least 20 of the 26 weeks;
+  - |z| ≥ 3.5, beyond the badge's 2.5, so a flagged week always carries a badge in the same direction;
+  - if the 26 weeks don't vary at all (MAD = 0), the hospital is skipped rather than given an
     infinite z.
 - **Why this method:** the median and MAD aren't pulled by earlier unusual weeks, unlike the mean
-  and standard deviation. 3.5 is Iglewicz and Hoaglin's recommended cut-off.
+  and standard deviation. 3.5 is Iglewicz and Hoaglin's recommended cut-off. 26 weeks, not 8: against
+  8 calm weeks, an ordinary week at a hospital whose waits swing widely would look extreme.
 - **Limitations:**
   - **No p-value**, so it's outside the BH correction. With 9 hospitals checked weekly, an
     occasional flag by chance is expected.
-  - **Eight weeks is a short baseline.**
+  - **26 weeks can include a season,** so a week can look usual because the season before it was long too.
   - **"Unusual" doesn't mean "bad practice":** a known event (a flu surge, a ward closure) may
     explain it, and the suggested action says so.
 
@@ -254,6 +265,13 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
     (decision recorded with the plan). Without it, the correlation mostly re-finds the shared
     weekly cycle that the weekday detector already reports.
   - **Strength labels:** negligible below 0.1, weak below 0.3, moderate below 0.5, strong above.
+  - **Significance (changed 27 Nov 2026):** busy days come in runs, and so do long waits, so the usual
+    p-value, which assumes independent days, is too small. The test rotates one series against the other
+    by every possible shift and counts how often a rotation links them as strongly as the real days do,
+    as `monthly_yoy` does. That keeps each series' own runs. With about 180 days the smallest possible p
+    is about 1 in 180. On the release of 25 Nov 2026, 8 of 9 hospitals still pass (adjusted p 0.02 to
+    0.03, against as low as 4 in 10 million before); Sengkang's weak link (0.16) no longer does.
+  - **Interval:** a moving-block bootstrap of 14-day blocks (2,000 resamples, the same seed).
 - **Gate:**
   - 80% of days with both figures, and at least 60 paired days;
   - adjusted p < 0.05;
@@ -264,18 +282,18 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
 - **Limitations:**
   - **An association, not a mechanism:** both series may follow a third thing, such as a flu
     season.
-  - **Daily values are autocorrelated,** which overstates significance somewhat. The BH correction
-    and the "not negligible" rule partly offset this.
+  - **Three lags per hospital are tested,** and the strongest passing one is published; all three
+    are in the BH correction and on the Findings page's chart of every test.
   - **Visits include non-urgent cases**, while the bed wait covers admitted patients only.
 
 ## 5. access_gap
 
 - **Question:** Which areas have the biggest CDMP clinic shortfall for their seniors?
 - **Method:**
-  - **Benchmark rate:** the CDMP GP clinics ÷ the residents aged 65+ of the areas that are compared (those
+  - **Average rate:** the CDMP GP clinics ÷ the residents aged 65+ of the areas that are compared (those
     with at least 1,000 such residents). Areas left out of the ranking are left out of the yardstick too:
     their 76 clinics (Downtown Core 35, Orchard 18) lifted the rate from 1.18 to 1.27 per 1,000 and
-    made 22 of 32 areas look short. Today it is 1.18; it replaces the older name "national rate", and every finding says
+    made 22 of 32 areas look short. Today it is 1.18; it replaces the older names "national rate" and "benchmark rate", and every finding says
     which areas it covers.
   - **Expected** = residents aged 65+ × the average rate.
   - **Shortfall** = expected − actual.
@@ -361,7 +379,7 @@ distribution. scipy is a pipeline-only dependency: the API and the site don't us
   - only a rise is published; there is no p-value, so the finding is outside the Benjamini-Hochberg
     correction and is worded as a plain comparison, never as a significant result.
 - **Why this method:** it is the figure a planner already sees on the home page, so a finding and the badge
-  never disagree. The `anomaly` detector (also untested: a robust z against the 8 weeks before) can say the same week is unusual; this one says how far above
+  never disagree. The `anomaly` detector (also untested: the same robust z, at the stricter 3.5) can say the same week is unusual; this one says how far above
   usual it is.
 - **Limitations:**
   - **Not a test:** with 9 hospitals checked weekly, a few weeks above the line are expected by chance.

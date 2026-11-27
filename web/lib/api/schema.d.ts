@@ -208,6 +208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/insights/tests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every result the insight engine weighed, published or not, with why */
+        get: operations["insight_tests_api_v1_insights_tests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/live/nuhs/latest": {
         parameters: {
             query?: never;
@@ -338,7 +355,7 @@ export interface components {
             cdmp_clinics_per_1k_seniors: number | null;
             /**
              * Cdmp Shortfall
-             * @description CDMP clinics the benchmark rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
+             * @description CDMP clinics the average rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
              */
             cdmp_shortfall?: number | null;
             /** Chas Clinics */
@@ -1163,6 +1180,102 @@ export interface components {
              */
             query: string;
         };
+        /**
+         * InsightTest
+         * @description One result the insight engine weighed this run, published or not (insights.json `candidates`).
+         */
+        InsightTest: {
+            /**
+             * Ci High
+             * @description 95% range of metric_value, high end
+             */
+            ci_high?: number | null;
+            /**
+             * Ci Low
+             * @description 95% range of metric_value, low end; null where the method gives none
+             */
+            ci_low?: number | null;
+            /**
+             * Ci Null
+             * @description The metric_value that means no difference (0 slope, the weekly average)
+             */
+            ci_null?: number | null;
+            /**
+             * Dq Tables
+             * @description The tables this result is computed from: the warnings in meta.dq_warnings with these tables apply to it
+             */
+            dq_tables?: string[];
+            /**
+             * Effect Size
+             * @description The detector's effect: Kendall's tau, epsilon-squared, Spearman's rho, robust z ...
+             */
+            effect_size: number | null;
+            /**
+             * Entity
+             * @description Hospital code, planning area, or 'All hospitals'
+             */
+            entity: string;
+            /**
+             * Metric Value
+             * @description The finding's number (a slope, a peak, a correlation). Null in older releases
+             */
+            metric_value?: number | null;
+            /** N */
+            n: number;
+            /**
+             * N Unit
+             * @description What n counts. Null in releases from before it was written
+             */
+            n_unit?: string | null;
+            /**
+             * Outcome
+             * @description 'published', or why not (effect too small, not significant after correction ...)
+             */
+            outcome: string;
+            /**
+             * P Adjusted
+             * @description Benjamini-Hochberg across every test in the run
+             */
+            p_adjusted: number | null;
+            /**
+             * P Value
+             * @description Null where nothing was tested
+             */
+            p_value: number | null;
+            /**
+             * Pairs
+             * @description A published correlation only: the pairs it was tested on, as [date, x, y]. Visits vs waits: the day's ED visits and the bed wait `when`, each after removing the weekday's median. Year on year: the % change in visits and in bed wait. Null otherwise, and in older releases
+             */
+            pairs?: (string | number)[][] | null;
+            /**
+             * Source Ids
+             * @description The sources this result is computed from (keys of meta.sources)
+             */
+            source_ids?: string[];
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "monthly_yoy" | "access_gap" | "regional" | "source_gap";
+            /**
+             * Unit
+             * @description metric_value's unit. Null in older releases
+             */
+            unit?: string | null;
+            /** Variant */
+            variant: string;
+            /**
+             * When
+             * @description Visits vs waits only: which day's wait ('the day after')
+             */
+            when?: string | null;
+        };
+        /** InsightTestsResponse */
+        InsightTestsResponse: {
+            /** Data */
+            data: components["schemas"]["InsightTest"][];
+            meta: components["schemas"]["Meta"];
+        };
         /** InsightTrendLine */
         InsightTrendLine: {
             /**
@@ -1529,7 +1642,7 @@ export interface components {
             cdmp_clinics_per_1k_seniors: number | null;
             /**
              * Cdmp Shortfall
-             * @description CDMP clinics the benchmark rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
+             * @description CDMP clinics the average rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded
              */
             cdmp_shortfall?: number | null;
             /** Chas Clinics */
@@ -1900,7 +2013,7 @@ export interface operations {
             query?: {
                 /** @description Hospital code (see /hospitals). Omit for all */
                 hospital?: string | null;
-                /** @description How many of the latest ISO weeks (1-104) */
+                /** @description How many of the latest ISO weeks (1-260) */
                 weeks?: number;
             };
             header?: never;
@@ -2064,6 +2177,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InsightsResponse"];
+                };
+            };
+            /** @description Invalid parameter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    insight_tests_api_v1_insights_tests_get: {
+        parameters: {
+            query?: {
+                /** @description Only this detector */
+                type?: ("trend" | "anomaly" | "usual_gap" | "weekday" | "volume_vs_wait" | "monthly_yoy" | "access_gap" | "regional" | "source_gap") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightTestsResponse"];
                 };
             };
             /** @description Invalid parameter */

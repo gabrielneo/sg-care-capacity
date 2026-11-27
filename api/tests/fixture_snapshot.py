@@ -162,7 +162,7 @@ INSIGHTS = [
      {"endpoint": "/api/v1/areas/access", "query": "SELECT 5"}, date(2024, 6, 6), "source_updated", 0.1, None,
      _display("0.02", "per 1,000 residents aged 65+", "CDMP GP clinics per 1,000 residents aged 65+ in Bedok",
               "0.03, the average rate", "down", "lower than the average rate"),
-     _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Benchmark rate", 0.0328)],
+     _chart("bar", "CDMP GP clinics per 1,000 residents aged 65+", [("area", "Bedok", 0.0164), ("national", "Average rate", 0.0328)],
             ["area"], "About 1 clinic short of the average rate", None)),
 ]
 # period_start, period_end and strength sit between headline_rank (column 22) and display (column 25).
@@ -346,16 +346,41 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# insights.json's list of every result the engine weighed: one published correlation, one that failed after correction,
+# a trend whose effect was too small, an untested unusual-week check, and an access-gap ranking (no test).
+TESTS = {
+    "alpha": 0.05, "tests_in_correction": 3,
+    "candidates": [
+        {"type": "volume_vs_wait", "entity": "SGH", "variant": "positive", "n": 181, "n_unit": "days", "when": "the day after",
+         "effect_size": 0.31, "metric_value": 0.31, "unit": "Spearman correlation", "ci_low": 0.16, "ci_high": 0.44, "ci_null": 0.0,
+         "p_value": 0.0055, "p_adjusted": 0.0165, "outcome": "published",
+         "pairs": [["2026-10-01", -20.0, -0.4], ["2026-10-02", 0.0, 0.1], ["2026-10-03", 25.0, 0.6]]},
+        {"type": "volume_vs_wait", "entity": "CGH", "variant": "positive", "n": 181, "n_unit": "days", "when": "on the same day",
+         "effect_size": 0.13, "metric_value": 0.13, "unit": "Spearman correlation", "ci_low": 0.01, "ci_high": 0.25, "ci_null": 0.0,
+         "p_value": 0.09, "p_adjusted": 0.135, "outcome": "not significant after correction (adjusted p 0.135)"},
+        {"type": "trend", "entity": "SGH", "variant": "rising", "n": 26, "n_unit": "weeks", "when": None,
+         "effect_size": 0.2, "metric_value": 0.02, "unit": "hours per week", "ci_low": -0.01, "ci_high": 0.05, "ci_null": 0.0,
+         "p_value": 0.3, "p_adjusted": 0.3, "outcome": "effect below the detector's minimum"},
+        {"type": "anomaly", "entity": "SGH", "variant": "worse", "n": 9, "n_unit": "weeks", "when": None,
+         "effect_size": 1.2, "metric_value": 4.4, "unit": "hours", "ci_low": None, "ci_high": None, "ci_null": None,
+         "p_value": None, "p_adjusted": None, "outcome": "effect below the detector's minimum"},
+        {"type": "access_gap", "entity": "BEDOK", "variant": "worse", "n": 61000, "effect_size": 0.4,
+         "p_value": None, "p_adjusted": None, "outcome": "published"},          # an older release's shape: no new fields
+    ],
+}
+
+
 def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy21: bool = True,
           live_qualifiers: bool = True, places: bool = True, events: bool = True,
-          monthly: bool = True) -> Path:
+          monthly: bool = True, tests: bool = True) -> Path:
     """Write the fixture snapshot into `out` (created). Returns `out`.
     insights=False builds a release from before the insight engine (no fct_insight);
     insight_charts=False one from before it wrote display and chart; svy21=False one with no 3D map layer;
     live_qualifiers=False one from before NUHS bounds were kept (no *_qualifier columns);
     places=False one from before 2026-11-09 (no dim_polyclinic, no hospital pins or short names);
     events=False one from before the event list (no dim_event);
-    monthly=False one from before the monthly figures (no fct_ed_monthly or fct_ed_system_monthly)."""
+    monthly=False one from before the monthly figures (no fct_ed_monthly or fct_ed_system_monthly);
+    tests=False one with no insights.json."""
     marts = {m: cols for m, cols in DDL.items() if (insights or m != "fct_insight") and (places or m != "dim_polyclinic")
              and (events or m != "dim_event")
              and (monthly or m not in ("fct_ed_monthly", "fct_ed_system_monthly"))}
@@ -442,6 +467,9 @@ def build(out: Path, *, insights: bool = True, insight_charts: bool = True, svy2
         layers.append(out / "planning_area_access_svy21.geojson")
 
     files = [db, *layers, *sorted((out / "parquet").glob("*.parquet"))]
+    if tests:
+        (out / "insights.json").write_text(json.dumps(TESTS))
+        files.append(out / "insights.json")
     latest = [d for d in DQ if d[6] == LATEST_RUN]
     manifest = {
         "snapshot_id": SNAPSHOT_ID,

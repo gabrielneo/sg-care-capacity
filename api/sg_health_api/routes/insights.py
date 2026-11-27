@@ -1,12 +1,14 @@
 """/insights: findings from the insight engine (docs/insights_method.md), as published in the snapshot."""
 from __future__ import annotations
 
+import json
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Query
 
 from ..context import Context
-from ..models import Insight, InsightsResponse
+from ..models import Insight, InsightsResponse, InsightTest, InsightTestsResponse
+from ..snapshot import SnapshotError
 from . import ERRORS, get_ctx
 
 router = APIRouter(tags=["insights"], responses=ERRORS)
@@ -89,4 +91,45 @@ def insights(
         meta=ctx.meta(as_of=as_of, sources=sources, caveats=notes,
                       tables=sorted({t for ty in types for t in TABLES_BY_TYPE[ty]}),
                       coverage={"insights": len(rows), "in_release": len(_all(ctx) or [])}),
+    )
+
+
+INSIGHTS_JSON = "insights.json"
+
+
+def _tests(ctx: Context) -> dict[str, Any] | None:
+    """insights.json from the release, or None if this release has none."""
+    if "insight_tests" not in ctx.cache:
+        try:
+            ctx.cache["insight_tests"] = json.loads(ctx.snap.file(INSIGHTS_JSON).read_text())
+        except SnapshotError:
+            ctx.cache["insight_tests"] = None
+    return ctx.cache["insight_tests"]
+
+
+@router.get("/insights/tests", response_model=InsightTestsResponse,
+            summary="Every result the insight engine weighed, published or not, with why")
+def insight_tests(
+    ctx: Context = Depends(get_ctx),
+    type: InsightType | None = Query(None, description="Only this detector"),
+) -> InsightTestsResponse:
+    raw = _tests(ctx)
+    notes = ["Every test and check the engine ran on this data release, including those that found nothing.",
+             "Adjusted p-values are corrected across every test in the run (Benjamini-Hochberg)."]
+    if raw is None:
+        notes.append("This data release has no list of the engine's tests.")
+    fields = InsightTest.model_fields
+    rows = [{k: v for k, v in c.items() if k in fields} for c in (raw or {}).get("candidates", [])]
+    if type:
+        rows = [r for r in rows if r["type"] == type]
+    types = sorted({r["type"] for r in rows}) or ([type] if type else list(SOURCES_BY_TYPE))
+    published = [r for r in (_all(ctx) or []) if r["type"] in types]
+    as_of = max((r["as_of"] for r in published), default=None) or ctx.created_at
+    return InsightTestsResponse(
+        data=[InsightTest(**r, source_ids=list(SOURCES_BY_TYPE[r["type"]]), dq_tables=list(TABLES_BY_TYPE[r["type"]]))
+              for r in rows],
+        meta=ctx.meta(as_of=as_of, sources=sorted({s for t in types for s in SOURCES_BY_TYPE[t]}), caveats=notes,
+                      tables=sorted({t for ty in types for t in TABLES_BY_TYPE[ty]}),
+                      coverage={"results": len(rows), "tests_in_correction": (raw or {}).get("tests_in_correction"),
+                                "alpha": (raw or {}).get("alpha")}),
     )

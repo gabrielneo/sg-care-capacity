@@ -173,6 +173,27 @@ export function Limits({ items }: { items: ReactNode[] }) {
   );
 }
 
+/** 4b. What's next: the case study's next steps, in the order it recommends them, each with what it would unlock. */
+export function NextSteps({ items }: { items: ReactNode[] }) {
+  return (
+    <section aria-labelledby="next-steps" className="section" data-testid="next-steps">
+      <h2 id="next-steps" className="font-semibold text-ink text-h2">What&apos;s next</h2>
+      <p className="mt-2 max-w-prose text-ink">
+        From the <Link href="/case-study#limitations-and-next-steps">case study</Link>, in the order it recommends: what would close
+        each gap above, and what it needs.
+      </p>
+      <ol className="mt-4 card-grid md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item, i) => (
+          <li key={i} className="doc rounded-lg border border-line bg-surface card text-small" data-testid="next-step">
+            <span aria-hidden="true" className="text-meta font-semibold text-muted">{i + 1}</span>
+            {item}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export interface DepthCard {
   budget: string;
   title: string;

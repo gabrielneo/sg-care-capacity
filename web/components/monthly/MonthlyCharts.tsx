@@ -5,7 +5,7 @@ import { Chapters } from "@/components/Section";
 import { Glossed } from "@/components/terms/Glossed";
 import type { Meta } from "@/lib/api/types";
 import { CAVEAT } from "@/lib/copy";
-import { MONTHS, MONTHS_LONG, monthsText, type Point, timeSeries, yearLines, yearsSoFar } from "@/lib/monthly";
+import { MONTHS, MONTHS_LONG, monthsText, type Point, seasonSentence, timeSeries, yearLines, yearsSoFar } from "@/lib/monthly";
 
 import { ChangeBars } from "./ChangeBars";
 import { LineChart, type LineSeries } from "./LineChart";
@@ -33,6 +33,7 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
                                   values: l.values, strong: i === lines.length - 1 }));
   };
   const years = yearLines(points, "wait").map((l) => l.year);
+  const season = seasonSentence(points);
   // What the hover tooltips say: the month in full, and each value with its unit.
   const hoursText = (v: number) => `${v.toLocaleString("en-SG", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} hours`;
   const visitsText = (v: number) => `${Math.round(v).toLocaleString("en-SG")} visits`;
@@ -51,7 +52,10 @@ export function MonthlyCharts({ points, meta, subject, csv, caveat, findings = n
       <ChartFrame title={`${subject}: the same month, year on year`} slug="monthly-year-on-year" meta={meta} csv={csv}
                   summary={`Lines for ${years.join(", ")} on one January to December axis, so each month can be read against the same month in other years.`}
                   table={<YearSoFarTable rows={sofar} />}
-                  description={<Glossed text={`Each year is one line, January to December. Months differ through the year, so this compares each month with the same month in other years.${span ? ` The table counts only ${span}, the months complete in every year shown.` : ""}`} />}>
+                  description={<>
+                    <Glossed text={`Each year is one line, January to December. Months differ through the year, so this compares each month with the same month in other years.${span ? ` The table counts only ${span}, the months complete in every year shown.` : ""}`} />
+                    {season ? <span className="mt-1 block text-ink" data-testid="season-sentence">{season}</span> : null}
+                  </>}>
         <LineChart labels={[...MONTHS]} titles={[...MONTHS_LONG]} format={hoursText} unit="Hours, average of each day's median" series={yearSeries("wait")} testId="year-lines-wait"
                    summary={`Average bed wait by month for ${years.join(", ")}, in hours.`} />
         <div className="mt-6">

@@ -93,6 +93,9 @@ export async function renderDoc(file: string, section?: string): Promise<Rendere
  * The bullet list right after the line that starts with `marker`, e.g. "**What the data can't
  * show**" in case_study.md. The Overview shows it as written there, so the text isn't duplicated.
  */
+/** A list item: a bullet or a numbered step. */
+const ITEM = /^(?:- |\d+\. )/;
+
 export function extractList(source: string, marker: string): string {
   const lines = source.split("\n");
   const start = lines.findIndex((l) => l.startsWith(marker));
@@ -102,7 +105,7 @@ export function extractList(source: string, marker: string): string {
   const out: string[] = [];
   for (; i < lines.length; i++) {
     const line = lines[i] as string;
-    if (line.startsWith("- ") || (out.length > 0 && /^\s+\S/.test(line))) out.push(line);
+    if (ITEM.test(line) || (out.length > 0 && /^\s+\S/.test(line))) out.push(line);
     else break;
   }
   if (!out.length) throw new Error(`no list after "${marker}"`);
@@ -112,7 +115,7 @@ export function extractList(source: string, marker: string): string {
 /** Render the list after `marker` in docs/<file>; `items` is its number of bullets. */
 export async function renderDocList(file: string, marker: string): Promise<RenderedDoc & { items: number }> {
   const list = extractList(await readFile(path.join(DOCS_DIR, file), "utf8"), marker);
-  return { ...(await renderMarkdown(list, file)), items: list.split("\n").filter((l) => l.startsWith("- ")).length };
+  return { ...(await renderMarkdown(list, file)), items: list.split("\n").filter((l) => ITEM.test(l)).length };
 }
 
 /** Words in docs/<file> (or one "## " section), for a reading-time estimate. */
@@ -127,7 +130,7 @@ export async function docWords(file: string, section?: string): Promise<number> 
  */
 export async function renderDocListItems(file: string, marker: string): Promise<ReactNode[]> {
   const list = extractList(await readFile(path.join(DOCS_DIR, file), "utf8"), marker);
-  const items = list.split(/\n(?=- )/).map((b) => b.replace(/^- /, "").replace(/\s*\n\s+/g, " ").replace(/[;.]$/, "").trim());
+  const items = list.split(/\n(?=- |\d+\. )/).map((b) => b.replace(ITEM, "").replace(/\s*\n\s+/g, " ").replace(/[;.]$/, "").trim());
   const sentence = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
   return Promise.all(items.map(async (t) => (await renderMarkdown(sentence(t), file)).content));
 }

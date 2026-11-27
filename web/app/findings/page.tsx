@@ -5,17 +5,20 @@ import { OnThisPage } from "@/components/OnThisPage";
 import { FigureCadenceNote } from "@/components/FigureCadenceNote";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState, ErrorState } from "@/components/States";
-import { type DepthCard, DepthCards, Findings, Hero, Limits, WhyNow } from "@/components/story/Sections";
+import { AllFindings } from "@/components/story/AllFindings";
+import { type DepthCard, DepthCards, Findings, Hero, Limits, NextSteps, WhyNow } from "@/components/story/Sections";
+import { TestLedger } from "@/components/story/TestLedger";
 import { api, settle } from "@/lib/api/client";
 import { plainError } from "@/lib/copy";
 import { docWords, renderDocListItems } from "@/lib/docs";
-import { EMPTY_STORY, emptyReason, readingMinutes, storySteps } from "@/lib/story";
+import { EMPTY_STORY, emptyReason, isStoryInsight, readingMinutes, storySteps } from "@/lib/story";
 import { SITE_TITLE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Findings" };
 export const dynamic = "force-dynamic"; // rendered per request; API responses are cached for an hour
 
 const LIMITS_MARKER = "**What the data can't show**";
+const NEXT_MARKER = "**Next steps,**";
 
 /**
  * Findings, as a scroll story (the site's home page until 2026-11-09; the home page now leads
@@ -24,16 +27,23 @@ const LIMITS_MARKER = "**What the data can't show**";
  * docs/case_study.md. This file writes none of them.
  */
 export default async function FindingsPage() {
-  const [insights, hospitals, population, limits, problemWords, methodWords] = await Promise.all([
+  const [insights, all, tests, hospitals, population, limits, next, problemWords, methodWords] = await Promise.all([
     settle(api.insights({ headline: true })),
+    settle(api.insights()),
+    settle(api.insightTests()),
     settle(api.hospitals()),
     settle(api.population()),
     renderDocListItems("case_study.md", LIMITS_MARKER),
+    renderDocListItems("case_study.md", NEXT_MARKER),
     docWords("case_study.md", "Problem statement"),
     docWords("insights_method.md"),
   ]);
   const steps = insights.ok ? storySteps(insights.value.data, hospitals.ok ? hospitals.value.data : []) : [];
   const top = steps[0];
+  // Every published finding, below the headline story: the headlines are not repeated.
+  const shown = new Set(steps.map((s) => s.insight_id));
+  const rest = all.ok ? all.value.data.filter(isStoryInsight).filter((i) => !shown.has(i.insight_id)) : [];
+  const ledger = tests.ok && tests.value.data.length > 0;
 
   const cards: DepthCard[] = [
     { budget: "Got 30 seconds?", title: "Look up one hospital", href: "/ed-trends", estimate: "30 seconds",
@@ -50,7 +60,10 @@ export default async function FindingsPage() {
   const stops = [
     ...(population.ok ? [{ id: "why-now", label: "Why now" }] : []),
     ...(insights.ok && steps.length ? [{ id: "findings", label: "What does the data show?" }] : []),
+    ...(rest.length ? [{ id: "all-findings", label: "Every finding this week" }] : []),
+    ...(ledger ? [{ id: "tests", label: "Every test run" }] : []),
     { id: "limits", label: "What can't this data tell you?" },
+    { id: "next-steps", label: "What's next" },
     { id: "depth", label: "Go further" },
   ];
 
@@ -62,7 +75,7 @@ export default async function FindingsPage() {
           <ErrorState error={plainError(insights.error)} />
         </>
       ) : top ? (
-        <Hero insight={top} meta={insights.value.meta} count={steps.length} />
+        <Hero insight={top} meta={insights.value.meta} count={steps.length + rest.length} />
       ) : (
         <>
           <PageHeader title={SITE_TITLE} />
@@ -81,8 +94,12 @@ export default async function FindingsPage() {
 
       {insights.ok && steps.length ? <Findings insights={steps} meta={insights.value.meta} /> : null}
 
+      {all.ok && rest.length ? <AllFindings insights={rest} meta={all.value.meta} hasTests={ledger} /> : null}
+      {tests.ok && ledger ? <TestLedger tests={tests.value.data} meta={tests.value.meta} hospitals={hospitals.ok ? hospitals.value.data : []} /> : null}
+
       <div className="mx-auto max-w-3xl pt-6"><FigureCadenceNote kind="findings" /></div>
       <Limits items={limits} />
+      <NextSteps items={next} />
       <DepthCards cards={cards} />
     </>
   );

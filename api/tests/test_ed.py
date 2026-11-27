@@ -100,7 +100,7 @@ def test_weekly_defaults_to_12_weeks(client):
     assert body["meta"]["coverage"]["weeks"] == 12 and len(body["data"]) == 20   # 10 weeks of data x 2 hospitals
 
 
-@pytest.mark.parametrize("weeks", [0, 105, "four"])
+@pytest.mark.parametrize("weeks", [0, 261, "four"])
 def test_weeks_out_of_range_are_refused(client, weeks):
     err = error(client, "/ed/weekly", weeks=weeks)
     assert err["code"] == "invalid_parameter" and err["field"] == "weeks"

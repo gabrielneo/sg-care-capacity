@@ -373,8 +373,14 @@ Each record has the full technical reasoning; follow the number.
 2. **Access by subzone (S2),** once URA publishes the Master Plan 2025 subzone boundaries.
 3. **Validate the personas.** This builds nothing and is the most valuable step: talk to one MOH and
    one AIC planner, with the three questions in the Personas section.
-4. **Look beyond the ED.** Data on other factors would strengthen the checks and the tests behind
-   the findings: bed occupancy, discharges, and admissions by age or urgency.
+4. **Approve the cluster mapping.** Six planning areas still need their polyclinic's operator
+   confirmed; once they are, the comparison of the three cluster regions (switched off today) can run.
+5. **Pair the NUHS readings with MOH's figures.** Feeding the 3-hourly NUHS readings into the weekly
+   build would give the test of NUHS's estimate against MOH's daily figure enough paired days. Today
+   it has none.
+6. **Look beyond the ED.** Data on other factors would strengthen the checks and the tests behind
+   the findings: bed occupancy, discharges, and ED visits by age or urgency. Visits by age and urgency
+   would answer the central right-siting question, which this data can't.
 
 ### What surprised, what was hard, what would change
 

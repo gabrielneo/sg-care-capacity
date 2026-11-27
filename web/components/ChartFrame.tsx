@@ -40,7 +40,7 @@ export interface ChartFrameProps {
   detail?: boolean;
   now?: Date;
   /** 3 inside a section that already has an h2. */
-  headingLevel?: 2 | 3;
+  headingLevel?: 2 | 3 | 4;
   /**
    * The meta of the SectionHeader above this chart. When the chart's own date and sources are the same, the section's line
    * covers it and the chart adds none. When they differ (or there is no section), the chart shows its own line.
@@ -74,7 +74,7 @@ export function ChartFrame({ title, slug, meta, children, summary, csv, table, d
   if (problems.length && process.env.NODE_ENV !== "production") {
     console.warn(`ChartFrame "${typeof title === "string" ? title : id}" is not drawn: ${problems.join(" and ")}.`);
   }
-  const Heading = headingLevel === 3 ? "h3" : "h2";
+  const Heading = (`h${headingLevel}`) as "h2" | "h3" | "h4";
   const covered = section != null && inheritsFrom(section, meta);
   const hasTable = table !== "self" && !(typeof table === "object" && table !== null && "href" in table);
   const allNotes = caveat ? [caveat, ...(notes ?? [])] : notes;

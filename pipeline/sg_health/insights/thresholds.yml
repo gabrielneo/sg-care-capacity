@@ -31,8 +31,10 @@ trend:
   autocorrelation_correction: yue_wang   # variance correction for lag-1 autocorrelation (decision 3)
 
 anomaly:
-  trailing_weeks: 8
-  threshold: 3.5              # |robust z| (median and MAD), Iglewicz and Hoaglin
+  trailing_weeks: 8           # the usual level shown: median of the 8 complete weeks before (as the site's badge)
+  range_weeks: 26             # the z-score's history: the previous 26 complete weeks, the badge's own (web/lib/status.ts)
+  min_range_weeks: 20
+  threshold: 3.5              # |robust z| (median and MAD), Iglewicz and Hoaglin; beyond the badge's 2.5, so a flagged week always has a badge
 
 weekday:
   weeks: 26
@@ -47,6 +49,7 @@ volume_vs_wait:
   lags: [0, 1, 2]             # visits on day t vs bed wait on day t + lag
   min_pairs: 60
   adjust_for_weekday: true    # remove each hospital's weekday median first (decision 4)
+  block_days: 14              # days per block in the bootstrap interval: keeps two weeks of day-to-day pattern together (a judgement)
   strength: {negligible: 0.1, weak: 0.3, moderate: 0.5}   # |rho| below each bound
 
 access_gap:

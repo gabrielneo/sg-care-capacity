@@ -22,6 +22,10 @@ export const RANGE_FETCH_WEEKS = RANGE_WEEKS + 1;
 export const SPARK_WEEKS = 12;
 /** The weekday pattern. */
 export const PROFILE_WEEKS = 26;
+/** Every week since the data starts (about four years today), for the long-run charts: the API's maximum. */
+export const HISTORY_WEEKS = 260;
+/** The insight engine's trend window (pipeline/sg_health/insights/thresholds.yml, trend.weeks). */
+export const TREND_WEEKS = 26;
 
 export type Window =
   /** The latest complete week, with its dates when they are known. */

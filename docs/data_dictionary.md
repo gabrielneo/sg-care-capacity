@@ -128,7 +128,7 @@ on every build. Clusters were checked on 2026-11-06 against NHG Health's corpora
 | `days_reported_wait`, `days_reported_attendances` | Days in the month with each metric | days | `count(...)` | Counted separately. |
 | `days_in_month` | Calendar days in the month | days | `last_day(month_start)` | |
 | `is_complete_month` | TRUE if both day counts equal `days_in_month` | boolean | | The newest month is usually FALSE: MOH's files end on a Saturday. |
-| `wait_yoy_pct`, `attendances_yoy_pct` | % change against the same calendar month a year earlier | % | `(this / last year - 1) × 100` | **NULL unless both months are complete** (never 0). Seasonal swings (May is the longest-wait month, August the shortest) make year-on-year the fairer comparison. |
+| `wait_yoy_pct`, `attendances_yoy_pct` | % change against the same calendar month a year earlier | % | `(this / last year - 1) × 100` | **NULL unless both months are complete** (never 0). Months differ through the year (averaged over 2023 to 2025, May had the longest wait and August the shortest, though the order changes from year to year), so year-on-year is the fairer comparison. |
 | `wait_mom_pct`, `attendances_mom_pct` | % change against the month before | % | as above | NULL unless both months are complete. Includes seasonal and calendar effects; not a trend. |
 | `source_sha256` | Every raw file contributing to the month, comma-separated, sorted | text | distinct hashes | |
 | `as_of` | Latest `as_of` of the month's days | timestamp (SGT) | `max(as_of)` | |
@@ -314,7 +314,7 @@ Two more properties come from the insight engine's own access-gap code
 | Property | Definition | Unit | Caveats |
 |---|---|---|---|
 | `excluded_reason` | Why the area is left out of the access-gap ranking: `no residents aged 65+`, or `fewer than 1,000 residents aged 65+` (`thresholds.yml`); null if it is ranked | text | A clinic or two moves a small area's ratio a lot, so these areas are drawn flat and grey on the 3D map. |
-| `cdmp_shortfall` | CDMP clinics the benchmark rate would give the area's residents aged 65+, minus the CDMP clinics it has. The benchmark rate is the CDMP clinics over the residents aged 65+ of the areas that are compared (those with at least 1,000 such residents; 1.18 per 1,000 in the 9 Nov release, against 1.27 with the city-centre areas that hold 76 of the 1,048 clinics) | clinics, 2 decimals | **Negative means more than the benchmark rate.** Null for excluded areas and missing counts. Clinics are counted where they are, not where patients go. |
+| `cdmp_shortfall` | CDMP clinics the average rate would give the area's residents aged 65+, minus the CDMP clinics it has. The average rate is the CDMP clinics over the residents aged 65+ of the areas that are compared (those with at least 1,000 such residents; 1.18 per 1,000 in the 9 Nov release, against 1.27 with the city-centre areas that hold 76 of the 1,048 clinics) | clinics, 2 decimals | **Negative means more than the average rate.** Null for excluded areas and missing counts. Clinics are counted where they are, not where patients go. |
 
 Caveat: rounding coordinates after simplification leaves 52 m² of gaps and 49 m² of overlap in total
 across all 55 areas (invisible at map scale; a test fails above 1,000 m²).
@@ -362,7 +362,7 @@ run, published or not, is in `insights.json` (`candidates`). Method per detector
 | `detail` | At most two sentences | text | `templates.yml` | Same checks. |
 | `metric_value` | The measured value (slope, week's value, peak-day mean, correlation, area ratio, median gap) | see `unit` | detector | Rounded to 4 decimals. |
 | `unit` | Unit of `metric_value` and `comparison_value` | text | detector | |
-| `comparison_value` | What `metric_value` is compared with (window median, usual level, weekly mean, benchmark rate) | see `unit` | detector | NULL where there is no comparison. |
+| `comparison_value` | What `metric_value` is compared with (window median, usual level, weekly mean, average rate) | see `unit` | detector | NULL where there is no comparison. |
 | `direction` | `better`, `worse` or `neutral`, for the metric's own sense (a longer wait is worse) | text | detector | |
 | `effect_size` | The detector's effect: Kendall's tau, robust z, epsilon-squared, Spearman rho, priority score, median gap | number | detector | Not comparable across detectors; `rank_score` is. |
 | `p_value` | The test's p-value, to 4 significant digits (never rounded to exactly 0) | probability | scipy | NULL for descriptive detectors (anomaly, access_gap, regional). |

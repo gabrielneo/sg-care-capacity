@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { docWords, extractList, extractSection, renderDoc, renderDocList, renderMarkdown } from "./docs";
+import { docWords, extractList, extractSection, renderDoc, renderDocList, renderDocListItems, renderMarkdown } from "./docs";
 
 const SAMPLE = `# Title
 
@@ -99,6 +99,16 @@ describe("extractList", () => {
     render(<ul>{doc.content}</ul>);
     expect(document.querySelectorAll("li")).toHaveLength(3);
     expect(document.body.textContent).toContain("how many could have been handled in primary care");
+  });
+
+  it("takes a numbered list too, and renders the case study's next steps in order", async () => {
+    expect(extractList("**Next**\n\n1. one\n   wraps\n2. two\n\nAfter.", "**Next**")).toBe("1. one\n   wraps\n2. two");
+    const items = await renderDocListItems("case_study.md", "**Next steps,**");
+    render(<ol>{items.map((c, i) => <li key={i}>{c}</li>)}</ol>);
+    const steps = [...document.querySelectorAll("li")].map((li) => li.textContent ?? "");
+    expect(steps.length).toBeGreaterThanOrEqual(6);
+    expect(steps[0]).toMatch(/^Travel-time access/);
+    expect(steps.some((t) => /^Pair the .*NUHS\) readings/.test(t))).toBe(true);   // abbreviations are spelled out on first use
   });
 
   it("counts a doc's words, or one section's", async () => {

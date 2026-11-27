@@ -1,8 +1,8 @@
 """Do months with more ED visits than a year before also have longer bed waits than a year before? Spearman on the change
 against the same month a year earlier, across the full emergency departments, tested with a circular-shift permutation.
 
-Why year on year: each month is set against the same month a year earlier, which removes the yearly pattern (May long, August
-short) that would otherwise make visits and waits look linked. Why not the usual p-value: neighbouring months' changes overlap
+Why year on year: each month is set against the same month a year earlier, which removes differences between months of the year
+(on average May long, August short) that would otherwise make visits and waits look linked. Why not the usual p-value: neighbouring months' changes overlap
 and drift together (see stats.circular_shift_spearman), so the test keeps each series' own serial pattern.
 """
 from __future__ import annotations
@@ -92,6 +92,7 @@ def detect(monthly: pd.DataFrame | None, cfg: dict[str, Any], min_completeness: 
                     reference=(0.0, "No change on a year before")),
         display={"value_text": f"{rho:.2f}", "unit_text": None, "change": None},
         period=(first, as_of), n_unit="months",
+        pairs=[(d.isoformat(), round(float(x), 4), round(float(y), 4)) for d, x, y in zip(w["month_start"], visits, wait, strict=True)],
         ci_null=0.0, ci_fn=partial(block_bootstrap_spearman_ci, visits, wait, block=int(cfg["block"]), resamples=int(boot["resamples"]),
                                     level=float(boot["level"]), seed=int(boot["seed"])),
     ))

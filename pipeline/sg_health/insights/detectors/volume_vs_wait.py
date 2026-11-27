@@ -1,4 +1,9 @@
-"""Do more ED visits come with longer bed waits? Spearman correlation per hospital at lags 0, 1, 2."""
+"""Do more ED visits come with longer bed waits? Spearman correlation per hospital at lags 0, 1, 2.
+
+Busy days come in runs and so do long waits, so the usual p-value (which assumes independent days) is too small. The p-value
+rotates one series against the other by every shift (stats.circular_shift_spearman), as monthly_yoy does, and the 95% range is a
+moving-block bootstrap of `block_days` days, so both keep each series' own day-to-day pattern.
+"""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -8,7 +13,7 @@ from typing import Any
 import pandas as pd
 
 from ..model import Candidate, DetectorResult, Skip, chart, point, thresholds
-from ..stats import spearman, spearman_ci, strength_label
+from ..stats import block_bootstrap_spearman_ci, circular_shift_spearman, strength_label
 from ..wording import hours
 from .common import (
     UNIT_CAVEAT,
@@ -78,7 +83,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             if pair["v"].nunique() < 2 or pair["w"].nunique() < 2:
                 out.skips.append(Skip("volume_vs_wait", f"{code} lag {lag}", "no day-to-day variation to compare"))
                 continue
-            rho, p = spearman(pair["v"].to_numpy(), pair["w"].to_numpy())
+            rho, p = circular_shift_spearman(pair["v"].to_numpy(), pair["w"].to_numpy())
             label = strength_label(rho, cfg["strength"])
             variant = "positive" if rho >= 0 else "negative"
             adjusted = bool(cfg.get("adjust_for_weekday", True))
@@ -86,10 +91,12 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
             after = AFTER_PHRASE[int(lag)]
             out.candidates.append(Candidate(
                 n_unit="days", ci_null=0.0,
-                ci_fn=partial(spearman_ci, pair["v"].to_numpy(), pair["w"].to_numpy(), **thresholds()["engine"]["bootstrap"]),
+                ci_fn=partial(block_bootstrap_spearman_ci, pair["v"].to_numpy(), pair["w"].to_numpy(), block=int(cfg["block_days"]),
+                              **thresholds()["engine"]["bootstrap"]),
                 type="volume_vs_wait", entity=code, variant=variant,
                 method=f"Spearman correlation, visits on day t vs bed wait on day t+{lag}"
-                       + (", after removing each weekday's median" if cfg.get("adjust_for_weekday", True) else ""),
+                       + (", after removing each weekday's median" if cfg.get("adjust_for_weekday", True) else "")
+                       + "; p-value from rotating one series against the other (allows for runs of similar days)",
                 n=len(pair), effect_size=rho, effect_norm=abs(rho), metric_value=rho, unit="Spearman correlation",
                 comparison_value=None, direction="neutral", p_value=p, passes_effect=label != "negligible",
                 completeness=min(completeness, 1.0), as_of=last, source="moh_bed_waits",
@@ -108,5 +115,7 @@ def detect(daily: pd.DataFrame, weekly: pd.DataFrame, hospitals: pd.DataFrame, c
                             reference=(0.0, "Usual for that weekday") if adjusted else None),
                 display={"value_text": f"{rho:.2f}", "unit_text": None, "change": None},
                 period=(first, last),
+                pairs=[(d.date().isoformat(), round(float(x), 4), round(float(y), 4)) for d, x, y in
+                       zip(pair.index, pair["v"], pair["w"], strict=True)],
             ))
     return out

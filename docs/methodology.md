@@ -174,7 +174,10 @@ series' own history, not a significance test.
 visits for each calendar month. A month's wait is the average of its daily medians (not a monthly median), and a month counts
 only when every day of both measures is in; a partial month is a gap, never a figure. Each month is also set against the same
 month a year earlier, and against the month before, but only when both months are complete. A missing change is shown as missing,
-never 0%. Bed waits run longest in May and shortest in August, so the same month a year earlier is the fair comparison.
+never 0%. Months differ through the year, so the same month a year earlier is the fair comparison. Averaged over the full years
+2023 to 2025, May had the longest average bed wait and August the shortest, but the order changes from year to year (the longest
+month was May, May and February; the shortest November, September and August), so this is a description, not a tested seasonal
+pattern. The year-by-year chart states each full year's longest and shortest month from the data.
 
 - **The average across hospitals** uses the 7 full EDs that MOH reported throughout. Alexandra Hospital (an urgent care centre) and
   Woodlands Hospital (reported from 23 Jun 2024) are left out, so the line does not step when a site joins. Every hospital counts
@@ -209,6 +212,22 @@ match the insight engine's, so a chart and its finding agree ([insights_method.m
   applies (a documented shortcut). The table gives each hospital's usual week-to-week swing in hours, so "about usual" is not read
   as "steady": the same % change can be ordinary at one hospital and rare at another. The chart of the latest week against usual
   uses the same words as the badge.
+- **Unusual weeks since the data starts** (added 27 Nov 2026). ED Trends marks every past complete week of every hospital with the
+  badge's own rule, computed by the same code, so the timeline and the badge can't disagree. Its first line counts how often the
+  rule fired. On the release of 25 Nov 2026, over the full EDs' 1,371 hospital-weeks with 26 weeks of history, that is 5% higher
+  (1.2% much higher) and 1% lower: the simulation above gave 1.5% much higher, over a slightly different set of weeks. The live
+  count is the one to quote.
+- **Every week, per hospital** (added 27 Nov 2026). Each hospital's page draws every complete week since MOH's data starts, with
+  the 26 weeks the trend test looks at shaded and its result written beside it, from the engine: the estimated change per week, its
+  95% range, and whether it was published or why not. Nothing is fitted on the page.
+- **How the days spread** (added 27 Nov 2026). ED Trends draws each hospital's daily medians over the weekday chart's window as a
+  box plot: the middle half of days, the 10th to 90th percentile (linear interpolation, as the all-hospital band), the middle day,
+  the average the weekly figures use, and the longest day. A few long days pull the average above the middle day, which is why a
+  weekly figure can sit above a typical day. It describes the days; it tests nothing.
+- **The tested pairs** (added 27 Nov 2026). Where a visits-and-waits link is published, the hospital's page plots the days it was
+  tested on, and the month-by-month page the months of the year-on-year test: the engine's own pairs, after the same adjustment
+  the test made. No line is fitted, because the tests are rank correlations and a straight line would claim a shape they didn't
+  test.
 - **Weekday pattern:** each weekday's average of daily medians, as a % above or below the hospital's
   own average. It uses the complete weeks among the 26 up to the latest complete week. A hospital
   with fewer than 4 complete weeks there is not shown.
@@ -224,8 +243,10 @@ correcting for every test in the run. *Robust* means it was tested and its 95% r
 difference. *Association only* means a correlation that passed its test but says nothing about why.
 Only tested findings mention chance. Each finding also states its *n*: how many days, weeks or
 residents it rests on. Where the method allows, it gives a 95% range. A trend uses the Theil-Sen
-interval. The weekday peak, the visits-and-waits correlation and the NUHS gap use a bootstrap.
-It resamples the data 2,000 times, with a fixed seed, so every run gives the same range. Details are in
+interval. The weekday peak and the NUHS gap use a bootstrap: it resamples the data 2,000 times,
+with a fixed seed, so every run gives the same range. The two correlations resample runs of days
+(or months) together, because similar days come in runs. Their p-values allow for that too. The Findings
+page charts every test run, with its range, including the ones that found nothing. Details are in
 [how findings are tested](insights_method.md).
 
 ## Clinic access: what is measured

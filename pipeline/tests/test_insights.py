@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sg_health.insights import actions, engine, stats, wording
-from sg_health.insights.detectors import access_gap, anomaly, usual_gap, weekday
+from sg_health.insights.detectors import access_gap, anomaly, usual_gap, volume_vs_wait, weekday
 from sg_health.insights.model import thresholds
 
 LATEST = date(2026, 10, 19)             # a Monday: the latest complete ISO week
@@ -117,15 +117,31 @@ def test_autocorrelation_correction_widens_the_p_value():
 # anomaly
 # --------------------------------------------------------------------------- #
 
+EIGHT = [4.0, 4.2, 3.9, 4.1, 4.0, 4.3, 3.8, 4.1]
+EARLIER = [4.1, 3.9, 4.2, 4.0, 3.8, 4.3, 4.1, 3.9, 4.0, 4.2, 4.1, 3.9, 4.0, 4.2, 3.8, 4.1, 4.0, 4.1]   # 18 weeks: 26 before the latest
+
+
 def test_a_planted_spike_is_an_anomaly():
-    vals = [4.0, 4.2, 3.9, 4.1, 4.0, 4.3, 3.8, 4.1, 9.0]
-    out = anomaly.detect(weekly({"SGH": vals}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0)
+    out = anomaly.detect(weekly({"SGH": EARLIER + EIGHT + [9.0]}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0)
     [c] = out.candidates
     assert c.passes_effect and c.direction == "worse" and c.effect_size > 3.5
 
 
+def test_anomaly_uses_the_badges_26_weeks_not_the_8_before():
+    """A week far above a calm 8 weeks, but ordinary for a hospital whose earlier weeks swung that far, is not flagged."""
+    volatile = [round(2 + 7 * k / 17, 1) for k in range(18)]      # 2 to 9 hours: against the 8 calm weeks alone, z would be about 20
+    [c] = anomaly.detect(weekly({"SGH": volatile + EIGHT + [7.0]}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0).candidates
+    assert not c.passes_effect and c.effect_size == pytest.approx(1.77, abs=0.01)
+    assert c.comparison_value == pytest.approx(4.05)              # the usual level shown is still the 8 weeks before, as on the badge
+
+
+def test_anomaly_needs_20_of_the_26_weeks_before():
+    out = anomaly.detect(weekly({"SGH": EARLIER[:10] + EIGHT + [9.0]}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0)
+    assert out.candidates == [] and "18 of the 26 complete weeks before; needs 20" in out.skips[0].reason
+
+
 def test_no_variation_before_is_skipped():
-    out = anomaly.detect(weekly({"SGH": [4.0] * 8 + [6.0]}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0)
+    out = anomaly.detect(weekly({"SGH": [4.0] * 26 + [6.0]}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0)
     assert out.candidates == [] and "MAD is 0" in out.skips[0].reason
 
 
@@ -170,6 +186,19 @@ def test_the_engine_applies_one_correction_across_detectors():
     tested = [c for c in result.candidates if c.p_value is not None]
     assert {c.type for c in tested} >= {"trend", "weekday", "volume_vs_wait"} and result.tests == len(tested)
     assert all(c.p_adjusted is not None and c.p_adjusted >= c.p_value for c in tested)
+
+
+def test_every_test_is_listed_with_its_range_published_or_not():
+    """insights.json lists every candidate with what the site's chart of tests needs, including the ones that found nothing."""
+    d = daily(lambda rng, c, i, wd: (4 + (2.0 if wd == 0 else 0) + rng.normal(0, 0.4), 400 + rng.normal(0, 20)), seed=4)
+    out = engine.to_json(engine.run(inputs(weekly_from(d), d), NO_FAILS, TODAY))
+    tests = [c for c in out["candidates"] if c["p_value"] is not None]
+    assert any(c["outcome"] != "published" for c in tests)                     # a test that found nothing is still there
+    for c in tests:
+        assert {"n_unit", "when", "metric_value", "unit", "ci_low", "ci_high", "ci_null"} <= set(c)
+        if c["type"] in ("trend", "volume_vs_wait"):
+            assert c["ci_low"] is not None and c["ci_low"] <= c["metric_value"] <= c["ci_high"], c
+    assert {c["when"] for c in tests if c["type"] == "volume_vs_wait"} == {"on the same day", "the day after", "two days after"}
 
 
 # --------------------------------------------------------------------------- #
@@ -498,8 +527,8 @@ def test_the_weekday_chart_is_the_tested_weekday_means():
 
 
 def test_the_anomaly_chart_shows_the_week_against_the_usual_level():
-    vals = [4.0, 4.2, 3.9, 4.1, 4.0, 4.3, 3.8, 4.1, 9.0]
-    [c] = anomaly.detect(weekly({"SGH": vals}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0).candidates
+    vals = EIGHT + [9.0]
+    [c] = anomaly.detect(weekly({"SGH": EARLIER + vals}), hospitals("SGH"), thresholds()["anomaly"], MIN_C, 7.0).candidates
     assert [p["value"] for p in c.chart["points"]] == vals and c.chart["highlight"] == [LATEST.isoformat()]
     assert c.chart["points"][-1]["label"] == "19 Oct" and c.chart["reference"] == {"value": 4.05, "label": "Usual level"}
     assert c.display == {"value_text": "9.0", "unit_text": "hours", "change": "up"}
@@ -533,7 +562,7 @@ def test_the_volume_chart_groups_days_into_fifths():
 def test_the_access_gap_chart_compares_the_area_with_singapore():
     out = access_gap.detect(areas_frame(), thresholds()["access_gap"], MIN_C)
     first = out.candidates[0]
-    assert [p["label"] for p in first.chart["points"]] == ["Big Low", "Benchmark rate"]
+    assert [p["label"] for p in first.chart["points"]] == ["Big Low", "Average rate"]
     assert first.chart["points"][1]["value"] == pytest.approx(1000 * 53 / 48000, abs=1e-4)
     assert first.display["change"] == "down"
 
@@ -983,3 +1012,29 @@ def test_with_26_weeks_of_history_a_noisy_hospital_is_not_flagged_and_a_steady_o
     wild = [3.0 + 5.0 * (i % 2) for i in range(n - 1)] + [8.4]
     c = usual_gap.detect(frame(wild), hosp, cfg, MIN_C, full).candidates[0]
     assert c.values["pct"] and not c.passes_effect
+
+
+def test_two_unrelated_drifting_series_are_not_a_volume_vs_wait_link():
+    """Visits and waits that each drift slowly, independently, line up by accident; the usual p-value calls that significant,
+    the rotation test (which keeps each series' own runs) does not."""
+    rng = np.random.default_rng(7)
+    n = 26 * 7
+    walk_v, walk_w = np.cumsum(rng.normal(0, 1, n)), np.cumsum(rng.normal(0, 1, n))
+    d = daily(lambda _rng, _code, i, _wd: (4 + 0.1 * walk_w[i], 300 + 5 * walk_v[i]))
+    cfg = {**thresholds()["volume_vs_wait"], "lags": [0]}
+    [c] = volume_vs_wait.detect(d, weekly_from(d), hospitals("SGH"), cfg, MIN_C).candidates
+    from scipy.stats import spearmanr
+    assert spearmanr(d["attendances"], d["median_wait_hours"]).pvalue < 0.01      # the old test: a "link"
+    assert c.p_value > 0.05 and "rotating" in c.method
+
+
+def test_a_published_correlation_carries_the_pairs_it_was_tested_on():
+    """The site's scatter plot draws the engine's own pairs (after the weekday pattern is removed), never a re-computation."""
+    from scipy.stats import spearmanr
+    d = daily(lambda rng, c, i, wd: (4 + 0.004 * (v := 400 + rng.normal(0, 40)) + rng.normal(0, 0.1), v), seed=3)
+    out = engine.to_json(engine.run(inputs(weekly_from(d), d), NO_FAILS, TODAY))
+    vw = [c for c in out["candidates"] if c["type"] == "volume_vs_wait"]
+    [pub] = [c for c in vw if c["outcome"] == "published"]
+    assert len(pub["pairs"]) == pub["n"] and all(len(p) == 3 for p in pub["pairs"])
+    assert spearmanr([p[1] for p in pub["pairs"]], [p[2] for p in pub["pairs"]]).statistic == pytest.approx(pub["metric_value"], abs=1e-3)
+    assert all(c["pairs"] is None for c in vw if c["outcome"] != "published")

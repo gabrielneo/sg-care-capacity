@@ -91,7 +91,7 @@ test.describe("CSV downloads", () => {
   });
 
   test("every chart on ED Trends and the Access Map offers its figures, and the links work", async ({ page, request }) => {
-    for (const [path, count] of [["/ed-trends", 4], ["/access-map", 3]] as const) {
+    for (const [path, count] of [["/ed-trends", 6], ["/access-map", 3]] as const) {   // ED Trends: + the unusual-weeks timeline and the spread of days
       await page.goto(path);
       const links = page.getByTestId("csv-download");
       await expect(links).toHaveCount(count);   // the Access Map shows its map or its table, not both
@@ -106,7 +106,7 @@ test.describe("CSV downloads", () => {
   test("every chart's CSV starts with # rows for its title, date, source, window and definitions, then the table", async ({ page, request }) => {
     await page.goto("/ed-trends");
     const hrefs = await page.getByTestId("csv-download").evaluateAll((els) => els.map((e) => e.getAttribute("href")!));
-    expect(hrefs).toHaveLength(4);
+    expect(hrefs).toHaveLength(6);
     for (const href of hrefs) {
       const res = await request.get(href);
       expect(res.status(), href).toBe(200);
@@ -133,7 +133,7 @@ test.describe("CSV downloads", () => {
   test("every chart's Excel file is a workbook of the same table, with its context on an About sheet", async ({ page, request }) => {
     await page.goto("/ed-trends");
     const hrefs = await page.getByTestId("xlsx-download").evaluateAll((els) => els.map((e) => e.getAttribute("href")!));
-    expect(hrefs).toHaveLength(4);
+    expect(hrefs).toHaveLength(6);
     for (const href of hrefs) {
       const res = await request.get(href);
       expect(res.status(), href).toBe(200);

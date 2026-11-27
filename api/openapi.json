@@ -124,7 +124,7 @@
                 "type": "null"
               }
             ],
-            "description": "CDMP clinics the benchmark rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded",
+            "description": "CDMP clinics the average rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded",
             "title": "Cdmp Shortfall"
           },
           "chas_clinics": {
@@ -2286,6 +2286,237 @@
         "title": "InsightEvidence",
         "type": "object"
       },
+      "InsightTest": {
+        "description": "One result the insight engine weighed this run, published or not (insights.json `candidates`).",
+        "properties": {
+          "ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "95% range of metric_value, high end",
+            "title": "Ci High"
+          },
+          "ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "95% range of metric_value, low end; null where the method gives none",
+            "title": "Ci Low"
+          },
+          "ci_null": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The metric_value that means no difference (0 slope, the weekly average)",
+            "title": "Ci Null"
+          },
+          "dq_tables": {
+            "description": "The tables this result is computed from: the warnings in meta.dq_warnings with these tables apply to it",
+            "items": {
+              "type": "string"
+            },
+            "title": "Dq Tables",
+            "type": "array"
+          },
+          "effect_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The detector's effect: Kendall's tau, epsilon-squared, Spearman's rho, robust z ...",
+            "title": "Effect Size"
+          },
+          "entity": {
+            "description": "Hospital code, planning area, or 'All hospitals'",
+            "title": "Entity",
+            "type": "string"
+          },
+          "metric_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The finding's number (a slope, a peak, a correlation). Null in older releases",
+            "title": "Metric Value"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "n_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What n counts. Null in releases from before it was written",
+            "title": "N Unit"
+          },
+          "outcome": {
+            "description": "'published', or why not (effect too small, not significant after correction ...)",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "p_adjusted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Benjamini-Hochberg across every test in the run",
+            "title": "P Adjusted"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null where nothing was tested",
+            "title": "P Value"
+          },
+          "pairs": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A published correlation only: the pairs it was tested on, as [date, x, y]. Visits vs waits: the day's ED visits and the bed wait `when`, each after removing the weekday's median. Year on year: the % change in visits and in bed wait. Null otherwise, and in older releases",
+            "title": "Pairs"
+          },
+          "source_ids": {
+            "description": "The sources this result is computed from (keys of meta.sources)",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Ids",
+            "type": "array"
+          },
+          "type": {
+            "enum": [
+              "trend",
+              "anomaly",
+              "usual_gap",
+              "weekday",
+              "volume_vs_wait",
+              "monthly_yoy",
+              "access_gap",
+              "regional",
+              "source_gap"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "metric_value's unit. Null in older releases",
+            "title": "Unit"
+          },
+          "variant": {
+            "title": "Variant",
+            "type": "string"
+          },
+          "when": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Visits vs waits only: which day's wait ('the day after')",
+            "title": "When"
+          }
+        },
+        "required": [
+          "type",
+          "entity",
+          "variant",
+          "n",
+          "effect_size",
+          "p_value",
+          "p_adjusted",
+          "outcome"
+        ],
+        "title": "InsightTest",
+        "type": "object"
+      },
+      "InsightTestsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InsightTest"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "InsightTestsResponse",
+        "type": "object"
+      },
       "InsightTrendLine": {
         "properties": {
           "first": {
@@ -3173,7 +3404,7 @@
                 "type": "null"
               }
             ],
-            "description": "CDMP clinics the benchmark rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded",
+            "description": "CDMP clinics the average rate would give its residents aged 65+, minus those it has; negative = more. Null if excluded",
             "title": "Cdmp Shortfall"
           },
           "chas_clinics": {
@@ -3892,14 +4123,14 @@
             }
           },
           {
-            "description": "How many of the latest ISO weeks (1-104)",
+            "description": "How many of the latest ISO weeks (1-260)",
             "in": "query",
             "name": "weeks",
             "required": false,
             "schema": {
               "default": 12,
-              "description": "How many of the latest ISO weeks (1-104)",
-              "maximum": 104,
+              "description": "How many of the latest ISO weeks (1-260)",
+              "maximum": 260,
               "minimum": 1,
               "title": "Weeks",
               "type": "integer"
@@ -4205,6 +4436,78 @@
           }
         },
         "summary": "Findings that passed their statistical gates",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/tests": {
+      "get": {
+        "operationId": "insight_tests_api_v1_insights_tests_get",
+        "parameters": [
+          {
+            "description": "Only this detector",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "trend",
+                    "anomaly",
+                    "usual_gap",
+                    "weekday",
+                    "volume_vs_wait",
+                    "monthly_yoy",
+                    "access_gap",
+                    "regional",
+                    "source_gap"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this detector",
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightTestsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid parameter"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Every result the insight engine weighed, published or not, with why",
         "tags": [
           "insights"
         ]

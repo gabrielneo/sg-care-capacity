@@ -29,6 +29,7 @@ export type SnapshotInfo = Schemas["SnapshotInfo"];
 export type Insight = Schemas["Insight"];
 export type InsightDisplay = Schemas["InsightDisplay"];
 export type InsightChart = Schemas["InsightChart"];
+export type InsightTest = Schemas["InsightTest"];
 export type PopulationYear = Schemas["PopulationYear"];
 
 /** Query parameters of a GET endpoint, e.g. Query<"/api/v1/ed/daily">. */

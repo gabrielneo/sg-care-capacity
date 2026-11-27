@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { changePhrase, fromHospital, fromSystem, latestComplete, monthLede, monthsText, type Point, timeSeries, yearLines, yearsSoFar, yoyContext, yoyWord } from "./monthly";
+import { changePhrase, fromHospital, fromSystem, latestComplete, monthLede, monthsText, type Point, timeSeries, yearLines, yearsSoFar, seasonSentence, yoyContext, yoyWord } from "./monthly";
 
 const pt = (year: number, month: number, wait: number | null, visits: number | null, o: Partial<Point> = {}): Point =>
   ({ year, month, complete: true, wait, visits, waitYoy: null, visitsYoy: null, waitMom: null, visitsMom: null, note: null, ...o });
@@ -111,5 +111,28 @@ describe("yoyWord", () => {
     expect(yoyWord(-6.46)).toBe("shorter");
     expect(yoyWord(19.1)).toBe("longer");
     expect(yoyWord(0.4)).toBe("about the same");
+  });
+});
+
+describe("seasonSentence", () => {
+  // The full EDs' monthly averages in the data release of 25 Nov 2026 (2026 is partial, so it is left out).
+  const REAL: Record<number, number[]> = {
+    2023: [5.82, 10.84, 10.62, 10.63, 11.3, 6.05, 6.64, 6.39, 6.59, 6.61, 5.67, 8.21],
+    2024: [7.39, 5.04, 5.58, 6.11, 7.98, 6.31, 6.39, 4.05, 3.87, 4.28, 4.56, 5.31],
+    2025: [5.15, 6.84, 4.13, 4.82, 5.67, 4.88, 4.09, 3.89, 4.79, 5.73, 5.26, 5.06],
+    2026: [5.81, 3.68, 4.08, 3.8, 4.48, 5.6, 5.46, 4.4, 5.7, 5.36],
+  };
+  const points = Object.entries(REAL).flatMap(([y, vs]) => vs.map((wait, i) => ({
+    year: Number(y), month: i + 1, complete: true, wait, visits: null, waitYoy: null, visitsYoy: null, waitMom: null, visitsMom: null, note: null })));
+
+  it("names each full year's longest and shortest month, and says the order changes, not that there is a pattern", () => {
+    expect(seasonSentence(points)).toBe(
+      "In each full year (2023, 2024 and 2025), the longest average bed wait was in May, May and February, and the shortest in November, " +
+      "September and August. Averaged over those three years, May is the longest and August the shortest, but the order changes from " +
+      "year to year, so this is a description, not a tested seasonal pattern.");
+  });
+
+  it("says nothing with fewer than two full years", () => {
+    expect(seasonSentence(points.filter((p) => p.year >= 2025))).toBeNull();
   });
 });

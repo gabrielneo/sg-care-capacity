@@ -38,8 +38,12 @@ const compact = (v: number) => (Math.abs(v) >= 10_000 ? `${Math.round(v / 1000)}
  * Lines on one axis, drawn on the server. The y axis starts at 0, so a line's height is its value and a fall is not exaggerated.
  * A null value breaks the line; a lone point is a dot. x labels are given in full and thinned to `every`.
  */
-export function LineChart({ labels, series, unit, summary, every = 1, testId = "line-chart", titles, format = compact }: {
+export function LineChart({ labels, series, unit, summary, every = 1, testId = "line-chart", titles, format = compact, shade, hover = true }: {
   labels: string[]; series: LineSeries[]; unit: string; summary: string; every?: number; testId?: string;
+  /** A shaded stretch of the x axis (first and last index, inclusive), labelled at its top: e.g. the weeks a test covered. */
+  shade?: { from: number; to: number; label: string } | null;
+  /** A tooltip per x label. Off for a long series (hundreds of weeks), where it would outweigh the chart; its table has the figures. */
+  hover?: boolean;
   /** Each x label in full, for the hover tooltip ("October 2026"); defaults to the labels. */
   titles?: string[];
   /** A value as the tooltip says it ("2.9 hours"). */
@@ -72,15 +76,22 @@ export function LineChart({ labels, series, unit, summary, every = 1, testId = "
     <div>
       <p className="text-meta text-muted">{unit}</p>
       <div className="relative">
-      <HoverBands bands={bands} plotTop={TOP} plotBottom={H - BOTTOM} testId={`${testId}-hover`} />
+      {hover ? <HoverBands bands={bands} plotTop={TOP} plotBottom={H - BOTTOM} testId={`${testId}-hover`} /> : null}
       <svg width="100%" height={H} role="img" aria-label={summary} data-testid={testId}>
+        {shade ? (
+          <g data-testid={`${testId}-shade`}>
+            <rect x={`${xPct(shade.from)}%`} width={`${Math.max(0.3, xPct(shade.to) - xPct(shade.from))}%`} y={TOP} height={H - TOP - BOTTOM}
+                  fill={colors["accent-soft"]} opacity={0.6} />
+            <text x={`${xPct(shade.to)}%`} y={TOP + 12} textAnchor="end" dx={-4} fontSize="13" fill={colors.muted}>{shade.label}</text>
+          </g>
+        ) : null}
         {ticks.map((t) => (
           <g key={t}>
             <line x1={`${XL}%`} x2={`${XR}%`} y1={y(t)} y2={y(t)} stroke={colors.line} strokeWidth={t === 0 ? 1.5 : 1} />
             <text x={`${XL}%`} dx={-6} y={y(t) + 4} textAnchor="end" fontSize="13" fill={colors.muted}>{compact(t)}</text>
           </g>
         ))}
-        {labels.map((l, i) => (i % every === 0 ? (
+        {labels.map((l, i) => (i % every === 0 && l ? (
           <text key={l + i} x={`${xPct(i)}%`} y={H - 8} textAnchor="middle" fontSize="13" fill={colors.muted}>{l}</text>
         ) : null))}
         {series.map((s, k) => (

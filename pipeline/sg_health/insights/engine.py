@@ -200,6 +200,10 @@ def run(inputs: dict[str, pd.DataFrame], failed: pd.DataFrame, today: date,
     tested = [c for c in candidates if c.p_value is not None]
     for c, padj in zip(tested, benjamini_hochberg([c.p_value for c in tested])):     # type: ignore[misc]
         c.p_adjusted = padj
+    # Every test gets its 95% range, published or not: the site charts each test, including the ones that found nothing.
+    for c in tested:
+        if c.ci is None and c.ci_fn is not None:
+            c.ci = c.ci_fn()
 
     alpha = float(eng["alpha"])
     passing: list[Candidate] = []
@@ -393,9 +397,14 @@ def to_json(result: InsightRun) -> dict[str, Any]:
         "excluded_areas": result.extra.get("excluded_areas", []),
         "national_cdmp_per_1k_seniors": result.extra.get("national_cdmp_per_1k_seniors"),
         "skipped": [{"type": s.type, "entity": s.entity, "reason": s.reason} for s in result.skips],
-        "candidates": [{"type": c.type, "entity": c.entity, "variant": c.variant, "n": c.n,
-                        "effect_size": _round(c.effect_size), "p_value": _round_p(c.p_value),
-                        "p_adjusted": _round_p(c.p_adjusted), "outcome": c.reason or "published"}
+        "candidates": [{"type": c.type, "entity": c.entity, "variant": c.variant, "n": c.n, "n_unit": c.n_unit,
+                        "when": c.values.get("after_phrase"),       # visits vs waits: which lag ("the day after")
+                        "effect_size": _round(c.effect_size), "metric_value": _round(c.metric_value), "unit": c.unit,
+                        "ci_low": _round(c.ci[0]) if c.ci else None, "ci_high": _round(c.ci[1]) if c.ci else None,
+                        "ci_null": c.ci_null, "p_value": _round_p(c.p_value),
+                        "p_adjusted": _round_p(c.p_adjusted), "outcome": c.reason or "published",
+                        # The pairs a published correlation was tested on, for the site's scatter plot (only those: they're long).
+                        "pairs": [list(p) for p in c.pairs] if c.pairs and (c.reason or "published") == "published" else None}
                        for c in sorted(result.candidates, key=lambda c: (c.type, c.entity, c.variant))],
     }
 

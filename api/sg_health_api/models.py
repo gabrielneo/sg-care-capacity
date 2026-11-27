@@ -322,7 +322,7 @@ class AreaProperties(BaseModel):
     as_of_basis: str | None
     excluded_reason: str | None = Field(None, description="Why the area is left out of the access-gap ranking "
                                                           "(too few residents aged 65+); null if it is ranked")
-    cdmp_shortfall: float | None = Field(None, description="CDMP clinics the benchmark rate would give its residents "
+    cdmp_shortfall: float | None = Field(None, description="CDMP clinics the average rate would give its residents "
                                                            "aged 65+, minus those it has; negative = more. Null if excluded")
 
 
@@ -525,6 +525,37 @@ class Insight(BaseModel):
 
 class InsightsResponse(BaseModel):
     data: list[Insight]
+    meta: Meta
+
+
+class InsightTest(BaseModel):
+    """One result the insight engine weighed this run, published or not (insights.json `candidates`)."""
+    type: Literal["trend", "anomaly", "usual_gap", "weekday", "volume_vs_wait", "monthly_yoy", "access_gap", "regional", "source_gap"]
+    entity: str = Field(description="Hospital code, planning area, or 'All hospitals'")
+    source_ids: list[str] = Field(default_factory=list, description="The sources this result is computed from (keys of meta.sources)")
+    dq_tables: list[str] = Field(default_factory=list, description=(
+        "The tables this result is computed from: the warnings in meta.dq_warnings with these tables apply to it"))
+    variant: str
+    n: int
+    n_unit: str | None = Field(None, description="What n counts. Null in releases from before it was written")
+    when: str | None = Field(None, description="Visits vs waits only: which day's wait ('the day after')")
+    effect_size: float | None = Field(description="The detector's effect: Kendall's tau, epsilon-squared, Spearman's rho, robust z ...")
+    metric_value: float | None = Field(None, description="The finding's number (a slope, a peak, a correlation). Null in older releases")
+    unit: str | None = Field(None, description="metric_value's unit. Null in older releases")
+    ci_low: float | None = Field(None, description="95% range of metric_value, low end; null where the method gives none")
+    ci_high: float | None = Field(None, description="95% range of metric_value, high end")
+    ci_null: float | None = Field(None, description="The metric_value that means no difference (0 slope, the weekly average)")
+    p_value: float | None = Field(description="Null where nothing was tested")
+    p_adjusted: float | None = Field(description="Benjamini-Hochberg across every test in the run")
+    outcome: str = Field(description="'published', or why not (effect too small, not significant after correction ...)")
+    pairs: list[list[str | float]] | None = Field(None, description=(
+        "A published correlation only: the pairs it was tested on, as [date, x, y]. Visits vs waits: the day's ED visits and the "
+        "bed wait `when`, each after removing the weekday's median. Year on year: the % change in visits and in bed wait. "
+        "Null otherwise, and in older releases"))
+
+
+class InsightTestsResponse(BaseModel):
+    data: list[InsightTest]
     meta: Meta
 
 

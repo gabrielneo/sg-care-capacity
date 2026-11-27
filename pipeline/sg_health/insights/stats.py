@@ -167,7 +167,7 @@ def circular_shift_spearman(x: np.ndarray, y: np.ndarray) -> tuple[float, float]
 
 def block_bootstrap_spearman_ci(x: np.ndarray, y: np.ndarray, *, block: int = 6, resamples: int = 2000, level: float = 0.95,
                                 seed: int = 20261114) -> tuple[float, float] | None:
-    """Percentile interval of Spearman's rho from a moving-block bootstrap: runs of `block` consecutive months are drawn with
+    """Percentile interval of Spearman's rho from a moving-block bootstrap: runs of `block` consecutive values (months or days) are drawn with
     replacement (keeping the serial pattern inside each run) until the series is as long as the original. None if it can't be computed."""
     x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
     n = len(x)

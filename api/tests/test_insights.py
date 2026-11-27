@@ -124,3 +124,28 @@ def test_each_insight_carries_its_evidence_level_n_unit_and_interval(client):
         assert r["evidence_level"] in ("observed", "tested", "robust", "association-only")
         if r["p_adjusted"] is None:
             assert r["evidence_level"] == "observed" and "chance" not in r["detail"]
+
+
+def test_every_test_the_engine_ran_is_listed_with_its_outcome(client):
+    body = client.get(f"{API}/tests").json()
+    rows = body["data"]
+    assert [(r["type"], r["entity"], r["outcome"][:20]) for r in rows][:3] == [
+        ("volume_vs_wait", "SGH", "published"), ("volume_vs_wait", "CGH", "not significant afte"), ("trend", "SGH", "effect below the det")]
+    sgh = rows[0]
+    assert (sgh["when"], sgh["ci_low"], sgh["ci_high"], sgh["ci_null"], sgh["p_adjusted"]) == ("the day after", 0.16, 0.44, 0.0, 0.0165)
+    assert body["meta"]["coverage"] == {"results": 5, "tests_in_correction": 3, "alpha": 0.05}
+    assert body["meta"]["as_of"] and body["meta"]["sources"]
+    assert sgh["pairs"][0] == ["2026-10-01", -20.0, -0.4] and rows[1]["pairs"] is None
+    assert sgh["source_ids"] == ["moh_bed_waits", "moh_ed_attendances"] and sgh["dq_tables"] == ["moh_bed_waits", "moh_ed_attendances"]
+
+
+def test_tests_filter_by_type_and_older_rows_serve_nulls(client):
+    [row] = client.get(f"{API}/tests", params={"type": "access_gap"}).json()["data"]
+    assert row["entity"] == "BEDOK" and row["metric_value"] is None and row["ci_low"] is None and row["n_unit"] is None
+
+
+def test_a_release_without_insights_json_serves_an_empty_list_of_tests(tmp_path):
+    snap = build(tmp_path / "old", tests=False)
+    with TestClient(create_app(Settings(local_snapshot_path=snap))) as c:
+        body = c.get(f"{API}/tests").json()
+    assert body["data"] == [] and any("no list of the engine's tests" in n for n in body["meta"]["caveats"])

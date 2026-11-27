@@ -27,7 +27,8 @@ test.describe("Findings: one band per finding", () => {
     await page.goto("/findings");
     const hero = page.getByTestId("hero");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Findings from the latest data release");
-    await expect(hero.getByTestId("hero-summary")).toHaveText(/^Three findings on emergency department bed waits/);
+    // Every published finding is on the page now (the headlines, then the rest), so the count is all of them.
+    await expect(hero.getByTestId("hero-summary")).toHaveText(/^5 findings on emergency department bed waits/);
     await expect(hero.getByTestId("provenance-line")).toHaveText(AS_OF);
     await expect(hero.getByTestId("finding-window")).toHaveText(/^ · This finding uses data to \d{1,2} [A-Z][a-z]{2} \d{4}$/);
     // The level depends on today's date against the fixture's; the date itself is the line's, stated once.
@@ -110,6 +111,21 @@ test.describe("Findings: one band per finding", () => {
     await expect(second.getByTestId("delta-change")).toContainText("▲ higher than usual");
     await expect(second.getByTestId("delta-change")).toHaveClass(/text-status-higher/);
     await expect(page.getByTestId("finding-band").first().getByTestId("delta-change")).toHaveClass(/text-ink/);
+  });
+
+  test("every other finding is grouped below the story, every test is charted with the ones that found nothing, and the next steps close", async ({ page }) => {
+    await page.goto("/findings");
+    const all = page.getByTestId("all-findings");
+    await expect(all.getByTestId("finding-row")).toHaveCount(2);                  // the fixture's 5, less the 3 headlines
+    const row = all.getByTestId("finding-row").first();
+    await row.locator("> details > summary").click();
+    await expect(row.getByTestId("chart-frame")).toBeVisible();
+    const ledger = page.getByTestId("test-ledger");
+    await expect(ledger.getByTestId("ledger-tally")).toHaveText(/^3 statistical tests this week: 1 passed and 2 did not\./);
+    await expect(ledger.locator('[data-testid="ledger-row"][data-outcome="not_significant"]')).toHaveCount(1);
+    await expect(ledger.getByRole("link", { name: /CSV/ }).first()).toHaveAttribute("href", /\/export\/tests\.csv/);
+    await expect(page.getByTestId("next-step").first()).toContainText("Travel-time access");
+    await expectNoHorizontalScroll(page);
   });
 
   test("a finding's warnings are only those on the data it uses (audit L-7)", async ({ page }) => {
