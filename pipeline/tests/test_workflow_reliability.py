@@ -94,3 +94,13 @@ def test_flaky_e2e_tests_are_not_retried():
     from sg_health import config
     text = (config.REPO_ROOT / "web" / "playwright.config.ts").read_text()
     assert re.search(r"^\s*retries: 0,", text, re.M)
+
+
+# ------------------------------------------------------ reliability (R14) #
+
+def test_every_action_is_pinned_to_a_commit_with_its_version_noted():
+    # A tag (v4) can be moved to other code; these jobs hold contents: write and the raw-store token.
+    for wf in sorted(WF.glob("*.yml")):
+        for line in wf.read_text().splitlines():
+            if "uses:" in line and not line.strip().startswith("#"):
+                assert re.search(r"uses: [\w.-]+/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$", line), f"{wf.name}: {line.strip()}"
