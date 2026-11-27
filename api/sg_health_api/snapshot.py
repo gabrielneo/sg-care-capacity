@@ -176,12 +176,31 @@ def _api_headers(settings: Settings) -> dict[str, str]:
     return headers
 
 
+def _get_retrying(client: httpx.Client, url: str, **kw: Any) -> httpx.Response:
+    """GET, retried (DOWNLOAD_ROUNDS, RETRY_DELAY apart) on a network error or a 5xx; a 4xx is returned at once."""
+    for round_ in range(DOWNLOAD_ROUNDS):
+        if round_:
+            time.sleep(RETRY_DELAY)
+        last = round_ == DOWNLOAD_ROUNDS - 1
+        try:
+            r = client.get(url, **kw)
+        except httpx.TransportError as exc:
+            if last:
+                raise
+            LOG.warning("GET %s failed, retrying: %s", url, exc)
+            continue
+        if r.status_code < 500 or last:
+            return r
+        LOG.warning("GET %s answered %s, retrying", url, r.status_code)
+    raise AssertionError("unreachable")                        # the last round always returns or raises
+
+
 def resolve_release(settings: Settings, client: httpx.Client) -> dict[str, Any]:
     """The release to serve: the pinned tag, or the newest non-pre-release data-YYYY-MM-DD."""
     base = f"{GITHUB_API}/repos/{settings.snapshot_repo}/releases"
     try:
         if settings.data_snapshot != "latest":
-            r = client.get(f"{base}/tags/{settings.data_snapshot}", headers=_api_headers(settings))
+            r = _get_retrying(client, f"{base}/tags/{settings.data_snapshot}", headers=_api_headers(settings))
             if r.status_code == 404:
                 raise SnapshotError(f"release {settings.data_snapshot} not found in {settings.snapshot_repo}")
             r.raise_for_status()
@@ -189,7 +208,7 @@ def resolve_release(settings: Settings, client: httpx.Client) -> dict[str, Any]:
             if release.get("prerelease"):
                 LOG.warning("serving %s, which is marked pre-release (withdrawn?)", settings.data_snapshot)
             return release
-        r = client.get(base, params={"per_page": 100}, headers=_api_headers(settings))
+        r = _get_retrying(client, base, params={"per_page": 100}, headers=_api_headers(settings))
         r.raise_for_status()
     except httpx.HTTPError as exc:
         raise SnapshotError(f"cannot list releases of {settings.snapshot_repo}: {exc}") from exc

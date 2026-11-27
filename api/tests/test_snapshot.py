@@ -231,3 +231,41 @@ def test_cache_with_a_stale_file_is_repaired(snapshot_dir, tmp_path):
     shutil.copy(snapshot_dir / "manifest.json", tmp_path / "cache" / "data-2026-11-01" / "dim_hospital.parquet")
     load_from(fake, tmp_path).close()
     assert fake.downloads()[-1] == "dim_hospital.parquet"
+
+
+class FlakyListing(FakeGitHub):
+    """The release listing answers 502 the first `fail` times (api.github.com blips happen at restart time too)."""
+
+    def __init__(self, *args, fail: int, status: int = 502, **kw):
+        super().__init__(*args, **kw)
+        self.fail, self.status = fail, status
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        if str(request.url).startswith("https://api.github.com/repos/gabrielneo/sg-care-capacity/releases") \
+                and not str(request.url).startswith(ASSETS) and self.fail:
+            self.fail -= 1
+            self.calls.append(request)
+            return httpx.Response(self.status)
+        return super().__call__(request)
+
+
+def test_a_blip_listing_releases_is_retried_not_fatal(snapshot_dir, tmp_path, no_retry_wait):
+    # R7: one 502 from api.github.com while Render restarted the API used to stop it from starting.
+    snap = load_from(FlakyListing(snapshot_dir, RELEASES, fail=1), tmp_path)
+    assert snap.release_tag == "data-2026-11-01"
+    snap.close()
+    pinned = load_from(FlakyListing(snapshot_dir, RELEASES, fail=1), tmp_path, data_snapshot="data-2026-10-25")
+    assert pinned.release_tag == "data-2026-10-25"
+    pinned.close()
+
+
+def test_a_listing_that_keeps_failing_still_refuses_to_start(snapshot_dir, tmp_path, no_retry_wait):
+    with pytest.raises(SnapshotError, match="cannot list releases"):
+        load_from(FlakyListing(snapshot_dir, RELEASES, fail=99), tmp_path)
+
+
+def test_a_client_error_listing_releases_is_not_retried(snapshot_dir, tmp_path, no_retry_wait):
+    fake = FlakyListing(snapshot_dir, RELEASES, fail=99, status=401)
+    with pytest.raises(SnapshotError, match="cannot list releases"):
+        load_from(fake, tmp_path)
+    assert len(fake.calls) == 1
