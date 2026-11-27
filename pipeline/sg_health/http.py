@@ -28,12 +28,21 @@ class CappedRetry(Retry):
         return None if after is None else min(after, MAX_RETRY_AFTER)
 
 
+def _disallow_all(why: str, host: str) -> robotparser.RobotFileParser:
+    """RFC 9309 (2.3.1.4): a robots.txt that can't be read because of a server or network error means "disallow
+    everything" for now. The source is then skipped this run and reported as failed (sg-health run exits 3)."""
+    LOG.warning("robots.txt of %s unreadable (%s): not fetching from it this run", host, why)
+    rp = robotparser.RobotFileParser()
+    rp.parse(["User-agent: *", "Disallow: /"])
+    return rp
+
+
 class PoliteHttp:
     """requests.Session wrapper with retries, rate limiting, timeouts and robots.txt.
 
     - Retries 429/5xx with exponential backoff and honours Retry-After (capped at MAX_RETRY_AFTER).
     - Sleeps a random 1.5-3 s between requests (configurable per call).
-    - Checks robots.txt for HTML pages. Official APIs skip the check.
+    - Checks robots.txt (an unreadable one, 5xx or network error, means disallow). Official APIs skip it.
     - Never raises on network errors. It logs them and returns None, so a
       single failing source never kills the whole pipeline.
     """
@@ -73,14 +82,16 @@ class PoliteHttp:
         parts = urlparse(url)
         host = f"{parts.scheme}://{parts.netloc}"
         if host not in self._robots:
-            parsed: robotparser.RobotFileParser | None = None   # None: no robots.txt, everything allowed
+            parsed: robotparser.RobotFileParser | None = None   # None: no robots.txt (4xx), everything allowed
             try:
                 r = self.session.get(f"{host}/robots.txt", timeout=self.timeout)
                 if r.status_code == 200:
                     parsed = robotparser.RobotFileParser()
                     parsed.parse(r.text.splitlines())
-            except requests.RequestException:
-                parsed = None
+                elif r.status_code >= 500:
+                    parsed = _disallow_all(f"HTTP {r.status_code}", host)
+            except requests.RequestException as exc:
+                parsed = _disallow_all(str(exc), host)
             self._robots[host] = parsed
         rp = self._robots[host]
         ok = True if rp is None else rp.can_fetch(str(self.session.headers["User-Agent"]), url)
