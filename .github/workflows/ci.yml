@@ -11,9 +11,15 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch or pull request makes the older run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   repo-guards:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: No binary databases or data exports committed (releases replace them)
@@ -26,6 +32,7 @@ jobs:
 
   pipeline:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: pipeline
@@ -49,6 +56,7 @@ jobs:
 
   api:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: api
@@ -87,6 +95,7 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: web
@@ -118,6 +127,7 @@ jobs:
     # The real API on its fixture snapshot, the production build of the site, Chromium at 1280 and
     # 375 px: every page, its loading/empty/error states, "Data as of" on every chart, axe WCAG AA.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: web
@@ -159,6 +169,7 @@ jobs:
     # about 1.5 s; 20 Nov 2026). Budgets in web/lighthouserc.json: LCP <= 2.5 s (target 2.0 s, a warning),
     # CLS <= 0.01, JavaScript <= 200 kB transferred.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: web

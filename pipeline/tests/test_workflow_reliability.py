@@ -1,4 +1,6 @@
 """Reliability fixes to the workflows (docs/runbook.md): failure modes found in the Nov 2026 QA/SRE pass."""
+import re
+
 from test_workflow import WF, condition, steps  # noqa: F401
 
 # ------------------------------------------------------- reliability (R1) #
@@ -75,3 +77,20 @@ def test_keep_awake_opens_one_api_down_issue_when_the_api_does_not_answer():
     assert "issues: write" in text and "contents: write" not in text
     issue = steps("keep-api-awake.yml")["Open an api-down issue if it didn't answer"]
     assert "failure()" in condition(issue) and "--label api-down --state open" in issue and "gh issue comment" not in issue
+
+
+# ------------------------------------------------------ reliability (R11) #
+
+def test_every_job_has_a_timeout_and_ci_cancels_superseded_runs():
+    import yaml
+    for wf in sorted(WF.glob("*.yml")):
+        for name, job in yaml.safe_load(wf.read_text())["jobs"].items():
+            assert job.get("timeout-minutes"), f"{wf.name}: job {name} has no timeout (default: 6 hours)"
+    ci = yaml.safe_load((WF / "ci.yml").read_text())
+    assert ci["concurrency"]["cancel-in-progress"] is True and "github.ref" in ci["concurrency"]["group"]
+
+
+def test_flaky_e2e_tests_are_not_retried():
+    from sg_health import config
+    text = (config.REPO_ROOT / "web" / "playwright.config.ts").read_text()
+    assert re.search(r"^\s*retries: 0,", text, re.M)

@@ -13,7 +13,7 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: 0, // a flaky test is fixed, not retried: a retry hides the race until it bites in production
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: { baseURL: `http://127.0.0.1:${WEB_PORT}`, trace: "retain-on-failure" },
   projects: [
