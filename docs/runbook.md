@@ -68,7 +68,8 @@ server only, so the API allows no browser origins. See [Deploying](#deploying).
    **Restart the API**: the workflow calls Render's deploy hook, then waits (up to 20 minutes) until
    `/api/v1/health` reports the new `snapshot_id`. If it never does, the job fails; the API keeps
    serving the previous release. Without the `RENDER_DEPLOY_HOOK_URL` secret this is skipped with a
-   notice. The website picks up the new figures within an hour (its cache, `API_REVALIDATE_SECONDS`).
+   notice. The website switches to the new figures within a minute of the API doing so: its cached API
+   responses are keyed by the served `snapshot_id`, so a page never mixes two releases.
 9. **Report it**: if any step failed, or a source landed nothing, one issue labelled **`pipeline-failure`**
    lists every step's outcome and the failed sources (a new comment if one is already open). Close it once a
    run is clean.
@@ -129,9 +130,11 @@ never editing data.
    running). Then run **Actions → Restart API** with *expect* = `data-2026-11-01` and *restart*
    unticked, to check it. Or by hand: `curl https://<api>/api/v1/meta` shows `snapshot_id` and
    `release_tag`.
-3. **Clear the website's cached figures,** or it shows the withdrawn release for up to an hour: in
-   Vercel, **Project → Settings → Data Cache → Purge** (the menu may move; it is the "Data Cache"
-   setting). The footer's status line then names the release you rolled back to.
+3. **The website follows within a minute.** Every API request the site makes is keyed by the
+   `snapshot_id` the API serves (read from `/api/v1/health`, rechecked every 60 s), so cached figures from
+   the withdrawn release stop being used as soon as the API serves the other one; no page mixes the two.
+   Check the footer's status line names the release you rolled back to. (Purging Vercel's Data Cache,
+   **Project → Settings → Data Cache → Purge**, is no longer needed; it is harmless if you do.)
 4. **Mark the bad snapshot, don't delete it.** Keep it for the record and flag it:
    ```bash
    gh release edit data-2026-11-08 --prerelease \

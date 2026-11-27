@@ -7,6 +7,10 @@
  *
  * Caching matches the API: it sends `Cache-Control: max-age=3600`, so by default Next revalidates
  * each response after an hour. API_REVALIDATE_SECONDS changes that (see revalidateSeconds).
+ *
+ * One release per page: every request carries the snapshot_id the API serves (from /health, rechecked every
+ * SNAPSHOT_CHECK_SECONDS), which is part of Next's cache key. Cached responses therefore never mix two releases,
+ * and a new release or a rollback starts a fresh set within a minute (no Data Cache purge needed).
  */
 import "server-only";
 
@@ -16,6 +20,8 @@ import type { paths } from "./schema";
 import type { Query } from "./types";
 
 export const REVALIDATE_SECONDS = 3600;
+export const SNAPSHOT_CHECK_SECONDS = 60;
+export const SNAPSHOT_HEADER = "x-data-snapshot";
 const REVALIDATE_MIN = 60;
 const REVALIDATE_MAX = 86_400;
 
@@ -51,12 +57,30 @@ export function apiBaseUrl(): string {
   return url.replace(/\/+$/, "");
 }
 
+/** The release the API serves now, or null if /health doesn't answer (then requests go out unkeyed, as before). */
+async function servedSnapshot(baseUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${baseUrl}/api/v1/health`, { next: { revalidate: SNAPSHOT_CHECK_SECONDS } });
+    if (!res.ok) return null;
+    const id = ((await res.json()) as { data?: { snapshot_id?: unknown } }).data?.snapshot_id;
+    return typeof id === "string" ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 function client() {
   const baseUrl = apiBaseUrl();
   return createClient<paths>({
     baseUrl,
     // Next reads caching options from fetch's second argument; openapi-fetch passes a Request.
-    fetch: (request: Request) => fetch(request, { next: { revalidate: revalidateSeconds() } }),
+    fetch: async (request: Request) => {
+      if (!new URL(request.url).pathname.endsWith("/api/v1/health")) {
+        const snapshot = await servedSnapshot(baseUrl);
+        if (snapshot) request.headers.set(SNAPSHOT_HEADER, snapshot);
+      }
+      return fetch(request, { next: { revalidate: revalidateSeconds() } });
+    },
   });
 }
 

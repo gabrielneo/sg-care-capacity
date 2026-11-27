@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { edMeta } from "@/test/fixtures/meta";
 
-import { api, ApiError, REVALIDATE_SECONDS, revalidateSeconds, settle } from "./client";
+import { api, ApiError, REVALIDATE_SECONDS, revalidateSeconds, settle, SNAPSHOT_CHECK_SECONDS, SNAPSHOT_HEADER } from "./client";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -23,27 +23,27 @@ afterEach(() => {
 
 describe("api client", () => {
   it("returns {data, meta} and calls the configured base URL with the query string", async () => {
-    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    fetchMock.mockImplementation(async () => json({ data: [], meta: edMeta }));
     const body = await api.edDaily({ hospital: "SGH", from: "2026-10-01" });
     expect(body.meta.as_of).toBe("2026-10-31");
-    const [request] = fetchMock.mock.calls[0] as [Request, RequestInit];
+    const [request] = fetchMock.mock.calls.at(-1) as [Request, RequestInit];
     expect(request.url).toBe("http://api.test/api/v1/ed/daily?hospital=SGH&from=2026-10-01");
     expect(request.method).toBe("GET");
   });
 
   it("revalidates as often as the API's max-age", async () => {
-    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    fetchMock.mockImplementation(async () => json({ data: [], meta: edMeta }));
     await api.edSummary();
-    const [, init] = fetchMock.mock.calls[0] as [Request, RequestInit & { next?: { revalidate?: number } }];
+    const [, init] = fetchMock.mock.calls.at(-1) as [Request, RequestInit & { next?: { revalidate?: number } }];
     expect(init.next?.revalidate).toBe(REVALIDATE_SECONDS);
     expect(REVALIDATE_SECONDS).toBe(3600);
   });
 
   it("revalidates after API_REVALIDATE_SECONDS when it is set", async () => {
     vi.stubEnv("API_REVALIDATE_SECONDS", "900");
-    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    fetchMock.mockImplementation(async () => json({ data: [], meta: edMeta }));
     await api.edSummary();
-    const [, init] = fetchMock.mock.calls[0] as [Request, RequestInit & { next?: { revalidate?: number } }];
+    const [, init] = fetchMock.mock.calls.at(-1) as [Request, RequestInit & { next?: { revalidate?: number } }];
     expect(init.next?.revalidate).toBe(900);
   });
 
@@ -55,7 +55,7 @@ describe("api client", () => {
   });
 
   it("turns the API's error envelope into an ApiError with its code and field", async () => {
-    fetchMock.mockResolvedValue(json({ data: null, meta: edMeta, error: {
+    fetchMock.mockImplementation(async () => json({ data: null, meta: edMeta, error: {
       code: "unknown_hospital", message: "unknown hospital 'XYZ'", field: "hospital" } }, 400));
     const err = await api.edDaily({ hospital: "XYZ" }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ApiError);
@@ -75,20 +75,48 @@ describe("api client", () => {
   });
 });
 
+describe("one data release per page (R3)", () => {
+  // Each cached response used to expire an hour after its own fetch, so after a new release a page could mix figures from
+  // two releases. The served snapshot_id (from /health, rechecked every minute) is part of every request, so every cached
+  // entry belongs to one release, and a new release (or a rollback) starts a fresh set.
+  const health = (id: string) => json({ data: { status: "ok", snapshot_id: id }, meta: edMeta });
+  const urlOf = (call: unknown[]) => (call[0] instanceof Request ? call[0].url : String(call[0]));
+
+  it("asks /health which release is served, briefly cached, and keys the data request by it", async () => {
+    fetchMock.mockImplementation(async (input: unknown) =>
+      urlOf([input]).endsWith("/api/v1/health") ? health("data-2026-11-29") : json({ data: [], meta: edMeta }));
+    await api.edSummary();
+    const healthCall = fetchMock.mock.calls.find((c) => urlOf(c).endsWith("/api/v1/health"))!;
+    expect((healthCall[1] as { next?: { revalidate?: number } }).next?.revalidate).toBe(SNAPSHOT_CHECK_SECONDS);
+    expect(SNAPSHOT_CHECK_SECONDS).toBe(60);
+    const dataCall = fetchMock.mock.calls.find((c) => urlOf(c).endsWith("/api/v1/ed/summary"))!;
+    expect((dataCall[0] as Request).headers.get(SNAPSHOT_HEADER)).toBe("data-2026-11-29");
+  });
+
+  it("still calls the API when /health fails (the cache then works as before)", async () => {
+    fetchMock.mockImplementation(async (input: unknown) =>
+      urlOf([input]).endsWith("/api/v1/health") ? json({ error: { code: "x" } }, 503) : json({ data: [], meta: edMeta }));
+    const body = await api.edSummary();
+    expect(body.meta.as_of).toBe("2026-10-31");
+    const dataCall = fetchMock.mock.calls.find((c) => urlOf(c).endsWith("/api/v1/ed/summary"))!;
+    expect((dataCall[0] as Request).headers.get(SNAPSHOT_HEADER)).toBeNull();
+  });
+});
+
 describe("insights", () => {
   it("passes its filters as the query string", async () => {
-    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    fetchMock.mockImplementation(async () => json({ data: [], meta: edMeta }));
     await api.insights({ type: "weekday", headline: true, top: 3 });
-    const [request] = fetchMock.mock.calls[0] as [Request, RequestInit];
+    const [request] = fetchMock.mock.calls.at(-1) as [Request, RequestInit];
     expect(request.url).toBe("http://api.test/api/v1/insights?type=weekday&headline=true&top=3");
   });
 });
 
 describe("population", () => {
   it("calls /population with no parameters", async () => {
-    fetchMock.mockResolvedValue(json({ data: [], meta: edMeta }));
+    fetchMock.mockImplementation(async () => json({ data: [], meta: edMeta }));
     await api.population();
-    const [request] = fetchMock.mock.calls[0] as [Request, RequestInit];
+    const [request] = fetchMock.mock.calls.at(-1) as [Request, RequestInit];
     expect(request.url).toBe("http://api.test/api/v1/population");
   });
 });
