@@ -18,5 +18,7 @@ export async function GET(): Promise<Response> {
   ]);
   if (!clinics.ok || !hospitals.ok) return Response.json({ error: "unavailable" }, { status: 502, headers: { "Cache-Control": "no-store" } });
   const places = buildPlaces(clinics.value.items, polyclinics.ok ? polyclinics.value.data : [], hospitals.value.data);
-  return Response.json(places, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
+  // Without the polyclinics the list is still useful, but it must not be kept at the edge for a day.
+  const cache = polyclinics.ok ? "public, s-maxage=3600, stale-while-revalidate=86400" : "no-store";
+  return Response.json(places, { headers: { "Cache-Control": cache } });
 }

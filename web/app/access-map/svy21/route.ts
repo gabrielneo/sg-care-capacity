@@ -10,7 +10,7 @@ export async function GET() {
   if (!result.ok) {
     const missing = result.error.status === 404;
     return Response.json({ error: { code: result.error.code, message: plainError(result.error).message } },
-                         { status: missing ? 404 : 502 });
+                         { status: missing ? 404 : 502, headers: { "Cache-Control": "no-store" } });
   }
   return Response.json(result.value, { headers: { "Cache-Control": "public, max-age=3600" } });
 }
