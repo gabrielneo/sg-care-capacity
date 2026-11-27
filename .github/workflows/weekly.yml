@@ -85,6 +85,8 @@ jobs:
       - name: Ingest
         id: ingest
         continue-on-error: true
+        # Well inside the job's 45 minutes, so a stalled source fails this step and raw history is still archived.
+        timeout-minutes: 25
         env:
           IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}               # optional; Wayback copies as evidence
           IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}

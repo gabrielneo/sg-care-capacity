@@ -45,3 +45,13 @@ def test_drafts_never_count_as_releases():
     assert "--exclude-drafts" in steps("restart-api.yml")["Work out which data release to expect"]
     stale = (WF / "stale-release.yml").read_text()
     assert "select(.isDraft | not)" in stale and "select(.isPrerelease | not)" in stale and "isDraft,isPrerelease" in stale
+
+
+# ------------------------------------------------------- reliability (R6) #
+
+def test_a_stalled_ingest_times_out_before_the_job_so_raw_history_is_still_archived():
+    text = (WF / "weekly.yml").read_text()
+    job = int(text.split("timeout-minutes: ", 1)[1].split()[0])
+    ingest = steps("weekly.yml")["Ingest"]
+    assert "continue-on-error: true" in ingest
+    assert int(ingest.split("timeout-minutes: ", 1)[1].split()[0]) <= job - 15

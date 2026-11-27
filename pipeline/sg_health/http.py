@@ -16,11 +16,22 @@ from .config import POLITE_DELAY, REQUEST_TIMEOUT, USER_AGENT
 
 LOG = logging.getLogger(__name__)
 
+MAX_RETRY_AFTER = 60     # seconds: a server asking for longer is treated as down for this run, not waited on
+
+
+class CappedRetry(Retry):
+    """Retry that honours Retry-After up to MAX_RETRY_AFTER. urllib3 would otherwise sleep for whatever a server
+    asks (a 429 with Retry-After: 86400 stalls the weekly job until GitHub kills it, before raw history is archived)."""
+
+    def get_retry_after(self, response):
+        after = super().get_retry_after(response)
+        return None if after is None else min(after, MAX_RETRY_AFTER)
+
 
 class PoliteHttp:
     """requests.Session wrapper with retries, rate limiting, timeouts and robots.txt.
 
-    - Retries 429/5xx with exponential backoff and honours Retry-After.
+    - Retries 429/5xx with exponential backoff and honours Retry-After (capped at MAX_RETRY_AFTER).
     - Sleeps a random 1.5-3 s between requests (configurable per call).
     - Checks robots.txt for HTML pages. Official APIs skip the check.
     - Never raises on network errors. It logs them and returns None, so a
@@ -36,7 +47,7 @@ class PoliteHttp:
             "User-Agent": user_agent,
             "Accept-Language": "en-SG,en;q=0.9",
         })
-        retry = Retry(
+        retry = CappedRetry(
             total=4, connect=3, read=3, status=4,
             backoff_factor=2,                       # 2s, 4s, 8s, 16s
             status_forcelist=(429, 500, 502, 503, 504),
