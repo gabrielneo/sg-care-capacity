@@ -122,6 +122,9 @@ def main(argv: list[str] | None = None) -> int:
     pub.add_argument("--out", default=str(DEFAULT_DB.parent / "publish"), help="output directory (default: %(default)s)")
     pr = sub.add_parser("snapshots-to-prune", help="read release tags on stdin, print snapshot tags beyond the newest N")
     pr.add_argument("--keep", type=int, default=12)
+    od = sub.add_parser("overdue", help="print the weekly sources overdue in a release manifest; exit 1 if any")
+    od.add_argument("--manifest", required=True, help="a release's manifest.json")
+    od.add_argument("--today", type=date.fromisoformat, default=None, help="default: today in SGT")
     sub.add_parser("transform", help="build staging views and mart tables from the clean tables")
     ins = sub.add_parser("insights", help="validate, then compute insights from the marts (marts.fct_insight)")
     ins.add_argument("--out", default=str(DEFAULT_DB.parent / "insights.json"), help="also write insights.json here")
@@ -134,6 +137,14 @@ def main(argv: list[str] | None = None) -> int:
         for tag in snapshots_to_prune([line.strip() for line in sys.stdin if line.strip()], keep=args.keep):
             print(tag)
         return 0
+    if args.command == "overdue":                       # pure function of the manifest: no warehouse needed
+        import json
+
+        from .freshness import overdue_sources
+        late = overdue_sources(json.loads(Path(args.manifest).read_text()), args.today or config.now_sgt().date())
+        for source, as_of in late:
+            print(f"{source} as_of {as_of} is overdue")
+        return 1 if late else 0
     logs.configure(verbose=args.verbose)
 
     try:

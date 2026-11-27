@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  issues: write                 # opens one api-down issue when the API doesn't answer
 
 concurrency:
   group: keep-api-awake
@@ -36,3 +37,16 @@ jobs:
           # instance can take a minute to answer.
           curl -fsS --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 \
             -o /dev/null -w "API answered %{http_code} in %{time_total}s\n" "${API_URL%/}/api/v1/health"
+
+      # The uptime alert: one issue while the API is down (no comment every 10 minutes). Close it once it answers.
+      - name: Open an api-down issue if it didn't answer
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          API_URL: ${{ vars.API_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -n "$(gh issue list -R "$GITHUB_REPOSITORY" --label api-down --state open --json number --jq '.[0].number // empty')" ]; then exit 0; fi
+          gh label create api-down -R "$GITHUB_REPOSITORY" --color B60205 --description "The API did not answer its health check" 2>/dev/null || true
+          gh issue create -R "$GITHUB_REPOSITORY" --label api-down --title "The API is not answering" \
+            --body "$API_URL/api/v1/health didn't answer within 3 tries ($(date -u +%FT%TZ)). Render -> sg-health-api -> Logs says why (often: it refused to start on a release that failed verification, or GitHub was unreachable). docs/runbook.md, \"When a scheduled run fails\". Close this once it answers."

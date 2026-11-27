@@ -55,3 +55,23 @@ def test_a_stalled_ingest_times_out_before_the_job_so_raw_history_is_still_archi
     ingest = steps("weekly.yml")["Ingest"]
     assert "continue-on-error: true" in ingest
     assert int(ingest.split("timeout-minutes: ", 1)[1].split()[0]) <= job - 15
+
+
+# ------------------------------------------------------ reliability (R10) #
+
+def test_a_daily_alert_checks_release_age_what_the_api_serves_and_overdue_as_of():
+    text = (WF / "stale-release.yml").read_text()
+    assert 'cron: "0 1 * * *"' in text and "issues: write" in text and "timeout-minutes:" in text
+    run = steps("stale-release.yml")["Check the newest release, what the API serves, and as_of"]
+    for label in ("stale-release", "api-stale", "data-overdue"):
+        assert f"alert {label} " in run
+    assert '--label "$1" --state open' in run and "gh issue comment" not in run      # one issue, no daily comments
+    assert "/api/v1/health" in run and '"$served" != "$tag"' in run
+    assert "sg-health overdue --manifest" in run and "exit $problems" in run
+
+
+def test_keep_awake_opens_one_api_down_issue_when_the_api_does_not_answer():
+    text = (WF / "keep-api-awake.yml").read_text()
+    assert "issues: write" in text and "contents: write" not in text
+    issue = steps("keep-api-awake.yml")["Open an api-down issue if it didn't answer"]
+    assert "failure()" in condition(issue) and "--label api-down --state open" in issue and "gh issue comment" not in issue

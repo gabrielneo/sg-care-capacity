@@ -13,6 +13,8 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
 | `ci.yml` | Every pull request and push to `main` | ruff, mypy, unit tests; guards against committed binaries or `.env` | Nothing (checks only) |
 | `restart-api.yml` | By hand: **Actions → Restart API → Run workflow** | Restarts the API (Render deploy hook) and checks which data release it serves; or only checks | Nothing |
 
+| `stale-release.yml` | Daily, 01:00 UTC (09:00 SGT) | The [alerts](#alerts): newest release older than 10 days, the API serving another release than the newest, a weekly source overdue | Issues |
+| `keep-api-awake.yml` | Every 10 minutes | Requests `/api/v1/health` so the free plan never sleeps; opens one `api-down` issue if it doesn't answer | An issue, when down |
 **Where the site runs:** the API on [Render](https://render.com) (`render.yaml`, free plan, Singapore
 region), the website on [Vercel](https://vercel.com) (`web/`). The website calls the API from its
 server only, so the API allows no browser origins. See [Deploying](#deploying).
@@ -283,6 +285,23 @@ landed nothing. Open the run, find the first red step, then:
 | **weekly: Ingest** | A source failed in a way that stopped the run (one source being down doesn't). Raw history was still archived | Read the `source_summary` log lines; see [When publishing is blocked](#when-publishing-is-blocked) for parser problems |
 | **weekly: Fail the job**, with `partial ingest: true` | A source landed nothing usable (the issue names it): down, blocked by robots.txt, an error page instead of the file, or a changed layout. The other sources were published; that source's figures are last week's | Open the source's URL from `fetch_log.json` or the log. A one-off outage fixes itself next week; a changed page or file needs a parser fix and a test, then a run by hand |
 | **weekly: Validate**, with a `data-quality` issue | Publishing is blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked). The site keeps the last release |
+## Alerts
+
+Each alert is one GitHub issue with a label; while it is open, the check stays quiet (no daily comments). Close
+it once the cause is fixed; the next check reopens it if it isn't.
+
+| Label | Opened by | Means | What to do |
+|---|---|---|---|
+| `pipeline-failure` | `weekly.yml` | A weekly step failed, or a source landed nothing (the issue lists each step and source) | [When a scheduled run fails](#when-a-scheduled-run-fails) |
+| `data-quality` | `weekly.yml` | Publishing blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked) |
+| `stale-release` | `stale-release.yml` (daily) | No new data release for more than 10 days | Look for the runs and issues above; a disabled schedule is the usual silent cause ([Housekeeping](#housekeeping)) |
+| `api-stale` | `stale-release.yml` (daily) | The API serves an older release than the newest one | `RENDER_DEPLOY_HOOK_URL` missing or wrong, or the API refused the new release (Render logs). **Actions → Restart API**. During a deliberate rollback, close it |
+| `data-overdue` | `stale-release.yml` (daily) | A weekly source (MOH, NUHS) in the newest release is past its overdue limit in `docs/datasets.yml` (`sg-health overdue --manifest manifest.json` shows which) | The source stopped publishing, or the pipeline stopped fetching it: check `pipeline-failure` and the Ingest log's `source_failed` lines |
+| `api-down` | `keep-api-awake.yml` (every 10 min) | `/api/v1/health` didn't answer in 3 tries | Render → **sg-health-api → Logs**. A refused release: [roll back](#rolling-back-to-an-earlier-snapshot) or fix and **Restart API** |
+
+Scheduled workflows stop after 60 days without a commit, alerts included: a quiet issue list is only proof of
+health while the schedules run ([Housekeeping](#housekeeping)).
+
 | **weekly: Transform / Publish** | A SQL or packaging error | Reproduce locally (`sg-health reparse && sg-health transform && sg-health publish`), fix, push, re-run |
 | **weekly: Check the API serves the new snapshot** | The release is published, but the API didn't switch to it within 20 minutes. It keeps serving the previous one | Render → **sg-health-api → Events / Logs**: the API logs why it refused to start (e.g. a file failed verification). Fix, then **Actions → Restart API**. If the new release itself is bad, [roll back](#rolling-back-to-an-earlier-snapshot) |
 | **weekly: Restart the API** | Render didn't accept the deploy hook (wrong or regenerated URL, or Render down) | Check the `RENDER_DEPLOY_HOOK_URL` secret; then **Actions → Restart API** |

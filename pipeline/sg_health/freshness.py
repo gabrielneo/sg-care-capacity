@@ -42,3 +42,20 @@ def level(source: str, as_of: date, today: date) -> str:
 def worst(levels: list[str]) -> str:
     """The least fresh of several levels: what a figure computed from them inherits."""
     return max(levels, key=LEVELS.index) if levels else "up_to_date"
+
+
+# Datasets this pipeline should refresh every week. One of them overdue in the newest release means the pipeline or
+# the source stopped (a publisher's own slow pace, e.g. CHAS on data.gov.sg, is not alarmed: the site already says it).
+WATCHED_CADENCES = frozenset({"weekly", "moment"})
+
+
+def overdue_sources(manifest: dict[str, Any], today: date) -> list[tuple[str, str]]:
+    """(source, as_of) for each weekly or live source in a release manifest whose as_of is overdue on `today`."""
+    out = []
+    for source, info in sorted(manifest.get("sources", {}).items()):
+        ds, as_of = datasets().get(source), (info or {}).get("as_of")
+        if not ds or ds.get("cadence") not in WATCHED_CADENCES or not as_of:
+            continue
+        if level(source, date.fromisoformat(str(as_of)[:10]), today) == "overdue":
+            out.append((source, str(as_of)))
+    return out

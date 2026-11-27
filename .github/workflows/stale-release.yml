@@ -1,12 +1,16 @@
-name: Stale release alert
+name: Freshness and uptime alert
 
-# Opens (or comments on) one issue when the newest data-YYYY-MM-DD release is more than 10 days old, so a
-# silent pipeline failure is noticed. weekly.yml normally publishes every Sunday; MOH's own files run about
-# two weeks behind, which is not a reason for an alert: only the date this repository last published counts.
+# Daily, so a silent failure is noticed within a day. Each problem opens one issue (never a new one while it is open,
+# and no daily comments):
+#   stale-release  the newest data-YYYY-MM-DD release is more than 10 days old (weekly.yml publishes every Sunday;
+#                  MOH's own files run about two weeks behind, which is not a reason: only our publishing date counts)
+#   api-stale      the API serves another release than the newest one (deploy hook missing or failed, or a rollback)
+#   data-overdue   a weekly source's as_of in the newest release is past its overdue limit in docs/datasets.yml
+# keep-api-awake.yml opens `api-down` when the API doesn't answer at all.
 
 on:
   schedule:
-    - cron: "0 1 * * 1"        # Mondays 01:00 UTC, the day after the weekly run
+    - cron: "0 1 * * *"        # daily 01:00 UTC = 09:00 SGT, after the Sunday run has published
   workflow_dispatch:
 
 permissions:
@@ -16,27 +20,71 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
       MAX_AGE_DAYS: "10"
+      API_URL: ${{ vars.API_PUBLIC_URL }}
     steps:
-      - name: Open an issue if the newest data release is too old
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/pyproject.toml
+
+      - name: Install the pipeline (for docs/datasets.yml's freshness rules)
+        run: pip install -e pipeline
+
+      - name: Check the newest release, what the API serves, and as_of
         run: |
           set -euo pipefail
+          alert() {   # label title body: open one issue unless one with this label is already open
+            if [ -n "$(gh issue list --label "$1" --state open --json number --jq '.[0].number // empty')" ]; then
+              echo "An open $1 issue already reports it."; return 0
+            fi
+            gh label create "$1" --description "$2" 2>/dev/null || true
+            gh issue create --title "$2" --label "$1" --body "$3"
+          }
+          problems=0
           # Drafts (a failed upload) and pre-releases (withdrawn) are not what the API serves, so they don't count.
-          latest=$(gh release list --limit 50 --json tagName,publishedAt,isDraft,isPrerelease \
-            --jq '[.[] | select(.isDraft | not) | select(.isPrerelease | not) | select(.tagName | test("^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$"))] | sort_by(.publishedAt) | last | .publishedAt // empty')
-          if [ -z "$latest" ]; then echo "::error::No data-YYYY-MM-DD release found."; exit 1; fi
+          newest=$(gh release list --limit 50 --json tagName,publishedAt,isDraft,isPrerelease \
+            --jq '[.[] | select(.isDraft | not) | select(.isPrerelease | not) | select(.tagName | test("^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$"))] | sort_by(.publishedAt) | last // empty')
+          if [ -z "$newest" ]; then echo "::error::No data-YYYY-MM-DD release found."; exit 1; fi
+          tag=$(jq -r .tagName <<<"$newest"); latest=$(jq -r .publishedAt <<<"$newest")
+
           age=$(( ( $(date -u +%s) - $(date -u -d "$latest" +%s) ) / 86400 ))
-          echo "Newest data release: $latest ($age days old; limit $MAX_AGE_DAYS)"
-          if [ "$age" -le "$MAX_AGE_DAYS" ]; then exit 0; fi
-          title="No new data release for more than $MAX_AGE_DAYS days"
-          body="The newest data release was published on ${latest%%T*} ($age days ago). Check the Weekly pipeline runs and docs/runbook.md."
-          existing=$(gh issue list --label stale-release --state open --json number --jq '.[0].number // empty')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body "$body"
-          else
-            gh label create stale-release --description "No recent data release" 2>/dev/null || true
-            gh issue create --title "$title" --label stale-release --body "$body"
+          echo "Newest data release: $tag, published $latest ($age days old; limit $MAX_AGE_DAYS)"
+          if [ "$age" -gt "$MAX_AGE_DAYS" ]; then
+            problems=1
+            alert stale-release "No new data release for more than $MAX_AGE_DAYS days" \
+              "The newest data release, $tag, was published on ${latest%%T*} ($age days ago). Check the Weekly pipeline runs, any open pipeline-failure or data-quality issue, and docs/runbook.md."
           fi
+
+          if [ -n "${API_URL:-}" ]; then
+            served=$(curl -fsS --retry 3 --retry-delay 10 --retry-all-errors --max-time 120 "${API_URL%/}/api/v1/health" \
+                       | jq -r '.data.snapshot_id // empty' || true)
+            echo "The API serves: ${served:-nothing}"
+            if [ -n "$served" ] && [ "$served" != "$tag" ]; then
+              problems=1
+              alert api-stale "The API serves $served, not the newest release $tag" \
+                "The API at $API_URL serves $served; the newest published release is $tag. Usually the restart after publishing didn't happen (RENDER_DEPLOY_HOOK_URL missing or wrong) or the API refused the new release (Render logs say why). Run Actions -> Restart API. If DATA_SNAPSHOT is pinned on purpose (a rollback), close this issue. docs/runbook.md, \"When a scheduled run fails\"."
+            fi                        # no answer at all is keep-api-awake.yml's api-down issue
+          else
+            echo "::warning::API_PUBLIC_URL is not set, so which release the API serves isn't checked."
+          fi
+
+          gh release download "$tag" --pattern manifest.json --dir "$RUNNER_TEMP" --clobber
+          if ! late=$(sg-health overdue --manifest "$RUNNER_TEMP/manifest.json"); then
+            problems=1
+            alert data-overdue "Weekly data overdue in $tag" \
+              "In release $tag these weekly sources are past their overdue limit (docs/datasets.yml); the site marks them Overdue:
+
+          $late
+
+          The source may have stopped publishing, or the pipeline stopped fetching it: check any open pipeline-failure issue and the Ingest log's source_failed lines."
+          fi
+          exit $problems

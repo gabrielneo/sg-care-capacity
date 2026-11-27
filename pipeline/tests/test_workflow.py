@@ -193,7 +193,7 @@ def test_weekly_installs_no_browser():
 
 def test_stale_release_alert_is_scheduled_and_opens_one_issue():
     text = (WF / "stale-release.yml").read_text()
-    assert 'cron: "0 1 * * 1"' in text and "issues: write" in text
+    assert 'cron: "0 1 * * *"' in text and "issues: write" in text                 # daily since R10
     assert 'MAX_AGE_DAYS: "10"' in text
-    # One open issue is updated, not a new one every week.
-    assert "gh issue list --label stale-release --state open" in text and "gh issue comment" in text
+    # One open issue, not a new one every day (test_workflow_reliability checks the rest).
+    assert "alert stale-release" in text and '--label "$1" --state open' in text
