@@ -1,7 +1,7 @@
 # Data quality
 
-Every number this project publishes passes through a set of automated checks first. This page
-lists each check: what it guards against, its threshold, and why that threshold was chosen.
+Every number this project publishes passes through a set of automated checks first. There are
+38 types of data check. This page lists each check: what it guards against, its threshold, and why that threshold was chosen.
 Thresholds were tested against the real data on 2026-11-06; the "On real data" notes give
 what each check found then.
 

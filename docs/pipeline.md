@@ -144,7 +144,8 @@ Parsed rows pass through a **load gate** before reaching a clean table. Rows tha
 check go to `quarantine_<table>` and never into the clean table; WARN rows are published and
 flagged. The gate never changes a value. `sg-health validate` adds the dataset-level checks
 (completeness, freshness, outliers, reconciliation), logs every check to `dq_results`, prints a
-summary table, and **exits 1 if publishing must be blocked**:
+summary table, and **exits 1 if publishing must be blocked**. Output from an early run (the number of
+checks run grows with the data; the latest is on the site's Data Quality page):
 
 ```
 STATUS              SEVERITY  CHECK                            TABLE               ROWS  DETAILS

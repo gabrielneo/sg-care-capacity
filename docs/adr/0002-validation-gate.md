@@ -45,7 +45,7 @@ The project's data principles say:
 
 ## Consequences
 
-- **What reaches the site has passed every blocking check.** In the current snapshot,
+- **What reaches the site has passed every blocking check.** In the first published snapshot,
   `data-2026-11-06`, 69 checks ran: 64 passed, 3 warned, 1 was skipped, 1 row-level error
   quarantined the misplaced clinic, and 0 blocked publishing.
 - **A quarantined row stays missing** until the source fixes it. The site shows that it's
