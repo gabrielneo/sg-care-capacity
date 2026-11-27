@@ -26,7 +26,10 @@ def fetch_datagov_dataset(http: PoliteHttp, dataset_id: str
     poll = f"{DATAGOV_BASE}/{dataset_id}/poll-download"
     for attempt in range(5):
         payload = http.get_json(poll, headers=headers, check_robots=False)
-        url = (payload or {}).get("data", {}).get("url") if isinstance(payload, dict) else None
+        # {"data": null} is data.gov.sg's error shape; anything but a dict with a string url means "not yet".
+        data = payload.get("data") if isinstance(payload, dict) else None
+        url = data.get("url") if isinstance(data, dict) else None
+        url = url if isinstance(url, str) and url else None
         if url:
             resp = http.get(url, check_robots=False)
             return (url, resp) if resp is not None else None
@@ -45,8 +48,12 @@ def ingest_opendata(http: PoliteHttp, loader: Loader) -> int:
         if not got:
             continue
         url, resp = got
-        # save_response strips the signature from the signed download URL before recording it
-        total += loader.process(loader.store.save_response(source, url, resp))
+        try:
+            # save_response strips the signature from the signed download URL before recording it
+            total += loader.process(loader.store.save_response(source, url, resp))
+        except Exception:  # one dataset's broken file must not stop the others (counted as load_error)
+            LOG.exception("data.gov.sg %s: could not load %s", key, url)
+            continue
         # The dataset's own "last updated" date, used as as_of for its figures.
         meta_url = DATAGOV_METADATA_URL.format(dataset_id=DATAGOV_DATASETS[key])
         meta = http.get(meta_url, check_robots=False)

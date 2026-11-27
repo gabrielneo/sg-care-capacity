@@ -6,9 +6,9 @@ from conftest import HTML, FakeHttp, source_routes
 from sg_health import cli
 
 
-def run(monkeypatch, paths, routes):
+def run(monkeypatch, paths, routes, *extra):
     monkeypatch.setattr(cli, "PoliteHttp", lambda: FakeHttp(routes))
-    return cli.main(["--db", str(paths["db"]), "--raw-dir", str(paths["raw"]), "--report", str(paths["report"]), "run"])
+    return cli.main(["--db", str(paths["db"]), "--raw-dir", str(paths["raw"]), "--report", str(paths["report"]), "run", *extra])
 
 
 def failed_lines(capsys):
@@ -47,3 +47,23 @@ def test_an_unchanged_moh_file_is_not_a_failure(monkeypatch, paths, capsys):
     assert run(monkeypatch, paths, source_routes()) == 0
     assert run(monkeypatch, paths, source_routes()) == 0       # second fetch: same sha256, skipped on purpose
     assert failed_lines(capsys) == []
+
+
+def test_a_null_data_payload_from_datagov_stops_only_that_dataset(monkeypatch, paths, capsys):
+    # R8: data.gov.sg answers {"code": ..., "data": null} on errors; that used to raise and skip every later dataset.
+    from sg_health import config
+    monkeypatch.setattr("sg_health.sources.datagov.time.sleep", lambda s: None)
+    routes = source_routes()
+    routes[config.DATAGOV_BASE + "/{}/poll-download".format(config.DATAGOV_DATASETS["chas"])] = (
+        json.dumps({"code": 1, "data": None, "errorMsg": "busy"}).encode(), "application/json")
+    assert run(monkeypatch, paths, routes) == cli.EXIT_PARTIAL
+    assert failed_lines(capsys) == ["datagov_chas"]
+
+
+def test_one_datasets_broken_file_does_not_stop_the_others(monkeypatch, paths, capsys):
+    from conftest import PLANNING_AREAS_DOWNLOAD
+    routes = source_routes()
+    routes[PLANNING_AREAS_DOWNLOAD] = (b'{"type": "Nope"}', "application/geo+json")   # parse_planning_areas raises
+    # As in CI (weekly.yml ingests with --no-transform): without boundaries the transform itself would fail.
+    assert run(monkeypatch, paths, routes, "--no-transform", "--no-validate", "--no-report") == cli.EXIT_PARTIAL
+    assert failed_lines(capsys) == ["datagov_planning_areas"]
