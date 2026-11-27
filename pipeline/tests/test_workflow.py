@@ -197,3 +197,37 @@ def test_stale_release_alert_is_scheduled_and_opens_one_issue():
     assert 'MAX_AGE_DAYS: "10"' in text
     # One open issue, not a new one every day (test_workflow_reliability checks the rest).
     assert "alert stale-release" in text and '--label "$1" --state open' in text
+
+
+# ------------------------------------------------------------- docs figures #
+
+def test_weekly_checks_doc_figures_after_transform_without_blocking_publishing():
+    s = steps("weekly.yml")
+    order = list(s)
+    check, issue = s["Check figures in the docs"], s["Open or update the docs-figures issue"]
+    assert order.index("Transform") < order.index("Check figures in the docs") < order.index("Publish snapshot")
+    assert "continue-on-error: true" in check and "steps.transform.outcome == 'success'" in condition(check)
+    assert "pipeline/acceptance/test_docs_figures.py" in check and "pipefail" in check
+    assert "no doc figure was checked" in check                         # all skipped is not a pass
+    assert "steps.docfigures.outcome == 'failure'" in condition(issue)
+    # Upload runs only on success(): an error in the issue step must not cancel the release.
+    assert "continue-on-error: true" in issue
+    # The -k filter must still select the figure test, or the check passes having run nothing.
+    acceptance = (config.REPO_ROOT / "pipeline" / "acceptance" / "test_docs_figures.py").read_text()
+    assert "-k figure_in_the_docs" in check and "def test_a_figure_in_the_docs_is_still_what_the_data_says" in acceptance
+    assert "gh issue list --label docs-figures --state open" in issue and "gh issue comment" in issue
+    # A stale sentence never stops a release or fails the job.
+    assert "docfigures" not in condition(s["Publish snapshot"])
+    assert "docfigures" not in s["Fail the job if any stage failed"]
+
+
+# --------------------------------------------------------- SingStat reminder #
+
+def test_singstat_reminder_runs_each_october_and_opens_one_issue():
+    text = (WF / "singstat-reminder.yml").read_text()
+    assert 'cron: "0 1 1 10 *"' in text and "issues: write" in text and "contents: read" in text
+    run = steps("singstat-reminder.yml")["Open an issue if the committed edition is not this year's"]
+    # The year test must match how config names the committed file, or the reminder never goes quiet.
+    assert '^SINGSTAT_RESIDENTS_FILE = .*respopagesextod${year}' in run and "pipeline/sg_health/config.py" in run
+    assert config.SINGSTAT_RESIDENTS_FILE.name.startswith("respopagesextod")
+    assert "gh issue list --label singstat-refresh --state open" in run and "gh issue create" in run

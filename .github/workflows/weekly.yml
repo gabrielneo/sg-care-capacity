@@ -158,6 +158,40 @@ jobs:
         if: ${{ !cancelled() && steps.restore.outcome == 'success' }}
         run: sg-health transform
 
+      # Figures typed into README/docs, read back from the new marts. A changed figure opens an issue
+      # naming the sentence to rewrite; it never blocks publishing (a stale sentence is not bad data).
+      - name: Check figures in the docs
+        id: docfigures
+        continue-on-error: true
+        if: ${{ !cancelled() && steps.transform.outcome == 'success' }}
+        env:
+          COLUMNS: "400"             # pytest cuts each FAILED line to the terminal width; keep the whole message
+        run: |
+          set -o pipefail
+          pytest -q pipeline/acceptance/test_docs_figures.py -k figure_in_the_docs -rf --tb=no -p no:cacheprovider \
+            | tee "$RUNNER_TEMP/docfigures.txt"
+          # Every figure skipped (no warehouse or marts) would otherwise pass having checked nothing.
+          grep -qE "[0-9]+ passed|[0-9]+ failed" "$RUNNER_TEMP/docfigures.txt" \
+            || { echo "::error::no doc figure was checked (see the pytest output above)"; exit 1; }
+
+      - name: Open or update the docs-figures issue
+        # If this step errors (GitHub API), the job must not turn red: the upload steps below run only on success().
+        continue-on-error: true
+        if: ${{ !cancelled() && steps.docfigures.outcome == 'failure' }}
+        run: |
+          set -euo pipefail
+          { echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; echo; \
+            echo "A figure typed into the docs no longer matches this week's data, or could not be checked (output below)."; \
+            echo "Rewrite each sentence so it is true again (the data was still published). Then run: pytest -q pipeline/acceptance/test_docs_figures.py"; echo; \
+            echo '```'; grep '^FAILED' "$RUNNER_TEMP/docfigures.txt" || tail -n 30 "$RUNNER_TEMP/docfigures.txt"; echo '```'; } > "$RUNNER_TEMP/docissue.md"
+          gh label create docs-figures --color FBCA04 --description "A figure in the docs no longer matches the data" 2>/dev/null || true
+          existing=$(gh issue list --label docs-figures --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/docissue.md"
+          else
+            gh issue create --title "Docs: a figure no longer matches the data" --label docs-figures --body-file "$RUNNER_TEMP/docissue.md"
+          fi
+
       # ------------------------------------------------------------- publish
       # Only after a clean ingest, a passing validation and a successful transform. `sg-health
       # publish` re-runs validation itself and refuses if anything blocks.

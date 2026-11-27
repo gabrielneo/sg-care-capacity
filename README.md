@@ -131,8 +131,8 @@ number with its "Data as of" date and source.
   year-on-year changes matched in every row. So did the all-hospital monthly series, the clinics per 1,000 seniors in every
   area, and the three headline findings: the weekday test, the visits and bed-wait correlation, and the priority ranking.
   The live API served the same values.
-- **Tests on every push.** Over 2,400 automated tests (counted on 27 Nov 2026): about 1,170 website unit
-  tests, about 680 browser checks, about 400 pipeline tests and about 150 API tests run in CI, and about
+- **Tests on every push.** Over 2,500 automated tests (counted on 27 Nov 2026): about 1,200 website unit
+  tests, about 690 browser checks, about 400 pipeline tests and about 150 API tests run in CI, and about
   110 acceptance checks run on the real built data (`make test`). The browser checks cover every page at 1280 and 375 px wide (with
   overflow checks at 768 and 1440 px), WCAG 2.1 AA accessibility with axe on every page (2.2 AA as well on
   the home page and the newer pages) in light and dark. Lighthouse checks the home, finder, findings and ED trends pages against budgets: largest paint

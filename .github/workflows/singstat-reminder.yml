@@ -1,0 +1,38 @@
+name: SingStat refresh reminder
+
+# SingStat refuses GitHub's runners, so the residents file is refreshed by hand (docs/runbook.md,
+# "SingStat population, yearly refresh"). SingStat publishes each June edition around September; on
+# 1 October this opens one issue unless the committed file is already this year's edition.
+
+on:
+  schedule:
+    - cron: "0 1 1 10 *"       # 1 October, 01:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Open an issue if the committed edition is not this year's
+        run: |
+          set -euo pipefail
+          year=$(date -u +%Y)
+          if grep -qE "^SINGSTAT_RESIDENTS_FILE = .*respopagesextod${year}\.zip\"" pipeline/sg_health/config.py; then
+            echo "The committed SingStat file is already the ${year} edition."; exit 0
+          fi
+          existing=$(gh issue list --label singstat-refresh --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then echo "Issue #$existing is already open."; exit 0; fi
+          gh label create singstat-refresh --description "Yearly SingStat population refresh" 2>/dev/null || true
+          gh issue create --label singstat-refresh \
+            --title "Refresh SingStat population: June ${year} edition" \
+            --body "SingStat's June ${year} residents file should be out. GitHub's runners can't download it, so follow docs/runbook.md, \"SingStat population, yearly refresh\": download the CSV zip into data/reference/singstat/, update SINGSTAT_RESIDENTS_FILE and SINGSTAT_RESIDENTS_SHA256 in pipeline/sg_health/config.py, run the checks, commit. Close this issue once it is committed."

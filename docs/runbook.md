@@ -11,10 +11,11 @@ commands use the [`gh` CLI](https://cli.github.com/); everything can also be don
 | `weekly.yml` | Sundays 00:00 UTC (08:00 SGT), or **Actions → Weekly pipeline → Run workflow** | test → ingest → validate → transform → publish → restart the API and check it serves the new release | Raw history: release **`data-latest`** (`raw.tar.gz`) in the private `sg-care-capacity-raw` repo ([Raw store](#raw-store)). Snapshots: releases **`data-YYYY-MM-DD`** (newest 12 kept) |
 | `live.yml` | Every 3 hours (at :15) | NUHS live waits only, into a separate store | Release **`live-latest`** (`live.tar.gz`, `nuhs_live_waits.parquet`) in the private `sg-care-capacity-raw` repo. Never a snapshot |
 | `ci.yml` | Every pull request and push to `main` | ruff, mypy, unit tests; guards against committed binaries or `.env` | Nothing (checks only) |
+| `singstat-reminder.yml` | 1 October, 01:00 UTC | Opens one `singstat-refresh` issue if the committed SingStat file isn't this year's edition ([yearly refresh](#singstat-population-yearly-refresh)) | An issue |
 | `restart-api.yml` | By hand: **Actions → Restart API → Run workflow** | Restarts the API (Render deploy hook) and checks which data release it serves; or only checks | Nothing |
-
 | `stale-release.yml` | Daily, 01:00 UTC (09:00 SGT) | The [alerts](#alerts): newest release older than 10 days, the API serving another release than the newest, a weekly source overdue | Issues |
 | `keep-api-awake.yml` | Every 10 minutes | Requests `/api/v1/health` so the free plan never sleeps; opens one `api-down` issue if it doesn't answer | An issue, when down |
+
 **Where the site runs:** the API on [Render](https://render.com) (`render.yaml`, free plan, Singapore
 region), the website on [Vercel](https://vercel.com) (`web/`). The website calls the API from its
 server only, so the API allows no browser origins. See [Deploying](#deploying).
@@ -219,6 +220,8 @@ Two services, both on free plans: the **API** on Render (a Docker container buil
 SingStat publishes each June edition around **September**. GitHub's runners can't download it (SingStat
 returns HTTP 403 to them), so it is refreshed **by hand** and committed. The `freshness.population_15_months`
 warning appears once the committed edition is more than 15 months past its reference date.
+Every 1 October, `singstat-reminder.yml` opens a `singstat-refresh` issue with these steps if the
+committed file isn't that year's edition. Close it once the new file is committed.
 
 1. Open SingStat's [geographic distribution page](https://www.singstat.gov.sg/find-data/explore-data-themes/population/geographic-distribution/latest-news-data),
    section **Singapore Residents by Planning Area / Subzone, Age Group, Sex and *Type of Dwelling***.
@@ -273,19 +276,16 @@ automatically with python-dotenv, never required, and a real environment variabl
   still starts, but may hit GitHub's 60-requests-an-hour limit on Render's shared IPs and fail to
   find the release.
 
-## When a scheduled run fails
+## When a figure in the docs no longer matches
 
-GitHub emails you when a workflow fails (check **Settings → Notifications → Actions**), and the weekly run
-also opens or comments on a **`pipeline-failure`** issue listing each step's outcome and any source that
-landed nothing. Open the run, find the first red step, then:
+The README, case study and methodology quote some figures in their sentences (`pipeline/acceptance/test_docs_figures.py`
+lists them). After each weekly transform the workflow reads them back from the new data. If one changed, it opens
+(or comments on) one `docs-figures` issue naming the doc, the figure and its new value. Publishing goes ahead.
 
-| Failed step | What it means | What to do |
-|---|---|---|
-| **weekly: Test** | The code is broken; no data was touched | Fix the test failure, push, run the workflow by hand |
-| **weekly: Restore data/raw** (or **live: Restore**) | `RAW_STORE_TOKEN` is missing, expired or can't read the private repo; or `data-latest` didn't download (usually a GitHub hiccup) | Renew the token ([Raw store](#raw-store)), or re-run the job. Never delete `data-latest` to "fix" it |
-| **weekly: Ingest** | A source failed in a way that stopped the run (one source being down doesn't). Raw history was still archived | Read the `source_summary` log lines; see [When publishing is blocked](#when-publishing-is-blocked) for parser problems |
-| **weekly: Fail the job**, with `partial ingest: true` | A source landed nothing usable (the issue names it): down, blocked by robots.txt, an error page instead of the file, or a changed layout. The other sources were published; that source's figures are last week's | Open the source's URL from `fetch_log.json` or the log. A one-off outage fixes itself next week; a changed page or file needs a parser fix and a test, then a run by hand |
-| **weekly: Validate**, with a `data-quality` issue | Publishing is blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked). The site keeps the last release |
+1. Rewrite each sentence so it is true of the new data. Don't just swap the number: a ranking or a direction
+   ("Rochor", "rose") may have changed too.
+2. Run `pytest -q pipeline/acceptance/test_docs_figures.py` on a fresh build, commit, and close the issue.
+
 ## Alerts
 
 Each alert is one GitHub issue with a label; while it is open, the check stays quiet (no daily comments). Close
@@ -303,6 +303,19 @@ it once the cause is fixed; the next check reopens it if it isn't.
 Scheduled workflows stop after 60 days without a commit, alerts included: a quiet issue list is only proof of
 health while the schedules run ([Housekeeping](#housekeeping)).
 
+## When a scheduled run fails
+
+GitHub emails you when a workflow fails (check **Settings → Notifications → Actions**), and the weekly run
+also opens or comments on a **`pipeline-failure`** issue listing each step's outcome and any source that
+landed nothing. Open the run, find the first red step, then:
+
+| Failed step | What it means | What to do |
+|---|---|---|
+| **weekly: Test** | The code is broken; no data was touched | Fix the test failure, push, run the workflow by hand |
+| **weekly: Restore data/raw** (or **live: Restore**) | `RAW_STORE_TOKEN` is missing, expired or can't read the private repo; or `data-latest` didn't download (usually a GitHub hiccup) | Renew the token ([Raw store](#raw-store)), or re-run the job. Never delete `data-latest` to "fix" it |
+| **weekly: Ingest** | A source failed in a way that stopped the run (one source being down doesn't). Raw history was still archived | Read the `source_summary` log lines; see [When publishing is blocked](#when-publishing-is-blocked) for parser problems |
+| **weekly: Fail the job**, with `partial ingest: true` | A source landed nothing usable (the issue names it): down, blocked by robots.txt, an error page instead of the file, or a changed layout. The other sources were published; that source's figures are last week's | Open the source's URL from `fetch_log.json` or the log. A one-off outage fixes itself next week; a changed page or file needs a parser fix and a test, then a run by hand |
+| **weekly: Validate**, with a `data-quality` issue | Publishing is blocked by a data check | [When publishing is blocked](#when-publishing-is-blocked). The site keeps the last release |
 | **weekly: Transform / Publish** | A SQL or packaging error | Reproduce locally (`sg-health reparse && sg-health transform && sg-health publish`), fix, push, re-run |
 | **weekly: Check the API serves the new snapshot** | The release is published, but the API didn't switch to it within 20 minutes. It keeps serving the previous one | Render → **sg-health-api → Events / Logs**: the API logs why it refused to start (e.g. a file failed verification). Fix, then **Actions → Restart API**. If the new release itself is bad, [roll back](#rolling-back-to-an-earlier-snapshot) |
 | **weekly: Restart the API** | Render didn't accept the deploy hook (wrong or regenerated URL, or Render down) | Check the `RENDER_DEPLOY_HOOK_URL` secret; then **Actions → Restart API** |

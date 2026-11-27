@@ -30,7 +30,7 @@ stays silent. It runs inside `sg-health publish`, after transform and before the
    count as missing.
 4. **Detectors:** each one returns *candidates*, meaning tests or measurements.
 5. **Multiple testing:** a single **Benjamini-Hochberg** correction runs across every p-value in
-   the run, about 46 tests today (`scipy.stats.false_discovery_control`).
+   the run, 47 tests on the release of 25 Nov 2026 (`scipy.stats.false_discovery_control`).
 6. **Publication gate:** a candidate is published only if it passes its detector's effect-size
    minimum **and**, where it has a p-value, its adjusted p-value is below **0.05**. Within one
    detector, only the strongest result per hospital or area is published, for example the best of
