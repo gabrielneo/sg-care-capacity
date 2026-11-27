@@ -232,10 +232,11 @@ jobs:
             ${{ env.PUBLISH_DIR }}/parquet/*.parquet
 
       - name: Keep only the newest snapshots
-        if: ${{ steps.publish.outcome == 'success' }}
+        # Only once the new release is up; drafts (a failed upload's leftovers) don't count as snapshots.
+        if: ${{ steps.upload.outcome == 'success' }}
         run: |
           set -euo pipefail
-          gh release list --limit 200 --json tagName --jq '.[].tagName' \
+          gh release list --limit 200 --exclude-drafts --json tagName --jq '.[].tagName' \
             | sg-health snapshots-to-prune --keep "$KEEP_SNAPSHOTS" \
             | while read -r tag; do echo "deleting old snapshot $tag"; gh release delete "$tag" --yes --cleanup-tag; done
 

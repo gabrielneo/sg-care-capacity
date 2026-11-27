@@ -33,3 +33,15 @@ def test_weekly_reports_a_partial_ingest_and_any_failed_step_in_one_issue():
     order = list(s)
     assert order.index("Open or update the pipeline-failure issue") < order.index("Fail the job if any stage failed")
     assert "steps.ingest.outputs.partial == 'true'" in condition(s["Fail the job if any stage failed"])
+
+
+# ------------------------------------------------------- reliability (R5) #
+
+def test_drafts_never_count_as_releases():
+    # A failed upload leaves a draft. Prune counted it and deleted a good release; Restart API expected it although the
+    # API ignores drafts; the stale alert took it (or a withdrawn pre-release) as fresh.
+    prune = steps("weekly.yml")["Keep only the newest snapshots"]
+    assert "steps.upload.outcome == 'success'" in condition(prune) and "--exclude-drafts" in prune
+    assert "--exclude-drafts" in steps("restart-api.yml")["Work out which data release to expect"]
+    stale = (WF / "stale-release.yml").read_text()
+    assert "select(.isDraft | not)" in stale and "select(.isPrerelease | not)" in stale and "isDraft,isPrerelease" in stale

@@ -24,8 +24,9 @@ jobs:
       - name: Open an issue if the newest data release is too old
         run: |
           set -euo pipefail
-          latest=$(gh release list --limit 50 --json tagName,publishedAt \
-            --jq '[.[] | select(.tagName | test("^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$"))] | sort_by(.publishedAt) | last | .publishedAt // empty')
+          # Drafts (a failed upload) and pre-releases (withdrawn) are not what the API serves, so they don't count.
+          latest=$(gh release list --limit 50 --json tagName,publishedAt,isDraft,isPrerelease \
+            --jq '[.[] | select(.isDraft | not) | select(.isPrerelease | not) | select(.tagName | test("^data-[0-9]{4}-[0-9]{2}-[0-9]{2}$"))] | sort_by(.publishedAt) | last | .publishedAt // empty')
           if [ -z "$latest" ]; then echo "::error::No data-YYYY-MM-DD release found."; exit 1; fi
           age=$(( ( $(date -u +%s) - $(date -u -d "$latest" +%s) ) / 86400 ))
           echo "Newest data release: $latest ($age days old; limit $MAX_AGE_DAYS)"

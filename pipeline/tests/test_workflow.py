@@ -49,8 +49,8 @@ def test_weekly_publishes_only_when_every_gate_passed():
                  "steps.transform.outcome == 'success'"):
         assert gate in cond
     assert "verify_manifest" in s["Publish snapshot"]
-    for name in ("Upload snapshot release", "Keep only the newest snapshots"):
-        assert "steps.publish.outcome == 'success'" in condition(s[name])
+    assert "steps.publish.outcome == 'success'" in condition(s["Upload snapshot release"])
+    assert "steps.upload.outcome == 'success'" in condition(s["Keep only the newest snapshots"])
     assert "snapshots-to-prune" in s["Keep only the newest snapshots"]
 
 
