@@ -185,7 +185,8 @@ Two services, both on free plans: the **API** on Render (a Docker container buil
 5. **Vercel**: sign in with GitHub, **Add New → Project**, import this repository, set **Root
    Directory** to `web`. Under **Environment Variables** (Production and Preview):
    `API_BASE_URL` = the Render URL, `API_REVALIDATE_SECONDS` = `3600`, `SHOW_DEV_PAGES` = `false`.
-   If the Node.js version setting is offered, match `web/.nvmrc`. Deploy.
+   Vercel takes the Node.js version from `web/package.json` (`engines.node`, kept equal to `web/.nvmrc` by
+   `web/test/deploy.test.ts`); if its own Node.js setting disagrees, set it to the same major. Deploy.
 6. **Check**: `https://<api>/api/v1/meta` shows the newest `data-YYYY-MM-DD`; the website's footer
    names the same release with a link to it. Then run **Actions → Weekly pipeline → Run workflow**
    and confirm the step *Check the API serves the new snapshot* passes.

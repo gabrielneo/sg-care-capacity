@@ -18,3 +18,11 @@ describe("deploy regions", () => {
     expect(vercel.regions).toEqual(["sin1"]);
   });
 });
+
+describe("Node version parity (R15)", () => {
+  it("Vercel builds on the Node major CI uses: package.json engines matches .nvmrc", () => {
+    const nvmrc = readFileSync(path.resolve(__dirname, "../.nvmrc"), "utf8").trim();
+    const pkg = JSON.parse(readFileSync(path.resolve(__dirname, "../package.json"), "utf8")) as { engines?: { node?: string } };
+    expect(pkg.engines?.node).toBe(`${nvmrc}.x`);
+  });
+});
